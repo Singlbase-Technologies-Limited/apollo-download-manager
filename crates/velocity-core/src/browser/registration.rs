@@ -97,7 +97,7 @@ impl BrowserIntegration {
         let b = branding();
         Self {
             host_path: host.map(|h| h.to_string_lossy().into_owned()),
-            native_host_name: b.native_host_name.clone(),
+            native_host_name: b.app_native_host_name().to_owned(),
             chrome_extension_ids: b.chrome_extension_ids.clone(),
             firefox_extension_id: b.firefox_extension_id.clone(),
             registrations: locations.status(host),
@@ -133,8 +133,8 @@ impl BrowserIntegration {
 pub fn manifest(browser: Browser, host: &Path) -> Value {
     let b = branding();
     let mut m = json!({
-        "name": b.native_host_name,
-        "description": format!("{} browser integration", b.product_name),
+        "name": b.app_native_host_name(),
+        "description": format!("{} browser integration", b.app_product_name()),
         "path": host.to_string_lossy(),
         "type": "stdio",
     });
@@ -511,8 +511,14 @@ mod tests {
 
     #[test]
     fn manifests_let_only_v2s_extensions_start_the_host() {
+        // The names this build runs as: an installed build wrote the development ones (#315).
+        // `--features release-identity` runs this as an installed build does.
         let c = manifest(Browser::Chrome, Path::new("/opt/v/host"));
         assert_eq!(c["name"], branding().app_native_host_name());
+        assert_eq!(
+            c["description"],
+            format!("{} browser integration", branding().app_product_name())
+        );
         assert_eq!(c["type"], "stdio");
         assert_eq!(c["allowed_origins"], json!(chrome_origins()));
         assert_eq!(

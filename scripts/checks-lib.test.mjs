@@ -104,6 +104,7 @@ describe('checkCommands', () => {
       'rust-fmt',
       'rust-clippy',
       'rust-test',
+      'rust-test-release',
       'tsc',
       'tsc-extension',
       'eslint',
@@ -113,8 +114,16 @@ describe('checkCommands', () => {
 
   it('limits clippy and tests to the selected packages', () => {
     const cmds = checkCommands({ all: false, frontend: false, rustPackages: ['velocity-core'] });
-    expect(cmds.map((c) => c.id)).toEqual(['native-build', 'rust-fmt', 'rust-clippy', 'rust-test']);
+    expect(cmds.map((c) => c.id)).toEqual(['native-build', 'rust-fmt', 'rust-clippy', 'rust-test', 'rust-test-release']);
     expect(cmds.find((c) => c.id === 'rust-test')?.args).toEqual(['test', '-p', 'velocity-core', '--no-fail-fast']);
+  });
+
+  // #315: an installed V2 wrote the development host name into its browser registration. Only the
+  // release identity shows it, and no check ran velocity-core that way.
+  it("runs velocity-core's registration tests as the installed app when velocity-core is checked", () => {
+    const release = checkCommands({ all: false, frontend: false, rustPackages: ['velocity-core'] }).find((c) => c.id === 'rust-test-release');
+    expect(release?.args).toEqual(['test', '-p', 'velocity-core', '--features', 'release-identity', '--lib', 'browser::registration', '--no-fail-fast']);
+    expect(ids({ all: false, frontend: false, rustPackages: ['velocity-curl'] })).not.toContain('rust-test-release');
   });
 
   it('keeps clippy going past a crate that fails to compile, so every crate reports (#91)', () => {

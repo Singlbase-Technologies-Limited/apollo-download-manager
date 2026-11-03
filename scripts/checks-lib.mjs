@@ -191,6 +191,17 @@ export function checkCommands(selection) {
       },
       { id: 'rust-test', name: 'Rust unit tests (cargo test)', tool: 'cargo', args: ['test', ...rust, '--no-fail-fast'] },
     );
+    // The browser registration's names, as an installed app has them: only packaging turns the
+    // release identity on, and an installed V2 once wrote the development name unseen (#315).
+    // Only these tests: others check the development identity on purpose.
+    if (selection.all || selection.rustPackages.includes('velocity-core')) {
+      cmds.push({
+        id: 'rust-test-release',
+        name: 'Browser registration as the installed app (cargo test --features release-identity)',
+        tool: 'cargo',
+        args: ['test', '-p', 'velocity-core', '--features', 'release-identity', '--lib', 'browser::registration', '--no-fail-fast'],
+      });
+    }
   }
   if (selection.all || selection.frontend) {
     cmds.push(
