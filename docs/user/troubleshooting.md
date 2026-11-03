@@ -24,10 +24,17 @@ What to do when a download doesn't go as expected. Every message a download can 
 
 ## A download failed
 
-The details panel shows the message, the server's HTTP status when there is one, and whether retrying can help. The most common:
+The details panel shows the message, the server's HTTP status when there is one, and a hint about retrying:
+
+- **"Retrying may help once the cause is fixed."** A network problem, such as a lost connection or a timeout.
+- **"The server asked Velocity to slow down. Retrying later may help."** The server is busy or limits how many requests it accepts.
+- **"Retrying is unlikely to help without changing the request."** For example a missing file, a refused login or a full disk: fix the cause first.
+
+The most common messages:
 
 | Message | What to do |
 |---|---|
+| "The server name could not be resolved. Check the link's spelling, …" | Check the link's spelling, the proxy's address if you set one in Settings, Proxy, and your internet connection. Some servers can be reached only over IPv6: if your network has no IPv6 internet access, they can't be reached from it. Velocity tries a few times on its own before it shows this, then waits for you to **Retry** |
 | "The file was not found on the server (404). The link may have expired." | Get a new link from the site |
 | "The download link expired (403). Get a fresh link from the browser." | Copy the link again from the site, and add it again |
 | "Access was denied by the server (403)." or "The server requires authentication (401)." | The link needs a login: add it again with your user name and password, or get a new link |

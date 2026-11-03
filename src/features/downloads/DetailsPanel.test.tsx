@@ -116,6 +116,28 @@ describe('the details panel (V1)', () => {
     expect(alert.className).toMatch(/\bbreak-words\b/);
   });
 
+  // #250: the hint under an error follows its class, and never promises that a retry helps.
+  it.each([
+    ['transient', true, 'Retrying may help once the cause is fixed.'],
+    ['throttled', true, 'The server asked Velocity to slow down. Retrying later may help.'],
+    ['permanent', false, 'Retrying is unlikely to help without changing the request.'],
+  ] as const)('shows the retry hint for a %s failure', async (failureClass, retryable, hint) => {
+    const failed = makeRecord({
+      id: 'f',
+      fileName: 'test-50mb.bin',
+      status: 'failed',
+      createdAtMs: 7,
+      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null },
+    });
+    installFakeBackend({ snapshot: withDownloads([failed]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('test-50mb.bin'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(alert.textContent).toContain(hint);
+    expect(alert.textContent).not.toContain('usually');
+  });
+
   it('keeps the open details panel on the selected download', async () => {
     const user = userEvent.setup();
     renderApp();

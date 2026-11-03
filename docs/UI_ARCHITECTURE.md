@@ -107,7 +107,7 @@ The panel (#61, V1's `DetailsPanel`) is `src/features/downloads/DetailsPanel.tsx
   - **Torrent** (`src/features/torrents/TorrentSection.tsx`, #61, #63): the peers and seeds connected, the bytes uploaded, the upload speed and the time seeding, as the torrent helper reports them ("Not reported yet" until it does); the info hashes, version and seeding policy (`get_torrent_details`); the trackers and the connected peers, asked for every second only while shown; re-announce, the upload limit, "Stop seeding", "Leave seeding queue", and changing its files, which keeps the files dropped unless the user asks to delete them.
   - **Source and destination**, and **Timeline**.
   - **Options for this download:** its category, its own speed limit, and a direct download's connections, which change while it runs (#47), so there is no restart to confirm.
-- **Errors** show the engine's message, the HTTP status when there is one, whether retrying can help, and Retry when the download allows it.
+- **Errors** show the engine's message, the HTTP status when there is one, a hint about retrying that follows the failure's class (#250), and Retry when the download allows it.
 - **Only what the engines report:** there are no per-connection or per-segment figures, because the engine doesn't report them.
 
 ## The history
