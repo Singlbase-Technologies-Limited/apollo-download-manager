@@ -543,7 +543,24 @@ The app hands back what it saved, in `TransferSpec::resume`:
 | `discardPartFile` | The part file is the download's own but has no usable checkpoint: it is deleted and the download starts over (PO decision). A link, or anything that isn't a plain file, is refused and never touched |
 | none | A new download. An existing part file is never reused: the download fails |
 
-A resumed download's progress counts the bytes it holds: D plus what arrived since, not only the new bytes (#257). So the list shows where it really is from its first report, and progress never drops after a pause, a crash or an engine restart, unless the download started over.
+A resumed download's progress counts the bytes it holds: D plus what arrived since, not only the new bytes (#257). So the list shows where it really is from its first report, and progress never drops after a pause, a crash or an engine restart, unless the download started over. Before that first report, a transfer added with a checkpoint is queued with D's bytes and the file's size (`TransferSnapshot::queued`, used by the engine and its supervisor), not "0 B of unknown size".
+
+**A start-over is never silent (#257).**
+- **What's reported:** each time a download drops bytes it had, the engine sets the snapshot's `startedOver` to why. The details panel shows the sentence, and the app's log has a warning line: `download <id> started over: <why>`.
+- **A start that drops nothing isn't reported:** for example a fresh download, or a mirror hand-over before any byte was written.
+- **The reasons** are in `download::started_over`:
+
+| Why | Sentence |
+| --- | --- |
+| [Another file](#what-a-change-does) (a changed validator or size) | "The file on the server changed, so the download started again." |
+| Another encoding | "The server changed how it sends the file, so the download started again." |
+| A checkpoint that isn't trusted (above) | "The saved progress couldn't be used, so the download started again." |
+| `discardPartFile`, with a non-empty part file | "There was no saved progress for the unfinished file, so the download started again." |
+| A checkpoint whose part file is gone | "The unfinished file was gone, so the download started again." |
+| A bad piece from a server without ranges ([integrity](#piece-hashes)) | "Part of the file failed its check, and the server can't send parts alone, so the download started again." |
+| The first source failing after it wrote bytes ([mirrors](#when-a-source-fails)) | "The first source failed, so the download started again from another." |
+
+A strong validator that differs from the one the download started with always means another file, even at the same size: the download starts over once and says so, and a second change fails it. Two versions are never mixed (PO decision on #257, 2026-11-03).
 
 `StoredDownload::resume` in the database layer makes the choice from a record and its saved checkpoint. It picks the checkpoint if it's known and of this record's source, `discardPartFile` otherwise, and nothing for a finished record. A record this build can't route is never resumed.
 

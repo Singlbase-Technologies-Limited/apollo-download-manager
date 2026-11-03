@@ -22,6 +22,10 @@ What to do when a download doesn't go as expected. Every message a download can 
 | A link from the browser to this computer or the local network | Velocity holds links from the browser to addresses such as `127.0.0.1` or `192.168.x.x` before sending anything. **Download anyway** in the details panel goes on |
 | A name already taken | **Keep both (rename)** or **Skip**: Velocity never replaces a file |
 
+## A download started again
+
+The details panel says "…, so the download started again." when Velocity dropped what it had downloaded and began again, with the reason. Most often the file on the server changed: Velocity never mixes two versions of a file, so it starts once more with the new one. There's nothing to do; the download continues by itself. If the file changes again while it downloads, the download fails, and you can retry it later.
+
 ## A download failed
 
 The details panel shows the message, the server's HTTP status when there is one, and a hint about retrying:

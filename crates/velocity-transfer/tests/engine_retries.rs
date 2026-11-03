@@ -9,7 +9,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use velocity_core::domain::{DownloadStatus, FailureClass};
 use velocity_core::transfer::{
-    DirectTransfer, Limits, TransferEvent, TransferId, TransferSnapshot, TransferSpec,
+    Checkpoint, DirectTransfer, Limits, Resume, TransferEvent, TransferId, TransferSnapshot,
+    TransferSpec, CHECKPOINT_FORMAT,
 };
 use velocity_test_http::{seeded_bytes, AnsweringLimit, Freeze, ServerOptions, TestServer};
 use velocity_transfer::engine::InProcessEngine;
@@ -479,6 +480,93 @@ fn a_stall_shows_in_the_snapshot() {
         seen.iter().any(|s| s.status == DownloadStatus::Stalled),
         "{:?}",
         seen.iter().map(|s| s.status).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn a_download_resumed_from_a_checkpoint_never_shows_less_than_it_resumed() {
+    // #257: after a crash the app resumes from the saved checkpoint, and the engine's first
+    // snapshot said "0 B of unknown size", which replaced the progress the app had saved.
+    let dir = Dir::new("resumed-progress");
+    let dest = dir.0.join("out.bin");
+    let data = seeded_bytes(8 << 20, 257);
+    let kept = 3u64 << 20;
+    std::fs::write(part_of(&dest), &data[..kept as usize]).unwrap();
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions::default(),
+    );
+    let url = s.url("f.bin");
+    let checkpoint = Checkpoint {
+        format: CHECKPOINT_FORMAT,
+        source: Checkpoint::source_of(&url),
+        total: data.len() as u64,
+        etag: None,
+        last_modified: None,
+        content_encoding: None,
+        durable: vec![(0, kept)],
+    };
+    let mut engine = engine(FAST);
+    let events = engine.subscribe();
+    let id = engine
+        .add(TransferSpec {
+            resume: Some(Resume::Checkpoint { checkpoint }),
+            ..spec(url, dest.clone(), 4)
+        })
+        .unwrap();
+    let seen = snapshots_until(&events, id, finished);
+    assert_eq!(seen.last().unwrap().status, DownloadStatus::Completed);
+    assert!(std::fs::read(&dest).unwrap() == data);
+    for s in &seen {
+        assert!(
+            s.progress.completed_bytes >= kept && s.progress.total_bytes == Some(data.len() as u64),
+            "{:?}: {} of {:?} bytes, resumed from {kept} of {}",
+            s.status,
+            s.progress.completed_bytes,
+            s.progress.total_bytes,
+            data.len()
+        );
+        assert_eq!(s.started_over, None, "nothing was dropped");
+    }
+}
+
+#[test]
+fn a_download_that_drops_its_bytes_says_why_in_its_snapshot() {
+    // #257: a resume whose checkpoint can't be used starts again, and says so.
+    let dir = Dir::new("says-why");
+    let dest = dir.0.join("out.bin");
+    let data = seeded_bytes(2 << 20, 2570);
+    std::fs::write(part_of(&dest), &data[..1 << 20]).unwrap();
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions::default(),
+    );
+    let url = s.url("f.bin");
+    let checkpoint = Checkpoint {
+        // Another format's: it can't be trusted.
+        format: CHECKPOINT_FORMAT + 1,
+        source: Checkpoint::source_of(&url),
+        total: data.len() as u64,
+        etag: None,
+        last_modified: None,
+        content_encoding: None,
+        durable: vec![(0, 1 << 20)],
+    };
+    let mut engine = engine(FAST);
+    let events = engine.subscribe();
+    let id = engine
+        .add(TransferSpec {
+            resume: Some(Resume::Checkpoint { checkpoint }),
+            ..spec(url, dest.clone(), 2)
+        })
+        .unwrap();
+    let seen = snapshots_until(&events, id, finished);
+    let last = seen.last().unwrap();
+    assert_eq!(last.status, DownloadStatus::Completed);
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(
+        last.started_over.as_deref(),
+        Some("The saved progress couldn't be used, so the download started again.")
     );
 }
 

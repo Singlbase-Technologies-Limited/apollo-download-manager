@@ -284,6 +284,44 @@ fn a_frozen_connection_shows_stalled_then_is_reset_and_retried() {
 }
 
 #[test]
+fn a_connection_that_goes_silent_while_the_others_finish_shows_stalled_then_is_reset() {
+    // #257: one of several connections stops sending while the rest finish their leases. Once
+    // only the silent one is left, the download shows No data received (Stalled), and the request
+    // is reset and fetched again; it never sits as Downloading at 0 B/s.
+    let (s, data) = serve(ServerOptions {
+        freeze_later_range: Some(Freeze {
+            after: 16 * 1024,
+            hold: Duration::from_secs(20),
+        }),
+        ..ServerOptions::default()
+    });
+    let dir = Dir::new("one-silent");
+    let dest = dir.file("out.bin");
+    let (control, seen) = recording();
+    let options = DownloadOptions {
+        connections: 4,
+        ..OPTIONS
+    };
+    let started = Instant::now();
+    let report = run(&s.url("f.bin"), &dest, options, &control).expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert!(s.counters().frozen);
+    assert!(
+        started.elapsed() < Duration::from_secs(10),
+        "{:?}",
+        started.elapsed()
+    );
+    assert!(report.fetches >= 3, "the frozen lease was fetched again");
+    let seen = seen.lock().unwrap();
+    let stalled = seen.iter().position(|s| *s == DownloadStatus::Stalled);
+    let again = seen.iter().rposition(|s| *s == DownloadStatus::Downloading);
+    assert!(
+        matches!((stalled, again), (Some(a), Some(b)) if a < b),
+        "Stalled, then Downloading again: {seen:?}"
+    );
+}
+
+#[test]
 fn a_host_that_does_not_resolve_fails_as_transient() {
     let dir = Dir::new("dns");
     let dest = dir.file("out.bin");

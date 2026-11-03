@@ -176,6 +176,39 @@ fn a_retrying_download_shows_when_the_engine_tries_again() {
     assert_eq!(r.retry_at_ms, None);
 }
 
+/// #257: a download that dropped the bytes it had says why, in its record and in the app's log,
+/// once however often the engine reports it.
+#[test]
+fn a_start_over_reaches_the_record_and_the_app_log() {
+    use tracing_subscriber::layer::SubscriberExt;
+    let log = crate::logs::AppLog::new();
+    let _default =
+        tracing::subscriber::set_default(tracing_subscriber::registry().with(log.layer()));
+    let (mut m, control, id) = setup();
+    control.progress(TransferId(1), 4096, Some(8192));
+    m.pump(T0);
+    assert_eq!(m.get(&id).unwrap().started_over, None);
+    let why = "The file on the server changed, so the download started again.";
+    for at in [T0 + 1, T0 + 2] {
+        control.emit(TransferEvent::Changed {
+            snapshot: TransferSnapshot {
+                status: DownloadStatus::Downloading,
+                started_over: Some(why.to_owned()),
+                ..control.snapshot(TransferId(1))
+            },
+        });
+        m.pump(at);
+    }
+    assert_eq!(m.get(&id).unwrap().started_over.as_deref(), Some(why));
+    let lines: Vec<_> = log
+        .lines()
+        .into_iter()
+        .filter(|l| l.message.contains("started over"))
+        .map(|l| l.message)
+        .collect();
+    assert_eq!(lines, [format!("download {id} started over: {why}")]);
+}
+
 /// A Downloading snapshot of transfer 1 with `completed_bytes`, sent late: the fake engine's own
 /// state stays as it is.
 fn late_progress(control: &FakeControl, completed_bytes: u64) -> TransferEvent {
@@ -291,6 +324,7 @@ fn events_for_unknown_transfers_are_ignored() {
         file_name: None,
         content_type: None,
         retry_at_ms: None,
+        started_over: None,
     };
     stray.progress.completed_bytes = 999;
     control.emit(TransferEvent::Changed { snapshot: stray });

@@ -131,6 +131,13 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
           <span>{formatPercent(pct)}</span>
         </div>
 
+        {d.startedOver ? (
+          // The bytes it had were dropped: never silently, and with why (#257).
+          <p role="status" className="mt-3 min-w-0 break-words rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
+            {d.startedOver}
+          </p>
+        ) : null}
+
         {d.error ? (
           // A long word, such as a host key's fingerprint or a path, wraps inside the panel (#248), as the rows do.
           <div role="alert" className="mt-3 min-w-0 break-words rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">

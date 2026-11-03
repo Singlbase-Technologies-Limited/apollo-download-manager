@@ -217,6 +217,7 @@ impl Manager {
                     created_at_ms: stored.created_at_ms,
                     completed_at_ms: stored.completed_at_ms,
                     retry_at_ms: None,
+                    started_over: None,
                     started_at_ms: stored.activity.started_at_ms,
                     average_speed_bps: activity.average_speed_bps(),
                     speed_limit_bps: None,

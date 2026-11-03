@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 22;
+export const COMMAND_API_VERSION = 23;
 
 const bytes = z.number().int().nonnegative();
 
@@ -117,6 +117,8 @@ export const DownloadRecordSchema = z.strictObject({
   completedAtMs: bytes.nullable(),
   /** While retrying, when the engine tries again (#59); `null` in every other status. */
   retryAtMs: bytes.nullable(),
+  /** Why it last dropped the bytes it had and started again (#257); `null` while it never did. */
+  startedOver: z.string().nullable(),
   /** The first time the engine reported it running (#59). */
   startedAtMs: bytes.nullable(),
   /** Bytes per second while it ran, once it ran for a second (#59). */

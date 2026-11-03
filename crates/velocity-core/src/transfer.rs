@@ -52,7 +52,8 @@ use std::sync::mpsc::Receiver;
 /// `https` to `http` only once the user confirmed it.
 /// Version 16 (#192) added [`DirectTransfer::set_proxy`]: engines download through the proxy the
 /// user set.
-pub const TRANSFER_CONTRACT_VERSION: u32 = 16;
+/// Version 17 (#257) added [`TransferSnapshot::started_over`].
+pub const TRANSFER_CONTRACT_VERSION: u32 = 17;
 
 /// An engine's id for one transfer. Assigned by the engine, never reused, and never shown as the
 /// app's download id.
@@ -591,6 +592,47 @@ pub struct TransferSnapshot {
     /// While Retrying, when the next attempt starts, in milliseconds since the Unix epoch (#59);
     /// `None` in every other status.
     pub retry_at_ms: Option<u64>,
+    /// Why the transfer last dropped the bytes it had and started again, as a sentence for the
+    /// user (#257); `None` while it never did. A start that drops nothing isn't one.
+    pub started_over: Option<String>,
+}
+
+impl TransferSnapshot {
+    /// A transfer `spec` describes, added and not started yet. One resumed from a checkpoint
+    /// starts with what the checkpoint kept and the file's size, not "0 B of unknown size", which
+    /// replaced the progress the app had saved (#257).
+    pub fn queued(id: TransferId, spec: &TransferSpec) -> Self {
+        let (completed_bytes, total_bytes) = match &spec.resume {
+            Some(Resume::Checkpoint { checkpoint }) => (
+                checkpoint
+                    .durable
+                    .iter()
+                    .map(|(a, b)| b.saturating_sub(*a))
+                    .sum(),
+                Some(checkpoint.total),
+            ),
+            _ => (0, None),
+        };
+        TransferSnapshot {
+            id,
+            status: DownloadStatus::Queued,
+            progress: Progress {
+                completed_bytes,
+                total_bytes,
+                download_speed_bps: 0,
+                upload_speed_bps: 0,
+                connections: 0,
+                connection_detail: None,
+            },
+            wasted_bytes: 0,
+            error: None,
+            verification: None,
+            file_name: spec.file_name.clone(),
+            content_type: None,
+            retry_at_ms: None,
+            started_over: None,
+        }
+    }
 }
 
 /// Something that happened to a transfer, pushed by the engine.
@@ -1025,7 +1067,34 @@ mod tests {
             file_name: Some("a.zip".to_owned()),
             content_type: None,
             retry_at_ms: None,
+            started_over: Some(
+                "The file on the server changed, so the download started again.".to_owned(),
+            ),
         }
+    }
+
+    #[test]
+    fn a_transfer_resumed_from_a_checkpoint_is_queued_with_what_it_kept() {
+        // #257: not "0 B of unknown size" before the engine's first report.
+        let started = |spec: &TransferSpec| {
+            let p = TransferSnapshot::queued(TransferId(7), spec).progress;
+            (p.completed_bytes, p.total_bytes)
+        };
+        let mut spec = spec();
+        spec.resume = None;
+        assert_eq!(started(&spec), (0, None));
+        spec.resume = Some(Resume::Checkpoint {
+            checkpoint: checkpoint(),
+        });
+        let queued = TransferSnapshot::queued(TransferId(7), &spec);
+        assert_eq!(queued.status, DownloadStatus::Queued);
+        assert_eq!(
+            (queued.progress.completed_bytes, queued.progress.total_bytes),
+            (600, Some(1000)),
+            "[0, 400) and [600, 800) of 1000 bytes"
+        );
+        spec.resume = Some(Resume::DiscardPartFile {});
+        assert_eq!(started(&spec), (0, None));
     }
 
     /// Owned, sendable and serialisable: what a value needs to cross a process boundary.
