@@ -6,7 +6,7 @@ import { Input } from '../../components/Input';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Select } from '../../components/Select';
 import { ConnectionLine } from '../../ConnectionLine';
-import type { Verification } from '../../contract';
+import type { FailureClass, Verification } from '../../contract';
 import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
 import { useCategories } from '../../lib/queries';
@@ -23,6 +23,13 @@ const VERIFICATION: Record<Verification, string> = {
   verified: 'Verified: its checksum matched',
   sizeVerified: 'Every byte arrived and the size matched; no checksum was given',
   notVerified: 'Not verified: it resumed without a way to tell the server’s file hadn’t changed',
+};
+
+/** The hint under an error, by its class: what a retry may do, never a promise (#250). */
+const RETRY_HINT: Record<FailureClass, string> = {
+  transient: 'Retrying may help once the cause is fixed.',
+  throttled: 'The server asked Velocity to slow down. Retrying later may help.',
+  permanent: 'Retrying is unlikely to help without changing the request.',
 };
 
 /** A titled group of rows, so the panel reads as sections (V1 #45). */
@@ -130,7 +137,7 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
             <p className="font-medium">{d.error.message}</p>
             <p className="mt-1 opacity-80">
               {d.error.httpStatus !== null ? `HTTP ${String(d.error.httpStatus)}. ` : ''}
-              {d.error.retryable ? 'This kind of failure can usually be retried.' : 'Retrying is unlikely to help without changing the request.'}
+              {RETRY_HINT[d.error.class]}
             </p>
             {d.status === 'failed' && d.error.confirm ? (
               // The user's answer, for this download only (#67): a plain retry would only stop at the same place.

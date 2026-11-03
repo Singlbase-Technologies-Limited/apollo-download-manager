@@ -227,7 +227,14 @@ fn host_key_failure(problem: HostKeyProblem) -> TransferError {
 fn curl_failure(kind: CurlFailure) -> (FailureClass, &'static str) {
     use FailureClass::{Permanent, Transient};
     match kind {
-        CurlFailure::Resolve => (Transient, "The server name could not be resolved."),
+        // Transient, so a name lost mid-download (a Wi-Fi drop) is tried again; the message says
+        // what to check when it never resolves (#250).
+        CurlFailure::Resolve => (
+            Transient,
+            "The server name could not be resolved. Check the link's spelling, the proxy's address \
+             if one is set, and the internet connection. Some servers can be reached only over \
+             IPv6, which this network may not have.",
+        ),
         CurlFailure::Connect => (Transient, "Couldn't connect to the server."),
         CurlFailure::Timeout => (Transient, "The connection timed out."),
         CurlFailure::Interrupted => (Transient, "The connection was interrupted."),
@@ -340,6 +347,18 @@ mod tests {
         }
         for status in [200, 206, 301, 416] {
             assert_eq!(status_failure(status), None, "{status}");
+        }
+    }
+
+    #[test]
+    fn a_name_that_does_not_resolve_says_what_to_check() {
+        // #250: an IPv6-only server on a network without IPv6 internet fails to resolve on every
+        // try, so the message names what to check instead of promising that a retry helps.
+        let (class, message) = curl_failure(CurlFailure::Resolve);
+        assert_eq!(class, FailureClass::Transient, "a Wi-Fi drop mid-download");
+        // libcurl reports a proxy name that doesn't resolve the same way.
+        for words in ["spelling", "proxy", "internet connection", "only over IPv6"] {
+            assert!(message.contains(words), "{words:?} in {message:?}");
         }
     }
 

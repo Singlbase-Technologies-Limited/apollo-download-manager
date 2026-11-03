@@ -31,6 +31,7 @@ export const DownloadKindSchema = z.enum(['http', 'ftp', 'sftp', 'metalink', 'to
 export type DownloadKind = z.infer<typeof DownloadKindSchema>;
 
 export const FailureClassSchema = z.enum(['transient', 'throttled', 'permanent']);
+export type FailureClass = z.infer<typeof FailureClassSchema>;
 
 /** An SFTP server host key the user hasn’t trusted (#53): unknown until they confirm its fingerprint, or changed, which is always refused. */
 export const HostKeyCheckSchema = z.strictObject({
