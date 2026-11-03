@@ -74,6 +74,15 @@ describe('the download list from the keyboard (V1’s keys)', () => {
     expect(await selected()).toEqual([]);
   });
 
+  it('Ctrl+A selects every row with Caps Lock on too', async () => {
+    // With Caps Lock on, the key arrives as a capital A (#310).
+    const user = userEvent.setup();
+    renderApp();
+    (await grid()).focus();
+    await user.keyboard('{Control>}A{/Control}');
+    expect(await selected()).toEqual(['done.iso', 'movie.mp4', 'archive.zip']);
+  });
+
   it('Enter opens the details of the focused row', async () => {
     const user = userEvent.setup();
     renderApp();
