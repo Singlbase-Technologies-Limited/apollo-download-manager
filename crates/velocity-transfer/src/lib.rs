@@ -20,6 +20,7 @@ pub mod request_log;
 pub mod retry;
 pub mod scheduler;
 pub mod sources;
+mod speed;
 pub mod stdio;
 pub mod supervisor;
 pub mod validator;

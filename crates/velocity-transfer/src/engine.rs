@@ -50,6 +50,7 @@ use crate::download::{
 use crate::files;
 use crate::retry::RetryPolicy;
 use crate::scheduler::Sizes;
+use crate::speed::SpeedMeter;
 
 /// The most connections to one host the engine starts with: the Balanced profile's
 /// ([`EngineLimits::DEFAULT`]). [`DirectTransfer::set_engine_limits`] changes it, up to
@@ -480,28 +481,34 @@ fn check_url(url: &str) -> Result<(), ErrorCode> {
     Ok(())
 }
 
+/// Whether `written` bytes are worth a snapshot, after one at `last` bytes.
+fn progress_due(last: Option<u64>, written: u64) -> bool {
+    match last {
+        // Fewer bytes than before: it started over, which shows at once (#246).
+        Some(bytes) => written < bytes || written - bytes >= PROGRESS_STEP,
+        None => true,
+    }
+}
+
 /// Turns the downloader's progress into rate-limited `Downloading` snapshots with a measured speed.
 fn progress_reporter(
     shared: &Arc<Shared>,
     id: TransferId,
 ) -> impl Fn(u64, Option<u64>) + Send + Sync + 'static {
     let shared = Arc::clone(shared);
-    // (bytes at the last event, when it was sent)
-    let last = Mutex::new((0u64, Instant::now()));
+    // (bytes at the last event, the speed measured over the last few seconds)
+    let last = Mutex::new((None, SpeedMeter::default()));
     move |written, total| {
-        let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
-        let (bytes_then, at) = *last;
-        if bytes_then != 0 && written.saturating_sub(bytes_then) < PROGRESS_STEP {
-            return;
-        }
-        let elapsed = at.elapsed().as_secs_f64();
-        // A measured rate over the bytes since the last event, never an estimate.
-        let speed = if elapsed > 0.0 {
-            (written.saturating_sub(bytes_then) as f64 / elapsed) as u64
-        } else {
-            0
+        let speed = {
+            let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
+            let (bytes_then, meter) = &mut *last;
+            if !progress_due(*bytes_then, written) {
+                return;
+            }
+            *bytes_then = Some(written);
+            // A measured rate over the bytes that arrived, never an estimate (#246).
+            meter.observe(Instant::now(), written)
         };
-        *last = (written, Instant::now());
         let mut state = lock(&shared.state);
         if let Some(entry) = state.transfers.get_mut(&id) {
             let now = entry.control.connections_now();
@@ -1132,6 +1139,19 @@ fn ended(shared: &Shared, id: TransferId, change: impl FnOnce(&mut TransferSnaps
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn progress_is_reported_every_step_and_at_once_when_the_download_starts_over() {
+        assert!(
+            progress_due(None, 450 << 20),
+            "the first report, with resumed bytes"
+        );
+        assert!(!progress_due(Some(1 << 20), (1 << 20) + PROGRESS_STEP - 1));
+        assert!(progress_due(Some(1 << 20), (1 << 20) + PROGRESS_STEP));
+        // #246: a download that started over showed no progress until it passed its old count.
+        assert!(progress_due(Some(400 << 20), 0), "started over");
+        assert!(progress_due(Some(400 << 20), 64 << 10), "started over");
+    }
 
     #[test]
     fn the_profiles_smallest_piece_is_the_split_size() {
