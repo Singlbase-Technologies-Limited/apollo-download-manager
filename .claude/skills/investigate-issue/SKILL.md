@@ -2,6 +2,7 @@
 name: investigate-issue
 description: Start work on a V2 GitHub issue. Reads the issue, its comments, dependencies and linked docs, checks the live repository and board state, searches for existing code to reuse, and produces a short plan with risks and PO questions before any edit. Use at the start of every issue, or when the user says "go", "start #N" or "resume #N".
 argument-hint: "<issue number>"
+model: sonnet
 ---
 
 # Investigate issue #$ARGUMENTS
@@ -14,22 +15,22 @@ Run every `gh` command for this repository with the agent's token, `GH_TOKEN="$(
 
 - `gh issue view $ARGUMENTS --comments`: the scope, non-goals, acceptance criteria, testing level and documentation impact. **The comments often record PO decisions that change the scope.**
 - **Dependencies:** check each blocking issue is closed (`gh issue view <N> --json state`). If one is still open, stop and report which.
-- **Linked documents and research:** for engine work, read `docs/ARCHITECTURE.md`, the relevant ADRs in `docs/decisions/`, and the research report sections the issue cites.
+- **Linked documents:** read only the documents and sections the issue or its comments name. Open `docs/ARCHITECTURE.md`, an ADR in `docs/decisions/` or the research report only when the plan depends on it.
 - **Decision issues it depends on**, such as #33 and #38: if one is undecided, the dependent parts stay *pending*. Never decide them yourself.
 
 ## 2. Check the live state
 
 - `git status`, the current branch, and `git fetch -q origin && git log --oneline -1 origin/main`. The work must start from the latest `main`, with a clean tree.
 - **Open pull requests:** `gh pr list`. Look for one that already covers this issue or touches the same files.
-- **Board:** `gh project item-list 4 --owner Singlbase-Technologies-Limited --format json` shows the item's status (the organisation's board; new issues aren't added to it automatically, so add them). Look up field and option ids; never hard-code them from memory.
+- **Board:** only this issue's item, not the whole board: `gh project item-list 4 --owner Singlbase-Technologies-Limited --format json --limit 400 --jq '.items[]|select(.content.number==$ARGUMENTS)|{id,status}'`. No output means it isn't on the organisation's board yet, so add it. Take the Status field and option ids from `gh project field-list 4 --owner Singlbase-Technologies-Limited --format json --jq '.fields[]|select(.name=="Status")'`; never hard-code them from memory.
 
 ## 3. Find what already exists
 
 Search before planning anything new (AGENTS.md, "Reuse before you add"):
 
 - **Code:** grep for the domain words in the issue, using the [glossary](../../../docs/GLOSSARY.md) terms, across `crates/`, `src-tauri/`, `src/` and `scripts/`.
-- **Patterns to follow:** error types, validation, commands, test helpers, `package.json` scripts and the `scripts/checks-lib.mjs` rules.
-- **V1, for reference only, never modified:** `C:\projects\velocity-download-manager` at `e9d717a8`. Read it to understand behaviour; don't copy aria2-specific code.
+- **Read only what the search points to:** the files it finds, and only the parts you need.
+- **V1, only when the issue names V1 behaviour:** `C:\projects\velocity-download-manager` at `e9d717a8`, for reference only, never modified. Read it to understand behaviour; don't copy aria2-specific code.
 
 ## 4. Write the plan
 
