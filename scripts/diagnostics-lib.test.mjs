@@ -90,6 +90,10 @@ describe('extractErrors', () => {
     ]);
   });
 
+  it('reads the release-identity test run as it reads cargo test (#315)', () => {
+    expect(extractErrors('rust-test-release', TEST, { root: ROOT })).toEqual(extractErrors('rust-test', TEST, { root: ROOT }));
+  });
+
   it('cargo test: every failing test across binaries, with its panic location and message', () => {
     expect(extractErrors('rust-test', TEST, { root: ROOT })).toEqual([
       {

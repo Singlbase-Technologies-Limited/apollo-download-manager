@@ -50,6 +50,7 @@ const parsers = {
     }),
   'rust-clippy': compilerErrors,
   'rust-release': compilerErrors,
+  'rust-test-release': (lines, root) => parsers['rust-test'](lines, root),
   'rust-test': (lines, root) => {
     const out = compilerErrors(lines, root);
     for (let i = 0; i < lines.length; i++) {
