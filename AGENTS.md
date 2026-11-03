@@ -9,6 +9,10 @@ These rules apply to every contributor, human or AI agent. Each rule has one hom
 - **Separate from V1:** V2 runs beside V1, so it never reuses V1's identifiers, data directories, ports or registrations (#11, #27).
 - **Platforms:** Windows and Linux are verified for development. macOS is not yet established (#83).
 - **The Product Owner (PO) decides** scope, architecture, dependencies, licensing, security trade-offs, repository settings, merges and releases. When a change needs one of these decisions, stop and ask; don't decide by default. Accepted decisions are recorded in [docs/decisions/](docs/decisions/README.md).
+- **Questions to the PO go through the multiple-choice window** (PO's request, #293).
+  - **Every question:** a decision, an approval, or what to do next, such as "shall I start the next issue?". It goes in the agent's multiple-choice question window, never only in the text.
+  - **Never end a message with a question in plain text.** A report can say what's open, and the question itself follows in the window.
+  - **Words:** plain words with a concrete example, such as "you set 8 connections; the server stops getting faster after 3: stay at 3, or use all 8?". No internal terms. The recommended option comes first.
 
 ## Evidence before claims
 
