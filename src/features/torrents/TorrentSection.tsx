@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUpFromLine, ListChecks, Radio, UploadCloud } from 'lucide-react';
+import { ArrowUpFromLine, Radio, UploadCloud } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
@@ -8,7 +8,6 @@ import type { DownloadRecord } from '../../contract';
 import { ApiError, toApiError } from '../../lib/errors';
 import { formatBytes, formatDuration, formatSpeed } from '../../lib/format';
 import { keys, useSwarm, useTorrentDetails } from '../../lib/queries';
-import { useUiStore } from '../../stores/ui';
 import type { DownloadActions } from '../downloads/useDownloadActions';
 import { FileTree } from './FileTree';
 import { sameSelection, seedingSummary, TRACKER_STATE, trackerSummary, VERSION_LABEL } from './torrentLogic';
@@ -36,7 +35,6 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
  */
 export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; actions: DownloadActions; busy: boolean }) {
   const qc = useQueryClient();
-  const openChooseFiles = useUiStore((s) => s.openChooseFiles);
   const details = useTorrentDetails(d.id);
   const live = !FINISHED.includes(d.status);
   const { trackers, peers } = useSwarm(d.id, live);
@@ -167,11 +165,6 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
       ) : null}
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {d.status === 'choosingFiles' ? (
-          <Button size="sm" variant="primary" onClick={() => { openChooseFiles(d.id); }}>
-            <ListChecks /> Choose files…
-          </Button>
-        ) : null}
         {d.status === 'seeding' ? (
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.stopSeeding([d.id])}>
             <UploadCloud /> Stop seeding
