@@ -99,6 +99,16 @@ pub struct ServerOptions {
     /// The first response over HTTP/1.1 whose body holds this byte of the file sends it with its
     /// bits flipped; later ones send it as it is: a piece that is bad once (#46).
     pub corrupt_once: Option<u64>,
+    /// The network goes away part way: the first GET's answer is cut after `after` body bytes,
+    /// then the next `drops` requests are closed unanswered, then the server answers again (#317).
+    pub outage: Option<Outage>,
+}
+
+/// See [`ServerOptions::outage`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Outage {
+    pub after: u64,
+    pub drops: u32,
 }
 
 /// Headers the server sends with a file, each as given and only when set (#45).
@@ -208,6 +218,9 @@ pub struct Counters {
     pub frozen: bool,
     /// Whether the byte [`ServerOptions::corrupt_once`] names was sent flipped.
     pub corrupted: bool,
+    /// Whether [`ServerOptions::outage`] began, and the requests it closed unanswered.
+    pub outage_began: bool,
+    pub outage_dropped: u32,
     /// Responses to file requests being sent now, from their status line to their last byte.
     pub answering: u32,
     /// The most responses to file requests that were sent at once (#47).
@@ -628,6 +641,12 @@ fn serve_connection(
             // Close without a byte of answer: the client sees an empty reply.
             return;
         }
+        if let (Some(outage), false) = (options.outage, head) {
+            let began = counters.lock().unwrap().outage_began;
+            if began && take_count(counters, |c| &mut c.outage_dropped, outage.drops) {
+                return;
+            }
+        }
         if let Some(first) = options.first_statuses.as_ref() {
             if !head && take_count(counters, |c| &mut c.first_statuses_sent, first.count) {
                 let head = status_head(first.status, first.retry_after.as_deref());
@@ -728,6 +747,19 @@ fn serve_connection(
         if let (Some(after), 1, false) = (options.cut_first, gets, head) {
             let cut = (after as usize).min(body.len());
             let _ = write_body(&mut out, &body[..cut], None, counters, None);
+            return;
+        }
+        if let (Some(outage), 1, false) = (options.outage, gets, head) {
+            // Paced like any answer, so the client has time to checkpoint before it's cut.
+            let cut = (outage.after as usize).min(body.len());
+            let _ = write_body(
+                &mut out,
+                &body[..cut],
+                options.throttle_bytes_per_sec,
+                counters,
+                Some(pace),
+            );
+            counters.lock().unwrap().outage_began = true;
             return;
         }
         if let (RangeMode::CutLaterBodies { after, .. }, true) = (mode, fault) {

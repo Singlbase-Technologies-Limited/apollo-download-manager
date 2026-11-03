@@ -45,6 +45,9 @@ pub struct RetryPolicy {
     pub first_throttled_download_wait: Duration,
     /// The longest wait before a restart.
     pub max_download_wait: Duration,
+    /// How long a download that fails for network trouble keeps being started again after its
+    /// [`Self::download_retries`], counted from when it last got a byte (#317).
+    pub ride_out: Duration,
 }
 
 impl RetryPolicy {
@@ -64,6 +67,8 @@ impl RetryPolicy {
         first_download_wait: Duration::from_secs(5),
         first_throttled_download_wait: Duration::from_secs(60),
         max_download_wait: Duration::from_secs(15 * 60),
+        // A Wi-Fi drop, a router restart or waking from sleep (PO decision on #317).
+        ride_out: Duration::from_secs(5 * 60),
     };
 
     /// The wait before retrying after failure number `failures` in a row (from 1), or `None` when
@@ -90,16 +95,28 @@ impl RetryPolicy {
         })
     }
 
-    /// The wait before restart number `attempt` (from 1) of a download that failed with `class`,
-    /// or `None` when it stays failed.
-    pub fn download_wait(&self, class: FailureClass, attempt: u32) -> Option<Duration> {
+    /// The wait before restart number `attempt` (from 1) of a download that failed with `class`
+    /// and has had no new byte for `failing_for`, or `None` when it stays failed. Network trouble
+    /// is ridden out for [`Self::ride_out`], trying at least every [`Self::max_wait`] (#317).
+    pub fn download_wait(
+        &self,
+        class: FailureClass,
+        attempt: u32,
+        failing_for: Duration,
+    ) -> Option<Duration> {
         let first = match class {
             FailureClass::Permanent => return None,
             FailureClass::Throttled => self.first_throttled_download_wait,
             FailureClass::Transient => self.first_download_wait,
         };
-        (attempt <= self.download_retries)
-            .then(|| doubled(first, attempt).min(self.max_download_wait))
+        let wait = doubled(first, attempt).min(self.max_download_wait);
+        if attempt <= self.download_retries {
+            Some(wait)
+        } else if class == FailureClass::Transient && failing_for < self.ride_out {
+            Some(wait.min(self.max_wait))
+        } else {
+            None
+        }
     }
 }
 
@@ -197,7 +214,11 @@ mod tests {
 
     #[test]
     fn a_failed_download_is_restarted_twice_with_v1s_waits() {
-        let secs = |class, attempt| P.download_wait(class, attempt).map(|d| d.as_secs());
+        // Failing for the whole ride-out already: only the counted restarts are left (#317).
+        let secs = |class, attempt| {
+            P.download_wait(class, attempt, P.ride_out)
+                .map(|d| d.as_secs())
+        };
         assert_eq!(
             (secs(Transient, 1), secs(Transient, 2)),
             (Some(5), Some(10))
@@ -212,7 +233,27 @@ mod tests {
             download_retries: 20,
             ..P
         };
-        assert_eq!(many.download_wait(Throttled, 20), Some(P.max_download_wait));
+        assert_eq!(
+            many.download_wait(Throttled, 20, P.ride_out),
+            Some(P.max_download_wait)
+        );
+    }
+
+    #[test]
+    fn a_network_failure_keeps_restarting_for_about_five_minutes() {
+        // #317 (PO decision): a minute without network failed a download after its 2 restarts.
+        assert_eq!(P.ride_out, Duration::from_secs(5 * 60));
+        let secs = |attempt, failing: u64| {
+            P.download_wait(Transient, attempt, Duration::from_secs(failing))
+                .map(|d| d.as_secs())
+        };
+        assert_eq!(secs(3, 60), Some(20));
+        // Never more than a minute between tries, so a network that is back is noticed soon.
+        assert_eq!(secs(6, 200), Some(60));
+        assert_eq!(secs(6, 300), None, "the ride-out is over");
+        // Only network trouble is ridden out: a throttling server isn't asked more often.
+        assert_eq!(P.download_wait(Throttled, 3, Duration::ZERO), None);
+        assert_eq!(P.download_wait(Permanent, 1, Duration::ZERO), None);
     }
 
     #[test]
