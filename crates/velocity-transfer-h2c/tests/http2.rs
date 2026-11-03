@@ -83,11 +83,22 @@ fn the_probe_classifies_answers_over_http2_as_over_http1() {
     let (s, data) = serve(1_000_000, Http2Options::default());
     let r = download(&lp, &s.url("f.bin"), &dir.file("honour"), FIXED).expect("ranges");
     assert!(std::fs::read(dir.file("honour")).unwrap() == data);
-    assert_eq!(
-        (r.mode, r.fetches),
-        (Mode::Ranges, 5),
-        "the probe, then 4 segments"
+    // The probe, then segments opened 1, 2, 4 (PO decision on #247). On loopback the first ones
+    // can finish before the last step opens, and the bytes left go to the streams free then, so how
+    // many segments depends on timing, as over HTTP/1.1 (`tests/download.rs` in velocity-transfer,
+    // #281): several at once, but never more than four.
+    let ranges = s.counters().ranges;
+    assert_eq!(r.mode, Mode::Ranges);
+    assert!(
+        r.fetches >= 5,
+        "the probe, then at least four segments: {ranges:?}"
     );
+    assert!(
+        (2..=4).contains(&r.peak_requests),
+        "{} requests open at once, for 4 connections: {ranges:?}",
+        r.peak_requests
+    );
+    assert_eq!(s.counters().gets, u64::from(r.fetches));
 
     let (s, data) = serve(500_000, in_mode(RangeMode::Ignore));
     let r = download(&lp, &s.url("f.bin"), &dir.file("ignore"), FIXED).expect("one stream");
