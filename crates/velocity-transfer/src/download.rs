@@ -68,6 +68,9 @@ const CANCEL_CHECK: Duration = Duration::from_millis(100);
 const MAX_ANOMALIES: u32 = 2;
 /// How many times a bad piece is fetched again before the download fails (PO decision on #46).
 const PIECE_REFETCHES: u32 = 2;
+/// A wait a throttling server asked for that is at most this long isn't shown as Retrying
+/// (#247, PO decision).
+const QUIET_THROTTLE: Duration = Duration::from_secs(30);
 
 /// Called with the bytes written so far and the total, once known.
 type ProgressFn = Box<dyn Fn(u64, Option<u64>) + Send + Sync>;
@@ -384,9 +387,14 @@ impl Control {
     }
 
     /// Reports Retrying until `at`, the next attempt (#59), after `why` (#245), unless that was
-    /// reported last.
+    /// reported last. A short wait a throttling server asked for stays Downloading, with nothing
+    /// to read: Velocity handles it (#247, PO decision).
     fn retrying_until(&self, at: Instant, why: Option<&TransferError>) {
         let left = at.saturating_duration_since(Instant::now());
+        if why.is_some_and(|w| w.class == FailureClass::Throttled) && left <= QUIET_THROTTLE {
+            self.show(DownloadStatus::Downloading);
+            return;
+        }
         self.report_status(
             DownloadStatus::Retrying,
             Some(SystemTime::now() + left),

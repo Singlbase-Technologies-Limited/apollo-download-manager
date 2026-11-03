@@ -123,8 +123,10 @@ fn a_429_with_retry_after_5_gets_no_request_before_5_s() {
         waited >= Duration::from_secs(5),
         "the retry came after {waited:?}"
     );
+    // A wait of 30 s or less for a throttling server stays Downloading (#247, PO decision); it
+    // showed Retrying before.
     assert!(
-        seen.lock().unwrap().contains(&DownloadStatus::Retrying),
+        !seen.lock().unwrap().contains(&DownloadStatus::Retrying),
         "{:?}",
         seen.lock().unwrap()
     );
@@ -584,5 +586,40 @@ fn a_server_known_to_throttle_is_asked_once_from_the_start() {
         c.limited.len() <= 1,
         "asked once after the probe: {:?}",
         c.ranges
+    );
+}
+
+#[test]
+fn a_short_wait_for_a_throttling_server_isnt_shown_as_retrying() {
+    // #247 (PO decision): a 429 that Velocity handles within 30 s keeps the download Downloading,
+    // with no error to read; only a longer wait shows.
+    let data = seeded_bytes(4 << 20, 2471);
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions {
+            request_pace: Some(RequestPace {
+                min_gap: Duration::from_secs(1),
+            }),
+            ..ServerOptions::default()
+        },
+    );
+    let dir = Dir::new("quiet-throttle");
+    let dest = dir.file("out.bin");
+    let options = DownloadOptions {
+        connections: 1,
+        retry: RetryPolicy {
+            throttled_wait: Duration::from_millis(1100),
+            ..FAST
+        },
+        ..OPTIONS
+    };
+    let (control, seen) = recording();
+    run(&s.url("f.bin"), &dest, options, &control).expect("it completes");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(s.counters().limited.len(), 1, "the server did throttle it");
+    let seen = seen.lock().unwrap().clone();
+    assert!(
+        !seen.contains(&DownloadStatus::Retrying),
+        "a 1 s wait for a throttling server isn't shown: {seen:?}"
     );
 }
