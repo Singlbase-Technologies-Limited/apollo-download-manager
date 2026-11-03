@@ -62,7 +62,8 @@ use serde::Serialize;
 /// and `choose_metalinks`; versions 13 to 21 are in docs/CONTRACTS.md.
 /// Version 23 (#257) added [`domain::DownloadRecord::started_over`].
 /// Version 24 (#274) added [`domain::ConnectionLimit::NoRanges`].
-pub const COMMAND_API_VERSION: u32 = 24;
+/// Version 25 (#277) added [`domain::DestinationCheck::path`].
+pub const COMMAND_API_VERSION: u32 = 25;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

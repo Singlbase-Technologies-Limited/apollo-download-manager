@@ -19,7 +19,7 @@ export function AddOutcomeView({ outcome }: { outcome: Outcome }) {
           <ul className="mt-2 space-y-1.5 text-xs">
             {direct.map(({ source, check }) => (
               <li key={source} className={item}>
-                <p className="truncate font-medium">{check.fileName === null ? check.directory : `${check.directory}/${check.fileName}`}</p>
+                <p className="truncate font-medium">{check.path ?? check.directory}</p>
                 <p className="mt-0.5 text-fg-muted">
                   {check.suggestedName ? `Keep both saves it as “${check.suggestedName}”.` : 'No free name is left for it in this folder.'}
                   {check.partialDownloadExists && !check.fileExists ? ' Another download is saving a file with this name.' : ''}
@@ -36,7 +36,7 @@ export function AddOutcomeView({ outcome }: { outcome: Outcome }) {
           <ul className="mt-2 space-y-1.5 text-xs">
             {torrents.map(({ source, check }) => (
               <li key={source} className={item}>
-                <p className="truncate font-medium">{check.fileName === null ? check.directory : `${check.directory}/${check.fileName}`}</p>
+                <p className="truncate font-medium">{check.path ?? check.directory}</p>
               </li>
             ))}
           </ul>

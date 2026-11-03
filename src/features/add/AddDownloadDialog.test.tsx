@@ -37,6 +37,15 @@ async function paste(user: ReturnType<typeof userEvent.setup>, field: HTMLElemen
   await user.paste(text);
 }
 
+/** A taken `fileName` in a Windows folder, with the path the native side joined (#277). */
+const windowsCheck = (fileName: string) => ({
+  ...(fixture('destination-check.json') as object),
+  directory: 'C:\\Users\\me\\dl',
+  fileName,
+  path: `C:\\Users\\me\\dl\\${fileName}`,
+  suggestedName: null,
+});
+
 const requests = (state: FakeState) => callsOf(state, 'add_downloads').map((c) => c.args.request as AddRequest);
 
 beforeEach(() => {
@@ -133,6 +142,17 @@ describe('the Add download dialog', () => {
     await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
   });
 
+  it('shows a taken name at the path the native side joined, never mixing separators (#277)', async () => {
+    const user = userEvent.setup();
+    const check = windowsCheck('WinFormClient.png');
+    installFakeBackend({ addResults: (request) => request.links.map((source) => ({ source, outcome: { kind: 'conflict', check } }) as AddResult) });
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'ftp://example.com/WinFormClient.png');
+    await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
+    expect(await within(dialog).findByText('C:\\Users\\me\\dl\\WinFormClient.png')).toBeTruthy();
+  });
+
   it('warns about a taken name before anything is added', async () => {
     const user = userEvent.setup();
     const state = installFakeBackend();
@@ -142,6 +162,7 @@ describe('the Add download dialog', () => {
       automaticDirectory: directory === null,
       categoryId,
       fileName: fileName ?? 'a.zip',
+      path: `${directory ?? '/home/user/Downloads'}/${fileName ?? 'a.zip'}`,
       fileExists: true,
       partialDownloadExists: false,
       suggestedName: 'a (1).zip',
@@ -179,12 +200,14 @@ describe('the Add download dialog', () => {
       // As Rust does: with no typed name, the link's own names the file.
       const name = fileName ?? url.split('/').pop() ?? '';
       const chosen = categoryId ?? (name.endsWith('.mp4') ? category.id : null);
+      const folder = directory ?? (chosen ? (category.directory ?? '') : '/home/user/Downloads');
       return {
-        directory: directory ?? (chosen ? (category.directory ?? '') : '/home/user/Downloads'),
+        directory: folder,
         directoryExists: directory === null,
         automaticDirectory: directory === null,
         categoryId: chosen,
         fileName,
+        path: fileName === null ? null : `${folder}/${fileName}`,
         fileExists: false,
         partialDownloadExists: false,
         suggestedName: null,
@@ -514,7 +537,7 @@ describe('torrents', () => {
 
   it('explains a torrent whose name is taken, and offers no rename', async () => {
     const user = userEvent.setup();
-    const check = { ...(fixture('destination-check.json') as object), fileName: 'album', suggestedName: null };
+    const check = windowsCheck('album');
     installFakeBackend({
       chosenTorrents: ['/t/album.torrent'],
       addResults: (request) => request.torrentFiles.map((source) => ({ source, outcome: { kind: 'conflict', check } }) as AddResult),
@@ -525,6 +548,7 @@ describe('torrents', () => {
     await within(dialog).findByRole('list', { name: 'Torrent files' });
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     expect(await within(dialog).findByText(/A torrent keeps the names in its metadata/)).toBeTruthy();
+    expect(within(dialog).getByText('C:\\Users\\me\\dl\\album')).toBeTruthy();
     expect(within(dialog).queryByRole('button', { name: 'Keep both (rename)' })).toBeNull();
     expect(within(dialog).getByRole('button', { name: 'Skip' })).toBeTruthy();
   });

@@ -117,6 +117,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
       automaticDirectory: directory === null,
       categoryId,
       fileName,
+      path: fileName === null ? null : `${directory ?? '/home/user/Downloads'}/${fileName}`,
       fileExists: false,
       partialDownloadExists: false,
       suggestedName: null,

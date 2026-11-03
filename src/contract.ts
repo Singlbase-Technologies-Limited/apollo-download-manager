@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 24;
+export const COMMAND_API_VERSION = 25;
 
 const bytes = z.number().int().nonnegative();
 
@@ -277,6 +277,8 @@ export const DestinationCheckSchema = z.strictObject({
   categoryId: z.string().min(1).nullable(),
   /** `null` when the server will name the file. */
   fileName: z.string().min(1).nullable(),
+  /** The folder and the name joined in the platform's separator, for showing (#277); `null` with `fileName`. */
+  path: z.string().min(1).nullable(),
   fileExists: z.boolean(),
   /** A download, V2's or V1's, that hasn't finished has the name. */
   partialDownloadExists: z.boolean(),
