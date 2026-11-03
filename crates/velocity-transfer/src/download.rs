@@ -1037,10 +1037,7 @@ fn piece_aligned(mut options: DownloadOptions, length: u64) -> DownloadOptions {
     let leases = &mut options.leases;
     leases.align = length;
     leases.min_split = leases.min_split.max(length);
-    // Without a cap there is nothing to round (#247).
-    if leases.max_lease != u64::MAX {
-        leases.max_lease = leases.max_lease.max(length).next_multiple_of(length);
-    }
+    leases.max_lease = leases.max_lease.max(length).next_multiple_of(length);
     options.probe_bytes = options.probe_bytes.max(1).next_multiple_of(length);
     options
 }

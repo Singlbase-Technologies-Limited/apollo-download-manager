@@ -233,7 +233,7 @@ A lease owns `[cursor, end)` of the file alone; `[start, cursor)` is already wri
 | Failed | It ended early; the rest of its range is unassigned again |
 | Revoked | It was cancelled; the rest of its range is unassigned again |
 
-- **Assignment:** a free connection gets the front of the unassigned bytes, an equal share per free connection. The share is rounded up to `align` and is at most `max_lease`, which has no cap by default (#247); `Scheduler::ask_once` lifts a cap once a server throttled. Sharing spreads a file over the connections without splits.
+- **Assignment:** a free connection gets the front of the unassigned bytes, an equal share per free connection. The share is rounded up to `align` and is at most `max_lease`; `Scheduler::ask_once` lifts that cap once a server throttled (#247). Sharing spreads a file over the connections without splits.
 - **Acceptance:** bytes are accepted only from the lease that is in flight, at its cursor, and only up to its *current* end. Bytes for a lease that isn't live (ended, revoked, unknown), at another offset, or past its end are dropped and counted as wasted. They enter coverage only once the write to the part file has returned.
 - **Split (work-stealing):** a free connection with nothing unassigned takes half of the live lease with the largest remainder. The remainder must be at least `2 × min_split`, and the midpoint is rounded down to `align`.
   - The old lease shrinks to end at the midpoint.
@@ -243,7 +243,7 @@ A lease owns `[cursor, end)` of the file alone; `[start, cursor)` is already wri
 
 | Size | Value | Where it comes from |
 |---|---|---|
-| `max_lease` | None: each connection asks once for its share | #247: the report's 32 MiB (section 5.2, a hypothesis) made a request per 32 MiB, about 90 for a 2.9 GB file, and a server that limits how often it's asked (proof.ovh.net) refused them. V1, on the same file, asked about 8 times and wasn't refused. Measured on the Ubuntu 26.04.1 server image before and after (#247) |
+| `max_lease` | 32 MiB | Report section 5.2, a hypothesis. Kept after #247 measured no cap (2026-11-04, the Ubuntu 26.04.1 server image, 2.9 GB): 294 s and 326 s with the cap, 385 s without, where the ramp settled on 1 connection because each connection it added had to split a running request. A server that throttled is asked once per connection for the rest instead (`Scheduler::ask_once`) |
 | `min_split` | 1 MiB (a remainder of at least 2 MiB splits) | A starting value; the report names no number |
 | `align` | 64 KiB | Report section 5.2 |
 
@@ -475,7 +475,7 @@ A download doesn't ask for all its connections at once (PO decision on #247):
 - **Fresh ranges, no splits:** leases are sized for the count the download is heading for, so a later step takes unassigned bytes instead of splitting a running request, and each request ends at its own end.
 - **At the first `429` or `503`,** the download keeps no more connections than the requests the server was still serving (at least one), and opens no more ([Retries](#retries-waits-and-stalls-48)).
 - **Remembered per host:** the engine keeps that count, by host name and port, while it runs. A restart, a resume or another download from that host starts there, never asks for more, and asks once for the rest of each share.
-- **Few requests:** leases have no size cap (#247), so each connection asks once for its share, about 8 requests for a file on 8 connections. With the earlier 32 MiB cap, a 1 GB file took about 32 requests one after another, and proof.ovh.net refused about every second one, then this computer, after about 20 (2026-11-03). V1, on the same file and PC, asked about 8 times and finished in about 2 minutes.
+- **Few requests once a server throttles:** after its first `429` or `503`, each connection asks once for the rest of its share (`Scheduler::ask_once`), and so does every later download from that host. With 32 MiB leases a 1 GB file took about 32 requests one after another, and proof.ovh.net refused about every second one, then this computer, after about 20 (2026-11-03). V1, on the same file and PC, made about 8 requests (the whole file, then 7 equal parts, as seen against the local test server) and wasn't refused. Other servers keep 32 MiB leases: on the Ubuntu image V2 with them took 294 s and 326 s, V1 363 s, and V2 without a cap 385 s (#247).
 - **Why:** proof.ovh.net serves one request per client at a time, answers the rest `429` within about 200 ms, and blocks a client for about 10 minutes after roughly 6 to 9 refusals in a few seconds. The old opening, all 8 at once after the probe, got the field-test PC blocked on its own (#247, 2026-11-02). Doubling costs a server like that one refusal.
 - **The cost on other servers:** about three round trips to reach 8 connections. Not yet measured against the earlier timings (#221); it is to be measured on the Ubuntu ISO.
 
