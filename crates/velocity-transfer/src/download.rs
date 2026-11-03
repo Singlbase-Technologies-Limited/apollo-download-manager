@@ -2096,6 +2096,13 @@ fn fetch_ranges(
             a.retiring = true;
             a.limit.stop_at(0);
         }
+        // An HTTP/2 server that throttled may refuse a stream that comes while another is being
+        // answered on the same connection, and serve it on a connection of its own, as
+        // proof.ovh.net does: from now on each request gets its own (#247).
+        if h2 && throttled_to != u32::MAX && !matches!(multiplex, Multiplex::Chosen(true)) {
+            multiplex = Multiplex::Chosen(true);
+            control.own_connections.store(true, Ordering::Release);
+        }
         // Fill the free connections, unless ranges stopped working for this download.
         let own_connection = matches!(
             multiplex,
