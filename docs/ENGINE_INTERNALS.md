@@ -630,7 +630,7 @@ Hashes don't compose: the digests of separate segments can't be combined into th
 
 ### A failed check
 
-A wrong checksum, or a piece that stays bad, fails the download with a message and `DownloadError::IntegrityFailed`, as Transient and retryable:
+A wrong checksum, or a piece that stays bad, fails the download with a message and `DownloadError::IntegrityFailed`. A piece that stays bad is Transient and retryable: another try, or another mirror, may send it right. A wrong checksum is Permanent (PO decision on #274): retrying gets the same bytes unless they were damaged on the way, so its message says to check the checksum first, and a retry by hand still downloads the file again. Either way:
 
 - the part file is **kept** for inspection, and not renamed;
 - the engine **doesn't start it again** on its own, as that would replace the part file;

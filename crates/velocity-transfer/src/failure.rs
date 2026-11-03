@@ -76,9 +76,10 @@ pub(crate) fn later_status_failure(status: u16) -> Option<TransferError> {
     status_failure(status)
 }
 
-/// A whole file that doesn't match its checksum (#46, report section 5.3). Worth a retry by hand,
-/// which downloads it again, so not `Permanent`; the engine doesn't restart it on its own, so the
-/// part file stays for inspection.
+/// A whole file that doesn't match its checksum (#46, report section 5.3). Permanent (PO decision
+/// on #274): retrying gets the same bytes unless they were damaged on the way, so the message says
+/// to check the checksum first. A retry by hand still downloads it again, and the part file stays
+/// for inspection.
 pub(crate) fn checksum_mismatch(algorithm: HashAlgorithm, got: &str) -> TransferError {
     let name = match algorithm {
         HashAlgorithm::Md5 => "MD5",
@@ -89,11 +90,12 @@ pub(crate) fn checksum_mismatch(algorithm: HashAlgorithm, got: &str) -> Transfer
         HashAlgorithm::Sha512 => "SHA-512",
     };
     TransferError::new(
-        FailureClass::Transient,
+        FailureClass::Permanent,
         None,
         &format!(
-            "The downloaded file doesn't match its {name} checksum (the file's is {got}). It was \
-             kept as a .vdmpart file, not renamed; retrying downloads it again."
+            "The downloaded file doesn't match its {name} checksum (the file's is {got}). Check \
+             that the checksum is the one given for this exact file. It was kept as a .vdmpart \
+             file, not renamed; retrying downloads it again."
         ),
     )
 }

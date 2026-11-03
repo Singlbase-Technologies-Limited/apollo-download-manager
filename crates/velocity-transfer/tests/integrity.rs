@@ -183,11 +183,18 @@ fn a_wrong_checksum_fails_keeps_the_part_file_and_renames_nothing() {
         panic!("expected a checksum mismatch, got {:?}", run.result);
     };
     assert!(e.message.contains("SHA-256 checksum"), "{}", e.message);
-    // Worth a retry by hand, which downloads the file again; the engine doesn't restart it.
+    // Permanent (PO decision on #274, reversing #46's transient): retrying gets the same bytes
+    // unless they were damaged on the way, so the message says what to check first.
     assert_eq!(
         (e.class, e.retryable),
-        (FailureClass::Transient, true),
+        (FailureClass::Permanent, false),
         "{e:?}"
+    );
+    assert!(
+        e.message
+            .contains("Check that the checksum is the one given for this exact file"),
+        "{}",
+        e.message
     );
     assert!(
         !dest.exists(),

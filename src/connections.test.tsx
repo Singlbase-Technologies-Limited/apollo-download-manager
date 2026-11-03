@@ -31,6 +31,10 @@ describe('connectionSummary', () => {
     expect(connectionSummary(7, { requested: 8, allowed: 7, limitedBy: 'rampingUp' })).toBe(
       'Using 7 connections, up to 7 of the 8 asked for: Velocity is still finding how many connections help.',
     );
+    // #274: a server without byte ranges said "perHostCap".
+    expect(connectionSummary(1, { requested: 8, allowed: 1, limitedBy: 'noRanges' })).toBe(
+      'Using 1 connection, up to 1 of the 8 asked for: the server sends the file in one piece, without byte ranges.',
+    );
   });
 
   it('says only the count when nothing holds it back, or nothing is known', () => {

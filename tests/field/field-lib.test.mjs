@@ -42,6 +42,15 @@ describe('hideLinks', () => {
     );
   });
 
+  // #274: the engine's "<origin>: 3 more requests ended the same way" came out as
+  // "https://host:/…: 3 more …"; a link with nothing after its host has nothing to cut.
+  it('keeps a bare origin, followed by a colon, as it is', () => {
+    expect(hideLinks('https://fsn1-speed.hetzner.com: 3 more requests ended the same way')).toBe(
+      'https://fsn1-speed.hetzner.com: 3 more requests ended the same way',
+    );
+    expect(hideLinks('see https://cdn.example.com:8443.')).toBe('see https://cdn.example.com.');
+  });
+
   it('leaves a text without links as it is', () => {
     expect(hideLinks('libcurl error 28: Failed to connect to example.com port 443 after 21073 ms')).toBe(
       'libcurl error 28: Failed to connect to example.com port 443 after 21073 ms',

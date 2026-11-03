@@ -61,7 +61,8 @@ use serde::Serialize;
 /// Version 22 (#222) added [`manager::AddRequest::metalink_files`], the `metalinkAdded` outcome
 /// and `choose_metalinks`; versions 13 to 21 are in docs/CONTRACTS.md.
 /// Version 23 (#257) added [`domain::DownloadRecord::started_over`].
-pub const COMMAND_API_VERSION: u32 = 23;
+/// Version 24 (#274) added [`domain::ConnectionLimit::NoRanges`].
+pub const COMMAND_API_VERSION: u32 = 24;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -4,5 +4,6 @@
   "serverThrottling",
   "rampingUp",
   "noGain",
-  "fileSize"
+  "fileSize",
+  "noRanges"
 ]

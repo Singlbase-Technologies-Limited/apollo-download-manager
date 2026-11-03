@@ -268,6 +268,11 @@ fn detail(requested: u32, share: Share, now: ConnectionsNow) -> ConnectionDetail
         allowed = now.active.max(1);
         limited_by = Some(ConnectionLimit::FileSize);
     }
+    // One stream for the whole file: the server's doing, whatever else would apply (#274).
+    if now.single_stream {
+        allowed = 1;
+        limited_by = Some(ConnectionLimit::NoRanges);
+    }
     ConnectionDetail {
         requested,
         allowed,
@@ -1221,6 +1226,7 @@ mod tests {
             throttled_to,
             file_bound,
             tuned: None,
+            single_stream: false,
         }
     }
 
@@ -1264,6 +1270,16 @@ mod tests {
         assert_eq!(
             detail_of(2, share(2, None), now(2, Some(4), false)),
             (2, None)
+        );
+        // #274: a server without byte ranges sends the file as one stream; that, not the
+        // per-host cap, is what holds it to one connection.
+        let single = ConnectionsNow {
+            single_stream: true,
+            ..now(1, None, false)
+        };
+        assert_eq!(
+            detail_of(8, share(4, Some(ConnectionLimit::PerHostCap)), single),
+            (1, Some(ConnectionLimit::NoRanges))
         );
     }
 }
