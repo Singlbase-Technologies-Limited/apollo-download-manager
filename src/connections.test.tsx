@@ -35,6 +35,10 @@ describe('connectionSummary', () => {
     expect(connectionSummary(1, { requested: 8, allowed: 1, limitedBy: 'noRanges' })).toBe(
       'Using 1 connection, up to 1 of the 8 asked for: the server sends the file in one piece, without byte ranges.',
     );
+    // #278: under a speed limit it said "more connections stopped making it faster".
+    expect(connectionSummary(1, { requested: 8, allowed: 1, limitedBy: 'speedLimit' })).toBe(
+      'Using 1 connection, up to 1 of the 8 asked for: the speed limit is reached with fewer connections.',
+    );
   });
 
   it('says only the count when nothing holds it back, or nothing is known', () => {

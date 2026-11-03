@@ -2020,6 +2020,8 @@ fn fetch_ranges(
             .min(control.allowed())
             .min(throttled_to);
         if let Some(r) = ramp.as_mut() {
+            // Under a speed limit it halves, and names the limit when fewer reach it (#278).
+            r.set_limit(tightest_limit(control));
             r.step(now, received, ceiling, live.len() as u32, rtt);
         }
         // HTTP/2: when more streams stop helping, connections of their own are tried once, and
@@ -2724,7 +2726,12 @@ impl Slowness {
 
 /// Whether a speed limit applies to a request of `control`'s download.
 fn limited(control: &Control) -> bool {
-    control.limits.iter().any(|l| l.get().is_some())
+    tightest_limit(control).is_some()
+}
+
+/// The lowest speed limit on `control`'s download, its own or the global one, in bytes per second.
+fn tightest_limit(control: &Control) -> Option<u64> {
+    control.limits.iter().filter_map(RateLimit::get).min()
 }
 
 /// What a fetch event is to [`Slowness::after`].

@@ -51,12 +51,18 @@ pub enum Tuning {
     RampingUp,
     /// More connections stopped making it faster.
     NoGain,
+    /// The download's speed limit is what fewer connections already reach (#278).
+    SpeedLimit,
 }
 
 /// One download's ramp. It measures the speed with every connection, then drops one and measures
 /// again: if the speed held, it drops the next; if it fell by [`AdaptivePolicy::help_percent`],
 /// the dropped one comes back, the speed with it is measured afresh, and it is dropped and judged
 /// again. A second loss keeps it, and the ramp stops (#281).
+///
+/// Under a speed limit, any count that reaches the limit gives the same speed, so it halves the
+/// count instead, until a halving loses speed; from then on it goes one at a time (PO decision on
+/// #278).
 #[derive(Debug)]
 pub struct Ramp {
     policy: AdaptivePolicy,
@@ -69,6 +75,12 @@ pub struct Ramp {
     /// The connection being judged seemed to help once and was brought back; a second loss keeps
     /// it for good.
     doubted: bool,
+    /// The count before the last drop, which comes back when the drop loses speed.
+    dropped_from: u32,
+    /// The tightest speed limit on the download, in bytes per second (#278).
+    limit: Option<u64>,
+    /// A drop has lost speed since the ramp started: it no longer halves.
+    lost: bool,
     /// The next window is the first after the count was set from outside, and isn't measured.
     warming: bool,
     /// The windows measured at this count, and the sum of their speeds.
@@ -93,6 +105,9 @@ impl Ramp {
             base: None,
             judging: false,
             doubted: false,
+            dropped_from: 1,
+            limit: None,
+            lost: false,
             warming: false,
             measured: 0,
             sum: 0.0,
@@ -135,10 +150,35 @@ impl Ramp {
     pub fn why(&self, ceiling: u32) -> Option<Tuning> {
         if self.target >= ceiling {
             None
-        } else if self.holding {
-            Some(Tuning::NoGain)
-        } else {
+        } else if !self.holding {
             Some(Tuning::RampingUp)
+        } else if self.reaches_limit() {
+            Some(Tuning::SpeedLimit)
+        } else {
+            Some(Tuning::NoGain)
+        }
+    }
+
+    /// Whether the fastest window came within [`AdaptivePolicy::help_percent`] of the speed limit:
+    /// then the limit, not the server, is what more connections couldn't beat.
+    fn reaches_limit(&self) -> bool {
+        let short = 1.0 - f64::from(self.policy.help_percent) / 100.0;
+        matches!((self.limit, self.best), (Some(limit), Some(best)) if best >= limit as f64 * short)
+    }
+
+    /// Sets the download's tightest speed limit. A changed one, set, lifted, raised or lowered,
+    /// takes every connection again and judges again: a count held down by the old limit would
+    /// stay down without it (#278).
+    pub fn set_limit(&mut self, limit: Option<u64>) {
+        if limit == self.limit {
+            return;
+        }
+        self.limit = limit;
+        if self.ceiling > 0 {
+            self.target = self.ceiling;
+            self.holding = false;
+            self.best = None;
+            self.restart();
         }
     }
 
@@ -195,6 +235,7 @@ impl Ramp {
         self.base = None;
         self.judging = false;
         self.doubted = false;
+        self.lost = false;
         self.warming = true;
         self.measured = 0;
         self.sum = 0.0;
@@ -226,9 +267,10 @@ impl Ramp {
                     0.0
                 };
                 if loss >= f64::from(self.policy.help_percent) {
-                    // The dropped connection seemed to help: it comes back.
-                    self.target += 1;
+                    // The dropped connections seemed to help: they come back.
+                    self.target = self.dropped_from;
                     self.judging = false;
+                    self.lost = true;
                     if self.doubted {
                         // It helped twice: it stays, and the ramp stops.
                         self.holding = true;
@@ -250,10 +292,15 @@ impl Ramp {
         self.drop_one();
     }
 
-    /// Drops a connection to be judged, or stops at one.
+    /// Drops a connection to be judged, or half of them under a speed limit, or stops at one.
     fn drop_one(&mut self) {
         if self.target > 1 {
-            self.target -= 1;
+            self.dropped_from = self.target;
+            self.target = if self.limit.is_some() && !self.lost {
+                self.target / 2
+            } else {
+                self.target - 1
+            };
             self.judging = true;
         } else {
             self.judging = false;
@@ -481,6 +528,64 @@ mod tests {
         assert!(ramp.settled());
         let best = ramp.best_rate().expect("measured");
         assert!((best - 3_000_000.0).abs() < 1.0, "{best}");
+    }
+
+    /// A ramp after its first step under a speed limit of `limit` bytes per second.
+    fn start_limited(limit: u64) -> (Ramp, (Instant, u64)) {
+        let mut ramp = Ramp::new(AdaptivePolicy::DEFAULT);
+        ramp.set_limit(Some(limit));
+        let clock = (Instant::now(), 0);
+        ramp.step(clock.0, clock.1, 8, 8, None);
+        (ramp, clock)
+    }
+
+    #[test]
+    fn under_a_limit_it_halves_down_to_what_the_limit_needs() {
+        // #278: limited to 1 MB/s, any count gives the limit. One at a time took 7 judgments
+        // from 8 to 1, about 39 s on a real server; halving takes 3 (PO decision on #278).
+        let (mut ramp, mut clock) = start_limited(1_000_000);
+        let targets = run(&mut ramp, &mut clock, 9, 8, |_| 1_000_000);
+        assert_eq!(targets, [8, 8, 4, 4, 2, 2, 1, 1, 1]);
+        assert!(ramp.settled());
+        assert_eq!(
+            ramp.why(8),
+            Some(Tuning::SpeedLimit),
+            "the limit holds it back"
+        );
+    }
+
+    #[test]
+    fn under_a_limit_a_halving_that_loses_speed_comes_back_and_steps_one_at_a_time() {
+        // Limited to 3 MB/s from a server that gives one client 3 connections' worth: 4 keep the
+        // limit, 2 don't. The 4 come back, and the ramp goes on one at a time to the 3 needed.
+        let (mut ramp, mut clock) = start_limited(3_000_000);
+        let targets = run(&mut ramp, &mut clock, 17, 8, capped);
+        assert_eq!(targets, [8, 8, 4, 4, 2, 2, 4, 4, 3, 3, 2, 2, 3, 3, 2, 2, 3]);
+        assert_eq!(ramp.why(8), Some(Tuning::SpeedLimit));
+    }
+
+    #[test]
+    fn a_limit_the_download_doesnt_reach_isnt_the_reason() {
+        // Limited to 100 MB/s, from a server that gives 3 MB/s: the server holds it back.
+        let (mut ramp, mut clock) = start_limited(100_000_000);
+        run(&mut ramp, &mut clock, 17, 8, capped);
+        assert_eq!((ramp.target(), ramp.why(8)), (3, Some(Tuning::NoGain)));
+    }
+
+    #[test]
+    fn a_changed_limit_judges_again_from_every_connection() {
+        // Held at 1 by a limit, a download would stay at 1 once the limit is lifted.
+        let (mut ramp, mut clock) = start_limited(1_000_000);
+        run(&mut ramp, &mut clock, 9, 8, |_| 1_000_000);
+        assert_eq!(ramp.target(), 1);
+        ramp.set_limit(None);
+        assert_eq!((ramp.target(), ramp.why(8)), (8, None));
+        assert!(!ramp.settled());
+        // The same limit again is no change.
+        let (mut ramp, mut clock) = start_limited(1_000_000);
+        run(&mut ramp, &mut clock, 9, 8, |_| 1_000_000);
+        ramp.set_limit(Some(1_000_000));
+        assert_eq!(ramp.target(), 1);
     }
 
     #[test]

@@ -262,6 +262,7 @@ fn detail(requested: u32, share: Share, now: ConnectionsNow) -> ConnectionDetail
         limited_by = Some(match why {
             Tuning::RampingUp => ConnectionLimit::RampingUp,
             Tuning::NoGain => ConnectionLimit::NoGain,
+            Tuning::SpeedLimit => ConnectionLimit::SpeedLimit,
         });
     }
     if now.file_bound && now.active < allowed {
@@ -1280,6 +1281,15 @@ mod tests {
         assert_eq!(
             detail_of(8, share(4, Some(ConnectionLimit::PerHostCap)), single),
             (1, Some(ConnectionLimit::NoRanges))
+        );
+        // #278: a speed limit that fewer connections reach is named as the reason.
+        let limited = ConnectionsNow {
+            tuned: Some((1, Tuning::SpeedLimit)),
+            ..now(1, None, false)
+        };
+        assert_eq!(
+            detail_of(8, share(8, None), limited),
+            (1, Some(ConnectionLimit::SpeedLimit))
         );
     }
 }

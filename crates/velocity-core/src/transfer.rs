@@ -54,7 +54,8 @@ use std::sync::mpsc::Receiver;
 /// user set.
 /// Version 17 (#257) added [`TransferSnapshot::started_over`].
 /// Version 18 (#274) added [`crate::domain::ConnectionLimit::NoRanges`].
-pub const TRANSFER_CONTRACT_VERSION: u32 = 18;
+/// Version 19 (#278) added [`crate::domain::ConnectionLimit::SpeedLimit`].
+pub const TRANSFER_CONTRACT_VERSION: u32 = 19;
 
 /// An engine's id for one transfer. Assigned by the engine, never reused, and never shown as the
 /// app's download id.

@@ -379,3 +379,50 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
         "the file is the source"
     );
 }
+
+#[test]
+fn under_a_speed_limit_a_download_keeps_only_the_connections_the_limit_needs() {
+    let _serial = one_at_a_time();
+    // #278: a download limited to 2 MiB/s from a server that isn't throttled. One loopback
+    // connection carries far more, so every count gives the limit's speed: the ramp halves to one
+    // and names the limit. 4 asked for: 4, 2, 1, about 14 s after a first window that isn't
+    // measured; 48 MiB at 2 MiB/s, about 24 s.
+    let data = seeded_bytes(48 * MIB, 54);
+    let server = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions::default(),
+    );
+    let dir = Dir::new("limited");
+    let control = Arc::new(
+        Control::default().with_limits(vec![velocity_curl::RateLimit::new(Some(2 * MIB as u64))]),
+    );
+    let four = DownloadOptions {
+        connections: 4,
+        ..ADAPTIVE
+    };
+    let timeline = ramp_timeline(&control);
+    let download = run(&server, &dir, four, &control);
+    wait_until_showing(
+        Duration::from_secs(40),
+        "the limit holds it to fewer connections",
+        Some(&timeline),
+        || {
+            matches!(
+                control.connections_now().tuned,
+                Some((_, Tuning::SpeedLimit))
+            )
+        },
+    );
+    let (kept, _) = control.connections_now().tuned.unwrap();
+    assert_eq!(
+        kept,
+        1,
+        "one connection carries the limit:\n{}",
+        timeline.text()
+    );
+    let (dest, _) = download.join().unwrap();
+    assert!(
+        std::fs::read(dest).unwrap() == data,
+        "the file is the source"
+    );
+}
