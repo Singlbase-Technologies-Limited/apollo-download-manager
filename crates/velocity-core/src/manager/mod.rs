@@ -384,6 +384,7 @@ impl Manager {
                 speed_limit_bps: None,
                 requested_connections: None,
                 torrent: None,
+                file_count: None,
             },
             job: Job::Direct(Box::new(DirectJob::new(spec, None))),
             running: false,

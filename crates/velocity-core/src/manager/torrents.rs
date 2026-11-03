@@ -28,8 +28,8 @@ use crate::domain::{
 };
 use crate::seeding::SeedPolicy;
 use crate::torrent::{
-    check_tracker, parse_magnet, parse_metadata, strip_trackers, MagnetInfo, MAX_RESUME_BYTES,
-    MAX_TORRENT_BYTES,
+    check_tracker, parse_magnet, parse_metadata, strip_trackers, MagnetInfo, TorrentMeta,
+    MAX_RESUME_BYTES, MAX_TORRENT_BYTES,
 };
 use crate::torrent_engine::{
     lost_by_helper, Chunk, TorrentEngine, TorrentEvent, TorrentId, TorrentSnapshot, TorrentSource,
@@ -102,6 +102,11 @@ impl TorrentJob {
 /// The record's name for a magnet link before its metadata is known: its display name.
 fn magnet_name(magnet: &MagnetInfo) -> Option<String> {
     magnet.display_name.clone()
+}
+
+/// The record's file count (#313): the files a user can choose, padding left out.
+pub(super) fn file_count(meta: &TorrentMeta) -> u32 {
+    u32::try_from(meta.user_files().count()).unwrap_or(u32::MAX)
 }
 
 impl Manager {
@@ -206,6 +211,7 @@ impl Manager {
                 speed_limit_bps: None,
                 requested_connections: None,
                 torrent: None,
+                file_count: None,
             },
             job: Job::Torrent(Box::new(job)),
             running: false,
@@ -686,6 +692,9 @@ impl Manager {
         }
         if let Ok(job) = self.torrent_job_mut(id) {
             job.metadata_kept = true;
+        }
+        if let Some(d) = self.downloads.get_mut(id) {
+            d.record.file_count = Some(file_count(&meta));
         }
         Ok(())
     }

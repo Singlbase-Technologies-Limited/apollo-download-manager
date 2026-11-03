@@ -302,6 +302,9 @@ pub struct DownloadRecord {
     /// What the torrent helper last reported about a torrent's peers and seeding (#61); `None`
     /// for a direct download, and until the helper reports.
     pub torrent: Option<TorrentActivity>,
+    /// How many files a torrent has, padding left out, once its metadata is known (#313), so
+    /// the list shows a folder only for several. `None` for a direct download, and before.
+    pub file_count: Option<u32>,
 }
 
 /// A torrent's peers and seeding, as the torrent helper reports them (#61).
@@ -654,6 +657,7 @@ impl DownloadRecord {
             speed_limit_bps: Some(524_288),
             requested_connections: Some(8),
             torrent: None,
+            file_count: None,
         }
     }
 }
@@ -690,6 +694,7 @@ impl DownloadsSnapshot {
                 seeding_secs: 600,
                 seed_queued: false,
             }),
+            file_count: Some(2),
             ..DownloadRecord::sample()
         };
         Self {

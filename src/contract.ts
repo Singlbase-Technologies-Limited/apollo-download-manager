@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 26;
+export const COMMAND_API_VERSION = 27;
 
 const bytes = z.number().int().nonnegative();
 
@@ -131,6 +131,8 @@ export const DownloadRecordSchema = z.strictObject({
   requestedConnections: z.number().int().positive().nullable(),
   /** What the torrent helper last reported about a torrent's peers and seeding; `null` for a direct download, and until it reports (#61). */
   torrent: TorrentActivitySchema.nullable(),
+  /** How many files a torrent has, once its metadata is known; `null` for a direct download, and before (#313). */
+  fileCount: z.number().int().nonnegative().nullable(),
 });
 export type DownloadRecord = z.infer<typeof DownloadRecordSchema>;
 

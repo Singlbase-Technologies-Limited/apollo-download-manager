@@ -3881,6 +3881,46 @@ mod torrents {
         fs::remove_dir_all(&dir).unwrap();
     }
 
+    #[test]
+    fn a_torrents_file_count_is_known_once_its_metadata_is_and_after_a_restart() {
+        // #313: the list showed a folder for every download without a category, plain files
+        // included. It needs to know whether a torrent has one file or several.
+        let dir = folder("file-count");
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let mut s = with_db(&db, 3);
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        assert_eq!(
+            s.m.get(&id).unwrap().file_count,
+            None,
+            "before its metadata"
+        );
+        let (meta, hash) = metadata();
+        s.torrents
+            .metadata_known(TorrentId(1), "album", &hash, 32_000, meta);
+        s.m.pump(T0 + 1);
+        assert_eq!(
+            s.m.get(&id).unwrap().file_count,
+            Some(2),
+            "the album's two files"
+        );
+        drop(s);
+        let mut again = with_db(&db, 3);
+        assert_eq!(
+            again.m.get(&id).unwrap().file_count,
+            Some(2),
+            "read back from its metadata"
+        );
+        let direct = again.m.add(DownloadKind::Http, spec(), T0).unwrap();
+        assert_eq!(
+            again.m.get(&direct).unwrap().file_count,
+            None,
+            "a direct download has none"
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
     /// The album's metadata is known to the helper and stored by the manager.
     fn with_metadata(s: &mut Setup, dir: &std::path::Path, choose_files: bool) -> String {
         let id =

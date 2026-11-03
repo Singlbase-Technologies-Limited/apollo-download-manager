@@ -164,6 +164,7 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
         move(rows.length - 1);
         break;
       case 'a':
+      case 'A': // with Caps Lock on (#310)
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
           selectAll(ids);

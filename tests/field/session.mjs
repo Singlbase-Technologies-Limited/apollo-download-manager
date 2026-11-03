@@ -24,7 +24,7 @@ import { appendFileSync, existsSync, mkdirSync, statSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { afterStart, findings, hideLinks, parseArgs, sample } from './field-lib.mjs';
+import { afterStart, findings, hideLinks, parseArgs, question, sample, shotPath } from './field-lib.mjs';
 
 const PROCESSES = { app: 'velocity-desktop-v2', engine: 'velocity-transfer', torrent: 'velocity-torrent' };
 const TERMINAL = new Set(['completed', 'failed', 'removed', 'seeding']);
@@ -216,11 +216,11 @@ async function startAdding(page) {
     const answer = typeof named.answer === 'string' && open?.buttons.includes(named.answer) && !answered.has(named.answer) ? named.answer : null;
     if (answer) {
       answered.add(answer);
-      console.log(`${clock()} the app asks: ${hideLinks(open.text)}; answering ${answer}`);
+      console.log(`${clock()} the app asks: ${hideLinks(question(open))}; answering ${answer}`);
       await page.getByRole('dialog', { name: 'Add download' }).getByRole('button', { name: answer, exact: true }).click();
       continue;
     }
-    const r = afterStart(open);
+    const r = afterStart(open, [...answered]);
     if (r.final && !r.added) await page.getByRole('button', { name: 'Done' }).click();
     return r;
   }
@@ -287,7 +287,8 @@ async function main() {
           for (let tries = 0; !(await page.getByText(`${items} selected`).isVisible()); tries++) {
             if (tries === 5) throw new Error(`Couldn't select all ${items} downloads shown.`);
             await grid.focus();
-            await page.keyboard.press('Control+A');
+            // Lowercase: Playwright's `Control+A` sends a capital A, as Caps Lock does (#311, #310).
+            await page.keyboard.press('Control+a');
             await sleep(300);
           }
           await page.getByRole('button', { name: 'More actions' }).click();
@@ -329,8 +330,10 @@ async function main() {
       });
     case 'shot':
       return withPage(async (page) => {
-        await page.screenshot({ path: rest[0] });
-        console.log(`Screenshot ${rest[0]}`);
+        mkdirSync(out, { recursive: true });
+        const path = shotPath(out, rest[0]);
+        await page.screenshot({ path });
+        console.log(`Screenshot ${path}`);
       });
     case 'quit':
       return withPage((page) => invoke(page, 'quit_app')).then(() => console.log('Quit.'));

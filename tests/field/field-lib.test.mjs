@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { afterStart, findings, hideLinks, hostOf, parseArgs, sample } from './field-lib.mjs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { afterStart, findings, hideLinks, hostOf, parseArgs, sample, shotPath } from './field-lib.mjs';
 
 const record = (over = {}) => ({
   id: 'd-0001',
@@ -174,5 +176,33 @@ describe('afterStart', () => {
 
   it('says added once the dialog has closed', () => {
     expect(afterStart(null)).toEqual({ added: true, final: true, message: 'Added.' });
+  });
+
+  // #311: after Skip the dialog closes with nothing added, and `add` said "Added".
+  it('says skipped when the dialog closed after Skip', () => {
+    expect(afterStart(null, ['Skip'])).toEqual({ added: false, final: true, message: 'Skipped: nothing was added.' });
+    expect(afterStart(null, ['Add anyway'])).toEqual({ added: true, final: true, message: 'Added.' });
+  });
+
+  // #311: the question repeated the dialog's title, its hint and the buttons.
+  it('reports only the question, without the dialog’s title, hint and buttons', () => {
+    const r = afterStart({
+      text: 'Add download | Paste links, one per line, or choose .torrent files. | This was added before | SHA256SUMS · In your list | Adding it again starts a separate download. | Show download | Skip | Add anyway',
+      buttons: ['Show download', 'Skip', 'Add anyway'],
+    });
+    expect(r.message).toBe(
+      'Not added yet. The app asks: This was added before | SHA256SUMS · In your list | Adding it again starts a separate download. Answer with --answer "Show download" or --answer "Skip" or --answer "Add anyway".',
+    );
+  });
+});
+
+describe('shotPath', () => {
+  // #311: `shot x.png` wrote into the folder it ran in, the repository.
+  it('puts a relative path in the session folder and keeps an absolute one', () => {
+    // Paths of the platform the test runs on: CI runs it on Linux, the tool runs on Windows.
+    const session = join(tmpdir(), 'velocity-field', '2026-11-03');
+    const elsewhere = resolve(tmpdir(), 'shots', 'panel.png');
+    expect(shotPath(session, 'panel.png')).toBe(join(session, 'panel.png'));
+    expect(shotPath(session, elsewhere)).toBe(elsewhere);
   });
 });
