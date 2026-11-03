@@ -111,14 +111,20 @@ pub fn start(app: &AppHandle, paths: &Paths) -> Result<Downloads, String> {
         // Emitting fails only once the app is closing, when no window is left to show it.
         let _ = app.emit(SNAPSHOT_EVENT, snapshot);
         if let Some(before) = &last {
+            // In words, never a type's debug text (#274).
             if before.engine != snapshot.engine {
-                tracing::info!("transfer engine: {:?}", snapshot.engine);
+                tracing::info!("transfer engine: {}", snapshot.engine);
             }
             if before.torrent_engine != snapshot.torrent_engine {
-                tracing::info!("torrent helper: {:?}", snapshot.torrent_engine);
+                tracing::info!("torrent helper: {}", snapshot.torrent_engine);
             }
             if before.storage_error != snapshot.storage_error {
-                tracing::warn!("saving downloads: {:?}", snapshot.storage_error);
+                match snapshot.storage_error {
+                    Some(code) => {
+                        tracing::warn!("saving downloads failed: {}", code.user_message())
+                    }
+                    None => tracing::info!("saving downloads works again"),
+                }
             }
         }
         app.state::<ShellState>()

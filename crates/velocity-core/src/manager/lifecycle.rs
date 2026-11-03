@@ -4,7 +4,9 @@
 //! login are never logged, only its protocol and host (PO decision on #251), and every line is
 //! redacted as it is kept ([`crate::logs::AppLog`]).
 
-use crate::domain::{DownloadKind, DownloadRecord, DownloadStatus, FailureClass, TransferError};
+use crate::domain::{
+    ConnectionLimit, DownloadKind, DownloadRecord, DownloadStatus, FailureClass, TransferError,
+};
 
 /// The fewest milliseconds between two connection lines of one download.
 const CONNECTIONS_EVERY_MS: u64 = 30_000;
@@ -119,7 +121,9 @@ impl Logged {
         let due = self
             .connections_at_ms
             .is_none_or(|at| now_ms.saturating_sub(at) >= CONNECTIONS_EVERY_MS);
+        // None open yet, as right after a resume: nothing to say (#274).
         if record.status != DownloadStatus::Downloading
+            || count == 0
             || count == self.connections
             || !due
             || self.connection_lines >= CONNECTION_LINES
@@ -137,7 +141,7 @@ impl Logged {
         };
         let limit = detail
             .limited_by
-            .map(|l| format!(", limited by {l:?}"))
+            .map(|l| format!(": {}", reason(l)))
             .unwrap_or_default();
         lines.push(Line::info(format!(
             "download {id} uses {count} {noun} (allowed {} of {}{limit})",
@@ -154,6 +158,20 @@ impl Logged {
 /// The line for a change of status other than a retry, or `None` for one that says nothing new:
 /// a running download that connects or gets going again after a retry or a stall, whose line said
 /// why it stopped.
+/// What holds a download's connections back, in the details panel's words (`limitReason` in
+/// `src/connections.ts`), not the type's name (#274).
+fn reason(limit: ConnectionLimit) -> &'static str {
+    match limit {
+        ConnectionLimit::PerHostCap => "the performance profile allows no more to one server",
+        ConnectionLimit::SharedBudget => "other downloads are sharing the connections",
+        ConnectionLimit::ServerThrottling => "the server asked Velocity to slow down",
+        ConnectionLimit::RampingUp => "Velocity is still finding how many connections help",
+        ConnectionLimit::NoGain => "more connections stopped making it faster",
+        ConnectionLimit::FileSize => "the rest of the file is too small to split further",
+        ConnectionLimit::NoRanges => "the server sends the file in one piece, without byte ranges",
+    }
+}
+
 fn status_line(before: DownloadStatus, record: &DownloadRecord, at: &str) -> Option<Line> {
     let id = &record.id;
     let why = why(record.error.as_ref());
@@ -542,15 +560,41 @@ mod tests {
             allowed: 2,
             limited_by: Some(ConnectionLimit::ServerThrottling),
         });
+        // #274: what holds them back in words, as the details panel says it, not `ServerThrottling`.
         assert_eq!(
             texts(logged.lines(&r, T0)),
-            ["download d-0001 uses 2 connections (allowed 2 of 8, limited by ServerThrottling)"]
+            [
+                "download d-0001 uses 2 connections (allowed 2 of 8: the server asked Velocity to \
+                 slow down)"
+            ]
         );
         assert!(logged.lines(&r, T0 + 60_000).is_empty());
         assert_eq!(
             texts(logged.lines(&downloading(0, 1), T0 + 60_000)),
             ["download d-0001 uses 1 connection (allowed 8 of 8)"]
         );
+    }
+
+    #[test]
+    fn no_connection_line_is_written_before_a_connection_is_open() {
+        // #274: "uses 0 connections (allowed 8 of 8)" right after a resume read as a fault.
+        let mut logged = Logged::new(&downloading(0, 4));
+        assert!(logged.lines(&downloading(0, 0), T0).is_empty());
+        assert_eq!(
+            texts(logged.lines(&downloading(0, 2), T0)),
+            ["download d-0001 uses 2 connections (allowed 8 of 8)"]
+        );
+    }
+
+    #[test]
+    fn every_connection_limit_reads_as_words() {
+        for limit in ConnectionLimit::ALL {
+            let words = reason(limit);
+            assert!(
+                words.contains(' ') && !words.contains(&format!("{limit:?}")),
+                "{limit:?}: {words}"
+            );
+        }
     }
 
     #[test]

@@ -17,6 +17,8 @@ export function limitReason(limit: ConnectionLimit): string {
       return 'more connections stopped making it faster';
     case 'fileSize':
       return 'the rest of the file is too small to split further';
+    case 'noRanges':
+      return 'the server sends the file in one piece, without byte ranges';
   }
 }
 

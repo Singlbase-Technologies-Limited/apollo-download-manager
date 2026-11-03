@@ -53,7 +53,8 @@ use std::sync::mpsc::Receiver;
 /// Version 16 (#192) added [`DirectTransfer::set_proxy`]: engines download through the proxy the
 /// user set.
 /// Version 17 (#257) added [`TransferSnapshot::started_over`].
-pub const TRANSFER_CONTRACT_VERSION: u32 = 17;
+/// Version 18 (#274) added [`crate::domain::ConnectionLimit::NoRanges`].
+pub const TRANSFER_CONTRACT_VERSION: u32 = 18;
 
 /// An engine's id for one transfer. Assigned by the engine, never reused, and never shown as the
 /// app's download id.

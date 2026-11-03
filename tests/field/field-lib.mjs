@@ -21,12 +21,19 @@ export function hostOf(link) {
 const LINK = /\b([a-z][a-z0-9+.-]*):\/\/([^\s/?#"'<>]*)[^\s"'<>]*/gi;
 const TRAILING = /[.,:;)\]]+$/;
 
-/** `text` with every link cut to `scheme://host/…`: no login, port, path or query. */
+/**
+ * `text` with every link cut to `scheme://host/…`: no login, port, path or query. A link with
+ * nothing after its host, such as the engine's `https://host: 3 more requests …`, stays
+ * `scheme://host` (#274).
+ */
 export function hideLinks(text) {
-  return text.replace(LINK, (whole, scheme, authority) => {
+  return text.replace(LINK, (whole, scheme) => {
     const tail = TRAILING.exec(whole)?.[0] ?? '';
-    const host = authority.slice(authority.lastIndexOf('@') + 1).replace(/:\d+$/, '');
-    return `${scheme}://${host}/…${tail}`;
+    const link = whole.slice(scheme.length + 3, whole.length - tail.length);
+    const end = link.search(/[/?#]/);
+    const authority = end === -1 ? link : link.slice(0, end);
+    const host = authority.slice(authority.lastIndexOf('@') + 1).replace(/:\d*$/, '');
+    return `${scheme}://${host}${end === -1 ? '' : '/…'}${tail}`;
   });
 }
 

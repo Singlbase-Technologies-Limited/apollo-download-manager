@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 23;
+export const COMMAND_API_VERSION = 24;
 
 const bytes = z.number().int().nonnegative();
 
@@ -67,6 +67,7 @@ export const ConnectionLimitSchema = z.enum([
   'rampingUp',
   'noGain',
   'fileSize',
+  'noRanges',
 ]);
 export type ConnectionLimit = z.infer<typeof ConnectionLimitSchema>;
 

@@ -134,6 +134,8 @@ pub struct Control {
     throttled_to: AtomicU32,
     /// The rest of the file was too small to split for another connection.
     file_bound: AtomicBool,
+    /// The server sends the file as one stream, without byte ranges (#274).
+    single_stream: AtomicBool,
     /// The adaptive ramp's count, when it is below what the download may use, and why.
     tuned: Mutex<Option<(u32, Tuning)>>,
     /// The requests go on connections of their own, not as HTTP/2 streams of one (#47).
@@ -180,6 +182,8 @@ pub struct ConnectionsNow {
     pub file_bound: bool,
     /// The adaptive ramp's count, when it is below what the download may use, and why.
     pub tuned: Option<(u32, Tuning)>,
+    /// The server sends the file as one stream, without byte ranges (#274).
+    pub single_stream: bool,
 }
 
 impl Control {
@@ -335,7 +339,13 @@ impl Control {
             },
             file_bound: self.file_bound.load(Ordering::Acquire),
             tuned: *self.tuned.lock().expect("the tuning lock"),
+            single_stream: self.single_stream.load(Ordering::Acquire),
         }
+    }
+
+    /// The server sends the file as one stream, without byte ranges (#274).
+    fn one_stream(&self) {
+        self.single_stream.store(true, Ordering::Release);
     }
 
     /// Reports progress. Bytes arriving also mean the download is downloading again, unless it
@@ -1152,6 +1162,7 @@ fn fetch_whole(
     control: &Control,
     policy: &RetryPolicy,
 ) -> Result<Fetched, DownloadError> {
+    control.one_stream();
     let before = part.written;
     let url = sources.url(lead).to_owned();
     let (total, fetches) = stream_gaps(lp, &url, None, None, part, control, policy)?;
@@ -1515,7 +1526,11 @@ fn probe(
             Some(Ok(ProbeOutcome::SequentialRanges { received_end })) => {
                 (Some(received_end + 1), None)
             }
-            Some(Ok(ProbeOutcome::SingleStream { length })) => (None, *length),
+            Some(Ok(ProbeOutcome::SingleStream { length })) => {
+                // One stream for the whole file: no other connection can help (#274).
+                control.one_stream();
+                (None, *length)
+            }
             _ => (None, None),
         };
         if part.is_pending() {

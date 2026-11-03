@@ -219,17 +219,21 @@ pub enum ConnectionLimit {
     NoGain,
     /// The rest of the file is too small to split between more connections.
     FileSize,
+    /// The server sends the file as one stream, without byte ranges, so one connection is all
+    /// that can help (#274).
+    NoRanges,
 }
 
 impl ConnectionLimit {
     /// Every value, in contract order (the fixture shared with `src/contract.ts`).
-    pub const ALL: [ConnectionLimit; 6] = [
+    pub const ALL: [ConnectionLimit; 7] = [
         ConnectionLimit::PerHostCap,
         ConnectionLimit::SharedBudget,
         ConnectionLimit::ServerThrottling,
         ConnectionLimit::RampingUp,
         ConnectionLimit::NoGain,
         ConnectionLimit::FileSize,
+        ConnectionLimit::NoRanges,
     ];
 }
 
@@ -433,6 +437,20 @@ pub enum EngineHealth {
     Unavailable {
         code: ErrorCode,
     },
+}
+
+/// In words, for the app's log (#274).
+impl std::fmt::Display for EngineHealth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EngineHealth::Running => f.write_str("running"),
+            EngineHealth::Restarting { attempt: 0 } => f.write_str("restarting"),
+            EngineHealth::Restarting { attempt } => {
+                write!(f, "restarting after a crash (attempt {attempt})")
+            }
+            EngineHealth::Unavailable { code } => write!(f, "unavailable: {}", code.user_message()),
+        }
+    }
 }
 
 /// What an engine really supports, reported rather than assumed (research report section 4.2).
@@ -814,6 +832,30 @@ mod tests {
     }
 
     #[test]
+    fn an_engines_health_reads_as_words() {
+        // #274: the app's log said `Restarting { attempt: 1 }`.
+        assert_eq!(EngineHealth::Running.to_string(), "running");
+        assert_eq!(
+            EngineHealth::Restarting { attempt: 0 }.to_string(),
+            "restarting"
+        );
+        assert_eq!(
+            EngineHealth::Restarting { attempt: 2 }.to_string(),
+            "restarting after a crash (attempt 2)"
+        );
+        assert_eq!(
+            EngineHealth::Unavailable {
+                code: ErrorCode::EngineUnavailable
+            }
+            .to_string(),
+            format!(
+                "unavailable: {}",
+                ErrorCode::EngineUnavailable.user_message()
+            )
+        );
+    }
+
+    #[test]
     fn a_permanent_failure_is_never_retryable() {
         let e = TransferError::new(FailureClass::Permanent, Some(404), "Not found");
         assert!(!e.retryable);
@@ -892,7 +934,8 @@ mod tests {
                 "serverThrottling",
                 "rampingUp",
                 "noGain",
-                "fileSize"
+                "fileSize",
+                "noRanges"
             ]
         );
     }
