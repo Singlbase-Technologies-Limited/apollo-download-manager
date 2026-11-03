@@ -27,6 +27,16 @@ async function openDialog(user: ReturnType<typeof userEvent.setup>) {
   return screen.findByRole('dialog', { name: 'Add download' });
 }
 
+/**
+ * Pastes `text` into `field` at the end of what it holds, as a user adds a copied link. Typing a link
+ * re-rendered the dialog once per character, and on Windows that took tests past their 5 s timeout
+ * (#287). Text whose typing a test is about stays typed.
+ */
+async function paste(user: ReturnType<typeof userEvent.setup>, field: HTMLElement, text: string) {
+  await user.click(field);
+  await user.paste(text);
+}
+
 const requests = (state: FakeState) => callsOf(state, 'add_downloads').map((c) => c.args.request as AddRequest);
 
 beforeEach(() => {
@@ -59,11 +69,11 @@ describe('the Add download dialog', () => {
     renderApp();
     const dialog = await openDialog(user);
     const links = within(dialog).getByRole('textbox', { name: 'Links' });
-    await user.type(links, 'not-a-link');
+    await paste(user, links, 'not-a-link');
     expect((await within(dialog).findByText(/This is not a complete link/)).textContent).toContain('not-a-link');
     expect(within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Start download' }).disabled).toBe(true);
     await user.clear(links);
-    await user.type(links, 'https://example.com/a.zip{enter}https://example.com/b.zip');
+    await paste(user, links, 'https://example.com/a.zip\nhttps://example.com/b.zip');
     expect(within(dialog).getByRole<HTMLInputElement>('textbox', { name: 'File name' }).disabled).toBe(true);
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     await waitFor(() => { expect(requests(state)).toHaveLength(1); });
@@ -84,10 +94,10 @@ describe('the Add download dialog', () => {
     const dialog = await openDialog(user);
     const links = within(dialog).getByRole('textbox', { name: 'Links' });
     const name = () => within(dialog).getByRole<HTMLInputElement>('textbox', { name: 'File name' });
-    await user.type(links, 'https://example.com/download.php?id=3');
+    await paste(user, links, 'https://example.com/download.php?id=3');
     expect(name().placeholder).toBe('Named by the server');
     await user.clear(links);
-    await user.type(links, 'https://example.com/docs/report.pdf');
+    await paste(user, links, 'https://example.com/docs/report.pdf');
     expect(name().placeholder).toBe('report.pdf');
     await user.type(name(), 'Annual report');
     expect(await within(dialog).findByText('Saved as “Annual report.pdf”')).toBeTruthy();
@@ -112,7 +122,7 @@ describe('the Add download dialog', () => {
     });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     expect(await within(dialog).findByText('A file with this name already exists')).toBeTruthy();
     expect(within(dialog).getByText(/Keep both saves it as “a \(1\)\.zip”/)).toBeTruthy();
@@ -138,7 +148,7 @@ describe('the Add download dialog', () => {
     });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
     expect(await within(dialog).findByText('“a.zip” is already in this folder. You’ll be asked what to do when you start.')).toBeTruthy();
   });
 
@@ -155,7 +165,7 @@ describe('the Add download dialog', () => {
     });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip{enter}https://example.com/album.torrent');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip\nhttps://example.com/album.torrent');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     expect(await within(dialog).findByText('2 links couldn’t be added')).toBeTruthy();
     expect(within(dialog).getByText(ERROR_MESSAGES.UNSUPPORTED_SCHEME)).toBeTruthy();
@@ -182,7 +192,7 @@ describe('the Add download dialog', () => {
     };
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/lesson.mp4');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/lesson.mp4');
     expect(await within(dialog).findByRole('option', { name: `Automatic: ${category.name}` })).toBeTruthy();
     expect(await within(dialog).findByText('Saves to /home/user/Courses')).toBeTruthy();
     // An automatic folder is the settings' or the category's: not an error here.
@@ -233,7 +243,7 @@ describe('the Add download dialog', () => {
     const state = installFakeBackend({ capabilities: fixture('capabilities.json') as Capabilities });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
     expect(await within(dialog).findByText(/This version of Velocity can’t download over SFTP yet\./)).toBeTruthy();
     expect(within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Start download' }).disabled).toBe(true);
     expect(requests(state)).toEqual([]);
@@ -244,7 +254,7 @@ describe('the Add download dialog', () => {
     const state = installFakeBackend({ chosenKey: '/home/user/.ssh/id_ed25519' });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
     await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
     await user.type(within(dialog).getByRole('textbox', { name: 'User name' }), 'me');
     await user.click(within(dialog).getByRole('button', { name: 'Choose a key' }));
@@ -260,7 +270,7 @@ describe('the Add download dialog', () => {
   // PO decision on #70: the keychain only with the user's consent, asked next to the login, unticked.
   const addWithLogin = async (user: ReturnType<typeof userEvent.setup>, remember: boolean) => {
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/private.zip');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/private.zip');
     await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
     expect(within(dialog).queryByRole('checkbox', { name: /Remember this login/ })).toBeNull();
     await user.type(within(dialog).getByRole('textbox', { name: 'User name' }), 'me');
@@ -297,7 +307,7 @@ describe('the Add download dialog', () => {
     const state = installFakeBackend();
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'ftp://ftp.example.org/pub/a.iso');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'ftp://ftp.example.org/pub/a.iso');
     expect(within(dialog).getByText(/This FTP download isn’t encrypted/)).toBeTruthy();
     await user.click(within(dialog).getByRole('checkbox', { name: 'Require encryption (FTPS)' }));
     expect(within(dialog).queryByText(/This FTP download isn’t encrypted/)).toBeNull();
@@ -311,11 +321,11 @@ describe('the Add download dialog', () => {
     const state = installFakeBackend();
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
     await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
     await user.type(within(dialog).getByRole('spinbutton', { name: 'Connections' }), '3');
     await user.type(within(dialog).getByRole('spinbutton', { name: 'Speed limit (KiB/s)' }), '256');
-    await user.type(within(dialog).getByRole('textbox', { name: 'Referrer' }), 'https://example.com/page');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Referrer' }), 'https://example.com/page');
     await user.click(within(dialog).getByRole('textbox', { name: 'Checksum' }));
     await user.paste(`sha-256=${'ab'.repeat(32)}`);
     await user.type(within(dialog).getByRole('textbox', { name: 'User name' }), 'me');
@@ -364,7 +374,7 @@ describe('duplicates', () => {
       const state = takenAndAddedBefore(nameFirst);
       renderApp();
       const dialog = await openDialog(user);
-      await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+      await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
       await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
       const [first, second] = nameFirst ? ['Keep both (rename)', 'Add anyway'] : ['Add anyway', 'Keep both (rename)'];
       await user.click(await within(dialog).findByRole('button', { name: first }));
@@ -387,7 +397,7 @@ describe('duplicates', () => {
     });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     await waitFor(() => { expect(requests(state)).toHaveLength(1); });
     expect(await within(dialog).findByText('This was added before')).toBeTruthy();
@@ -409,7 +419,7 @@ describe('duplicates', () => {
     });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     expect(await within(dialog).findByText('This torrent is already in your list')).toBeTruthy();
     expect(within(dialog).getByText(/can’t run two copies of the same torrent/)).toBeTruthy();
@@ -431,7 +441,7 @@ describe('duplicates', () => {
     });
     renderApp();
     const dialog = await openDialog(user);
-    await user.type(within(dialog).getByRole('textbox', { name: 'Links' }), 'magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     await user.click(await within(dialog).findByRole('button', { name: 'Show download' }));
     await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
@@ -489,11 +499,11 @@ describe('torrents', () => {
     renderApp();
     const dialog = await openDialog(user);
     const links = within(dialog).getByRole('textbox', { name: 'Links' });
-    await user.type(links, 'https://example.com/a.zip');
+    await paste(user, links, 'https://example.com/a.zip');
     expect(within(dialog).queryByRole('checkbox', { name: 'Choose files before downloading' })).toBeNull();
-    await user.type(links, '{enter}https://example.com/album.torrent');
+    await paste(user, links, '\nhttps://example.com/album.torrent');
     expect(within(dialog).getByText(/fetches the \.torrent file first/)).toBeTruthy();
-    await user.type(links, '{enter}magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    await paste(user, links, '\nmagnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     expect(within(dialog).queryByText(/can’t be added/)).toBeNull();
     expect(within(dialog).getByRole('checkbox', { name: 'Choose files before downloading' })).toBeTruthy();
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
