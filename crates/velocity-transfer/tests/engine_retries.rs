@@ -26,6 +26,7 @@ const FAST: RetryPolicy = RetryPolicy {
     failures_in_a_row: 5,
     stalled_after: Duration::from_millis(500),
     reset_after: Duration::from_secs(1),
+    least_rate_bps: RetryPolicy::DEFAULT.least_rate_bps,
     download_retries: 2,
     first_download_wait: Duration::from_millis(200),
     first_throttled_download_wait: Duration::from_millis(300),

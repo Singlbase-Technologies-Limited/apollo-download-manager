@@ -21,7 +21,7 @@ The screen (#30, `src/features/settings/SettingsView.tsx`) edits every section b
 |---|---|---|---|
 | `failuresInARow` | 5 | 1 to 100 | `max_tries` |
 | `maxRetryWaitSecs` | 60 | 1 to 600 | `retry_wait_secs` |
-| `stalledAfterSecs` | 15 | 5 to 600 | `lowest_speed_limit_kib`, on time without data rather than speed |
+| `stalledAfterSecs` | 15 | 5 to 600 | `lowest_speed_limit_kib`: time without data, or under the engine's 1 KiB/s floor (#292) |
 | `resetAfterSecs` | 30 | 5 to 3600, never below `stalledAfterSecs` | `timeout_secs` |
 | `connectTimeoutSecs` | 30 | 1 to 300 | `connect_timeout_secs` (HTTP, HTTPS and FTP; SFTP keeps its own) |
 | `downloadRetries` | 2 | 0 to 10 | `app_retries` |

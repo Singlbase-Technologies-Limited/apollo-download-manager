@@ -338,12 +338,29 @@ impl Control {
         }
     }
 
-    /// Reports progress. Bytes arriving also mean the download is downloading again.
+    /// Reports progress. Bytes arriving also mean the download is downloading again, unless it
+    /// shows Stalled: a few bytes don't end a stall, a request that moves again does
+    /// ([`Control::moving`], #292).
     fn report(&self, written: u64, total: Option<u64>) {
-        self.show(DownloadStatus::Downloading);
+        if !self.stalled() {
+            self.show(DownloadStatus::Downloading);
+        }
         if let Some(p) = &self.progress {
             p(written, total);
         }
+    }
+
+    /// A request brings enough again: the download is downloading (#292).
+    fn moving(&self) {
+        self.show(DownloadStatus::Downloading);
+    }
+
+    /// Whether Stalled was the status reported last.
+    fn stalled(&self) -> bool {
+        matches!(
+            *self.shown.lock().expect("the status lock"),
+            Some((DownloadStatus::Stalled, _))
+        )
     }
 
     /// Records how many bytes a finished request held for the writer at most.
@@ -1764,9 +1781,12 @@ type SegmentVerdict = Arc<Mutex<Option<Result<u64, SegmentRejection>>>>;
 /// What a segment's forwarder passes to the downloader.
 enum Segment {
     Fetch(FetchEvent),
-    /// No byte for [`RetryPolicy::stalled_after`].
+    /// Too little for [`RetryPolicy::stalled_after`]: no byte, or under
+    /// [`RetryPolicy::least_rate_bps`] (#292).
     Quiet,
-    /// No byte for [`RetryPolicy::reset_after`]: the request was cancelled.
+    /// After [`Segment::Quiet`], the request brings enough again.
+    Moving,
+    /// Too little for [`RetryPolicy::reset_after`]: the request was cancelled.
     Reset,
 }
 
@@ -1855,6 +1875,7 @@ fn request(
         lease.id,
         tx,
         policy,
+        Slowness::new(policy, limited(control)),
         Arc::clone(&control.peak_buffered),
     );
     Active {
@@ -2180,6 +2201,12 @@ fn fetch_ranges(
                     control.show(DownloadStatus::Stalled);
                 }
             }
+            Segment::Moving => {
+                if let Some(a) = active.get_mut(&id) {
+                    a.quiet = false;
+                    control.moving();
+                }
+            }
             Segment::Reset => {
                 // The forwarder gave up on the request and cancelled it; its lease is ended, and
                 // the rest of it is leased again after the wait.
@@ -2216,7 +2243,9 @@ fn fetch_ranges(
                 let Some(a) = active.get_mut(&id) else {
                     continue;
                 };
-                a.quiet = false;
+                // A quiet request stays quiet until its forwarder says it moves again: a few
+                // bytes now and then aren't progress (#292).
+                let moving = !a.quiet;
                 if !a.fed && !chunk.is_empty() {
                     a.fed = true;
                     fed += 1;
@@ -2247,6 +2276,9 @@ fn fetch_ranges(
                     anomalies += 1;
                 }
                 control.report(part.covered(), Some(total));
+                if moving {
+                    control.moving();
+                }
                 if ck.due(part) {
                     ck.take(part, &mut sched, control)?;
                 }
@@ -2628,49 +2660,115 @@ fn stream_gaps(
     }
 }
 
-/// Moves a fetch's events to `tx`, tagged with `tag`, on its own thread. It measures the time the
-/// fetch brings nothing (#48): after [`RetryPolicy::stalled_after`] it sends [`Segment::Quiet`],
-/// after [`RetryPolicy::reset_after`] it cancels the fetch and sends [`Segment::Reset`]. Time
-/// spent waiting for room in `tx` (a slow writer) doesn't count, as the clock runs only while it
-/// waits for the fetch.
+/// How long a request has brought too little (#48, #292): the time spent waiting for the network
+/// since it last brought `least` bytes. Time spent writing never counts, so a slow writer is never
+/// a stall.
+struct Slowness {
+    least: u64,
+    brought: u64,
+    waited: Duration,
+}
+
+impl Slowness {
+    /// For a request whose download `limited` holds back, any byte is progress: slow because the
+    /// user asked, not because of the server. Otherwise it must bring
+    /// [`RetryPolicy::least_rate_bps`] over [`RetryPolicy::stalled_after`].
+    fn new(policy: &RetryPolicy, limited: bool) -> Self {
+        let least = if limited {
+            1
+        } else {
+            (policy.least_rate_bps as f64 * policy.stalled_after.as_secs_f64()) as u64
+        };
+        Slowness {
+            least: least.max(1),
+            brought: 0,
+            waited: Duration::ZERO,
+        }
+    }
+
+    /// Counts `waited` for the network and what came: `Some(bytes)` of the body, or `None` for an
+    /// answer's head or its end, which are progress. Says whether the request moves, which starts
+    /// the count again.
+    fn after(&mut self, waited: Duration, came: Option<Option<usize>>) -> bool {
+        self.waited += waited;
+        let moved = match came {
+            Some(Some(bytes)) => {
+                self.brought += bytes as u64;
+                self.brought >= self.least
+            }
+            Some(None) => true,
+            None => false,
+        };
+        if moved {
+            self.brought = 0;
+            self.waited = Duration::ZERO;
+        }
+        moved
+    }
+}
+
+/// Whether a speed limit applies to a request of `control`'s download.
+fn limited(control: &Control) -> bool {
+    control.limits.iter().any(|l| l.get().is_some())
+}
+
+/// What a fetch event is to [`Slowness::after`].
+fn came(event: &FetchEvent) -> Option<usize> {
+    match event {
+        FetchEvent::Data(chunk) => Some(chunk.len()),
+        _ => None,
+    }
+}
+
+/// Moves a fetch's events to `tx`, tagged with `tag`, on its own thread. It measures how long the
+/// fetch brings too little ([`Slowness`]): after [`RetryPolicy::stalled_after`] it sends
+/// [`Segment::Quiet`], then [`Segment::Moving`] if it picks up again, and after
+/// [`RetryPolicy::reset_after`] it cancels the fetch and sends [`Segment::Reset`]. Time spent
+/// waiting for room in `tx` (a slow writer) doesn't count, as the clock runs only while it waits
+/// for the fetch.
 fn forward<T: Copy + Send + 'static>(
     fetch: Fetch,
     tag: T,
     tx: mpsc::SyncSender<(T, Segment)>,
     policy: &RetryPolicy,
+    mut slowness: Slowness,
     peak: Arc<AtomicU64>,
 ) {
     let (stalled, reset) = (policy.stalled_after, policy.reset_after);
     thread::spawn(move || {
         let mut quiet = false;
         loop {
-            let wait = if quiet {
-                reset.saturating_sub(stalled)
-            } else {
-                stalled
-            };
-            let segment = match fetch.next_event(wait) {
-                Some(event) => {
-                    quiet = false;
-                    Segment::Fetch(event)
-                }
-                None if !quiet => {
-                    quiet = true;
-                    Segment::Quiet
-                }
-                None => Segment::Reset,
-            };
-            let last = matches!(
-                segment,
-                Segment::Fetch(FetchEvent::Done(_)) | Segment::Reset
-            );
-            if last {
-                // Recorded before the downloader can see the end.
-                note_peak(&peak, &fetch);
+            let limit = if quiet { reset } else { stalled };
+            let asked = Instant::now();
+            let event = fetch.next_event(limit.saturating_sub(slowness.waited));
+            let moved = slowness.after(asked.elapsed(), event.as_ref().map(came));
+            let mut segments = Vec::with_capacity(2);
+            if let Some(event) = event {
+                segments.push(Segment::Fetch(event));
             }
-            if tx.send((tag, segment)).is_err() || last {
-                // Dropping an unfinished Fetch cancels it.
-                return;
+            if moved {
+                if std::mem::take(&mut quiet) {
+                    segments.push(Segment::Moving);
+                }
+            } else if !quiet && slowness.waited >= stalled {
+                quiet = true;
+                segments.push(Segment::Quiet);
+            } else if quiet && slowness.waited >= reset {
+                segments.push(Segment::Reset);
+            }
+            for segment in segments {
+                let last = matches!(
+                    segment,
+                    Segment::Fetch(FetchEvent::Done(_)) | Segment::Reset
+                );
+                if last {
+                    // Recorded before the downloader can see the end.
+                    note_peak(&peak, &fetch);
+                }
+                if tx.send((tag, segment)).is_err() || last {
+                    // Dropping an unfinished Fetch cancels it.
+                    return;
+                }
             }
         }
     });
@@ -2717,9 +2815,9 @@ impl Drained {
 }
 
 /// Reads one fetch to its end, handing each body chunk to `on_data`. Checks for cancellation
-/// while it waits. Silence is measured from the end of the last `on_data`, so time spent writing
-/// never counts as a stall: after [`RetryPolicy::stalled_after`] the download shows Stalled, and
-/// after [`RetryPolicy::reset_after`] the fetch is cancelled (#48).
+/// while it waits. Too little ([`Slowness`]) counts only time spent waiting for the network, so
+/// time spent writing never counts as a stall: after [`RetryPolicy::stalled_after`] the download
+/// shows Stalled, and after [`RetryPolicy::reset_after`] the fetch is cancelled (#48, #292).
 fn drain(
     fetch: &Fetch,
     control: &Control,
@@ -2738,7 +2836,9 @@ fn drain_events(
     policy: &RetryPolicy,
     mut on_data: impl FnMut(&[u8]) -> Result<(), DownloadError>,
 ) -> Result<Drained, DownloadError> {
-    let mut last = Instant::now();
+    // Too little for too long, as for a segment's request ([`forward`], #292).
+    let mut slowness = Slowness::new(policy, limited(control));
+    let mut quiet = false;
     loop {
         if control.is_cancelled() {
             fetch.cancel();
@@ -2748,24 +2848,28 @@ fn drain_events(
             fetch.cancel();
             return Err(DownloadError::Paused);
         }
-        let Some(event) = fetch.next_event(CANCEL_CHECK) else {
-            let quiet = last.elapsed();
-            if quiet >= policy.reset_after {
-                fetch.cancel();
-                return Ok(Drained::Reset);
+        let asked = Instant::now();
+        let event = fetch.next_event(CANCEL_CHECK);
+        let moved = slowness.after(asked.elapsed(), event.as_ref().map(came));
+        if let Some(event) = event {
+            match event {
+                FetchEvent::Head(_) => {}
+                FetchEvent::Data(chunk) => on_data(&chunk)?,
+                FetchEvent::Done(Ok(())) => return Ok(Drained::Complete),
+                FetchEvent::Done(Err(e)) => return Ok(Drained::Failed(e)),
             }
-            if quiet >= policy.stalled_after {
-                control.show(DownloadStatus::Stalled);
-            }
-            continue;
-        };
-        match event {
-            FetchEvent::Head(_) => {}
-            FetchEvent::Data(chunk) => on_data(&chunk)?,
-            FetchEvent::Done(Ok(())) => return Ok(Drained::Complete),
-            FetchEvent::Done(Err(e)) => return Ok(Drained::Failed(e)),
         }
-        last = Instant::now();
+        if moved {
+            if std::mem::take(&mut quiet) {
+                control.moving();
+            }
+        } else if slowness.waited >= policy.reset_after {
+            fetch.cancel();
+            return Ok(Drained::Reset);
+        } else if !quiet && slowness.waited >= policy.stalled_after {
+            quiet = true;
+            control.show(DownloadStatus::Stalled);
+        }
     }
 }
 
@@ -3297,4 +3401,48 @@ fn write_at(file: &File, mut buf: &[u8], mut offset: u64) -> io::Result<()> {
 fn write_at(file: &File, buf: &[u8], offset: u64) -> io::Result<()> {
     use std::os::unix::fs::FileExt;
     file.write_all_at(buf, offset)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SECOND: Duration = Duration::from_secs(1);
+
+    fn policy() -> RetryPolicy {
+        RetryPolicy {
+            stalled_after: Duration::from_secs(15),
+            least_rate_bps: 1024,
+            ..RetryPolicy::DEFAULT
+        }
+    }
+
+    #[test]
+    fn a_request_moves_once_it_brought_the_floor_over_the_stall_time() {
+        // #292: 1 KiB/s over 15 s is 15 KiB. A trickle of 100 bytes a second never gets there, and
+        // its waiting adds up; 15 KiB at once moves it, and starts the count again.
+        let mut s = Slowness::new(&policy(), false);
+        for _ in 0..20 {
+            assert!(!s.after(SECOND, Some(Some(100))));
+        }
+        assert_eq!(s.waited, 20 * SECOND);
+        assert!(s.after(SECOND, Some(Some(15 * 1024))));
+        assert_eq!(s.waited, Duration::ZERO);
+    }
+
+    #[test]
+    fn a_head_or_an_end_is_progress_and_silence_is_not() {
+        let mut s = Slowness::new(&policy(), false);
+        assert!(!s.after(2 * SECOND, None));
+        assert_eq!(s.waited, 2 * SECOND);
+        assert!(s.after(SECOND, Some(None)));
+        assert_eq!(s.waited, Duration::ZERO);
+    }
+
+    #[test]
+    fn under_a_speed_limit_any_byte_is_progress() {
+        let mut s = Slowness::new(&policy(), true);
+        assert!(s.after(5 * SECOND, Some(Some(1))));
+        assert!(!s.after(5 * SECOND, Some(Some(0))));
+    }
 }

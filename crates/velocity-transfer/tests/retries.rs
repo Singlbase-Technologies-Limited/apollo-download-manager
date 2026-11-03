@@ -6,9 +6,9 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use velocity_core::domain::{DownloadStatus, FailureClass};
-use velocity_curl::{CurlLoop, Libcurl, LoopOptions};
+use velocity_curl::{CurlLoop, Libcurl, LoopOptions, RateLimit};
 use velocity_test_http::{
-    seeded_bytes, AnsweringLimit, FirstStatuses, Freeze, ServerOptions, TestServer,
+    seeded_bytes, AnsweringLimit, FirstStatuses, Freeze, ServerOptions, TestServer, Trickle,
 };
 use velocity_transfer::download::{
     download_with, Cadence, Control, DiskOptions, DownloadError, DownloadOptions, DownloadReport,
@@ -318,6 +318,99 @@ fn a_connection_that_goes_silent_while_the_others_finish_shows_stalled_then_is_r
     assert!(
         matches!((stalled, again), (Some(a), Some(b)) if a < b),
         "Stalled, then Downloading again: {seen:?}"
+    );
+}
+
+/// Runs the download on a thread of its own, and fails the test if it isn't done within `limit`:
+/// a request that is never reset would otherwise hold the test for hours.
+fn run_within(
+    limit: Duration,
+    url: String,
+    dest: PathBuf,
+    options: DownloadOptions,
+    control: Control,
+) -> Result<DownloadReport, DownloadError> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let _ = tx.send(run(&url, &dest, options, &control));
+    });
+    rx.recv_timeout(limit)
+        .unwrap_or_else(|_| panic!("the download was still running after {limit:?}"))
+}
+
+#[test]
+fn a_trickling_connection_shows_stalled_then_is_reset_and_retried() {
+    // #292: 32 bytes every 100 ms is never silent for FAST's 500 ms, but at about 320 B/s it is
+    // below the 1 KiB/s a request must keep up. It shows No data received (Stalled), is reset after
+    // 1 s, and its lease is fetched again.
+    let (s, data) = serve(ServerOptions {
+        trickle_first_later_range: Some(Trickle {
+            bytes: 32,
+            every: Duration::from_millis(100),
+        }),
+        ..ServerOptions::default()
+    });
+    let dir = Dir::new("trickle");
+    let dest = dir.file("out.bin");
+    let (control, seen) = recording();
+    let options = DownloadOptions {
+        connections: 1,
+        ..OPTIONS
+    };
+    let report = run_within(
+        Duration::from_secs(20),
+        s.url("f.bin"),
+        dest.clone(),
+        options,
+        control,
+    )
+    .expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert!(s.counters().trickled);
+    assert_eq!(report.mode, Mode::Ranges);
+    let seen = seen.lock().unwrap();
+    let stalled = seen.iter().position(|s| *s == DownloadStatus::Stalled);
+    let again = seen.iter().rposition(|s| *s == DownloadStatus::Downloading);
+    assert!(
+        matches!((stalled, again), (Some(a), Some(b)) if a < b),
+        "Stalled, then Downloading again: {seen:?}"
+    );
+}
+
+#[test]
+fn a_download_held_back_by_a_speed_limit_is_never_reset_for_being_slow() {
+    // #292: slow because the user limited it, not because of the server. Here every request is
+    // below the floor (set at 10 MiB/s), and none is reset or shown as Stalled.
+    let small = seeded_bytes(256 * 1024, 292);
+    let s = TestServer::start(
+        vec![("f.bin".into(), small.clone())],
+        ServerOptions::default(),
+    );
+    let dir = Dir::new("limited");
+    let dest = dir.file("out.bin");
+    let (control, seen) = recording();
+    let control = control.with_limits(vec![RateLimit::new(Some(64 * 1024))]);
+    let options = DownloadOptions {
+        retry: RetryPolicy {
+            least_rate_bps: 10 << 20,
+            ..FAST
+        },
+        ..OPTIONS
+    };
+    let report = run_within(
+        Duration::from_secs(20),
+        s.url("f.bin"),
+        dest.clone(),
+        options,
+        control,
+    )
+    .expect("the download succeeds");
+    assert!(std::fs::read(&dest).unwrap() == small);
+    assert_eq!(s.counters().gets, u64::from(report.fetches), "none reset");
+    assert!(
+        !seen.lock().unwrap().contains(&DownloadStatus::Stalled),
+        "{:?}",
+        seen.lock().unwrap()
     );
 }
 

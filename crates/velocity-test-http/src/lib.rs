@@ -72,6 +72,10 @@ pub struct ServerOptions {
     /// Limits only the first response to a range after byte 0 to this many body bytes per second,
     /// so that one connection is slower than the others (a range split, #42).
     pub throttle_first_later_range: Option<u64>,
+    /// Trickles the first response to a range after byte 0: a few bytes at a time, too often to
+    /// be silence and too few to be progress, until its body is sent or the client gives up
+    /// (#292).
+    pub trickle_first_later_range: Option<Trickle>,
     /// Paths answered with `302 Found` and this `Location`, for example to test that a redirect
     /// to a protocol outside the engine's allowlist is refused.
     pub redirects: Vec<(String, String)>,
@@ -167,6 +171,13 @@ pub struct Freeze {
     pub hold: Duration,
 }
 
+/// See [`ServerOptions::trickle_first_later_range`]: `bytes` every `every`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Trickle {
+    pub bytes: usize,
+    pub every: Duration,
+}
+
 /// What the server has seen and sent so far.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Counters {
@@ -183,6 +194,8 @@ pub struct Counters {
     pub faults: u32,
     /// Whether the response that [`ServerOptions::throttle_first_later_range`] slows was sent.
     pub slowed: bool,
+    /// Whether the response that [`ServerOptions::trickle_first_later_range`] trickles was sent.
+    pub trickled: bool,
     /// When each GET arrived, in order.
     pub request_times: Vec<Instant>,
     /// Requests answered by [`ServerOptions::first_statuses`].
@@ -686,6 +699,23 @@ fn serve_connection(
                 Some(pace),
             );
             return;
+        }
+        if let (Some(trickle), Some((start, _))) = (options.trickle_first_later_range, range) {
+            let first = {
+                let mut c = counters.lock().unwrap();
+                let first = start > 0 && !c.trickled;
+                c.trickled |= first;
+                first
+            };
+            if first {
+                for piece in body.chunks(trickle.bytes.max(1)) {
+                    if write_body(&mut out, piece, None, counters, None).is_err() {
+                        return;
+                    }
+                    thread::sleep(trickle.every);
+                }
+                return;
+            }
         }
         if let (Some(freeze), Some((start, _))) = (options.freeze_later_range, range) {
             let first = {
