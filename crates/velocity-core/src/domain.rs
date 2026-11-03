@@ -348,6 +348,9 @@ pub struct DestinationCheck {
     pub category_id: Option<String>,
     /// `None` when the server will name the file.
     pub file_name: Option<String>,
+    /// The folder and the name joined in the platform's separator, for the UI to show (#277);
+    /// `None` with `file_name`.
+    pub path: Option<String>,
     pub file_exists: bool,
     /// A download, V2's or V1's, that hasn't finished has the name.
     pub partial_download_exists: bool,
@@ -712,6 +715,7 @@ impl DestinationCheck {
             automatic_directory: true,
             category_id: Some("documents".to_owned()),
             file_name: Some("report.pdf".to_owned()),
+            path: Some("/home/user/Downloads/Documents/report.pdf".to_owned()),
             file_exists: true,
             partial_download_exists: false,
             suggested_name: Some("report (1).pdf".to_owned()),

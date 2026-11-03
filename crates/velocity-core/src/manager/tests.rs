@@ -4573,6 +4573,12 @@ mod categories {
                 automatic_directory: true,
                 category_id: Some("documents".to_owned()),
                 file_name: Some("report.pdf".to_owned()),
+                path: Some(
+                    dir.join("Documents")
+                        .join("report.pdf")
+                        .to_string_lossy()
+                        .into_owned()
+                ),
                 file_exists: false,
                 partial_download_exists: false,
                 suggested_name: None,
@@ -4605,6 +4611,32 @@ mod categories {
             m.check_destination(&long, &Choice::default()),
             Err(ErrorCode::InvalidUrl)
         );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// #277: a taken name is shown at its full path, which core joins in the platform's
+    /// separator, even for a folder typed with `/`.
+    #[test]
+    fn a_taken_name_is_shown_at_its_full_path() {
+        let (m, _control, _db, dir) = in_folder("full-path");
+        fs::write(dir.join("report.pdf"), b"there").unwrap();
+        let chosen = Choice {
+            directory: Some(dir.to_string_lossy().replace('\\', "/")),
+            ..Choice::default()
+        };
+        let url = "https://example.com/files/report.pdf";
+        let want = dir.join("report.pdf").to_string_lossy().into_owned();
+        let check = m.check_destination(url, &chosen).unwrap();
+        assert_eq!(check.path.as_deref(), Some(want.as_str()));
+        let Ok(Placement::Conflict(conflict)) = m.place(url, &chosen, OnConflict::Ask) else {
+            panic!("a conflict")
+        };
+        assert_eq!(conflict.path.as_deref(), Some(want.as_str()));
+        // A link the server names has no path yet.
+        let unnamed = m
+            .check_destination("https://example.com/download.php?id=3", &chosen)
+            .unwrap();
+        assert_eq!(unnamed.path, None);
         fs::remove_dir_all(&dir).unwrap();
     }
 

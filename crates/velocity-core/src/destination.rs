@@ -16,10 +16,16 @@ pub const MAX_FOLDER_BYTES: usize = 4096;
 
 /// `path` as a folder to save into, or `InvalidPath` when it is empty, too long, relative, has a
 /// control character or a `..` (V1's `validate_directory_syntax`). The folder needn't exist.
+/// On Windows its `/` become `\`, so a name joined to it never mixes the two (#277).
 pub fn check_folder(path: &str) -> Result<PathBuf, ErrorCode> {
     // Both separators on every platform: `a\..\b` is refused on Linux too.
     let parent = path.split(['/', '\\']).any(|part| part == "..");
-    let folder = PathBuf::from(path);
+    // A Windows name can't hold a `/`; a Linux one can hold a `\`, so it stays.
+    let folder = PathBuf::from(if cfg!(windows) {
+        path.replace('/', "\\")
+    } else {
+        path.to_owned()
+    });
     if path.is_empty()
         || path.len() > MAX_FOLDER_BYTES
         || path.chars().any(char::is_control)
@@ -572,6 +578,25 @@ mod tests {
             too_long,
         ] {
             assert_eq!(check_folder(&bad), Err(ErrorCode::InvalidPath), "{bad:?}");
+        }
+    }
+
+    /// #277: a folder typed with `/` on Windows is shown and saved with `\`, so a name joined to
+    /// it never mixes the two. A `\` stays as it is on Linux, where it can be part of a name.
+    #[test]
+    fn a_folder_uses_the_platforms_separator() {
+        // As text: two `PathBuf`s with different separators compare equal.
+        let text = |typed: &str| check_folder(typed).map(|p| p.to_string_lossy().into_owned());
+        if cfg!(windows) {
+            for typed in ["C:/Users/me/dl", "C:\\Users/me\\dl"] {
+                assert_eq!(text(typed).as_deref(), Ok("C:\\Users\\me\\dl"));
+            }
+            assert_eq!(
+                text("//server/share/dl").as_deref(),
+                Ok("\\\\server\\share\\dl")
+            );
+        } else {
+            assert_eq!(text("/home/me/a\\b").as_deref(), Ok("/home/me/a\\b"));
         }
     }
 }

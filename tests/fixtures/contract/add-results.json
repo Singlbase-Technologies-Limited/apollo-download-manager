@@ -16,6 +16,7 @@
         "fileExists": true,
         "fileName": "report.pdf",
         "partialDownloadExists": false,
+        "path": "/home/user/Downloads/Documents/report.pdf",
         "suggestedName": "report (1).pdf"
       },
       "kind": "conflict"

@@ -108,6 +108,7 @@ impl Manager {
             directory_exists: found.directory_exists,
             automatic_directory: resolved.automatic_directory,
             category_id: resolved.category.map(|c| c.id),
+            path: shown_path(&resolved.directory, file_name.as_deref()),
             file_name,
             file_exists: found.file_exists,
             partial_download_exists: found.partial_download_exists,
@@ -176,6 +177,7 @@ impl Manager {
                 automatic_directory: resolved.automatic_directory,
                 category_id,
                 file_name: name.map(str::to_owned),
+                path: shown_path(&resolved.directory, name),
                 file_exists: found.file_exists,
                 partial_download_exists: found.partial_download_exists,
                 suggested_name: None,
@@ -210,6 +212,11 @@ impl Manager {
                 && Path::new(&d.record.directory) == directory
         })
     }
+}
+
+/// `name` in `directory` as the UI shows it, in the platform's separator (#277).
+fn shown_path(directory: &Path, name: Option<&str>) -> Option<String> {
+    name.map(|n| directory.join(n).to_string_lossy().into_owned())
 }
 
 /// Makes `directory` ready for a new download: a missing category `subfolder` at its end is created

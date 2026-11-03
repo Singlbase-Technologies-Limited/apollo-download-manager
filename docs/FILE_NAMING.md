@@ -67,7 +67,7 @@ A typed name that isn't already a safe file name is refused with `INVALID_FILENA
 
 **The folder settings** are the settings document's `downloads` section (`FolderSettings`). [SETTINGS.md](SETTINGS.md#folders) lists them.
 
-**A folder path** must be absolute, at most 4096 bytes, with no control character and no `..` part, with either separator on any platform (`INVALID_PATH`). Only the text is checked; following links, and the other file system checks, are #72's.
+**A folder path** must be absolute, at most 4096 bytes, with no control character and no `..` part, with either separator on any platform (`INVALID_PATH`). On Windows its `/` become `\`, so the folder, and a name joined to it, is shown and saved with one separator (#277). Only the text is checked; following links, and the other file system checks, are #72's.
 
 **When adding,** a missing category subfolder is created inside its parent, one level, and never through a link (`metalink::create_folders`; a link there is `INVALID_PATH`). Any other missing folder is `DESTINATION_MISSING`: the default folder, a category's own folder, and a chosen folder.
 
