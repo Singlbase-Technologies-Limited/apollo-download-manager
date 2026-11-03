@@ -378,6 +378,7 @@ impl Manager {
                 created_at_ms: now_ms,
                 completed_at_ms: None,
                 retry_at_ms: None,
+                started_over: None,
                 started_at_ms: None,
                 average_speed_bps: None,
                 speed_limit_bps: None,
@@ -1044,6 +1045,8 @@ impl Manager {
                     .retry_at_ms
                     .filter(|_| shown == DownloadStatus::Retrying);
                 record.progress = snapshot.progress;
+                // Not saved either: why this run dropped the bytes it had (#257).
+                record.started_over = snapshot.started_over;
                 record.error = snapshot.error;
                 record.verification = snapshot.verification;
                 if snapshot.file_name.is_some() {

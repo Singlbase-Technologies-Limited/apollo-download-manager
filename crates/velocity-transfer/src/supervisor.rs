@@ -29,7 +29,7 @@ use std::sync::Arc;
 use velocity_child::ledger::Ledger;
 use velocity_child::supervisor::{Book, Retired, Supervisor};
 pub use velocity_child::supervisor::{EngineHealth, SupervisorOptions};
-use velocity_core::domain::{Capabilities, DownloadStatus, ErrorCode};
+use velocity_core::domain::{Capabilities, ErrorCode};
 use velocity_core::transfer::{
     DirectTransfer, EngineLimits, EngineSettings, Limits, TransferEvent, TransferId,
     TransferSnapshot, TransferSpec,
@@ -80,27 +80,9 @@ impl TransferBook {
         }
     }
 
-    /// Records a transfer an engine assigned, if no event has yet; `current` says whether that
-    /// engine still runs. Returns the events to pass on.
-    fn added(&mut self, current: bool, id: TransferId) -> Vec<TransferEvent> {
-        let queued = TransferSnapshot {
-            id,
-            status: DownloadStatus::Queued,
-            progress: velocity_core::domain::Progress {
-                completed_bytes: 0,
-                total_bytes: None,
-                download_speed_bps: 0,
-                upload_speed_bps: 0,
-                connections: 0,
-                connection_detail: None,
-            },
-            wasted_bytes: 0,
-            error: None,
-            verification: None,
-            file_name: None,
-            content_type: None,
-            retry_at_ms: None,
-        };
+    /// Records a transfer an engine assigned, as `queued` ([`TransferSnapshot::queued`]), if no
+    /// event has yet; `current` says whether that engine still runs. Returns the events to pass on.
+    fn added(&mut self, current: bool, queued: TransferSnapshot) -> Vec<TransferEvent> {
         // When the engine stopped between assigning the id and this reply, the transfer is lost.
         self.transfers
             .added(current, queued, CRASH_MESSAGE)
@@ -244,9 +226,12 @@ impl DirectTransfer for SupervisedEngine {
 
     fn add(&mut self, spec: TransferSpec) -> Result<TransferId, ErrorCode> {
         let (engine, generation) = self.supervisor.child()?;
+        // Before the spec goes to the engine; the id is the engine's.
+        let mut queued = TransferSnapshot::queued(TransferId(0), &spec);
         let id = engine.add(spec)?;
+        queued.id = id;
         self.supervisor
-            .update(|book, current| ((), book.added(current == generation, id)));
+            .update(|book, current| ((), book.added(current == generation, queued)));
         Ok(id)
     }
 

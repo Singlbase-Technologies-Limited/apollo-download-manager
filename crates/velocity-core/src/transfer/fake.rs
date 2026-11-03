@@ -278,24 +278,7 @@ impl DirectTransfer for FakeTransfer {
         }
         s.next_id += 1;
         let id = TransferId(s.next_id);
-        let snapshot = TransferSnapshot {
-            id,
-            status: DownloadStatus::Queued,
-            progress: Progress {
-                completed_bytes: 0,
-                total_bytes: None,
-                download_speed_bps: 0,
-                upload_speed_bps: 0,
-                connections: 0,
-                connection_detail: None,
-            },
-            wasted_bytes: 0,
-            error: None,
-            verification: None,
-            file_name: spec.file_name.clone(),
-            content_type: None,
-            retry_at_ms: None,
-        };
+        let snapshot = TransferSnapshot::queued(id, &spec);
         s.transfers.insert(id, Transfer { spec, snapshot });
         s.changed(id);
         Ok(id)

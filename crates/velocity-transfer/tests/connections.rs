@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use velocity_curl::{CurlLoop, Libcurl, LoopOptions};
+use velocity_test_http::timeline::Timeline;
 use velocity_test_http::{seeded_bytes, ServerOptions, TestServer};
 use velocity_transfer::adaptive::{AdaptivePolicy, Tuning};
 use velocity_transfer::download::{
@@ -57,11 +58,35 @@ fn one_at_a_time() -> MutexGuard<'static, ()> {
 
 /// Polls `done` every 20 ms; panics with `what` after `timeout`.
 fn wait_until(timeout: Duration, what: &str, done: impl Fn() -> bool) {
+    wait_until_showing(timeout, what, None, done);
+}
+
+/// [`wait_until`], with what `timeline` saw in the message when it times out (#257).
+fn wait_until_showing(
+    timeout: Duration,
+    what: &str,
+    timeline: Option<&Timeline>,
+    done: impl Fn() -> bool,
+) {
     let deadline = Instant::now() + timeout;
     while !done() {
-        assert!(Instant::now() < deadline, "timed out waiting until {what}");
+        assert!(
+            Instant::now() < deadline,
+            "timed out waiting until {what}{}",
+            timeline.map_or(String::new(), |t| format!(":\n{}", t.text()))
+        );
         std::thread::sleep(Duration::from_millis(20));
     }
+}
+
+/// What `control`'s download runs, every 500 ms: what a ramp test shows when it fails on a runner
+/// where it passes locally (#257).
+fn ramp_timeline(control: &Arc<Control>) -> Timeline {
+    let control = Arc::clone(control);
+    Timeline::start(Duration::from_millis(500), move || {
+        let now = control.connections_now();
+        format!("{} running, tuned {:?}", now.active, now.tuned)
+    })
 }
 
 #[test]
@@ -327,10 +352,12 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
         connections: 4,
         ..ADAPTIVE
     };
+    let timeline = ramp_timeline(&control);
     let download = run(&server, &dir, four, &control);
-    wait_until(
+    wait_until_showing(
         Duration::from_secs(40),
         "more connections stop helping",
+        Some(&timeline),
         || matches!(control.connections_now().tuned, Some((_, Tuning::NoGain))),
     );
     // Noise only ever keeps a connection (#221): a noisy count stops the ramp above 2, at 3. It
@@ -338,7 +365,8 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
     let (kept, _) = control.connections_now().tuned.unwrap();
     assert!(
         (2..=3).contains(&kept),
-        "kept {kept}: the 2 that help, or one more after a noisy count"
+        "kept {kept}: the 2 that help, or one more after a noisy count:\n{}",
+        timeline.text()
     );
     let (dest, report) = download.join().unwrap();
     // Counted by the engine over the whole download: the server may count a stopped request's

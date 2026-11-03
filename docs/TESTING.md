@@ -128,6 +128,12 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 - **A running child, on Linux only:** it reads `/proc/<pid>/cmdline` and `environ` of the engine and the torrent helper. On Windows that part prints NOT RUN, and `secret_leaks.rs` checks the command a child is started with instead: one fixed argument and a cleared environment (PO decision on #71).
 - **Where it runs:** `crates/velocity-transfer/tests/secret_leaks.rs` (HTTP login and cookie and FTP login through the child engine; SFTP key and password logins) and `crates/velocity-torrent/tests/manager.rs` (a private tracker's passkey, through the manager and the torrent helper). The scan's own tests plant each kind of leak and check it is found.
 
+## Timelines in ramp tests (#257)
+
+`velocity_test_http::timeline::Timeline` samples a line every interval while a test runs, and the test puts the lines in its failure message.
+- **Why:** the adaptive-connection tests time the ramp. A loaded CI runner bends that timing in ways a local run doesn't show, even with the test pinned to one or two cores.
+- **Where:** `adaptive_connections_stop_below_the_cap_when_more_stop_helping` (`crates/velocity-transfer/tests/connections.rs`) and `a_server_that_throttles_each_connection_gets_separate_connections` (`crates/velocity-transfer-h2c/tests/http2.rs`) record, every 500 ms, the requests running and the ramp's count and reason. A failure on CI then shows what the ramp did.
+
 ## The field test (#262)
 
 The installed app, built from `main`, used the way a person uses it: real links from real servers, pause and resume, closing and killing the app mid-download, torrents. `pnpm field` drives the real window through Playwright and records each download every few seconds, with what is on disk and the app's connections. Every problem becomes an issue in epic #1. It runs by hand on Windows, before each release candidate, never in CI, and never against the public internet in automated tests (the fixture policy above still holds).

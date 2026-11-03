@@ -60,7 +60,8 @@ use serde::Serialize;
 /// Version 12 (#59) added [`domain::DownloadRecord::retry_at_ms`].
 /// Version 22 (#222) added [`manager::AddRequest::metalink_files`], the `metalinkAdded` outcome
 /// and `choose_metalinks`; versions 13 to 21 are in docs/CONTRACTS.md.
-pub const COMMAND_API_VERSION: u32 = 22;
+/// Version 23 (#257) added [`domain::DownloadRecord::started_over`].
+pub const COMMAND_API_VERSION: u32 = 23;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

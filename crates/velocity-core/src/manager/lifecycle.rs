@@ -23,6 +23,8 @@ pub(super) struct Logged {
     connections_at_ms: Option<u64>,
     /// Connection lines since it last started.
     connection_lines: u32,
+    /// Why it last started over, as logged (#257).
+    started_over: Option<String>,
 }
 
 /// One line, at warn for what went wrong and at info for the rest.
@@ -61,6 +63,7 @@ impl Logged {
             connections: record.progress.connections,
             connections_at_ms: None,
             connection_lines: 0,
+            started_over: record.started_over.clone(),
         }
     }
 
@@ -87,6 +90,13 @@ impl Logged {
         } else if before != record.status {
             if let Some(line) = status_line(before, record, &at) {
                 lines.push(line);
+            }
+        }
+        if record.started_over != self.started_over {
+            self.started_over.clone_from(&record.started_over);
+            if let Some(why) = &record.started_over {
+                // The bytes it had were dropped: never silently (#257).
+                lines.push(Line::warn(format!("download {id} started over: {why}")));
             }
         }
         if working(record.status) && !on_its_way(before) {

@@ -34,6 +34,7 @@
       "sourceUrl": "https://example.com/files/archive.zip",
       "speedLimitBps": 524288,
       "startedAtMs": 1792600001000,
+      "startedOver": "The file on the server changed, so the download started again.",
       "status": "retrying",
       "torrent": null,
       "verification": null
@@ -61,6 +62,7 @@
       "sourceUrl": "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567",
       "speedLimitBps": null,
       "startedAtMs": 1792600001000,
+      "startedOver": "The file on the server changed, so the download started again.",
       "status": "seeding",
       "torrent": {
         "peers": 7,

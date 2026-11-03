@@ -116,6 +116,19 @@ describe('the details panel (V1)', () => {
     expect(alert.className).toMatch(/\bbreak-words\b/);
   });
 
+  // #257: a download that dropped the bytes it had says why, while it runs and after.
+  it('says why a download started again', async () => {
+    const why = 'The file on the server changed, so the download started again.';
+    const restarted = makeRecord({ id: 'f', fileName: 'big.rar', status: 'downloading', createdAtMs: 7, startedOver: why });
+    installFakeBackend({ snapshot: withDownloads([restarted, { ...archive }]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('big.rar'));
+    expect(within(await panel()).getByRole('status').textContent).toBe(why);
+    await user.click(await rowFor('archive.zip'));
+    expect(within(await panel()).queryByText(why)).toBeNull();
+  });
+
   // #250: the hint under an error follows its class, and never promises that a retry helps.
   it.each([
     ['transient', true, 'Retrying may help once the cause is fixed.'],

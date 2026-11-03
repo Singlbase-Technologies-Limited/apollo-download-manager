@@ -4,6 +4,7 @@
 //! segment for the rest, so every request can be checked.
 
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use velocity_core::transfer::{Checkpoint, Resume, CHECKPOINT_FORMAT};
@@ -300,6 +301,144 @@ fn a_resume_of_a_file_whose_etag_changed_starts_over() {
         asked(&s_data.counters())[0],
         (Some("bytes=100000-299999"), Some("\"v1\"")),
         "the resume asks with the recorded ETag"
+    );
+}
+
+/// A control that records why the download started over (#257).
+fn recording_start_overs() -> (Control, Arc<Mutex<Vec<String>>>) {
+    let seen = Arc::new(Mutex::new(Vec::new()));
+    let into = Arc::clone(&seen);
+    let control =
+        Control::default().with_start_over(move |why| into.lock().unwrap().push(why.to_owned()));
+    (control, seen)
+}
+
+#[test]
+fn a_start_over_says_why() {
+    // #257: a download that drops the bytes it had says so, with the reason, never silently.
+    let v2 = version(2);
+    let s = TestServer::start(
+        vec![("f.bin".into(), v2.clone())],
+        ServerOptions {
+            file_headers: etag("\"v2\""),
+            ..ServerOptions::default()
+        },
+    );
+    let dir = Dir::new("says-why");
+    let dest = dir.file("out.bin");
+    std::fs::write(part_of(&dest), &version(1)[..100_000]).unwrap();
+    let checkpoint = Checkpoint {
+        format: CHECKPOINT_FORMAT,
+        source: s.url("f.bin"),
+        total: LEN as u64,
+        etag: Some("\"v1\"".to_owned()),
+        last_modified: None,
+        content_encoding: None,
+        durable: vec![(0, 100_000)],
+    };
+    let (control, seen) = recording_start_overs();
+    download_resumable(
+        &curl_loop(),
+        &s.url("f.bin"),
+        &dest,
+        OPTIONS,
+        Some(&Resume::Checkpoint { checkpoint }),
+        &Expected::default(),
+        &control,
+    )
+    .expect("it starts over");
+    assert!(std::fs::read(&dest).unwrap() == v2);
+    assert_eq!(
+        *seen.lock().unwrap(),
+        ["The file on the server changed, so the download started again."]
+    );
+}
+
+#[test]
+fn a_checkpoint_that_cannot_be_used_says_why_the_download_started_again() {
+    let data = version(1);
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions::default(),
+    );
+    let dir = Dir::new("untrusted");
+    let dest = dir.file("out.bin");
+    std::fs::write(part_of(&dest), &data[..100_000]).unwrap();
+    // Saved by another version's format: it can't be trusted, so its bytes are discarded.
+    let checkpoint = Checkpoint {
+        format: CHECKPOINT_FORMAT + 1,
+        source: s.url("f.bin"),
+        total: LEN as u64,
+        etag: None,
+        last_modified: None,
+        content_encoding: None,
+        durable: vec![(0, 100_000)],
+    };
+    let (control, seen) = recording_start_overs();
+    let report = download_resumable(
+        &curl_loop(),
+        &s.url("f.bin"),
+        &dest,
+        OPTIONS,
+        Some(&Resume::Checkpoint { checkpoint }),
+        &Expected::default(),
+        &control,
+    )
+    .expect("it downloads again");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(report.resumed_bytes, 0);
+    assert_eq!(
+        *seen.lock().unwrap(),
+        ["The saved progress couldn't be used, so the download started again."]
+    );
+}
+
+#[test]
+fn a_new_download_or_a_good_resume_says_nothing_about_starting_over() {
+    let data = version(1);
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions::default(),
+    );
+    let dir = Dir::new("nothing-lost");
+    let dest = dir.file("out.bin");
+    let (control, seen) = recording_start_overs();
+    download_resumable(
+        &curl_loop(),
+        &s.url("f.bin"),
+        &dest,
+        OPTIONS,
+        None,
+        &Expected::default(),
+        &control,
+    )
+    .expect("it downloads");
+    std::fs::remove_file(&dest).unwrap();
+    std::fs::write(part_of(&dest), &data[..100_000]).unwrap();
+    let checkpoint = Checkpoint {
+        format: CHECKPOINT_FORMAT,
+        source: s.url("f.bin"),
+        total: LEN as u64,
+        etag: None,
+        last_modified: None,
+        content_encoding: None,
+        durable: vec![(0, 100_000)],
+    };
+    let report = download_resumable(
+        &curl_loop(),
+        &s.url("f.bin"),
+        &dest,
+        OPTIONS,
+        Some(&Resume::Checkpoint { checkpoint }),
+        &Expected::default(),
+        &control,
+    )
+    .expect("it resumes");
+    assert_eq!(report.resumed_bytes, 100_000);
+    assert!(
+        seen.lock().unwrap().is_empty(),
+        "{:?}",
+        seen.lock().unwrap()
     );
 }
 

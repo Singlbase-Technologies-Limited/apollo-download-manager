@@ -13,6 +13,7 @@ mod http2;
 pub mod leaks;
 pub mod proxy;
 pub mod ssh;
+pub mod timeline;
 pub mod tls;
 
 pub use http2::{Http2Options, Http2Server};

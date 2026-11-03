@@ -81,6 +81,31 @@ type StatusFn =
 type NamedFn = Box<dyn Fn(&str) + Send + Sync>;
 /// Called with the file's media type, once the server answered with the file (#54).
 type TypedFn = Box<dyn Fn(&str) + Send + Sync>;
+/// Called with why the download dropped the bytes it had and started again (#257).
+type StartOverFn = Box<dyn Fn(&str) + Send + Sync>;
+
+/// Why a download dropped the bytes it had and started again, as the user is told (#257).
+pub mod started_over {
+    /// Another version of the file: its bytes are never mixed with the old ones (#45).
+    pub const CHANGED: &str = "The file on the server changed, so the download started again.";
+    /// The server now applies another `Content-Encoding`, so the old bytes don't line up (#45).
+    pub const ENCODING_CHANGED: &str =
+        "The server changed how it sends the file, so the download started again.";
+    /// The checkpoint isn't this download's, or is damaged, so its bytes can't be trusted (#43).
+    pub const UNUSABLE_CHECKPOINT: &str =
+        "The saved progress couldn't be used, so the download started again.";
+    /// A part file with no checkpoint: nothing proves which of its bytes are on disk (#43).
+    pub const NO_CHECKPOINT: &str =
+        "There was no saved progress for the unfinished file, so the download started again.";
+    /// The checkpoint was saved, but its part file is gone.
+    pub const PART_FILE_GONE: &str = "The unfinished file was gone, so the download started again.";
+    /// A piece failed its hash, and the server can't send it alone (#46).
+    pub const BAD_PIECE_WITHOUT_RANGES: &str = "Part of the file failed its check, and the server \
+        can't send parts alone, so the download started again.";
+    /// The first source failed after it sent bytes, and another took over (#55).
+    pub const SOURCE_FAILED: &str =
+        "The first source failed, so the download started again from another.";
+}
 
 /// Lets a caller follow, pause and stop a running download (the engine, #37, #43).
 #[derive(Default)]
@@ -118,6 +143,7 @@ pub struct Control {
     request: Arc<RequestOptions>,
     named: Option<NamedFn>,
     typed: Option<TypedFn>,
+    started_over: Option<StartOverFn>,
 }
 
 /// Gives a request what every request of its download carries: its speed limits (#49) and its
@@ -223,6 +249,20 @@ impl Control {
     pub fn with_content_type(mut self, typed: impl Fn(&str) + Send + Sync + 'static) -> Self {
         self.typed = Some(Box::new(typed));
         self
+    }
+
+    /// `started_over` is called with why, each time the download drops bytes it had and starts
+    /// again (#257). A start that drops nothing isn't reported.
+    pub fn with_start_over(mut self, started_over: impl Fn(&str) + Send + Sync + 'static) -> Self {
+        self.started_over = Some(Box::new(started_over));
+        self
+    }
+
+    /// Tells the caller the download dropped the bytes it had, and why.
+    fn started_over(&self, why: &str) {
+        if let Some(started_over) = &self.started_over {
+            started_over(why);
+        }
     }
 
     /// Stops the download and keeps its part file: it ends with [`DownloadError::Paused`], after a
@@ -650,21 +690,35 @@ pub fn download_from(
                 return Err(DownloadError::FileExists);
             }
             let path = part_path(destination);
+            // Why bytes the user saw counted are dropped, if they are (#257).
+            let mut why = None;
             if let Some(Resume::Checkpoint { checkpoint }) = resume {
+                let kept = !checkpoint.durable.is_empty();
                 if let Some(durable) = trusted(checkpoint, url) {
                     match files::open_part(&path) {
                         Ok(file) => {
                             part = Some(PartFile::resumed(path.clone(), file, durable));
                             from = Some(checkpoint);
                         }
-                        Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+                        Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                            why = kept.then_some(started_over::PART_FILE_GONE);
+                        }
                         Err(e) => return Err(io_error("open the part file", &path, &e)),
                     }
+                } else {
+                    why = kept.then_some(started_over::UNUSABLE_CHECKPOINT);
                 }
             }
             if part.is_none() {
+                if let Some(Resume::DiscardPartFile {}) = resume {
+                    let held = fs::symlink_metadata(&path).is_ok_and(|m| m.len() > 0);
+                    why = held.then_some(started_over::NO_CHECKPOINT);
+                }
                 if resume.is_some() {
                     discard(&path)?;
+                }
+                if let Some(why) = why {
+                    control.started_over(why);
                 }
                 part = Some(PartFile::create(path, sparse)?);
             }
@@ -717,7 +771,14 @@ pub fn download_from(
         // The file changed on the server, during the download or since its checkpoint: its old
         // bytes are never mixed with the new ones, and it starts over once with the new file;
         // after an encoding change, as one stream. A second change ends it; the user may retry
-        // (report section 5.3, #45).
+        // (report section 5.3, #45). The user is told why (#257).
+        if part.covered() > 0 {
+            control.started_over(if one_stream {
+                started_over::ENCODING_CHANGED
+            } else {
+                started_over::CHANGED
+            });
+        }
         part.start_over()?;
         let lead = sources.lead();
         ck = Checkpointer::new(options.checkpoints, sources.url(lead));
@@ -861,6 +922,7 @@ fn repair_pieces(
         } else if !started_over {
             // Ranges don't work for this download, so the piece can't come alone.
             started_over = true;
+            control.started_over(self::started_over::BAD_PIECE_WITHOUT_RANGES);
             part.start_over()?;
             let lead = sources.lead();
             *ck = Checkpointer::new(options.checkpoints, sources.url(lead));
@@ -967,6 +1029,9 @@ fn fresh_from_any(
         let Some(next) = sources.fallback(lead) else {
             return result;
         };
+        if part.covered() > 0 {
+            control.started_over(started_over::SOURCE_FAILED);
+        }
         part.start_over()?;
         sources.make_lead(next);
         *ck = Checkpointer::new(options.checkpoints, sources.url(next));

@@ -3,14 +3,16 @@
 //! stream reset moved from #42, and the multiplex policy. Real libcurl, real sockets, real files.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
 use velocity_core::domain::FailureClass;
 use velocity_curl::{CurlLoop, Libcurl, LoopOptions};
+use velocity_test_http::timeline::Timeline;
 use velocity_test_http::{seeded_bytes, AnsweringLimit, Http2Options, Http2Server, RangeMode};
 use velocity_transfer::adaptive::AdaptivePolicy;
 use velocity_transfer::download::{
-    download, Cadence, DiskOptions, DownloadError, DownloadOptions, Mode,
+    download, download_with, Cadence, Control, DiskOptions, DownloadError, DownloadOptions, Mode,
 };
 use velocity_transfer::retry::RetryPolicy;
 use velocity_transfer::scheduler::Sizes;
@@ -243,7 +245,24 @@ fn a_server_that_throttles_each_connection_gets_separate_connections() {
         connections: 8,
         ..ADAPTIVE
     };
-    let r = download(&h2c_loop(), &s.url("f.bin"), &dir.file("f"), options).expect("done");
+    // What the ramp did, for the failure message: a CI runner once ran all 128 MiB at 8 streams
+    // while every local run stepped down and tried connections of their own (#257).
+    let control = Arc::new(Control::default());
+    let timeline = {
+        let control = Arc::clone(&control);
+        Timeline::start(Duration::from_millis(500), move || {
+            let now = control.connections_now();
+            format!("{} running, tuned {:?}", now.active, now.tuned)
+        })
+    };
+    let r = download_with(
+        &h2c_loop(),
+        &s.url("f.bin"),
+        &dir.file("f"),
+        options,
+        &control,
+    )
+    .expect("done");
     assert!(std::fs::read(dir.file("f")).unwrap() == data);
     let c = s.counters();
     eprintln!(
@@ -252,7 +271,8 @@ fn a_server_that_throttles_each_connection_gets_separate_connections() {
     );
     assert!(
         r.own_connections,
-        "it chose connections of their own: {r:?}"
+        "it chose connections of their own: {r:?}\n{}",
+        timeline.text()
     );
     // The mode is the criterion. How far the trial's own ramp got varies with the machine (CI's
     // Windows runner settled at 3), so this only checks several of its own ran together.

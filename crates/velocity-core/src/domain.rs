@@ -279,6 +279,9 @@ pub struct DownloadRecord {
     /// While Retrying, when the engine tries again, in milliseconds since the Unix epoch (#59);
     /// `None` in every other status. Never invented: only an engine reports it.
     pub retry_at_ms: Option<u64>,
+    /// Why the download last dropped the bytes it had and started again, as the engine said it
+    /// (#257); `None` while it never did in this run. Not saved, like `retry_at_ms`.
+    pub started_over: Option<String>,
     /// The first time the engine reported it running, in milliseconds since the Unix epoch (#59).
     pub started_at_ms: Option<u64>,
     /// The bytes per second it received while it ran, once it ran for a second (#59).
@@ -619,6 +622,9 @@ impl DownloadRecord {
             created_at_ms: 1_792_600_000_000,
             completed_at_ms: None,
             retry_at_ms: Some(1_792_600_030_000),
+            started_over: Some(
+                "The file on the server changed, so the download started again.".to_owned(),
+            ),
             started_at_ms: Some(1_792_600_001_000),
             average_speed_bps: Some(262_144),
             speed_limit_bps: Some(524_288),

@@ -23,7 +23,7 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use velocity_core::domain::{
     Capabilities, ConnectionDetail, ConnectionLimit, DownloadKind, DownloadStatus, ErrorCode,
-    FailureClass, LibraryVersion, Progress, ProtocolCapabilities, TransferError,
+    FailureClass, LibraryVersion, ProtocolCapabilities, TransferError,
 };
 use velocity_core::paths::Paths;
 use velocity_core::proxy::{Proxy, ProxyKind};
@@ -624,24 +624,7 @@ impl DirectTransfer for InProcessEngine {
         );
         state.next_id += 1;
         let id = TransferId(state.next_id);
-        let snapshot = TransferSnapshot {
-            id,
-            status: DownloadStatus::Queued,
-            progress: Progress {
-                completed_bytes: 0,
-                total_bytes: None,
-                download_speed_bps: 0,
-                upload_speed_bps: 0,
-                connections: 0,
-                connection_detail: None,
-            },
-            wasted_bytes: 0,
-            error: None,
-            verification: None,
-            file_name: spec.file_name.clone(),
-            content_type: None,
-            retry_at_ms: None,
-        };
+        let snapshot = TransferSnapshot::queued(id, &spec);
         state.transfers.insert(
             id,
             Entry {
@@ -858,7 +841,12 @@ fn start_worker(shared: &Arc<Shared>, id: TransferId, resume: Option<Resume>) {
         let Some(entry) = state.transfers.get_mut(&id) else {
             return;
         };
-        let (reporter, namer, typer) = (Arc::clone(shared), Arc::clone(shared), Arc::clone(shared));
+        let (reporter, namer, typer, restarter) = (
+            Arc::clone(shared),
+            Arc::clone(shared),
+            Arc::clone(shared),
+            Arc::clone(shared),
+        );
         let control = Control::with_progress(progress_reporter(shared, id))
             .with_status(status_reporter(shared, id))
             .with_limits(vec![entry.limit.clone(), shared.global.clone()])
@@ -890,6 +878,16 @@ fn start_worker(shared: &Arc<Shared>, id: TransferId, resume: Option<Resume>) {
                         entry.snapshot.content_type = Some(content_type.to_owned());
                         state.changed(id);
                     }
+                }
+            })
+            .with_start_over(move |why| {
+                // The bytes it had are gone: progress counts from 0 again, and the user is told
+                // why (#257).
+                let mut state = lock(&restarter.state);
+                if let Some(entry) = state.transfers.get_mut(&id) {
+                    entry.snapshot.started_over = Some(why.to_owned());
+                    entry.snapshot.progress.completed_bytes = 0;
+                    state.changed(id);
                 }
             });
         entry.control = Arc::new(control);

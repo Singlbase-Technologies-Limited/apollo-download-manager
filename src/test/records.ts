@@ -9,6 +9,7 @@ export function makeRecord(over: Partial<DownloadRecord> = {}): DownloadRecord {
     status: 'queued',
     error: null,
     retryAtMs: null,
+    startedOver: null,
     startedAtMs: null,
     averageSpeedBps: null,
     progress: { ...sample.progress, connectionDetail: null },
