@@ -66,9 +66,15 @@ const OPTIONS: DownloadOptions = DownloadOptions {
 #[test]
 fn a_segmented_download_over_https_completes() {
     let data = seeded_bytes(4 * MIB, 72);
+    // Paced as a network is (#281): since #247 a download opens its connections a step at a time,
+    // and on loopback a starved CPU let the first one finish its lease before the next step opened,
+    // so every request reused one session.
     let server = TestServer::start(
         vec![("f.bin".into(), data.clone())],
-        ServerOptions::default(),
+        ServerOptions {
+            throttle_bytes_per_sec: Some(4 * MIB as u64),
+            ..ServerOptions::default()
+        },
     );
     let front = TlsFront::start(server.addr(), Leaf::Valid, Alpn::Http1);
     let dir = Dir::new("https");
