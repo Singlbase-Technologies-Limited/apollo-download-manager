@@ -131,8 +131,10 @@ pub struct Sizes {
 }
 
 impl Sizes {
-    /// The report's hypotheses: leases of at most 32 MiB, splits of remainders of at least 2 MiB,
-    /// at multiples of 64 KiB.
+    /// Leases of at most 32 MiB, splits of remainders of at least 2 MiB, at multiples of 64 KiB.
+    /// The cap is the report's hypothesis, kept after #247 measured none: without it a connection
+    /// the ramp adds must split a running request, and the ramp settled on fewer connections. A
+    /// server that throttled is asked once per connection instead ([`Scheduler::ask_once`]).
     pub const DEFAULT: Sizes = Sizes {
         max_lease: 32 << 20,
         min_split: 1 << 20,
@@ -289,6 +291,12 @@ impl Scheduler {
         };
         self.leases.insert(lease.id, lease);
         lease
+    }
+
+    /// From now on a lease is as long as its share, without `max_lease`: for a server that
+    /// limits how often it's asked, each connection asks once for the rest (#247).
+    pub fn ask_once(&mut self) {
+        self.sizes.max_lease = u64::MAX;
     }
 
     /// Hands out the next lease for one of `idle` free connections: the front of the unassigned
@@ -584,6 +592,20 @@ mod tests {
         assert_eq!(fresh(s.assign(3)).end, 1000);
         let mut s = Scheduler::new(1001, &Coverage::default(), small());
         assert_eq!(fresh(s.assign(4)).end, 260);
+    }
+
+    #[test]
+    fn a_server_that_limits_requests_gets_the_rest_in_one_lease() {
+        // #247: a server that answers 429 when asked too often gets one request for the rest,
+        // not one per `max_lease`.
+        let mut s = Scheduler::new(5000, &Coverage::default(), small());
+        assert_eq!(fresh(s.assign(1)).end, 1000);
+        s.ask_once();
+        assert_eq!(fresh(s.assign(1)).end, 5000);
+        // Shared between idle connections as before.
+        let mut s = Scheduler::new(5000, &Coverage::default(), small());
+        s.ask_once();
+        assert_eq!(fresh(s.assign(2)).end, 2500);
     }
 
     #[test]

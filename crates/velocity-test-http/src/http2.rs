@@ -9,6 +9,7 @@
 use std::collections::HashMap;
 use std::future::poll_fn;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -38,6 +39,10 @@ pub struct Http2Options {
     pub throttle_first_later_range: Option<u64>,
     /// Answers a stream with an error status while this many others are being answered (#247).
     pub limit_answering: Option<AnsweringLimit>,
+    /// Answers a stream with an error status while this many others are being answered on the
+    /// same connection, the way proof.ovh.net refuses parallel streams of one HTTP/2 connection
+    /// and serves the same requests on connections of their own (#247).
+    pub limit_per_connection: Option<AnsweringLimit>,
 }
 
 /// A running HTTP/2 server on 127.0.0.1 and a free port. It stops when dropped.
@@ -132,6 +137,8 @@ async fn serve_connection(
         return;
     };
     let pace = Arc::new(Pace::new(options.throttle_connection_bytes_per_sec));
+    // Streams of this connection being answered, for [`Http2Options::limit_per_connection`].
+    let streams = Arc::new(AtomicU32::new(0));
     while let Some(Ok((request, respond))) = connection.accept().await {
         tokio::spawn(serve_stream(
             request,
@@ -140,7 +147,26 @@ async fn serve_connection(
             Arc::clone(&counters),
             options.clone(),
             Arc::clone(&pace),
+            Arc::clone(&streams),
         ));
+    }
+}
+
+/// One stream of a connection being answered; counted while it lives.
+struct ConnectionStream(Arc<AtomicU32>);
+
+impl ConnectionStream {
+    /// Starts one when fewer than `max` streams of the connection are being answered.
+    fn within(streams: &Arc<AtomicU32>, max: u32) -> Option<Self> {
+        // Counted first, then checked: the guard gives the count back either way.
+        let stream = ConnectionStream(Arc::clone(streams));
+        (streams.fetch_add(1, Ordering::AcqRel) < max).then_some(stream)
+    }
+}
+
+impl Drop for ConnectionStream {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::AcqRel);
     }
 }
 
@@ -151,6 +177,7 @@ async fn serve_stream(
     counters: Arc<Mutex<Counters>>,
     options: Http2Options,
     pace: Arc<Pace>,
+    streams: Arc<AtomicU32>,
 ) {
     let head = request.method() == Method::HEAD;
     let range_header = request
@@ -185,6 +212,23 @@ async fn serve_stream(
             .expect("a valid response");
         let _ = respond.send_response(not_found, true);
         return;
+    };
+    let _on_connection = match options.limit_per_connection.as_ref() {
+        Some(limit) if !head => match ConnectionStream::within(&streams, limit.max) {
+            Some(stream) => Some(stream),
+            None => {
+                counters.lock().unwrap().limited.push(Instant::now());
+                let mut refused = Response::builder()
+                    .status(limit.status)
+                    .header(header::CONTENT_LENGTH, 0);
+                if let Some(wait) = &limit.retry_after {
+                    refused = refused.header(header::RETRY_AFTER, wait);
+                }
+                let _ = respond.send_response(refused.body(()).expect("a valid response"), true);
+                return;
+            }
+        },
+        _ => None,
     };
     let admitted = match options.limit_answering.as_ref() {
         Some(limit) if !head => match Answering::within(&counters, limit) {

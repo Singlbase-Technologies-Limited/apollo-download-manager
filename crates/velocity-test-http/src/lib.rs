@@ -99,9 +99,18 @@ pub struct ServerOptions {
     /// The first response over HTTP/1.1 whose body holds this byte of the file sends it with its
     /// bits flipped; later ones send it as it is: a piece that is bad once (#46).
     pub corrupt_once: Option<u64>,
+    /// Answers `429` to a file request that comes sooner than `min_gap` after the previous one
+    /// began, the way proof.ovh.net limits how often it's asked (#247).
+    pub request_pace: Option<RequestPace>,
     /// The network goes away part way: the first GET's answer is cut after `after` body bytes,
     /// then the next `drops` requests are closed unanswered, then the server answers again (#317).
     pub outage: Option<Outage>,
+}
+
+/// See [`ServerOptions::request_pace`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RequestPace {
+    pub min_gap: Duration,
 }
 
 /// See [`ServerOptions::outage`].
@@ -218,6 +227,8 @@ pub struct Counters {
     pub frozen: bool,
     /// Whether the byte [`ServerOptions::corrupt_once`] names was sent flipped.
     pub corrupted: bool,
+    /// When the last file request [`ServerOptions::request_pace`] let through began.
+    pub last_paced: Option<Instant>,
     /// Whether [`ServerOptions::outage`] began, and the requests it closed unanswered.
     pub outage_began: bool,
     pub outage_dropped: u32,
@@ -651,6 +662,26 @@ fn serve_connection(
             if !head && take_count(counters, |c| &mut c.first_statuses_sent, first.count) {
                 let head = status_head(first.status, first.retry_after.as_deref());
                 let _ = out.write_all(head.as_bytes());
+                if close {
+                    return;
+                }
+                continue;
+            }
+        }
+        if let (Some(pace), false) = (options.request_pace, head) {
+            let too_soon = {
+                let mut c = counters.lock().unwrap();
+                let now = Instant::now();
+                let soon = c.last_paced.is_some_and(|at| now - at < pace.min_gap);
+                if soon {
+                    c.limited.push(now);
+                } else {
+                    c.last_paced = Some(now);
+                }
+                soon
+            };
+            if too_soon {
+                let _ = out.write_all(status_head(429, None).as_bytes());
                 if close {
                     return;
                 }

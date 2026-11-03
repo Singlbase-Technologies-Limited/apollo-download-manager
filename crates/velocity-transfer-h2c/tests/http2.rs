@@ -384,3 +384,37 @@ fn a_server_that_rate_limits_extra_streams_gets_no_new_ones_until_its_wait_is_ov
         limited.len()
     );
 }
+
+#[test]
+fn after_a_429_on_a_shared_connection_requests_get_connections_of_their_own() {
+    let _serial = one_at_a_time();
+    // #247: proof.ovh.net refuses a stream that comes while another is being answered on the same
+    // HTTP/2 connection, and serves the same requests on connections of their own (curl.exe, V1).
+    // Velocity's retries went on as streams of the shared connection, every one was refused, and
+    // the server blocked the computer.
+    let (s, data) = serve(
+        8_000_000,
+        Http2Options {
+            limit_per_connection: Some(AnsweringLimit {
+                max: 1,
+                status: 429,
+                retry_after: Some("1".into()),
+            }),
+            throttle_stream_bytes_per_sec: Some(2_000_000),
+            ..Http2Options::default()
+        },
+    );
+    let dir = Dir::new("per-connection-limit");
+    download(&h2c_loop(), &s.url("f.bin"), &dir.file("out"), FIXED).expect("the download finishes");
+    assert!(std::fs::read(dir.file("out")).unwrap() == data);
+    let c = s.counters();
+    assert!(
+        c.connections > 1,
+        "connections of their own after the 429s: {c:?}"
+    );
+    assert!(
+        c.limited.len() <= 3,
+        "only the first streams of the shared connection are refused: {} refusals",
+        c.limited.len()
+    );
+}
