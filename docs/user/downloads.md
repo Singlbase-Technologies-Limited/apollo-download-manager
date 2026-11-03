@@ -79,7 +79,7 @@ The right-click menu needs a pointer, as in V1. Its actions are also on the tool
 
 | Status | Meaning |
 |---|---|
-| Retrying in 1m 30s | The download failed in a way worth retrying; Velocity tries again by itself at that time. **Waiting to retry** when the time isn't known |
+| Retrying in 1m 30s | The download failed in a way worth retrying; Velocity tries again by itself at that time. **Waiting to retry** when the time isn't known. A server that asks Velocity to slow down for 30 s or less isn't shown here: the download stays Downloading, and the details' Connections line says the server asked Velocity to slow down |
 | No data received | The server stopped sending. Velocity resets the connection and tries again |
 | Waiting for peers | A torrent with no one to download from yet |
 | Needs its login | After Velocity restarts, a download that had a login, headers or a key it didn't remember waits for them. **Resume** or **Retry** asks for them again |

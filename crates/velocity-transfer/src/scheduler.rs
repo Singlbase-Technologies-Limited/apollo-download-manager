@@ -131,10 +131,11 @@ pub struct Sizes {
 }
 
 impl Sizes {
-    /// The report's hypotheses: leases of at most 32 MiB, splits of remainders of at least 2 MiB,
-    /// at multiples of 64 KiB.
+    /// Leases without a cap, so each connection asks once for its share (#247: a cap of 32 MiB,
+    /// the report's hypothesis, made a request per 32 MiB, and a server that limits how often
+    /// it's asked refused them); splits of remainders of at least 2 MiB, at multiples of 64 KiB.
     pub const DEFAULT: Sizes = Sizes {
-        max_lease: 32 << 20,
+        max_lease: u64::MAX,
         min_split: 1 << 20,
         align: 64 << 10,
     };
@@ -590,6 +591,18 @@ mod tests {
         assert_eq!(fresh(s.assign(3)).end, 1000);
         let mut s = Scheduler::new(1001, &Coverage::default(), small());
         assert_eq!(fresh(s.assign(4)).end, 260);
+    }
+
+    #[test]
+    fn by_default_each_connection_asks_once_for_its_share() {
+        // #247 (PO decision): leases were capped at 32 MiB, a request each, about 90 for a
+        // 2.9 GB file; a server that limits how often it's asked refused them. Now a connection
+        // asks once for its share, and splits share the work out as connections are added.
+        let total = 10 << 30;
+        let mut s = Scheduler::new(total, &Coverage::default(), Sizes::DEFAULT);
+        assert_eq!(fresh(s.assign(1)).end, total);
+        let mut s = Scheduler::new(total, &Coverage::default(), Sizes::DEFAULT);
+        assert_eq!(fresh(s.assign(8)).end, total / 8);
     }
 
     #[test]

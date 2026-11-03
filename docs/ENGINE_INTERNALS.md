@@ -233,7 +233,7 @@ A lease owns `[cursor, end)` of the file alone; `[start, cursor)` is already wri
 | Failed | It ended early; the rest of its range is unassigned again |
 | Revoked | It was cancelled; the rest of its range is unassigned again |
 
-- **Assignment:** a free connection gets the front of the unassigned bytes, an equal share per free connection. The share is rounded up to `align` and is at most `max_lease`. Sharing spreads a file over the connections without splits.
+- **Assignment:** a free connection gets the front of the unassigned bytes, an equal share per free connection. The share is rounded up to `align` and is at most `max_lease`, which has no cap by default (#247); `Scheduler::ask_once` lifts a cap once a server throttled. Sharing spreads a file over the connections without splits.
 - **Acceptance:** bytes are accepted only from the lease that is in flight, at its cursor, and only up to its *current* end. Bytes for a lease that isn't live (ended, revoked, unknown), at another offset, or past its end are dropped and counted as wasted. They enter coverage only once the write to the part file has returned.
 - **Split (work-stealing):** a free connection with nothing unassigned takes half of the live lease with the largest remainder. The remainder must be at least `2 × min_split`, and the midpoint is rounded down to `align`.
   - The old lease shrinks to end at the midpoint.
@@ -243,7 +243,7 @@ A lease owns `[cursor, end)` of the file alone; `[start, cursor)` is already wri
 
 | Size | Value | Where it comes from |
 |---|---|---|
-| `max_lease` | 32 MiB | Report section 5.2, a hypothesis for #47 to tune |
+| `max_lease` | None: each connection asks once for its share | #247: the report's 32 MiB (section 5.2, a hypothesis) made a request per 32 MiB, about 90 for a 2.9 GB file, and a server that limits how often it's asked (proof.ovh.net) refused them. V1, on the same file, asked about 8 times and wasn't refused. Measured on the Ubuntu 26.04.1 server image before and after (#247) |
 | `min_split` | 1 MiB (a remainder of at least 2 MiB splits) | A starting value; the report names no number |
 | `align` | 64 KiB | Report section 5.2 |
 
@@ -338,7 +338,7 @@ A failure is classified first ([`failure.rs`](../crates/velocity-transfer/src/fa
 | Class | Examples | What happens |
 |---|---|---|
 | Transient | No answer, or a connection broken during the request; a name that doesn't resolve; a refused connection; the 30 s connect timeout; a failed TLS handshake; `408`; other `5xx`; a stall | Retried after a wait |
-| Throttled | `429`, `503` | Retried after at least what `Retry-After` asks for (seconds or an HTTP date), up to 10 minutes. Without `Retry-After`, at least 60 s, as in V1. The download's connections are halved, and kept to no more than the requests the server was still serving, down to one. The engine remembers that count for the host ([Opening](#opening-247)) |
+| Throttled | `429`, `503` | Retried after at least what `Retry-After` asks for (seconds or an HTTP date), up to 10 minutes. Without `Retry-After`, at least 60 s, as in V1. The download's connections are halved, and kept to no more than the requests the server was still serving, down to one. The engine remembers that count for the host ([Opening](#opening-247)). From then on each connection asks once for the rest of its share (`Scheduler::ask_once`, #247). A wait of 30 s or less stays Downloading, with no error shown (PO decision on #247). When the server then refuses connections (the name doesn't resolve, the connection is refused or times out), the wait is 60 s, doubled for each refusal in a row, up to 10 minutes: "The server is refusing connections from this computer for now, after asking Velocity to slow down." |
 | Permanent | `401`, `403`, `404`, `410`, other `4xx`; an untrusted certificate; too many redirects; a protocol outside the allowlist; an answer that contradicts itself; a full disk, or a folder V2 may no longer write to | Never retried. A full disk or a refused write checkpoints what reached the disk when a sync still works, and keeps the part file whenever a checkpoint exists, so the user's retry, once it is fixed, resumes (#74) |
 
 ### Inside a download
@@ -474,7 +474,8 @@ A download doesn't ask for all its connections at once (PO decision on #247):
 - **Doubling:** after the probe it opens one request, then 2, 4 and 8, each step once every request opened so far has received a byte. A fixed count and the CLI open the same way.
 - **Fresh ranges, no splits:** leases are sized for the count the download is heading for, so a later step takes unassigned bytes instead of splitting a running request, and each request ends at its own end.
 - **At the first `429` or `503`,** the download keeps no more connections than the requests the server was still serving (at least one), and opens no more ([Retries](#retries-waits-and-stalls-48)).
-- **Remembered per host:** the engine keeps that count, by host name and port, while it runs. A restart, a resume or another download from that host starts there and never asks for more.
+- **Remembered per host:** the engine keeps that count, by host name and port, while it runs. A restart, a resume or another download from that host starts there, never asks for more, and asks once for the rest of each share.
+- **Few requests:** leases have no size cap (#247), so each connection asks once for its share, about 8 requests for a file on 8 connections. With the earlier 32 MiB cap, a 1 GB file took about 32 requests one after another, and proof.ovh.net refused about every second one, then this computer, after about 20 (2026-11-03). V1, on the same file and PC, asked about 8 times and finished in about 2 minutes.
 - **Why:** proof.ovh.net serves one request per client at a time, answers the rest `429` within about 200 ms, and blocks a client for about 10 minutes after roughly 6 to 9 refusals in a few seconds. The old opening, all 8 at once after the probe, got the field-test PC blocked on its own (#247, 2026-11-02). Doubling costs a server like that one refusal.
 - **The cost on other servers:** about three round trips to reach 8 connections. Not yet measured against the earlier timings (#221); it is to be measured on the Ubuntu ISO.
 

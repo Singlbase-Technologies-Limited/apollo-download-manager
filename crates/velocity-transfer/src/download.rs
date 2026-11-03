@@ -1037,7 +1037,10 @@ fn piece_aligned(mut options: DownloadOptions, length: u64) -> DownloadOptions {
     let leases = &mut options.leases;
     leases.align = length;
     leases.min_split = leases.min_split.max(length);
-    leases.max_lease = leases.max_lease.max(length).next_multiple_of(length);
+    // Without a cap there is nothing to round (#247).
+    if leases.max_lease != u64::MAX {
+        leases.max_lease = leases.max_lease.max(length).next_multiple_of(length);
+    }
     options.probe_bytes = options.probe_bytes.max(1).next_multiple_of(length);
     options
 }
@@ -1699,6 +1702,19 @@ impl Retrier {
         why
     }
 
+    /// The wait before trying a server again that refuses this computer after throttling it
+    /// (#247): `throttled_wait`, doubled for each refusal in a row, at most `max_retry_after`.
+    /// New bytes since the last failure start it again, as in [`Retrier::wait`].
+    fn refused_wait(&self, written: u64) -> Duration {
+        let next = if written > self.written {
+            1
+        } else {
+            self.failures + 1
+        };
+        velocity_child::supervisor::doubled(self.policy.throttled_wait, next)
+            .min(self.policy.max_retry_after)
+    }
+
     /// The wait before retrying after `error`, with `written` bytes written so far, or `None` to
     /// give up. New bytes since the last failure start the count again.
     fn wait(
@@ -2207,20 +2223,24 @@ fn fetch_ranges(
             .filter(|(other, a)| **other != id && a.fed && !a.retiring)
             .count() as u32;
         // A failure worth retrying frees its connection for a wait; otherwise the download fails.
+        // A server that throttled and now refuses the connection is given minutes (#247).
         let mut retry_later =
-            |t: TransferError, retry_after: Option<Duration>, written: u64| match retrier.wait(
-                &t,
-                retry_after,
-                written,
-            ) {
-                Some(wait) => {
-                    waiting.push((Instant::now() + wait, Some(retrier.why(&t))));
-                    if t.class == FailureClass::Throttled {
-                        throttled_to = retry::after_throttling(connections, serving);
-                        control.throttled_to.store(throttled_to, Ordering::Release);
+            |t: TransferError, retry_after: Option<Duration>, written: u64, refused: bool| {
+                let (t, retry_after) = if refused {
+                    (refused_failure(), Some(retrier.refused_wait(written)))
+                } else {
+                    (t, retry_after)
+                };
+                match retrier.wait(&t, retry_after, written) {
+                    Some(wait) => {
+                        waiting.push((Instant::now() + wait, Some(retrier.why(&t))));
+                        if t.class == FailureClass::Throttled {
+                            throttled_to = retry::after_throttling(connections, serving);
+                            control.throttled_to.store(throttled_to, Ordering::Release);
+                        }
                     }
+                    None => failure = failure.take().or(Some(t)),
                 }
-                None => failure = failure.take().or(Some(t)),
             };
         match event {
             Segment::Quiet => {
@@ -2251,7 +2271,7 @@ fn fetch_ranges(
                         sources.failed(a.source, Instant::now(), false, &t.message);
                         last_source_error = Some(t);
                     } else {
-                        retry_later(stall_error(policy), None, part.written);
+                        retry_later(stall_error(policy), None, part.written, false);
                     }
                 }
             }
@@ -2395,7 +2415,7 @@ fn fetch_ranges(
                         last_source_error = Some(t);
                     }
                     (Some(Err(SegmentRejection::Invalid(t))), _) => {
-                        retry_later(t, a.retry_after.get(), part.written)
+                        retry_later(t, a.retry_after.get(), part.written, false)
                     }
                     (Some(Err(SegmentRejection::Changed(t))), _) => changed = changed.or(Some(t)),
                     (Some(Err(SegmentRejection::EncodingChanged(t))), _) => {
@@ -2417,7 +2437,11 @@ fn fetch_ranges(
                         sources.failed(lead, Instant::now(), !t.retryable, &t.message);
                         last_source_error = Some(t);
                     }
-                    (None, Err(e)) => retry_later(fetch_failure(e), None, part.written),
+                    (None, Err(e)) => {
+                        let throttled = control.throttled_to.load(Ordering::Acquire) != 0;
+                        let refused = throttled && never_connected(&e);
+                        retry_later(fetch_failure(e), None, part.written, refused)
+                    }
                     (None, Ok(())) => {}
                 }
                 sched.ended(id);
@@ -2815,6 +2839,33 @@ fn note_peak(peak: &AtomicU64, fetch: &Fetch) {
     peak.fetch_max(fetch.peak_buffered_bytes() as u64, Ordering::AcqRel);
 }
 
+/// The fetch never reached the server: the name didn't resolve, or the connection was refused or
+/// timed out (#245).
+fn never_connected(e: &FetchError) -> bool {
+    use velocity_curl::CurlFailure::{Connect, Resolve, Timeout};
+    matches!(
+        e,
+        FetchError::Curl {
+            kind: Resolve | Connect | Timeout,
+            ..
+        } | FetchError::Sftp {
+            kind: Resolve | Connect | Timeout,
+            ..
+        }
+    )
+}
+
+/// A server that throttled the download now refuses its connections: a block on this computer
+/// for a while, which tries every few seconds would keep going (#247).
+fn refused_failure() -> TransferError {
+    TransferError::new(
+        FailureClass::Throttled,
+        None,
+        "The server is refusing connections from this computer for now, after asking Velocity to \
+         slow down.",
+    )
+}
+
 /// How a fetch read by [`drain`] ended.
 enum Drained {
     Complete,
@@ -2826,19 +2877,7 @@ enum Drained {
 impl Drained {
     /// It failed before it reached the server (#245).
     fn unreachable(&self) -> bool {
-        use velocity_curl::CurlFailure::{Connect, Resolve, Timeout};
-        matches!(
-            self,
-            Drained::Failed(
-                FetchError::Curl {
-                    kind: Resolve | Connect | Timeout,
-                    ..
-                } | FetchError::Sftp {
-                    kind: Resolve | Connect | Timeout,
-                    ..
-                }
-            )
-        )
+        matches!(self, Drained::Failed(e) if never_connected(e))
     }
 
     /// The failure it stands for, if it didn't complete.
@@ -3452,6 +3491,48 @@ mod tests {
             least_rate_bps: 1024,
             ..RetryPolicy::DEFAULT
         }
+    }
+
+    #[test]
+    fn a_server_that_refuses_after_throttling_is_left_alone_for_minutes() {
+        // #247: proof.ovh.net refused this computer's connections after its 429s, and Velocity
+        // tried again every few seconds, which kept the block going. Each refusal in a row waits
+        // twice as long, from `throttled_wait` up to `max_retry_after`; a byte starts it again.
+        let p = RetryPolicy::DEFAULT;
+        let mut r = Retrier::new(p);
+        let mins = |d: Duration| d.as_secs() / 60;
+        let mut waits = Vec::new();
+        for _ in 0..4 {
+            let w = r.refused_wait(1000);
+            waits.push(mins(w));
+            assert!(r.wait(&refused_failure(), Some(w), 1000).is_some());
+        }
+        assert_eq!(waits, [1, 2, 4, 8]);
+        assert_eq!(
+            mins(r.refused_wait(1000)),
+            10,
+            "16 minutes, held to max_retry_after"
+        );
+        assert_eq!(mins(r.refused_wait(2000)), 1, "new bytes start it again");
+        // The fifth in a row gives up, as any failure does; the engine may start it again.
+        assert_eq!(
+            r.wait(&refused_failure(), Some(Duration::from_secs(600)), 1000),
+            None
+        );
+    }
+
+    #[test]
+    fn only_a_failure_to_reach_the_server_counts_as_refused() {
+        let curl = |kind| FetchError::Curl {
+            kind,
+            code: 28,
+            message: String::new(),
+        };
+        assert!(never_connected(&curl(velocity_curl::CurlFailure::Connect)));
+        assert!(never_connected(&curl(velocity_curl::CurlFailure::Timeout)));
+        assert!(!never_connected(&curl(
+            velocity_curl::CurlFailure::Interrupted
+        )));
     }
 
     #[test]
