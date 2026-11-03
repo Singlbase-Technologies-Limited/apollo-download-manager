@@ -163,6 +163,28 @@ describe('torrents in the list (V1)', () => {
     await waitFor(() => { expect(callsOf(state, 'choose_torrent_files')[0]?.args).toEqual({ id: 'm', files: [2, 3], deleteDropped: false }); });
   });
 
+  // #276: only the row's menu offered Choose files, and the panel said "0 B of unknown size".
+  it('offers Choose files in the details while a torrent waits for it, opening the same dialog', async () => {
+    const d = torrent({ id: 'm', kind: 'magnet', status: 'choosingFiles', progress: { ...makeRecord().progress, completedBytes: 0, totalBytes: null } });
+    installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [d] }, torrentDetails: () => details() });
+    const user = userEvent.setup();
+    const p = await openDetails('m');
+    const button = within(p).getByRole('button', { name: 'Choose files…' });
+    // At the top, before the Transfer section, where it's seen without scrolling.
+    const transfer = within(p).getByRole('region', { name: 'Transfer' });
+    expect(button.compareDocumentPosition(transfer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(button);
+    expect(await screen.findByRole('dialog', { name: 'Choose files to download' })).toBeTruthy();
+  });
+
+  it('says the files aren’t chosen yet instead of 0 B of unknown size', async () => {
+    const d = torrent({ id: 'm', kind: 'magnet', status: 'choosingFiles', progress: { ...makeRecord().progress, completedBytes: 0, totalBytes: null } });
+    installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [d] }, torrentDetails: () => details() });
+    const p = await openDetails('m');
+    expect(within(p).queryByText(/unknown size/)).toBeNull();
+    expect(within(p).getByText('Files not chosen yet')).toBeTruthy();
+  });
+
   it('shows both info hashes and the version in the details', async () => {
     installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [torrent({ id: 'h', status: 'downloading' })] }, torrentDetails: () => details() });
     const p = await openDetails('h');

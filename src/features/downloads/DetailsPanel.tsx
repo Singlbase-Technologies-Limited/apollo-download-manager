@@ -1,4 +1,4 @@
-import { Copy, FileSearch, FolderOpen, Gauge, RotateCcw, X } from 'lucide-react';
+import { Copy, FileSearch, FolderOpen, Gauge, ListChecks, RotateCcw, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
@@ -11,6 +11,7 @@ import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextT
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
 import { useCategories } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
+import { useUiStore } from '../../stores/ui';
 import { TorrentSection } from '../torrents/TorrentSection';
 import type { DownloadActions } from './useDownloadActions';
 
@@ -79,6 +80,7 @@ interface Props {
  */
 export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClose }: Props) {
   const d = useDownloadsStore((s) => s.snapshot?.downloads.find((x) => x.id === id));
+  const openChooseFiles = useUiStore((s) => s.openChooseFiles);
   const { data: categories } = useCategories();
   // A typed value belongs to the download it was typed for, never to the next one shown.
   const [limit, setLimit] = useState<{ id: string; kib: string } | null>(null);
@@ -127,9 +129,21 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
         ) : null}
         <ProgressBar value={pct} tone={STATUS_TONE[d.status]} animated={d.status === 'downloading'} label="Progress" />
         <div className="mt-1.5 flex justify-between text-xs tabular-nums text-fg-muted">
-          <span>{formatTransferred(d.progress.completedBytes, d.progress.totalBytes)}</span>
+          {/* Before the choice, its size is unknown, which isn't "0 B of unknown size" (#276). */}
+          <span>
+            {d.status === 'choosingFiles' && d.progress.totalBytes === null
+              ? 'Files not chosen yet'
+              : formatTransferred(d.progress.completedBytes, d.progress.totalBytes)}
+          </span>
           <span>{formatPercent(pct)}</span>
         </div>
+
+        {d.status === 'choosingFiles' ? (
+          // At the top, where it's seen at once; it was at the end of the Torrent section (#276).
+          <Button size="sm" variant="primary" className="mt-3" onClick={() => { openChooseFiles(d.id); }}>
+            <ListChecks /> Choose files…
+          </Button>
+        ) : null}
 
         {d.startedOver ? (
           // The bytes it had were dropped: never silently, and with why (#257).
