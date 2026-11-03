@@ -146,9 +146,21 @@ describe('what the list shows (#59)', () => {
     expect(averageSpeedOf(at(0, 'completed'))).toBe(214_528);
   });
 
-  it('names a download by its file, or by its link until the server names it', () => {
+  // #275: until the server names it, the link's last path segment, as the add dialog does; never
+  // the whole link, which was shown in the list before.
+  it('names a download by its file, or by its link’s last segment until the server names it', () => {
+    const unnamed = (sourceUrl: string) => displayName(makeRecord({ fileName: null, sourceUrl }));
     expect(displayName(makeRecord({ fileName: 'a.zip' }))).toBe('a.zip');
-    expect(displayName(makeRecord({ fileName: null, sourceUrl: 'https://example.com/get?id=3' }))).toBe('https://example.com/get?id=3');
+    expect(unnamed('https://host.example/path/file.iso')).toBe('file.iso');
+    expect(unnamed('https://example.com/get%20it.iso?id=3')).toBe('get it.iso');
+    expect(unnamed('https://example.com/get?id=3')).toBe('get');
+  });
+
+  it('names a download whose link has no last segment by its host, never the whole link', () => {
+    const unnamed = (sourceUrl: string) => displayName(makeRecord({ fileName: null, sourceUrl }));
+    expect(unnamed('https://example.com/')).toBe('example.com');
+    expect(unnamed('https://example.com/?token=secret')).toBe('example.com');
+    expect(unnamed('magnet:?xt=urn:btih:aaaa')).toBe('Unnamed download');
   });
 
   it('shows a finished torrent waiting for a seeding slot as waiting to seed (#63)', () => {

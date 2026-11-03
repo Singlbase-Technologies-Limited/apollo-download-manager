@@ -1,5 +1,6 @@
 import type { DownloadRecord, DownloadStatus } from '../contract';
 import { formatDuration } from '../lib/format';
+import { fileNameFromUrl } from '../naming';
 import { matchesView, type ListView } from './views';
 
 // The download list's rules (V1's src/features/downloads/logic.ts): searching, sorting, the actions each status allows
@@ -11,9 +12,21 @@ export interface SortState {
   dir: 'asc' | 'desc';
 }
 
-/** The file's name, or the link until the server names it: never a name made up for it. */
+/**
+ * The file's name; until the server names it, the link's last path segment, as the add dialog shows it, or the
+ * link's host when it has none. Never the whole link, which could be long and hold a token (#275).
+ */
 export function displayName(d: DownloadRecord): string {
-  return d.fileName ?? d.sourceUrl;
+  if (d.fileName !== null) return d.fileName;
+  const fromLink = fileNameFromUrl(d.sourceUrl);
+  if (fromLink !== null) return fromLink;
+  try {
+    const host = new URL(d.sourceUrl).hostname;
+    if (host !== '') return host;
+  } catch {
+    // Not a link with a host, such as a magnet link.
+  }
+  return 'Unnamed download';
 }
 
 /** The share of the file the accepted bytes prove; `null` while the size is unknown. */
