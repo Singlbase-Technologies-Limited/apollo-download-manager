@@ -277,6 +277,14 @@ Checked after every change in debug builds (`Scheduler::check`), and by the prop
 
 Every received byte is either written into the part file once, or counted in `wasted_bytes`. That includes bytes past a lease's end, bytes for a lease that isn't live, bytes the single stream sends again, bytes already covered, and the bytes of a piece that failed its hash and was fetched again ([integrity](#piece-hashes)). Progress counts written bytes only. A server that ignores ranges costs exactly one GET with no wasted bytes, which a fixture test checks.
 
+**Progress and speed (#246).**
+- **When progress is sent:** the engine sends a progress snapshot for every 256 KiB written (`PROGRESS_STEP`), and at once when the count goes down because the download started over.
+- **The speed:** the snapshot's download speed is the bytes written over the last 3 seconds (`SpeedMeter` in `crates/velocity-transfer/src/speed.rs`). That's a measurement, not an estimate. The list, the details panel, the time left and the status bar's total all show this figure.
+- **Measuring starts again** at the first report after a start or resume, and when the count goes down. So the bytes already on disk never count as received.
+- **No figure** is shown until 0.5 s has been measured.
+- **Why 3 seconds:** a change in speed, such as a new speed limit, shows half within 1.5 s and fully within 3 s. A pause in one connection barely moves the figure.
+- **Before #246,** the speed was measured over a single 256 KiB step, about 80 ms at 3 MiB/s, and it jumped between KiB/s and GiB/s.
+
 ## Changed files (#45)
 
 Every answer after the first must be about the file the first answer described (report section 5.3, [`validator.rs`](../crates/velocity-transfer/src/validator.rs)). Validators belong to the file, not to its URL, so an answer that a redirect brought from elsewhere is held to the same.
