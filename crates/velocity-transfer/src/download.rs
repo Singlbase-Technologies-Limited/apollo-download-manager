@@ -885,7 +885,10 @@ pub fn download_from(
             );
             // A local error the user can fix keeps what a checkpoint recorded, to resume from (#74).
             let fixable = matches!(e, DownloadError::Local(_));
-            if matches!(e, DownloadError::Paused) || ((retryable || fixable) && ck.sent > 0) {
+            // A checkpoint of this attempt's, or the one it resumed from: an attempt that resumed
+            // and failed before its own first checkpoint deleted every earlier byte (#317).
+            let checkpointed = ck.sent > 0 || ck.resumed;
+            if matches!(e, DownloadError::Paused) || ((retryable || fixable) && checkpointed) {
                 part.keep = true;
             }
             if matches!(e, DownloadError::IntegrityFailed(_)) {

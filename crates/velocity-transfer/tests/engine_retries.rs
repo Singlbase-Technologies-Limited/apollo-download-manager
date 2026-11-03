@@ -12,7 +12,7 @@ use velocity_core::transfer::{
     Checkpoint, DirectTransfer, Limits, Resume, TransferEvent, TransferId, TransferSnapshot,
     TransferSpec, CHECKPOINT_FORMAT,
 };
-use velocity_test_http::{seeded_bytes, AnsweringLimit, Freeze, ServerOptions, TestServer};
+use velocity_test_http::{seeded_bytes, AnsweringLimit, Freeze, Outage, ServerOptions, TestServer};
 use velocity_transfer::engine::InProcessEngine;
 use velocity_transfer::retry::RetryPolicy;
 
@@ -600,4 +600,80 @@ fn a_retry_never_takes_progress_back() {
         bytes.windows(2).all(|w| w[0] <= w[1]),
         "progress went back: {bytes:?}"
     );
+}
+
+/// A download that checkpointed, then lost the network long enough that the engine restarted it twice,
+/// into `dest`, or into its folder with the name left to the server when `named` is false.
+fn through_an_outage(dest: &Path, named: bool) -> (Vec<TransferSnapshot>, TestServer, Vec<u8>) {
+    let data = seeded_bytes(8 << 20, 317);
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions {
+            // 3 s at 1 MiB/s: past the engine's 2 s checkpoint cadence before the cut.
+            throttle_bytes_per_sec: Some(1 << 20),
+            outage: Some(Outage {
+                after: 3 << 20,
+                // Enough that the restart, resumed from the checkpoint, fails too without a byte,
+                // and the second restart gets through (#317: the bytes went when an attempt that
+                // resumed failed before a checkpoint of its own).
+                drops: 2 * FAST.failures_in_a_row,
+            }),
+            ..ServerOptions::default()
+        },
+    );
+    let mut engine = engine(FAST);
+    let events = engine.subscribe();
+    let mut spec = spec(s.url("f.bin"), dest.to_owned(), 1);
+    if !named {
+        spec.file_name = None;
+    }
+    let id = engine.add(spec).unwrap();
+    let seen = snapshots_until(&events, id, finished);
+    (seen, s, data)
+}
+
+fn assert_kept_its_bytes(seen: &[TransferSnapshot], s: &TestServer) {
+    assert!(s.counters().outage_began, "the outage happened");
+    assert!(
+        seen.iter().any(|s| s
+            .error
+            .as_ref()
+            .is_some_and(|e| e.message.contains("Retrying automatically (2 of 2)"))),
+        "the engine restarted it twice: {:?}, {} GETs",
+        seen.iter()
+            .filter_map(|s| s.error.as_ref().map(|e| e.message.clone()))
+            .collect::<std::collections::BTreeSet<_>>(),
+        s.counters().gets
+    );
+    assert_eq!(seen.last().unwrap().status, DownloadStatus::Completed);
+    for snapshot in seen {
+        assert_eq!(snapshot.started_over, None, "nothing was dropped");
+    }
+    let last = s.counters().ranges.last().cloned().flatten();
+    assert!(
+        last.as_deref().is_some_and(|r| !r.starts_with("bytes=0-")),
+        "the restart resumed past byte 0: {:?}",
+        s.counters().ranges
+    );
+}
+
+#[test]
+fn a_restart_after_an_outage_resumes_from_its_checkpoint() {
+    // #317: a minute without network made the field test's download lose its part file and
+    // start again from 0.
+    let dir = Dir::new("outage-named");
+    let dest = dir.0.join("out.bin");
+    let (seen, s, data) = through_an_outage(&dest, true);
+    assert_kept_its_bytes(&seen, &s);
+    assert!(std::fs::read(&dest).unwrap() == data);
+}
+
+#[test]
+fn a_restart_after_an_outage_resumes_from_its_checkpoint_when_the_server_named_the_file() {
+    // #317: the app adds a link without a name, so the server's answer names the file.
+    let dir = Dir::new("outage-unnamed");
+    let dest = dir.0.join("f.bin");
+    let (seen, s, data) = through_an_outage(&dest, false);
+    assert_kept_its_bytes(&seen, &s);
+    assert!(std::fs::read(&dest).unwrap() == data);
 }
