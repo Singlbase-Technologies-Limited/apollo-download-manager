@@ -27,7 +27,7 @@ A link Velocity can't download is refused in the dialog, with the reason, for ex
 | Option | What it does |
 |---|---|
 | Connections | The most connections this download may use. Velocity starts with all of them and keeps those that make it faster |
-| Speed limit | This download's own limit, on top of the global one in Settings |
+| Speed limit | This download's own limit, on top of the global one in Settings. Under a limit, Velocity uses only the connections that reach it, and the details say so |
 | Referrer, extra headers | Sent to the server, for sites that need them |
 | User name and password | The login for the server |
 | SSH key and its passphrase | For SFTP servers that use keys |

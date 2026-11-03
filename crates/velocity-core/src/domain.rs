@@ -222,11 +222,13 @@ pub enum ConnectionLimit {
     /// The server sends the file as one stream, without byte ranges, so one connection is all
     /// that can help (#274).
     NoRanges,
+    /// Adaptive connections: the download's speed limit is reached with fewer (#278).
+    SpeedLimit,
 }
 
 impl ConnectionLimit {
     /// Every value, in contract order (the fixture shared with `src/contract.ts`).
-    pub const ALL: [ConnectionLimit; 7] = [
+    pub const ALL: [ConnectionLimit; 8] = [
         ConnectionLimit::PerHostCap,
         ConnectionLimit::SharedBudget,
         ConnectionLimit::ServerThrottling,
@@ -234,6 +236,7 @@ impl ConnectionLimit {
         ConnectionLimit::NoGain,
         ConnectionLimit::FileSize,
         ConnectionLimit::NoRanges,
+        ConnectionLimit::SpeedLimit,
     ];
 }
 
@@ -939,7 +942,8 @@ mod tests {
                 "rampingUp",
                 "noGain",
                 "fileSize",
-                "noRanges"
+                "noRanges",
+                "speedLimit"
             ]
         );
     }

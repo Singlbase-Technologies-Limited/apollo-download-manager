@@ -426,7 +426,7 @@ A download's connections are the tightest of these, from the outside in:
 | What it asked for | `TransferSpec::max_connections`, or `set_connections` later, at least 1 and at most the per-host cap | `requested` |
 | Its share of the per-host cap and the shared budget | The engine, max-min fairly between the running transfers ([`budget.rs`](../crates/velocity-transfer/src/budget.rs)) | `perHostCap`, `sharedBudget` |
 | A throttling server | A `429` or `503` halves the connections, keeps no more than the server was serving, down to one (#48, #247); remembered for the host while the engine runs | `serverThrottling` |
-| What helps | Opening a step at a time ([Opening](#opening-247)), then the adaptive ramp ([`adaptive.rs`](../crates/velocity-transfer/src/adaptive.rs)) | `rampingUp`, `noGain` |
+| What helps | Opening a step at a time ([Opening](#opening-247)), then the adaptive ramp ([`adaptive.rs`](../crates/velocity-transfer/src/adaptive.rs)) | `rampingUp`, `noGain`, `speedLimit` |
 | What is left to split | No remainder of at least 2 × `min_split` | `fileSize` |
 
 Snapshots carry the connections in use now (`Progress::connections`) and `connectionDetail`: `requested`, `allowed` and the tightest limit, `limitedBy` ([CONTRACTS.md](CONTRACTS.md)).
@@ -461,6 +461,9 @@ The asked-for count is the most a download may use, not a must (PO decision on #
 - **A lower ceiling** (the budget, the user, a throttling server) applies at once. **A higher one,** such as a count the user raised, is taken at once, and the ramp judges again (PO decision on #221).
 - **While it tries fewer,** the download shows `rampingUp`, a name from #47's climbing ramp.
 - **Example:** asked for 8, from a server that gives one client no more than 3 connections' worth, a download drops to 2, brings the 3rd back, drops it again to judge it a second time, keeps 3, and shows `noGain`.
+- **Under a speed limit** (PO decision on #278), any count that reaches the limit gives the same speed, so the ramp halves the count at each step instead of dropping one: 8, 4, 2, 1. A halving that loses speed brings the dropped ones back, and from then on it drops one at a time, judging twice as above. With 8 asked for and 1 MiB/s, one at a time took about 39 s to reach 1 connection on releases.ubuntu.com (one run, 2026-11-03); halving takes 3 judgments instead of 7.
+- **The limit as the reason:** once the ramp stops at a count whose fastest window came within 10% of the tightest limit, the download's own or the global one, it shows `speedLimit`, not `noGain`. A limit it doesn't reach, because the server is slower, leaves `noGain`. A global limit shared by several downloads gives each less than the limit, so they show `noGain`.
+- **A changed limit** (set, lifted, raised or lowered) takes every connection again and judges again: a download held at 1 by a limit would otherwise stay at 1 once the limit is lifted.
 
 `DownloadOptions::adaptive` is `None` for a fixed count, which the CLI uses to compare fixed plans.
 
@@ -478,7 +481,7 @@ A download doesn't ask for all its connections at once (PO decision on #247):
 ### HTTP/2
 
 - **Multiplexing first:** requests to one host wait for the connection being set up (`CURLOPT_PIPEWAIT`), and share it as streams if it speaks HTTP/2.
-- **Then connections of their own, once:** when the ramp finds that more streams stop helping, the download tries requests on connections of their own (`CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`), starting again with every connection it may use. Not after the server throttled the download: the restart would ask while the stopped streams are still being answered, and be refused (#247).
+- **Then connections of their own, once:** when the ramp finds that more streams stop helping (`noGain`, not `speedLimit`: under a limit a faster way can't show), the download tries requests on connections of their own (`CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`), starting again with every connection it may use. Not after the server throttled the download: the restart would ask while the stopped streams are still being answered, and be refused (#247).
 - **The faster way is kept:** connections of their own stay only if their best speed beats the best multiplexed one by 10%. Otherwise the download goes back to the multiplexed count. Changing the way stops every request first, so each way is measured on its own.
 - **`DownloadReport::own_connections`** says which way was kept.
 - **A split** resets only its stream; the connection stays.

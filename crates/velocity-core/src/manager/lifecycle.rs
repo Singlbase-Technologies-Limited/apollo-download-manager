@@ -169,6 +169,7 @@ fn reason(limit: ConnectionLimit) -> &'static str {
         ConnectionLimit::NoGain => "more connections stopped making it faster",
         ConnectionLimit::FileSize => "the rest of the file is too small to split further",
         ConnectionLimit::NoRanges => "the server sends the file in one piece, without byte ranges",
+        ConnectionLimit::SpeedLimit => "the speed limit is reached with fewer connections",
     }
 }
 
