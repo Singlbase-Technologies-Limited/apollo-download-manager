@@ -22,7 +22,7 @@ The skills in the table below hold the details of each step.
    - Read the issue, its comments and dependencies, and check the live state. Trust the repository over summaries and memory.
    - Search for existing code to reuse.
    - Plan multi-file or architecture work before editing.
-   - PO decisions are asked, not assumed: use multiple-choice questions in plain words.
+   - PO decisions are asked, not assumed: ask them, and every other question to the PO, with `AskUserQuestion` ([AGENTS.md](AGENTS.md#project-and-authority)).
 2. **Branch.** Create `<type>/<issue>-<slug>` from the latest `main`, and set the issue to *In progress* on the project board.
 3. **Test first** (`/tdd-change`). Red, green, refactor, one behaviour at a time, with `pnpm test:focused -- <area>`.
 4. **When something fails, stop.** Report the actual error. Don't weaken a test, a lint, a check or a security control to get past it.
