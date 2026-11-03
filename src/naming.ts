@@ -98,7 +98,7 @@ function percentDecode(s: string): string {
 }
 
 /** `file_name_from_url`: the decoded, sanitised last path segment. */
-function fileNameFromUrl(url: string): string | null {
+export function fileNameFromUrl(url: string): string | null {
   const at = url.indexOf('://');
   if (at < 0) return null;
   const rest = url.slice(at + 3);
