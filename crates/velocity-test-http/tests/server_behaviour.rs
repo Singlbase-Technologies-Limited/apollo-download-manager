@@ -421,6 +421,41 @@ fn throttles_all_connections_together() {
 }
 
 #[test]
+fn a_response_held_back_doesnt_catch_up_in_a_burst() {
+    // 1 MB/s per connection, 1.5 MB/s in all: two responses get 0.75 MB/s each. The short one ends
+    // at about 2 s, 0.5 MB behind the long one's 1 MB/s. Alone, the long one goes on at 1 MB/s and
+    // ends at about 4.5 s; caught up at the server's 1.5 MB/s, it ended at 4 s, and a ramp
+    // measuring one connection saw two's speed (#281).
+    let s = TestServer::start(
+        vec![
+            ("short".into(), seeded_bytes(1_500_000, 3)),
+            ("long".into(), seeded_bytes(4_000_000, 4)),
+        ],
+        ServerOptions {
+            throttle_bytes_per_sec: Some(1_000_000),
+            throttle_total_bytes_per_sec: Some(1_500_000),
+            ..ServerOptions::default()
+        },
+    );
+    let started = std::time::Instant::now();
+    let clients: Vec<_> = ["/short", "/long"]
+        .into_iter()
+        .map(|path| {
+            let mut stream = connect(&s);
+            std::thread::spawn(move || request(&mut stream, "GET", path, &[]).body.len())
+        })
+        .collect();
+    for c in clients {
+        c.join().unwrap();
+    }
+    assert!(
+        started.elapsed() >= Duration::from_millis(4_300),
+        "{:?}",
+        started.elapsed()
+    );
+}
+
+#[test]
 fn corrupts_one_byte_once_then_serves_it_as_it_is() {
     let data = seeded_bytes(SIZE, 7);
     let s = TestServer::start(

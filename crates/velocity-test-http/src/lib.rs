@@ -549,6 +549,48 @@ impl Pace {
     }
 }
 
+/// How far behind its rate a response may catch up, as time at that rate: a late wake-up's worth
+/// (Windows sleeps in 15.6 ms steps), too little to pass for a faster connection (#281).
+const CATCH_UP: Duration = Duration::from_millis(50);
+
+/// One response's own rate ([`ServerOptions::throttle_bytes_per_sec`], and HTTP/2's per stream).
+/// A response held back, by the client or by [`Pace`], catches up no more than [`CATCH_UP`]:
+/// it used to catch up at the server-wide rate once alone, and a ramp measuring one connection saw
+/// two's speed (#281).
+struct Schedule {
+    rate: Option<u64>,
+    /// When the bytes sent so far were due to start.
+    start: Instant,
+    sent: u64,
+}
+
+impl Schedule {
+    fn new(rate: Option<u64>) -> Self {
+        Schedule {
+            rate: rate.filter(|r| *r > 0),
+            start: Instant::now(),
+            sent: 0,
+        }
+    }
+
+    /// When the next bytes may be sent, or `None` without a rate.
+    fn due(&mut self) -> Option<Instant> {
+        let rate = self.rate?;
+        let due = self.start + Duration::from_secs_f64(self.sent as f64 / rate as f64);
+        let behind = Instant::now().saturating_duration_since(due);
+        if let Some(missed) = behind.checked_sub(CATCH_UP) {
+            // What it missed beyond the catch-up is gone.
+            self.start += missed;
+            return Some(due + missed);
+        }
+        Some(due)
+    }
+
+    fn sent(&mut self, bytes: usize) {
+        self.sent += bytes as u64;
+    }
+}
+
 fn serve_connection(
     stream: TcpStream,
     files: &HashMap<String, Arc<Vec<u8>>>,
@@ -954,14 +996,13 @@ fn write_body(
     pace: Option<&Pace>,
 ) -> std::io::Result<()> {
     const CHUNK: usize = 16 * 1024;
-    let started = Instant::now();
-    let mut sent = 0u64;
+    let mut schedule = Schedule::new(rate);
     for chunk in body.chunks(CHUNK) {
-        if let Some(rate) = rate.filter(|r| *r > 0) {
-            let due = Duration::from_secs_f64(sent as f64 / rate as f64);
-            if let Some(wait) = due.checked_sub(started.elapsed()) {
-                thread::sleep(wait);
-            }
+        if let Some(wait) = schedule
+            .due()
+            .and_then(|due| due.checked_duration_since(Instant::now()))
+        {
+            thread::sleep(wait);
         }
         if let Some(pace) = pace {
             pace.wait(chunk.len());
@@ -974,7 +1015,7 @@ fn write_body(
             counters.lock().unwrap().body_bytes_sent -= chunk.len() as u64;
             return Err(e);
         }
-        sent += chunk.len() as u64;
+        schedule.sent(chunk.len());
     }
     out.flush()
 }
