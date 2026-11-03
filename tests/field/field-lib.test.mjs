@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { afterStart, findings, hideLinks, hostOf, parseArgs, sample, shotPath } from './field-lib.mjs';
 
 const record = (over = {}) => ({
@@ -198,7 +199,10 @@ describe('afterStart', () => {
 describe('shotPath', () => {
   // #311: `shot x.png` wrote into the folder it ran in, the repository.
   it('puts a relative path in the session folder and keeps an absolute one', () => {
-    expect(shotPath('C:\\Temp\\velocity-field\\2026-11-03', 'panel.png')).toBe(join('C:\\Temp\\velocity-field\\2026-11-03', 'panel.png'));
-    expect(shotPath('C:\\Temp\\velocity-field\\2026-11-03', 'D:\\shots\\panel.png')).toBe('D:\\shots\\panel.png');
+    // Paths of the platform the test runs on: CI runs it on Linux, the tool runs on Windows.
+    const session = join(tmpdir(), 'velocity-field', '2026-11-03');
+    const elsewhere = resolve(tmpdir(), 'shots', 'panel.png');
+    expect(shotPath(session, 'panel.png')).toBe(join(session, 'panel.png'));
+    expect(shotPath(session, elsewhere)).toBe(elsewhere);
   });
 });
