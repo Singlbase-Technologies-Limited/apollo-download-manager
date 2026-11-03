@@ -2106,6 +2106,10 @@ fn fetch_ranges(
                 }
                 break;
             };
+            // A server that throttled asks for few requests: the rest in one (#247).
+            if throttled_to != u32::MAX {
+                sched.ask_once();
+            }
             let lease = match sched.assign(idle) {
                 Some(Assignment::Fresh(lease)) => lease,
                 Some(Assignment::Split { new, shrunk }) => {

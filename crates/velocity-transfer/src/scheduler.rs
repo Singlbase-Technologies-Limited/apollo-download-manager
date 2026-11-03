@@ -291,6 +291,12 @@ impl Scheduler {
         lease
     }
 
+    /// From now on a lease is as long as its share, without `max_lease`: for a server that
+    /// limits how often it's asked, each connection asks once for the rest (#247).
+    pub fn ask_once(&mut self) {
+        self.sizes.max_lease = u64::MAX;
+    }
+
     /// Hands out the next lease for one of `idle` free connections: the front of the unassigned
     /// bytes, an equal share of them per idle connection (rounded up to `align`, at most
     /// `max_lease`); or, with nothing unassigned, a split of the live lease with the largest
@@ -584,6 +590,20 @@ mod tests {
         assert_eq!(fresh(s.assign(3)).end, 1000);
         let mut s = Scheduler::new(1001, &Coverage::default(), small());
         assert_eq!(fresh(s.assign(4)).end, 260);
+    }
+
+    #[test]
+    fn a_server_that_limits_requests_gets_the_rest_in_one_lease() {
+        // #247: a server that answers 429 when asked too often gets one request for the rest,
+        // not one per `max_lease`.
+        let mut s = Scheduler::new(5000, &Coverage::default(), small());
+        assert_eq!(fresh(s.assign(1)).end, 1000);
+        s.ask_once();
+        assert_eq!(fresh(s.assign(1)).end, 5000);
+        // Shared between idle connections as before.
+        let mut s = Scheduler::new(5000, &Coverage::default(), small());
+        s.ask_once();
+        assert_eq!(fresh(s.assign(2)).end, 2500);
     }
 
     #[test]

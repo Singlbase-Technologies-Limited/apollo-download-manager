@@ -8,7 +8,8 @@ use std::time::{Duration, Instant};
 use velocity_core::domain::{DownloadStatus, FailureClass};
 use velocity_curl::{CurlLoop, Libcurl, LoopOptions, RateLimit};
 use velocity_test_http::{
-    seeded_bytes, AnsweringLimit, FirstStatuses, Freeze, ServerOptions, TestServer, Trickle,
+    seeded_bytes, AnsweringLimit, FirstStatuses, Freeze, RequestPace, ServerOptions, TestServer,
+    Trickle,
 };
 use velocity_transfer::download::{
     download_with, Cadence, Control, DiskOptions, DownloadError, DownloadOptions, DownloadReport,
@@ -504,4 +505,84 @@ fn cancelling_during_a_retry_wait_ends_at_once() {
     );
     assert_eq!(s.counters().gets, 1, "no request after the cancel");
     assert!(!part_of(&dest).exists());
+}
+
+#[test]
+fn after_a_429_for_asking_too_often_the_rest_comes_in_one_request() {
+    // #247: proof.ovh.net answers 429 to a request that comes too soon after the last one. Each
+    // 32 MiB lease was a request of its own, so every second one was refused, and after about 20
+    // the server stopped accepting this computer. After the first 429 the rest is asked for once.
+    let data = seeded_bytes(8 << 20, 247);
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions {
+            request_pace: Some(RequestPace {
+                min_gap: Duration::from_secs(1),
+            }),
+            ..ServerOptions::default()
+        },
+    );
+    let dir = Dir::new("request-pace");
+    let dest = dir.file("out.bin");
+    let options = DownloadOptions {
+        connections: 1,
+        leases: Sizes {
+            max_lease: 1 << 20,
+            ..Sizes::DEFAULT
+        },
+        retry: RetryPolicy {
+            // Past the server's gap, so each wait is long enough.
+            throttled_wait: Duration::from_millis(1100),
+            ..FAST
+        },
+        ..OPTIONS
+    };
+    run(&s.url("f.bin"), &dest, options, &Control::default()).expect("it completes");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    let c = s.counters();
+    assert_eq!(
+        c.limited.len(),
+        1,
+        "one 429, then one request for the rest: {:?}",
+        c.ranges
+    );
+}
+
+#[test]
+fn a_server_known_to_throttle_is_asked_once_from_the_start() {
+    // #247: the engine remembers a server that throttled; a later download from it starts by
+    // asking once for the rest, so the server never has to refuse it.
+    let data = seeded_bytes(8 << 20, 2470);
+    let s = TestServer::start(
+        vec![("f.bin".into(), data.clone())],
+        ServerOptions {
+            request_pace: Some(RequestPace {
+                min_gap: Duration::from_secs(1),
+            }),
+            ..ServerOptions::default()
+        },
+    );
+    let dir = Dir::new("known-throttler");
+    let dest = dir.file("out.bin");
+    let options = DownloadOptions {
+        connections: 1,
+        leases: Sizes {
+            max_lease: 1 << 20,
+            ..Sizes::DEFAULT
+        },
+        retry: RetryPolicy {
+            throttled_wait: Duration::from_millis(1100),
+            ..FAST
+        },
+        ..OPTIONS
+    };
+    let control = Control::default().with_throttled_to(Some(1));
+    run(&s.url("f.bin"), &dest, options, &control).expect("it completes");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    let c = s.counters();
+    assert!(
+        c.limited.len() <= 1,
+        "asked once after the probe: {:?}",
+        c.ranges
+    );
 }
