@@ -5,8 +5,11 @@
 //
 //   pnpm field start                      start the installed app with the port
 //   pnpm field onboard [folder]           finish the first-run setup
-//   pnpm field add <link> [<link>…] [--connections N] [--checksum sha-256=HEX] [--folder DIR]   (several: one per line, as pasted)
+//   pnpm field add <link> [<link>…] [--connections N] [--checksum sha-256=HEX] [--folder DIR]
+//                  [--user NAME --password] [--ftps] [--answer BUTTON]   (several: one per line, as pasted;
+//                  the password is typed at a prompt, never given as an argument)
 //   pnpm field pause|resume|cancel|retry|remove <name>
+//   pnpm field delete <name> | --all     delete the downloads' files, confirmed
 //   pnpm field click <role> <name>        any other control, by its accessible role and name
 //   pnpm field watch [--every S] [--for S] [--until done]
 //   pnpm field status | log [--last N] | export | shot <file>
@@ -21,23 +24,13 @@ import { appendFileSync, existsSync, mkdirSync, statSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { findings, hideLinks, sample } from './field-lib.mjs';
+import { afterStart, findings, hideLinks, parseArgs, sample } from './field-lib.mjs';
 
 const PROCESSES = { app: 'velocity-desktop-v2', engine: 'velocity-transfer', torrent: 'velocity-torrent' };
 const TERMINAL = new Set(['completed', 'failed', 'removed', 'seeding']);
 
-function options(args) {
-  const named = {};
-  const rest = [];
-  for (let i = 0; i < args.length; i++) {
-    if (args[i].startsWith('--')) named[args[i].slice(2)] = args[++i];
-    else rest.push(args[i]);
-  }
-  return { named, rest };
-}
-
 const [command, ...args] = process.argv.slice(2);
-const { named, rest } = options(args);
+const { named, rest } = parseArgs(args);
 const port = Number(named.port ?? 9333);
 const out = named.out ?? join(tmpdir(), 'velocity-field', new Date().toISOString().slice(0, 10));
 const exe = named.exe ?? join(process.env.LOCALAPPDATA ?? '', 'Velocity Download Manager V2', `${PROCESSES.app}.exe`);
@@ -171,6 +164,68 @@ async function dialog(page) {
   if (await open.isVisible()) console.log(`${clock()} the app asks: ${(await open.innerText()).replace(/\n+/g, ' | ')}`);
 }
 
+/** Reads a line from the terminal without showing it: a password never goes in an argument (#279). */
+function askHidden(question) {
+  if (!process.stdin.isTTY) return Promise.reject(new Error('--password needs a terminal to type the password in.'));
+  process.stdout.write(question);
+  process.stdin.setRawMode(true);
+  process.stdin.setEncoding('utf8');
+  process.stdin.resume();
+  return new Promise((resolve, reject) => {
+    let typed = '';
+    const finish = () => {
+      process.stdin.off('data', onData);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdout.write('\n');
+    };
+    function onData(chunk) {
+      for (const c of chunk) {
+        if (c === '\r' || c === '\n') {
+          finish();
+          resolve(typed);
+          return;
+        }
+        if (c === '\u0003') {
+          finish();
+          reject(new Error('Cancelled.'));
+          return;
+        }
+        typed = c === '\u007f' || c === '\b' ? typed.slice(0, -1) : typed + c;
+      }
+    }
+    process.stdin.on('data', onData);
+  });
+}
+
+/** The add dialog's text and buttons, or null once it has closed. */
+async function addDialog(page) {
+  const open = page.getByRole('dialog', { name: 'Add download' });
+  if (!(await open.isVisible())) return null;
+  const names = await open.getByRole('button').allInnerTexts();
+  return { text: (await open.innerText()).replace(/\n+/g, ' | '), buttons: names.map((n) => n.trim()).filter((n) => n !== '' && n !== 'Close') };
+}
+
+/** Clicks Start, answers the question `--answer` names, and reports what is left (#279). */
+async function startAdding(page) {
+  await page.getByRole('button', { name: 'Start download' }).click();
+  const answered = new Set();
+  for (;;) {
+    await sleep(1500);
+    const open = await addDialog(page);
+    const answer = typeof named.answer === 'string' && open?.buttons.includes(named.answer) && !answered.has(named.answer) ? named.answer : null;
+    if (answer) {
+      answered.add(answer);
+      console.log(`${clock()} the app asks: ${hideLinks(open.text)}; answering ${answer}`);
+      await page.getByRole('dialog', { name: 'Add download' }).getByRole('button', { name: answer, exact: true }).click();
+      continue;
+    }
+    const r = afterStart(open);
+    if (r.final && !r.added) await page.getByRole('button', { name: 'Done' }).click();
+    return r;
+  }
+}
+
 const ACTIONS = { pause: 'Pause selected', resume: 'Resume selected', cancel: 'Cancel selected', retry: 'Retry selected', remove: 'Remove selected from list' };
 
 async function main() {
@@ -183,25 +238,32 @@ async function main() {
         await page.getByRole('button', { name: 'Get started' }).click();
         console.log('Setup finished.');
       });
-    case 'add':
+    case 'add': {
+      if (named.password && !named.user) throw new Error('--password goes with --user NAME.');
+      // Asked before the window is touched, so the dialog doesn't wait on the prompt.
+      const password = named.password ? await askHidden(`Password for ${named.user}: `) : null;
       return withPage(async (page) => {
         await page.getByRole('button', { name: /^Add download/ }).click();
         // Several links are pasted one per line; a shell can't pass a line break in one argument.
         await page.getByRole('textbox', { name: 'Links' }).fill(rest.join('\n'));
         if (named.folder) await page.getByRole('textbox', { name: 'Save to' }).fill(named.folder);
-        if (named.connections || named.checksum) await page.getByRole('button', { name: 'Advanced options' }).click();
+        // Shown only for a plain ftp:// link.
+        if (named.ftps) await page.getByRole('checkbox', { name: 'Require encryption (FTPS)' }).check();
+        if (named.connections || named.checksum || named.user) await page.getByRole('button', { name: 'Advanced options' }).click();
         if (named.connections) await page.getByRole('spinbutton', { name: 'Connections' }).fill(named.connections);
         if (named.checksum) await page.getByRole('textbox', { name: 'Checksum' }).fill(named.checksum);
-        await page.getByRole('button', { name: 'Start download' }).click();
-        await sleep(1500);
-        const done = page.getByRole('button', { name: 'Done' });
-        if (await done.isVisible()) await done.click();
-        else await dialog(page);
+        if (named.user) await page.getByRole('textbox', { name: 'User name' }).fill(named.user);
+        if (password !== null) await page.getByLabel('Password', { exact: true }).fill(password);
+        const r = await startAdding(page);
         mkdirSync(out, { recursive: true });
         const shot = join(out, `added-${Date.now()}.png`);
         await page.screenshot({ path: shot });
-        console.log(`Added ${rest.length} link(s): ${rest.map(hideLinks).join(' ')}; screenshot ${shot}`);
+        const links = rest.map(hideLinks).join(' ');
+        console.log(`${r.added ? `Added ${rest.length} link(s): ${links}.` : `${links}: ${r.message}`} Screenshot ${shot}`);
+        // A question left unanswered: the next command shouldn't assume the download exists.
+        if (!r.added && !r.final) process.exitCode = 2;
       });
+    }
     case 'pause':
     case 'resume':
     case 'cancel':
@@ -216,12 +278,18 @@ async function main() {
     case 'delete':
       // The app's "Delete files of selected…", confirmed: the files the downloads own, and the rows.
       return withPage(async (page) => {
-        if (named.all !== undefined || rest[0] === '--all') {
-          // A list refresh can clear the selection, so it's checked again before the menu.
-          const all = page.getByRole('checkbox', { name: 'Select all shown downloads' });
-          await all.check();
-          await sleep(300);
-          if (!(await all.isChecked())) await all.check();
+        if (named.all) {
+          // Ctrl+A in the list selects every download shown. Clicking the select-all box failed
+          // now and then: a list refresh came between the click and Playwright's check of it (#279).
+          const items = Number(/(\d+) items?/.exec(await page.getByText(/^\d+ items?$/).first().innerText())?.[1] ?? 0);
+          if (items === 0) throw new Error('No downloads shown to delete.');
+          const grid = page.getByRole('grid', { name: 'Downloads' });
+          for (let tries = 0; !(await page.getByText(`${items} selected`).isVisible()); tries++) {
+            if (tries === 5) throw new Error(`Couldn't select all ${items} downloads shown.`);
+            await grid.focus();
+            await page.keyboard.press('Control+A');
+            await sleep(300);
+          }
           await page.getByRole('button', { name: 'More actions' }).click();
           await page.getByRole('menuitem', { name: /Delete files of selected/ }).click();
         } else {

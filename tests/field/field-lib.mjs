@@ -1,6 +1,8 @@
 // Pure logic behind the field test (#262, tests/field/README.md):
 // - hostOf, hideLinks: a link is never written whole, only its scheme and host (PO decision on
 //   #262: the PO's own links stay out of every report).
+// - parseArgs: the session tool's options and flags (#279).
+// - afterStart: what the add dialog shows once Start is clicked (#279).
 // - sample: one download as the field test watches it, from the app's snapshot and its files.
 // - findings: what looks wrong between two samples of the same download.
 // No I/O here; session.mjs supplies the inputs.
@@ -19,6 +21,7 @@ export function hostOf(link) {
 }
 
 const LINK = /\b([a-z][a-z0-9+.-]*):\/\/([^\s/?#"'<>]*)[^\s"'<>]*/gi;
+const MAGNET = /\b(magnet):\?[^\s"'<>]*/gi;
 const TRAILING = /[.,:;)\]]+$/;
 
 /**
@@ -27,7 +30,9 @@ const TRAILING = /[.,:;)\]]+$/;
  * `scheme://host` (#274).
  */
 export function hideLinks(text) {
-  return text.replace(LINK, (whole, scheme) => {
+  // A magnet link has no host, and its trackers are links of their own: all of it goes (#279).
+  const magnets = text.replace(MAGNET, (whole, scheme) => `${scheme}:?…${TRAILING.exec(whole)?.[0] ?? ''}`);
+  return magnets.replace(LINK, (whole, scheme) => {
     const tail = TRAILING.exec(whole)?.[0] ?? '';
     const link = whole.slice(scheme.length + 3, whole.length - tail.length);
     const end = link.search(/[/?#]/);
@@ -93,4 +98,50 @@ export function findings(before, now, quietMs) {
     out.push(`${id}: no new bytes for ${Math.floor(quietMs / 1000)} s, but it still shows downloading`);
   }
   return out;
+}
+
+/** Options that take no value. A password is never one: it is typed at the prompt (#279). */
+const FLAGS = new Set(['all', 'ftps', 'password']);
+
+/**
+ * The session tool's arguments: `--name value` options, `--flag`s, and the rest in order.
+ * @param {string[]} args
+ * @returns {{named: Record<string, string|true>, rest: string[]}}
+ */
+export function parseArgs(args) {
+  const named = {};
+  const rest = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg.startsWith('--')) {
+      rest.push(arg);
+      continue;
+    }
+    const name = arg.slice(2);
+    if (name.startsWith('password') && name !== 'password') {
+      throw new Error('--password takes no value: the password is typed at the prompt.');
+    }
+    if (FLAGS.has(name)) {
+      named[name] = true;
+      continue;
+    }
+    const value = args[++i];
+    if (value === undefined || value.startsWith('--')) throw new Error(`--${name} needs a value.`);
+    named[name] = value;
+  }
+  return { named, rest };
+}
+
+/**
+ * What the add dialog shows once Start was clicked, as `add` reports it.
+ * @param {{text: string, buttons: string[]}|null} open the dialog's text and buttons, or null once it closed
+ * @returns {{added: boolean, final: boolean, message: string}}
+ */
+export function afterStart(open) {
+  if (!open) return { added: true, final: true, message: 'Added.' };
+  const text = hideLinks(open.text);
+  // Only Done left: an outcome to read, not a question.
+  if (open.buttons.length === 1 && open.buttons[0] === 'Done') return { added: false, final: true, message: `The app says: ${text}` };
+  const answers = open.buttons.map((b) => `--answer "${b}"`).join(' or ');
+  return { added: false, final: false, message: `Not added yet. The app asks: ${text}. Answer with ${answers}.` };
 }
