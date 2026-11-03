@@ -2,10 +2,13 @@
 // - hostOf, hideLinks: a link is never written whole, only its scheme and host (PO decision on
 //   #262: the PO's own links stay out of every report).
 // - parseArgs: the session tool's options and flags (#279).
-// - afterStart: what the add dialog shows once Start is clicked (#279).
+// - afterStart, question: what the add dialog shows once Start is clicked (#279, #311).
+// - shotPath: where a screenshot goes (#311).
 // - sample: one download as the field test watches it, from the app's snapshot and its files.
 // - findings: what looks wrong between two samples of the same download.
 // No I/O here; session.mjs supplies the inputs.
+
+import { isAbsolute, join } from 'node:path';
 
 /** How long a download may show Downloading without a new byte before it is flagged. */
 export const QUIET_MS = 30_000;
@@ -132,16 +135,43 @@ export function parseArgs(args) {
   return { named, rest };
 }
 
+/** The add dialog's title and hint, which every question repeats (#311). */
+const DIALOG_HEADER = new Set(['Add download', 'Paste links, one per line, or choose .torrent files.']);
+
+/**
+ * The add dialog's text without its title, its hint and its buttons, which are listed apart.
+ * @param {{text: string, buttons: string[]}} open
+ */
+export function question(open) {
+  return open.text
+    .split(' | ')
+    .filter((part) => !DIALOG_HEADER.has(part) && !open.buttons.includes(part))
+    .join(' | ');
+}
+
+/**
+ * Where `shot` writes: a relative path goes in the session folder, not the folder the tool ran
+ * in, which is the repository (#311).
+ * @param {string} out the session folder
+ * @param {string} path
+ */
+export function shotPath(out, path) {
+  return isAbsolute(path) ? path : join(out, path);
+}
+
 /**
  * What the add dialog shows once Start was clicked, as `add` reports it.
  * @param {{text: string, buttons: string[]}|null} open the dialog's text and buttons, or null once it closed
+ * @param {string[]} [answered] the buttons `--answer` clicked
  * @returns {{added: boolean, final: boolean, message: string}}
  */
-export function afterStart(open) {
-  if (!open) return { added: true, final: true, message: 'Added.' };
-  const text = hideLinks(open.text);
+export function afterStart(open, answered = []) {
+  // Skip closes the dialog too, with nothing added (#311).
+  if (!open) return answered.includes('Skip') ? { added: false, final: true, message: 'Skipped: nothing was added.' } : { added: true, final: true, message: 'Added.' };
+  const text = hideLinks(question(open));
   // Only Done left: an outcome to read, not a question.
   if (open.buttons.length === 1 && open.buttons[0] === 'Done') return { added: false, final: true, message: `The app says: ${text}` };
   const answers = open.buttons.map((b) => `--answer "${b}"`).join(' or ');
-  return { added: false, final: false, message: `Not added yet. The app asks: ${text}. Answer with ${answers}.` };
+  const stop = /[.?!]$/.test(text) ? '' : '.';
+  return { added: false, final: false, message: `Not added yet. The app asks: ${text}${stop} Answer with ${answers}.` };
 }

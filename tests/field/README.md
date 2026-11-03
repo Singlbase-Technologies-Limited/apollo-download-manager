@@ -25,9 +25,10 @@ pnpm field kill [app|engine|torrent]   # end a process at once, as a crash does
 ```
 
 - **Actions are real clicks** in the real window ([`session.mjs`](session.mjs), Playwright over the Chrome DevTools Protocol).
-- **`add` reports what the dialog asks** (#279). It says "Added" only once the dialog has closed. A question it can't answer, such as "This was added before", is printed with its buttons, and `add` exits with code 2; `--answer "<button>"` clicks that button when the question comes, or `pnpm field click button "<button>"` answers it after. When only Done is left, it prints what the app says and clicks Done.
+- **`add` reports what the dialog asks** (#279). It says "Added" only once the dialog has closed, and "Skipped" when the dialog closed after **Skip** (#311). A question it can't answer, such as "This was added before", is printed with its buttons, without the dialog's title and hint, and `add` exits with code 2; `--answer "<button>"` clicks that button when the question comes, or `pnpm field click button "<button>"` answers it after. When only Done is left, it prints what the app says and clicks Done.
 - **Logins:** `--user NAME --password` fills the Advanced options' login. The password is typed at a hidden prompt, never given as an argument or an environment variable, and the tool doesn't write it anywhere. `--ftps` ticks *Require encryption (FTPS)*, shown for plain `ftp://` links.
-- **`delete --all`** selects every download shown with Ctrl+A in the list, and waits until the bar says they're all selected, before *Delete files of selected…*.
+- **`delete --all`** selects every download shown with Ctrl+A in the list, and waits until the bar says they're all selected, before *Delete files of selected…*. The view must be a list, not Settings.
+- **`shot <file>`** writes a relative path into the session folder (#311).
 - **Readings use the app's read-only commands** (`get_snapshot`, `get_diagnostics`), plus the part file's length on disk and the app's processes and TCP connections (PowerShell's `Get-Process` and `Get-NetTCPConnection`).
 - **`watch` flags what looks wrong** ([`field-lib.mjs`](field-lib.mjs)) and takes a screenshot each time:
   - progress that goes backwards without a cancel or retry;
