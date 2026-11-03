@@ -352,10 +352,11 @@ A failure is classified first ([`failure.rs`](../crates/velocity-transfer/src/fa
 
 ### Stalls
 
-- **The rule:** a stall is time with no byte from the network. It is never a speed limit, so a slow but steady transfer is never reset.
-- **Stalled after 15 s:** with no byte, the download shows Stalled. With several connections, it shows Stalled only when none of them brings bytes.
-- **Reset after 30 s:** with no byte, the request is cancelled and retried like any failure. These replace the prototype's fixed 60 s limit.
-- **Disk waits don't count:** each segment's forwarder starts its clock only while it waits for libcurl, and the single-stream reader starts it after each write. Time spent waiting for a slow disk is never taken for a stall ([engine-mode-costs.md](research/engine-mode-costs.md) measured disk stalls of up to 57 s).
+- **The rule:** a stall is time in which a request brings too little from the network: no byte, or less than `RetryPolicy::least_rate_bps` (1 KiB/s) over the stall time, so 15 KiB in 15 s (#292, PO decision on #257). A connection that trickles a few bytes now and then is therefore stalled, as V1's `lowest_speed_limit_kib` had it. A slow but steady transfer above the floor is never reset.
+- **Stalled after 15 s:** with too little, the download shows Stalled ("No data received"). With several connections, it shows Stalled only when every one of them brings too little. A few bytes don't end a stall; a request that brings the floor again does (`Segment::Moving`, `Control::moving`).
+- **Reset after 30 s:** with too little, the request is cancelled and retried like any failure. These replace the prototype's fixed 60 s limit. The floor is a starting value, not a measurement; it isn't a setting.
+- **A speed limit is never a stall:** while a speed limit applies to the download, its own or the global one, any byte counts as progress, so a request the user slowed is never reset. A limit set while a request runs applies to its next request.
+- **Disk waits don't count:** the clock (`Slowness`) runs only while the forwarder or the single-stream reader waits for libcurl. Time spent waiting for a slow disk is never taken for a stall ([engine-mode-costs.md](research/engine-mode-costs.md) measured disk stalls of up to 57 s).
 
 ### The whole download
 

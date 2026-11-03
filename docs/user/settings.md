@@ -109,8 +109,8 @@ The theme (follow the system, light or dark) and the list's density (compact or 
   | Failures in a row before giving up | 5 |
   | Longest wait before a retry | 60 s |
   | Times a failed download starts again | 2 |
-  | Shown as stalled after | 15 s without data |
-  | A request starts again after | 30 s without data |
+  | Shown as stalled after | 15 s without data, or with less than 1 KiB/s |
+  | A request starts again after | 30 s without data, or with less than 1 KiB/s; never while a speed limit slows it |
   | Connect timeout | 30 s |
 
 - **Disk:** **Preallocation** (sparse by default; full reserves the whole file at the start, so a disk too small fails at once) and the **write buffer per connection** (2 MiB).

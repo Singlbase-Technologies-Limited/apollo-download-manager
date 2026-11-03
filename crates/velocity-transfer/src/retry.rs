@@ -32,6 +32,11 @@ pub struct RetryPolicy {
     pub stalled_after: Duration,
     /// No byte from the network on a request for this long: the request is reset and retried.
     pub reset_after: Duration,
+    /// The least a request must bring, in bytes per second over [`Self::stalled_after`], to count
+    /// as moving (#292). One that brings less is silent for [`Self::stalled_after`] and
+    /// [`Self::reset_after`], however often a few bytes arrive. Not while a speed limit holds the
+    /// request back: then any byte counts.
+    pub least_rate_bps: u64,
     /// How many times a failed download is started again.
     pub download_retries: u32,
     /// The wait before the first restart of a failed download, doubled after each one.
@@ -52,6 +57,9 @@ impl RetryPolicy {
         failures_in_a_row: 5,
         stalled_after: Duration::from_secs(15),
         reset_after: Duration::from_secs(30),
+        // V1's `lowest_speed_limit_kib` floor, 1 KiB/s: 15 KiB in 15 s (PO decision on #257). A
+        // starting value, not a measurement.
+        least_rate_bps: 1024,
         download_retries: 2,
         first_download_wait: Duration::from_secs(5),
         first_throttled_download_wait: Duration::from_secs(60),
