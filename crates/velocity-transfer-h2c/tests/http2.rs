@@ -3,7 +3,7 @@
 //! stream reset moved from #42, and the multiplex policy. Real libcurl, real sockets, real files.
 
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use velocity_core::domain::FailureClass;
@@ -18,6 +18,18 @@ use velocity_transfer::retry::RetryPolicy;
 use velocity_transfer::scheduler::Sizes;
 
 const MIB: usize = 1 << 20;
+
+/// The ramp's tests measure speed, and the others download as fast as loopback allows: on CI's
+/// Windows runner, run together, they slowed the 2 windows that judged one stream by 15% (main run
+/// 41637850734, #281). Each test holds this for its whole run, so they run one at a time; a failed
+/// one doesn't block the rest.
+static SERIAL: Mutex<()> = Mutex::new(());
+
+fn one_at_a_time() -> MutexGuard<'static, ()> {
+    SERIAL
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
 
 struct Dir(PathBuf);
 
@@ -77,6 +89,7 @@ fn in_mode(range_mode: RangeMode) -> Http2Options {
 
 #[test]
 fn the_probe_classifies_answers_over_http2_as_over_http1() {
+    let _serial = one_at_a_time();
     // #41's fixture rows over HTTP/2 (moved to #47): libcurl gives the engine the same status and
     // headers over either version, and the answers must be classified the same.
     let dir = Dir::new("probe");
@@ -172,6 +185,7 @@ fn the_probe_classifies_answers_over_http2_as_over_http1() {
 
 #[test]
 fn a_split_over_http2_resets_only_the_stream() {
+    let _serial = one_at_a_time();
     // #42's criterion, moved to #47: the first later range is slow, so the other connection
     // finishes early and splits it. Over HTTP/2 the old request's stream is reset and the
     // connection stays: one TCP connection for the whole file.
@@ -225,12 +239,14 @@ const ADAPTIVE: DownloadOptions = DownloadOptions {
 
 #[test]
 fn a_server_that_throttles_each_connection_gets_separate_connections() {
+    let _serial = one_at_a_time();
     // 1 MiB/s per TCP connection, however many streams share it: more streams don't help, so the
-    // downloader tries connections of their own, which do. 128 MiB, so the trial of its own
+    // downloader tries connections of their own, which do. 192 MiB, so the trial of its own
     // connections settles before the file ends (#168): at 64 MiB, the slower start of #221's ramp
     // left the trial unfinished when the file ended, on both platforms (batch run 41180516439).
+    // Since #281 the trial judges a connection that helps twice, which settles it 4 windows later.
     let (s, data) = serve(
-        128 * MIB,
+        192 * MIB,
         Http2Options {
             throttle_connection_bytes_per_sec: Some(MIB as u64),
             ..Http2Options::default()
@@ -240,7 +256,7 @@ fn a_server_that_throttles_each_connection_gets_separate_connections() {
     // 8 asked for (#168): the streams start at 8 and step down while the speed holds, so they stop
     // below 8 and the trial, which starts only on "no gain", runs. Each count takes 2 windows, so
     // after a first window that isn't measured, the streams settle by about 17 s and the trial's own
-    // connections by about 22 s (#221).
+    // connections by about 26 s (#221, #281). The file ends at about 40 s.
     let options = DownloadOptions {
         connections: 8,
         ..ADAPTIVE
@@ -288,6 +304,7 @@ fn a_server_that_throttles_each_connection_gets_separate_connections() {
 
 #[test]
 fn a_server_that_throttles_each_stream_keeps_one_multiplexed_connection() {
+    let _serial = one_at_a_time();
     // 1 MiB/s per stream: every added stream helps, so the downloader stays on one connection.
     let (s, data) = serve(
         32 * MIB,
@@ -311,6 +328,7 @@ fn a_server_that_throttles_each_stream_keeps_one_multiplexed_connection() {
 
 #[test]
 fn a_server_that_rate_limits_extra_streams_gets_no_new_ones_until_its_wait_is_over() {
+    let _serial = one_at_a_time();
     // proof.ovh.net over HTTP/2: one stream is served, and each stream beyond it is answered 429
     // (#247). With the app's adaptive connections, the download keeps the stream that works and
     // finishes, instead of opening stream after stream until the server blocks the client.

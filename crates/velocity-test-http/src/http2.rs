@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::future::poll_fn;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use bytes::Bytes;
 use h2::server::SendResponse;
@@ -21,7 +21,7 @@ use tokio::runtime::Runtime;
 
 use crate::{
     answer, parse_range, takes_fault, Answering, AnsweringLimit, Counters, FileHeaders, Pace,
-    RangeMode, Served,
+    RangeMode, Schedule, Served,
 };
 
 /// What the HTTP/2 server does, beyond serving its files.
@@ -261,12 +261,10 @@ async fn send_body(
 ) -> Result<(), Stopped> {
     let mut answering = Some(answering);
     const CHUNK: usize = 16 * 1024;
-    let started = Instant::now();
-    let mut sent = 0u64;
+    let mut schedule = Schedule::new(rate);
     let count = body.len().div_ceil(CHUNK);
     for (i, chunk) in body.chunks(CHUNK).enumerate() {
-        if let Some(rate) = rate.filter(|r| *r > 0) {
-            let due = started + Duration::from_secs_f64(sent as f64 / rate as f64);
+        if let Some(due) = schedule.due() {
             tokio::time::sleep_until(due.into()).await;
         }
         if let Some(due) = pace.reserve(chunk.len()) {
@@ -302,7 +300,7 @@ async fn send_body(
                 });
             }
         }
-        sent += chunk.len() as u64;
+        schedule.sent(chunk.len());
     }
     Ok(())
 }

@@ -339,12 +339,12 @@ fn adaptive_connections_start_with_all_asked_for_and_keep_each_that_helps() {
 fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
     let _serial = one_at_a_time();
     // Per-IP throttle: 1 MiB/s per connection but 1.5 MiB/s in all, so 2 connections fill it and
-    // more bring nothing. 4 asked for: the ramp starts at 4 (#221), drops to 3, 2 and 1, and
-    // brings the 2nd back, since 1 loses a third of the speed. Each count takes 2 windows, so it
-    // decides at about 18 s, after a first window that isn't measured; 40 MiB, about 27 s, so the
-    // download is still running then, however
-    // slowly a loaded machine lets it measure (#154).
-    let data = seeded_bytes(40 * MIB, 53);
+    // more bring nothing. 4 asked for: the ramp starts at 4 (#221), drops to 3, 2 and 1, brings
+    // the 2nd back, since 1 loses a third of the speed, and judges it again (#281). Each count
+    // takes 2 windows, so it decides at about 26 s, after a first window that isn't measured;
+    // 64 MiB, about 45 s, so the download is still running then, however slowly a loaded machine
+    // lets it measure (#154).
+    let data = seeded_bytes(64 * MIB, 53);
     let server = throttled_server(&data, MIB as u64, Some(3 * MIB as u64 / 2));
     let dir = Dir::new("per-ip");
     let control = Arc::new(Control::default());
@@ -355,13 +355,13 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
     let timeline = ramp_timeline(&control);
     let download = run(&server, &dir, four, &control);
     wait_until_showing(
-        Duration::from_secs(40),
+        Duration::from_secs(60),
         "more connections stop helping",
         Some(&timeline),
         || matches!(control.connections_now().tuned, Some((_, Tuning::NoGain))),
     );
-    // Noise only ever keeps a connection (#221): a noisy count stops the ramp above 2, at 3. It
-    // never loses the 2 that help.
+    // Noise only ever keeps a connection (#221): a count noisy twice, once judged again (#281),
+    // stops the ramp above 2, at 3. It never loses the 2 that help.
     let (kept, _) = control.connections_now().tuned.unwrap();
     assert!(
         (2..=3).contains(&kept),

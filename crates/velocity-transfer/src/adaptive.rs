@@ -55,7 +55,8 @@ pub enum Tuning {
 
 /// One download's ramp. It measures the speed with every connection, then drops one and measures
 /// again: if the speed held, it drops the next; if it fell by [`AdaptivePolicy::help_percent`],
-/// the dropped one comes back and the ramp stops.
+/// the dropped one comes back, the speed with it is measured afresh, and it is dropped and judged
+/// again. A second loss keeps it, and the ramp stops (#281).
 #[derive(Debug)]
 pub struct Ramp {
     policy: AdaptivePolicy,
@@ -65,6 +66,9 @@ pub struct Ramp {
     base: Option<f64>,
     /// A connection was dropped and the count without it is being measured.
     judging: bool,
+    /// The connection being judged seemed to help once and was brought back; a second loss keeps
+    /// it for good.
+    doubted: bool,
     /// The next window is the first after the count was set from outside, and isn't measured.
     warming: bool,
     /// The windows measured at this count, and the sum of their speeds.
@@ -88,6 +92,7 @@ impl Ramp {
             target: 1,
             base: None,
             judging: false,
+            doubted: false,
             warming: false,
             measured: 0,
             sum: 0.0,
@@ -189,6 +194,7 @@ impl Ramp {
     fn restart(&mut self) {
         self.base = None;
         self.judging = false;
+        self.doubted = false;
         self.warming = true;
         self.measured = 0;
         self.sum = 0.0;
@@ -220,12 +226,22 @@ impl Ramp {
                     0.0
                 };
                 if loss >= f64::from(self.policy.help_percent) {
-                    // The dropped connection helped: it comes back, and the ramp stops.
+                    // The dropped connection seemed to help: it comes back.
                     self.target += 1;
                     self.judging = false;
-                    self.holding = true;
+                    if self.doubted {
+                        // It helped twice: it stays, and the ramp stops.
+                        self.holding = true;
+                    } else {
+                        // Once may be a slow stretch, and would hold the count for the whole
+                        // download (#281): the speed with it is measured afresh, then it is judged
+                        // again.
+                        self.doubted = true;
+                        self.base = None;
+                    }
                     return;
                 }
+                self.doubted = false;
                 self.base = Some(base.max(mean));
             }
             // The first count measured: the speed to keep.
@@ -296,9 +312,10 @@ mod tests {
     }
 
     /// What a ramp against [`capped`] does: the first window isn't measured, then each count is
-    /// measured for 2 windows; without the 3rd the speed falls, so it comes back and the ramp stops
+    /// measured for 2 windows; without the 3rd the speed falls, so it comes back, 3 are measured
+    /// afresh, and it is judged again (#281). The speed falls again: it stays, and the ramp stops
     /// at 3.
-    const DOWN_TO_THREE: [u32; 16] = [8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 3, 3];
+    const DOWN_TO_THREE: [u32; 20] = [8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3];
 
     /// `speed`, times `factor` during window `which` (1-based) of [`run`].
     fn in_window(which: u32, factor: f64, speed: impl Fn(u32) -> u64) -> impl Fn(u32) -> u64 {
@@ -324,11 +341,11 @@ mod tests {
     #[test]
     fn keeps_every_connection_while_each_helps() {
         let (mut ramp, mut clock) = start();
-        let targets = run(&mut ramp, &mut clock, 6, 8, linear);
+        let targets = run(&mut ramp, &mut clock, 10, 8, linear);
         assert_eq!(
             targets,
-            [8, 8, 7, 7, 8, 8],
-            "the 8th tried without, then kept"
+            [8, 8, 7, 7, 8, 8, 7, 7, 8, 8],
+            "the 8th tried without, brought back, judged again, then kept"
         );
         assert_eq!(ramp.why(8), None, "at the most it may use");
         assert!(ramp.settled());
@@ -337,7 +354,7 @@ mod tests {
     #[test]
     fn drops_the_connections_that_dont_help_and_keeps_the_rest() {
         let (mut ramp, mut clock) = start();
-        let targets = run(&mut ramp, &mut clock, 16, 8, capped);
+        let targets = run(&mut ramp, &mut clock, 20, 8, capped);
         assert_eq!(targets, DOWN_TO_THREE);
         assert_eq!(ramp.why(8), Some(Tuning::NoGain));
     }
@@ -369,7 +386,7 @@ mod tests {
         // then look faster, but each count is judged against the best before it, so it still
         // stops at the 3 that help.
         let (mut ramp, mut clock) = start();
-        let targets = run(&mut ramp, &mut clock, 16, 8, in_window(2, 0.5, capped));
+        let targets = run(&mut ramp, &mut clock, 20, 8, in_window(2, 0.5, capped));
         assert_eq!(targets, DOWN_TO_THREE);
     }
 
@@ -379,13 +396,14 @@ mod tests {
         // all 8, raises the bar by 7.5% on average: fewer stay within 10% of it, so the ramp goes
         // on and still finds the 3 that help.
         let (mut ramp, mut clock) = start();
-        let targets = run(&mut ramp, &mut clock, 16, 8, in_window(3, 1.15, capped));
+        let targets = run(&mut ramp, &mut clock, 20, 8, in_window(3, 1.15, capped));
         assert_eq!(targets, DOWN_TO_THREE);
     }
 
     #[test]
     fn one_slow_window_while_judging_keeps_the_connection() {
-        // Noise only ever keeps a connection: a slow window without the 8th brings it back.
+        // A slow window without the 8th brings it back at once; it is judged again after (#281,
+        // `a_slow_stretch_while_judging_is_judged_again`).
         let (mut ramp, mut clock) = start();
         let targets = run(
             &mut ramp,
@@ -395,6 +413,33 @@ mod tests {
             in_window(4, 0.5, |_| 8_000_000),
         );
         assert_eq!(targets, [8, 8, 7, 7, 8]);
+    }
+
+    #[test]
+    fn a_slow_stretch_while_judging_is_judged_again() {
+        // CI's Windows runner (main run 41637850734): the same speed with any count, but both
+        // windows without the 8th came in 15% slow. The 8th came back and the ramp held at 8 for
+        // the whole download (#281). Judged again, the loss is gone, so it goes on down to one.
+        let (mut ramp, mut clock) = start();
+        let windows = Cell::new(0u32);
+        let ticks = Cell::new(0u32);
+        let speed = |_| {
+            ticks.set(ticks.get() + 1);
+            windows.set((ticks.get() - 1) / 20 + 1);
+            if matches!(windows.get(), 4 | 5) {
+                850_000
+            } else {
+                1_000_000
+            }
+        };
+        let targets = run(&mut ramp, &mut clock, 22, 8, speed);
+        assert_eq!(
+            &targets[..7],
+            [8, 8, 7, 7, 8, 8, 7],
+            "brought back, then judged again"
+        );
+        assert_eq!(targets.last(), Some(&1), "{targets:?}");
+        assert_eq!(ramp.why(8), Some(Tuning::NoGain));
     }
 
     #[test]
@@ -416,7 +461,7 @@ mod tests {
     #[test]
     fn a_ceiling_raised_after_the_ramp_stopped_takes_the_new_one_and_judges_again() {
         let (mut ramp, mut clock) = start();
-        run(&mut ramp, &mut clock, 16, 8, capped);
+        run(&mut ramp, &mut clock, 20, 8, capped);
         assert_eq!((ramp.target(), ramp.why(8)), (3, Some(Tuning::NoGain)));
         // 9 allowed, from a server where each connection helps: losing one of 9 costs 11%. The
         // first window starts once all 9 run and isn't measured, so each decision lands later.
@@ -424,7 +469,7 @@ mod tests {
         assert_eq!(
             targets,
             [9, 9, 9, 8, 8, 9],
-            "the 9th tried without, and kept"
+            "the 9th tried without, and brought back"
         );
     }
 
@@ -432,7 +477,7 @@ mod tests {
     fn settles_when_fewer_stop_keeping_the_speed_and_knows_its_best_speed() {
         let (mut ramp, mut clock) = start();
         assert!(!ramp.settled());
-        run(&mut ramp, &mut clock, 16, 8, capped);
+        run(&mut ramp, &mut clock, 20, 8, capped);
         assert!(ramp.settled());
         let best = ramp.best_rate().expect("measured");
         assert!((best - 3_000_000.0).abs() < 1.0, "{best}");
