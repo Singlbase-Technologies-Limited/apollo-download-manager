@@ -140,8 +140,7 @@ pub fn seed(name: &str, dir: &Path) -> Seeder {
     wait_for("the seeder to check its files", 30, || {
         session.status(id).unwrap().is_seeding
     });
-    let port = session.listen_port();
-    assert_ne!(port, 0);
+    let port = listening(&session, "the seeder");
     Seeder {
         _session: session,
         port,
@@ -289,6 +288,33 @@ pub fn leech(name: &str, dir: &Path, tracker: &str) -> Leecher {
     Leecher { session, id }
 }
 
+/// Waits for `session` to listen, and returns its port. libtorrent opens its socket after the
+/// session starts, so the port is 0 until then: on a busy CI runner a seeder was still at 0 when
+/// its files were checked, and a leecher took over 30 s (#281). A timeout names the listen
+/// failures libtorrent reported meanwhile.
+pub fn listening(session: &Session, what: &str) -> u16 {
+    let deadline = Instant::now() + Duration::from_secs(30);
+    let mut failures = Vec::new();
+    loop {
+        let port = session.listen_port();
+        if port != 0 {
+            return port;
+        }
+        failures.extend(
+            session
+                .pop_alerts()
+                .into_iter()
+                .filter(|a| a.kind == "listen_failed")
+                .map(|a| format!("{} port {}: {}", a.transport, a.port, a.message)),
+        );
+        assert!(
+            Instant::now() < deadline,
+            "timed out waiting for {what} to listen; libtorrent's listen failures: {failures:?}"
+        );
+        thread::sleep(Duration::from_millis(50));
+    }
+}
+
 pub fn wait_for(what: &str, secs: u64, mut done: impl FnMut() -> bool) {
     let deadline = Instant::now() + Duration::from_secs(secs);
     while !done() {
@@ -422,8 +448,7 @@ pub fn metadata_seeder(name: &str, dir: &Path) -> Seeder {
             ..Default::default()
         })
         .unwrap();
-    wait_for("the seeder to listen", 30, || session.listen_port() != 0);
-    let port = session.listen_port();
+    let port = listening(&session, "the seeder");
     Seeder {
         _session: session,
         port,

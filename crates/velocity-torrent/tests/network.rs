@@ -87,7 +87,7 @@ fn leech_time(name: &str, test: &str, engine: &SupervisedTorrentEngine) -> Durat
             ..Default::default()
         })
         .unwrap();
-    wait_for("the leecher to listen", 30, || session.listen_port() != 0);
+    listening(&session, "the leecher");
     let started = Instant::now();
     session.connect_peer(id, "127.0.0.1", port).unwrap();
     wait_for("the leecher to finish", 120, || {
