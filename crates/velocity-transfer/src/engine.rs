@@ -950,6 +950,8 @@ fn run(shared: &Shared, id: TransferId, job: &Job, resume: Option<&Resume>, cont
     };
     let mut resume = resume.cloned();
     let mut restarts = 0;
+    // When the failures in a row began, and the durable bytes then.
+    let mut failing_since: Option<(Instant, u64)> = None;
     let result = loop {
         // Named by now when an earlier attempt's answer named it (#40).
         let destination = destination_of(shared, id).or_else(|| job.destination.clone());
@@ -975,15 +977,31 @@ fn run(shared: &Shared, id: TransferId, job: &Job, resume: Option<&Resume>, cont
             break result;
         };
         restarts += 1;
+        // Failing since the last attempt that brought a byte the checkpoint recorded (#317).
+        let durable = durable_bytes(shared, id);
+        let since = match failing_since {
+            Some((at, bytes)) if bytes == durable => at,
+            _ => Instant::now(),
+        };
+        failing_since = Some((since, durable));
         let policy = *lock_value(&shared.retry);
-        let Some(wait) = policy.download_wait(e.class, restarts) else {
+        let Some(wait) = policy.download_wait(e.class, restarts, since.elapsed()) else {
             break result;
         };
         let mut waiting = e.clone();
-        waiting.message = format!(
-            "{} Retrying automatically ({restarts} of {}).",
-            e.message, policy.download_retries
-        );
+        waiting.message = if restarts <= policy.download_retries {
+            format!(
+                "{} Retrying automatically ({restarts} of {}).",
+                e.message, policy.download_retries
+            )
+        } else {
+            let minutes = policy.ride_out.as_secs().div_ceil(60);
+            let unit = if minutes == 1 { "minute" } else { "minutes" };
+            format!(
+                "{} Retrying automatically for up to {minutes} {unit}.",
+                e.message
+            )
+        };
         update(shared, id, |s| {
             s.status = DownloadStatus::Retrying;
             // The restart's own time, never the last request's wait, which is over.
@@ -1048,6 +1066,11 @@ fn run(shared: &Shared, id: TransferId, job: &Job, resume: Option<&Resume>, cont
 }
 
 /// The last checkpoint transfer `id` sent.
+/// The bytes transfer `id`'s last checkpoint recorded on disk.
+fn durable_bytes(shared: &Shared, id: TransferId) -> u64 {
+    last_checkpoint(shared, id).map_or(0, |c| c.durable.iter().map(|(a, b)| b - a).sum())
+}
+
 fn last_checkpoint(shared: &Shared, id: TransferId) -> Option<Checkpoint> {
     lock(&shared.state)
         .transfers

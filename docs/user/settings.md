@@ -108,7 +108,7 @@ The theme (follow the system, light or dark) and the list's density (compact or 
   |---|---|
   | Failures in a row before giving up | 5 |
   | Longest wait before a retry | 60 s |
-  | Times a failed download starts again | 2 |
+  | Times a failed download starts again | 2; after a lost network connection, Velocity keeps trying for up to 5 minutes, keeping what it downloaded |
   | Shown as stalled after | 15 s without data, or with less than 1 KiB/s |
   | A request starts again after | 30 s without data, or with less than 1 KiB/s; never while a speed limit slows it |
   | Connect timeout | 30 s |

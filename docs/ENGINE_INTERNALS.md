@@ -362,11 +362,11 @@ A failure is classified first ([`failure.rs`](../crates/velocity-transfer/src/fa
 
 A download that still fails in a way worth retrying is started again by the engine (V1's `app_retries`):
 - unless no try of that start reached the server: a name that didn't resolve, or a connection refused or timed out. Those 5 tries are all, and the download fails (`DownloadError::Unreachable`, PO decision on #245). A server that accepts the connection and doesn't answer is still started again;
-- at most 2 times;
+- at most 2 times; then, for a transient failure, again while it has had no new byte for less than 5 minutes (`RetryPolicy::ride_out`, PO decision on #317), at least every 60 s, so a Wi-Fi drop, a router restart or waking from sleep is ridden out;
 - after 5 s and then 10 s, or 60 s and then 120 s when the server was throttling, never more than 15 minutes;
 - from its last checkpoint when it has one (its part file was kept), otherwise from the start.
 
-While it waits, the snapshot shows Retrying, with the failure's message and "Retrying automatically (1 of 2).". A request's own retry within a start shows its failure too, with "Trying again (2 of 5).": the try that comes next, of the 5 a start makes (#245). Once bytes come again, the error is cleared. A cancel during the wait removes the kept part file. A permanent failure is never started again. Retrying by hand is the manager's, and never a second automatic retry ([ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#retrying-removing-and-clearing-58)).
+While it waits, the snapshot shows Retrying, with the failure's message and "Retrying automatically (1 of 2).", and past the 2 "Retrying automatically for up to 5 minutes.". A request's own retry within a start shows its failure too, with "Trying again (2 of 5).": the try that comes next, of the 5 a start makes (#245). Once bytes come again, the error is cleared. A cancel during the wait removes the kept part file. A permanent failure is never started again. Retrying by hand is the manager's, and never a second automatic retry ([ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#retrying-removing-and-clearing-58)).
 
 ### The values
 
@@ -573,7 +573,7 @@ A strong validator that differs from the one the download started with always me
 
 - **Pause:** the requests stop, a last checkpoint is taken, and the part file stays. **Resume** starts a new worker from that checkpoint. Cancelling a paused transfer deletes its part file.
 - **When the app goes away,** or closes the engine's pipe, the engine pauses every transfer and keeps their part files, so the app can resume them when it starts again. It no longer cancels them, as #39 did.
-- **A failure:** one worth retrying, after a checkpoint was taken, keeps the part file, and the engine starts the download again from that checkpoint ([the whole download](#the-whole-download)). Any other failure deletes it.
+- **A failure:** one worth retrying, after a checkpoint was taken or when the start resumed from one (#317), keeps the part file, and the engine starts the download again from that checkpoint ([the whole download](#the-whole-download)). Any other failure deletes it.
 - **A crash** (`kill -9`, a power loss) leaves the part file and the last checkpoint the app saved. Nothing that looks finished exists until the rename.
 
 ### Finishing
@@ -745,7 +745,7 @@ Run it with `cargo run --release -p velocity-transfer --example high_offset_writ
   - a `404` is permanent with its message;
   - a cancel during a wait ends at once.
 
-  `tests/engine_retries.rs` covers starting a whole download again, giving up after the restarts, never restarting a permanent failure, a cancel during the wait, and Stalled in the snapshot. `tests/supervisor.rs` freezes a real engine process and checks it is restarted.
+  `tests/engine_retries.rs` covers starting a whole download again, keeping the bytes through an outage that fails a resumed start too, riding an outage out past the counted restarts (#317), giving up after the restarts, never restarting a permanent failure, a cancel during the wait, and Stalled in the snapshot. `tests/supervisor.rs` freezes a real engine process and checks it is restarted.
 - **Limit fixtures:** `tests/limits.rs` measures the bytes written over a window: a global 4 MiB/s across 3 downloads, a change taking effect within 2 s, and a download limit under a higher global one, each within ±10% over 10 s. `VELOCITY_LIMIT_SECONDS=30 cargo test -p velocity-transfer --test limits -- --nocapture` runs the 30 s window of #49 by hand (PO decision on #49). `tests/engine_contract.rs` checks limits in both engine modes, and `tests/supervisor.rs` checks that the global limit survives a restart.
 - **Connection fixtures (#47):** `tests/connections.rs` changes a download's count live (up and down, with no byte wasted and no second probe), holds it to the engine's allowance, reports when the file is too small for more, and runs the adaptive ramp against a per-connection and a per-IP throttle. `tests/engine_contract.rs` checks `set_connections`, the per-host share with Jain's index, and connection reuse in both engine modes. Since #154, so that slow machines don't fail them:
   - `tests/connections.rs` runs its tests one at a time, and so do the three in `tests/engine_contract.rs` that measure speed. At once, on 2 vCPUs, they stretched the ramp's windows to almost 3 s. Since #281, `velocity-transfer-h2c/tests/http2.rs` runs its tests one at a time too: its probe and split tests download at loopback speed, and slowed the ramp's measurements on CI's Windows runner;
