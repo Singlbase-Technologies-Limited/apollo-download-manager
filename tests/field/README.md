@@ -14,8 +14,10 @@ The installed app, used the way a person uses it, with real downloads from real 
 pnpm field start                       # the installed app, with WebView2's debugging port on 127.0.0.1
 pnpm field onboard [folder]            # the first-run setup, after a clean install
 pnpm field add <link> [<link>…] [--connections N] [--checksum sha-256=HEX] [--folder DIR]
+               [--user NAME --password] [--ftps] [--answer "Add anyway"]
 pnpm field watch --every 5 --for 600   # one line per download every 5 s, and samples.jsonl
 pnpm field pause|resume|cancel|retry|remove <name>
+pnpm field delete <name> | --all       # the app's Delete files, confirmed
 pnpm field click <role> "<name>"       # any other control, by its accessible role and name
 pnpm field status | log --last 50 | export | shot <file>
 pnpm field quit                        # as the tray's Quit
@@ -23,6 +25,9 @@ pnpm field kill [app|engine|torrent]   # end a process at once, as a crash does
 ```
 
 - **Actions are real clicks** in the real window ([`session.mjs`](session.mjs), Playwright over the Chrome DevTools Protocol).
+- **`add` reports what the dialog asks** (#279). It says "Added" only once the dialog has closed. A question it can't answer, such as "This was added before", is printed with its buttons, and `add` exits with code 2; `--answer "<button>"` clicks that button when the question comes, or `pnpm field click button "<button>"` answers it after. When only Done is left, it prints what the app says and clicks Done.
+- **Logins:** `--user NAME --password` fills the Advanced options' login. The password is typed at a hidden prompt, never given as an argument or an environment variable, and the tool doesn't write it anywhere. `--ftps` ticks *Require encryption (FTPS)*, shown for plain `ftp://` links.
+- **`delete --all`** selects every download shown with Ctrl+A in the list, and waits until the bar says they're all selected, before *Delete files of selected…*.
 - **Readings use the app's read-only commands** (`get_snapshot`, `get_diagnostics`), plus the part file's length on disk and the app's processes and TCP connections (PowerShell's `Get-Process` and `Get-NetTCPConnection`).
 - **`watch` flags what looks wrong** ([`field-lib.mjs`](field-lib.mjs)) and takes a screenshot each time:
   - progress that goes backwards without a cancel or retry;
@@ -34,7 +39,7 @@ pnpm field kill [app|engine|torrent]   # end a process at once, as a crash does
 ## Keeping it safe
 
 - **The debugging port** listens on `127.0.0.1` only, and only while an app started by `pnpm field start` runs. While it's open, any program on this PC can control the app, so sessions run only with the PO's knowledge. Quit the app when the session ends. The installed app and its configuration are never changed.
-- **Links stay private.** The PO's own links, such as tokenised file hosts, are pasted in the session they're for. Nothing the tool writes holds a link, only its scheme and host (`hideLinks`). Screenshots can show the details panel's link, so they stay in the session folder: crop or skip them before attaching one to an issue.
+- **Links stay private.** The PO's own links, such as tokenised file hosts, are pasted in the session they're for. Nothing the tool writes holds a link, only its scheme and host (`hideLinks`); a magnet link keeps only `magnet:?…`. Screenshots can show the details panel's link, so they stay in the session folder: crop or skip them before attaching one to an issue.
 - **The PO's data:** the tool never edits the app's database. To read a checkpoint, copy `velocity.sqlite3` with its `-wal` file and open the copy read-only. Only files the session downloaded are deleted, through the app.
 
 ## After a session

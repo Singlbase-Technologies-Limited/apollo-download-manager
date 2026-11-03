@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findings, hideLinks, hostOf, sample } from './field-lib.mjs';
+import { afterStart, findings, hideLinks, hostOf, parseArgs, sample } from './field-lib.mjs';
 
 const record = (over = {}) => ({
   id: 'd-0001',
@@ -40,6 +40,14 @@ describe('hideLinks', () => {
     expect(hideLinks('sftp://user@10.0.0.2:22/home/me/x and ftp://h.example/y')).toBe(
       'sftp://10.0.0.2/… and ftp://h.example/…',
     );
+  });
+
+  // #279: `add` printed a magnet link whole: it has no `//`, so the pattern never matched it.
+  it('cuts a magnet link down to its scheme', () => {
+    expect(hideLinks('Added magnet:?xt=urn:btih:0123abcd&dn=secret.iso&tr=udp://t.example:1337/announce.')).toBe(
+      'Added magnet:?….',
+    );
+    expect(hideLinks('MAGNET:?xt=urn:btih:0123 and https://a.example/x')).toBe('MAGNET:?… and https://a.example/…');
   });
 
   // #274: the engine's "<origin>: 3 more requests ended the same way" came out as
@@ -126,5 +134,45 @@ describe('findings', () => {
     expect(findings(at({ progress: progress(1000) }), at({ progress: progress(2000) }), 5_000)).toEqual([]);
     // A user's cancel and retry start over on purpose; the status says so.
     expect(findings(at({ progress: progress(3000) }), at({ status: 'queued', progress: progress(0) }), 5_000)).toEqual([]);
+  });
+});
+
+describe('parseArgs', () => {
+  // #279: every `--name` took the next argument, so a flag without a value ate a link.
+  it('reads flags without a value, and options with one', () => {
+    expect(parseArgs(['--user', 'alice', '--password', 'ftp://h.example/a', '--ftps', '--connections', '4'])).toEqual({
+      named: { user: 'alice', password: true, ftps: true, connections: '4' },
+      rest: ['ftp://h.example/a'],
+    });
+    expect(parseArgs(['--all'])).toEqual({ named: { all: true }, rest: [] });
+  });
+
+  it('never takes a password as an argument', () => {
+    expect(() => parseArgs(['--password=hunter2', 'ftp://h.example/a'])).toThrow(/typed at the prompt/);
+  });
+
+  it('refuses an option without its value', () => {
+    expect(() => parseArgs(['ftp://h.example/a', '--user'])).toThrow(/--user needs a value/);
+  });
+});
+
+describe('afterStart', () => {
+  // #279: `add` printed "Added 1 link(s)" while the dialog still waited for Add anyway.
+  it('reports a question the dialog still asks, with the buttons that answer it', () => {
+    const r = afterStart({ text: 'This was added before | https://me@a.example/t0ken/x.iso · In your history', buttons: ['Skip', 'Add anyway'] });
+    expect(r.added).toBe(false);
+    expect(r.final).toBe(false);
+    expect(r.message).toBe(
+      'Not added yet. The app asks: This was added before | https://a.example/… · In your history. Answer with --answer "Skip" or --answer "Add anyway".',
+    );
+  });
+
+  it('reports what the app says when only Done is left', () => {
+    const r = afterStart({ text: 'One link couldn’t be added | ftp://h.example/a', buttons: ['Done'] });
+    expect(r).toEqual({ added: false, final: true, message: 'The app says: One link couldn’t be added | ftp://h.example/…' });
+  });
+
+  it('says added once the dialog has closed', () => {
+    expect(afterStart(null)).toEqual({ added: true, final: true, message: 'Added.' });
   });
 });
