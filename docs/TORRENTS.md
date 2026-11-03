@@ -52,7 +52,9 @@ Torrent metadata and magnet links are untrusted input. `velocity_core::torrent` 
 - **Peers:** a torrent that wanted nothing, or completed and stopped, has dropped its peers. Leaving Choosing files, or getting more files after completing, removes it from the session and adds it again with the new choice, so it finds peers as a new torrent does, and libtorrent checks the files already on disk. In the tests, without this a torrent waited longer than 120 s for peers.
 - **Libtorrent's part file:** in a v1 or hybrid torrent a piece can span two files. When only one of them is chosen, libtorrent keeps the other file's part of that piece in a file of its own, `.<info hash>.parts`, in the torrent's folder, never in the unchosen file.
 - **Progress:** with only some files chosen, progress is the chosen files' bytes, from libtorrent's per-file progress. libtorrent's own count is in whole pieces.
-- **The metadata:** `metadata` returns a torrent's metadata (`d4:info…e`) in chunks of at most 1 MiB, as hex, because metadata may be up to 16 MiB and a message at most 4 MiB. The manager joins the chunks once the metadata is known, checks them with `parse_metadata` and against the info hash the helper reports, and keeps them ([In the app](#in-the-app-58)). The resume data holds the metadata too ([Resume data](#resume-data-and-recovery)).
+- **The metadata:** `metadata` returns a torrent's metadata (`d4:info…e`) in chunks of at most 1 MiB, as hex, because metadata may be up to 16 MiB and a message at most 4 MiB. The manager joins the chunks once the metadata is known, checks them with `parse_metadata` and against each info hash the helper reports, and keeps them ([In the app](#in-the-app-58)).
+  - **Hashes:** only the hashes the helper reports are compared. A hybrid torrent's magnet gives one hash first.
+  - **Retries:** just after the metadata arrives the helper can't always give it, so the manager asks again on each snapshot, up to 10 times, then warns in the app's log (#268). The resume data holds the metadata too ([Resume data](#resume-data-and-recovery)).
 
 ## The torrent contract
 
@@ -162,6 +164,11 @@ Resume data is libtorrent's own record of a torrent: its metadata, which pieces 
 
 The helper never deletes files. Deleting is the manager's decision, through `velocity_core::torrent_files` (PO decision on #62): `Manager::remove` with its files deletes, with the torrent's stored metadata, the files ever chosen, libtorrent's part file and the folders left empty.
 
+- **Without stored metadata (#268):**
+  - **A last try:** before the helper forgets the torrent, `remove` asks it for the metadata once more.
+  - **If it still isn't known:** a torrent that wrote bytes reports its folder entry as kept (`Failed`), with a warning in the app's log. It's never reported deleted.
+  - **The cause it fixes:** the field test found magnets' metadata often unsaved, and Delete files then deleted nothing while logging that it had.
+
 - **What is deleted:**
   - the files ever chosen;
   - libtorrent's part file, `.<info hash>.parts`;
@@ -259,7 +266,7 @@ The manager runs torrents beside direct downloads, through the `TorrentEngine` c
 | Tracker URLs redacted | `velocity-core` `torrent.rs` unit tests |
 | Trackers taken out of resume data before it is stored | `velocity-core` `torrent.rs` unit tests |
 | The manager's torrents against a fake helper: adding, the queue's slots, events, metadata and resume data stored, file choice, policy and limits, pause, resume and cancel, a lost torrent waiting, restoring from resume data or the origin, deleting files, closing, no helper | `velocity-core` `manager/tests.rs` (`torrents`) |
-| The manager with a real helper: a torrent downloaded with its metadata and resume data kept without trackers; seeding again from resume data after the app starts again; back on its own after the helper is killed; removed with only its own files | `velocity-torrent` `tests/manager.rs` |
+| The manager with a real helper: a torrent downloaded with its metadata and resume data kept without trackers; seeding again from resume data after the app starts again; back on its own after the helper is killed; removed with only its own files; a hybrid magnet removed with its files, three times (#268) | `velocity-torrent` `tests/manager.rs` |
 
 - **Isolation:** the tests never leave the machine. DHT, peer exchange, local peer discovery and port mapping are off, and peers are found through a tracker on 127.0.0.1, or connect to the helper's port. Port mapping is tested by its unit tests and the session's settings only: turned on, it would send UPnP and NAT-PMP requests to the network. For seeding, the test tracker answers each peer with every other peer that announced to it; never with the peer itself, since libtorrent keeps one entry per address by default and every peer is on 127.0.0.1.
 - **The corpus:** [`tests/fixtures/torrents`](../tests/fixtures/torrents) comes from V1. [`scripts/make-torrent-corpus.py`](../scripts/make-torrent-corpus.py) generated it with libtorrent's own torrent creator (2.0.10, through its Python bindings). Running the script again needs those bindings; the committed files don't.

@@ -119,12 +119,18 @@ impl FakeTorrentControl {
         total: u64,
         metadata: Vec<u8>,
     ) {
+        self.metadata_ready(id, metadata);
+        self.hash_known(id, name, info_hash, total);
+    }
+
+    /// The torrent's name, hash and size are known, but [`TorrentEngine::metadata`] can't give
+    /// the metadata yet, as the real helper sometimes can't just after it arrived (#268).
+    pub fn hash_known(&self, id: TorrentId, name: &str, info_hash: &str, total: u64) {
         let mut s = lock(&self.state);
         let t = s.torrents.get_mut(&id).expect("known torrent");
         t.snapshot.name = Some(name.to_owned());
         t.snapshot.info_hash_v1 = Some(info_hash.to_owned());
         t.snapshot.progress.total_bytes = Some(total);
-        t.metadata = Some(metadata);
         if t.snapshot.status == DownloadStatus::FetchingMetadata {
             t.snapshot.status = if t.spec.choose_files {
                 DownloadStatus::ChoosingFiles
@@ -133,6 +139,12 @@ impl FakeTorrentControl {
             };
         }
         s.changed(id);
+    }
+
+    /// [`TorrentEngine::metadata`] gives `metadata` from now on; no event says so.
+    pub fn metadata_ready(&self, id: TorrentId, metadata: Vec<u8>) {
+        let mut s = lock(&self.state);
+        s.torrents.get_mut(&id).expect("known torrent").metadata = Some(metadata);
     }
 
     pub fn progress(&self, id: TorrentId, completed_bytes: u64) {

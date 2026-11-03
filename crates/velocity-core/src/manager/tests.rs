@@ -4237,6 +4237,71 @@ mod torrents {
     }
 
     #[test]
+    fn metadata_the_helper_can_give_only_a_moment_later_is_still_kept() {
+        // #268: the field test found most magnets' metadata never saved. It was tried once, as
+        // soon as the hash was known; the helper couldn't give it yet, and it was never tried
+        // again.
+        let dir = folder("late-metadata");
+        let mut s = setup(3);
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        let (meta, hash) = metadata();
+        s.torrents.hash_known(TorrentId(1), "album", &hash, 32_000);
+        s.m.pump(T0 + 1);
+        assert_eq!(s.db.torrent(&id).unwrap().unwrap().metadata, None);
+        s.torrents.metadata_ready(TorrentId(1), meta.clone());
+        s.torrents.progress(TorrentId(1), 4_000);
+        s.m.pump(T0 + 2);
+        assert_eq!(s.db.torrent(&id).unwrap().unwrap().metadata, Some(meta));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn removing_a_torrent_whose_metadata_wasnt_saved_still_deletes_its_files() {
+        // #268: "removed, and its files deleted" was logged while the files stayed: without
+        // stored metadata, the files to delete came out empty. The helper still knows them.
+        let dir = folder("delete-unsaved");
+        let mut s = setup(3);
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        let (meta, hash) = metadata();
+        s.torrents.hash_known(TorrentId(1), "album", &hash, 32_000);
+        s.torrents.progress(TorrentId(1), 4_000);
+        s.m.pump(T0 + 1);
+        s.torrents.metadata_ready(TorrentId(1), meta);
+        fs::create_dir_all(dir.join("album")).unwrap();
+        fs::write(dir.join("album").join("a.bin"), vec![1u8; 20_000]).unwrap();
+        assert_eq!(s.m.remove(&id, true), Ok(Vec::new()));
+        assert!(!dir.join("album").exists(), "its files were deleted");
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_torrent_whose_files_cant_be_known_reports_them_kept() {
+        // #268: when neither the database nor the helper has its metadata, its files can't be
+        // worked out: they're reported kept, never as deleted.
+        let dir = folder("delete-unknown");
+        let mut s = setup(3);
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        let (_meta, hash) = metadata();
+        s.torrents.hash_known(TorrentId(1), "album", &hash, 32_000);
+        s.torrents.progress(TorrentId(1), 4_000);
+        s.m.pump(T0 + 1);
+        let kept = s.m.remove(&id, true).unwrap();
+        assert_eq!(kept.len(), 1, "{kept:?}");
+        assert_eq!(kept[0].0, dir.join("album"));
+        assert!(
+            matches!(kept[0].1, crate::torrent_files::Kept::Failed(_)),
+            "{kept:?}"
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
     fn before_the_app_closes_every_torrents_resume_data_is_asked_for_and_saved() {
         let dir = folder("close");
         let mut s = setup(3);
