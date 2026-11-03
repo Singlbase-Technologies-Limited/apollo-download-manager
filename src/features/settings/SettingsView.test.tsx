@@ -160,6 +160,14 @@ describe('the Settings screen (#30)', () => {
     await waitFor(() => { expect(state.appSettings.storage.historyRetentionDays).toBe(30); });
   });
 
+  it('names the speed limit for direct downloads and points torrents to their own (#312)', async () => {
+    installFakeBackend();
+    await openSettings('Queue and performance');
+    // Both throw when they find nothing.
+    await screen.findByLabelText('Speed limit for direct downloads (KiB/s, 0 for none)');
+    screen.getByText('Torrents have their own limit, under BitTorrent.');
+  });
+
   it('keeps the global speed limit and the user agent', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Advanced');

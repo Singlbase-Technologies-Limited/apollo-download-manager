@@ -30,7 +30,7 @@ On Linux the tray needs an AppIndicator library. Without a tray, closing the win
 |---|---|---|
 | Simultaneous downloads | 3 | Up to 32. The others wait in the queue |
 | Start new downloads at once | On | Off: new downloads wait in the queue until you start them |
-| Global speed limit | None | For all direct downloads together, in KiB/s. Torrents have their own limits |
+| Speed limit for direct downloads | None | For all direct downloads together, in KiB/s. Torrents have their own limit, under BitTorrent (#312) |
 | Use the schedule | Off | Downloads run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose. No stop time runs to midnight; a stop before the start runs past midnight |
 | Profile | Balanced | How many connections a download may use, and the smallest piece of a file each connection takes |
 | Connections for all downloads together | 48 | Shared fairly between the running downloads |
