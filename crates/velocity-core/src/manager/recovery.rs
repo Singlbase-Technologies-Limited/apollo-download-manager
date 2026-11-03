@@ -22,7 +22,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use super::torrents::TorrentJob;
+use super::torrents::{file_count as file_count_of, TorrentJob};
 use super::{DirectJob, Download, Job, Manager};
 use crate::database::{
     resume_from, Database, DatabaseError, Engine, Stored, StoredDownload, StoredOptions,
@@ -32,6 +32,7 @@ use crate::domain::{
     DownloadRecord, DownloadStatus, ErrorCode, FailureClass, Progress, TransferError,
 };
 use crate::keychain::{Keychain, NoKeychain};
+use crate::torrent::parse_metadata;
 use crate::transfer::{
     Credentials, DirectTransfer, Header, Limits, SshKey, TransferId, TransferSpec,
 };
@@ -132,6 +133,8 @@ impl Manager {
             // A login the user asked to remember (#70), read back from the keychain.
             let mut login_restored = false;
             let mut keychain_failed = false;
+            // A torrent's file count, from its stored metadata (#313).
+            let mut file_count = None;
             let job = match engine {
                 Engine::Velocity => {
                     let Some(options) = stored.options.known() else {
@@ -173,8 +176,14 @@ impl Manager {
                 Engine::Libtorrent => match m.database.torrent(&stored.id)? {
                     Some(StoredTorrent {
                         options: Stored::Known(options),
+                        metadata,
                         ..
-                    }) => Job::Torrent(Box::new(TorrentJob::new(options, None))),
+                    }) => {
+                        file_count = metadata
+                            .and_then(|m| parse_metadata(&m).ok())
+                            .map(|meta| file_count_of(&meta));
+                        Job::Torrent(Box::new(TorrentJob::new(options, None)))
+                    }
                     _ => {
                         m.unavailable.push(stored);
                         continue;
@@ -223,6 +232,7 @@ impl Manager {
                     speed_limit_bps: None,
                     requested_connections: None,
                     torrent: None,
+                    file_count,
                 },
                 job,
                 running: false,

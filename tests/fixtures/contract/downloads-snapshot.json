@@ -14,6 +14,7 @@
         "message": "Service unavailable",
         "retryable": true
       },
+      "fileCount": null,
       "fileName": "archive.zip",
       "id": "d-0001",
       "kind": "http",
@@ -46,6 +47,7 @@
       "createdAtMs": 1792600000000,
       "directory": "/home/user/Downloads",
       "error": null,
+      "fileCount": 2,
       "fileName": "album",
       "id": "d-0003",
       "kind": "magnet",

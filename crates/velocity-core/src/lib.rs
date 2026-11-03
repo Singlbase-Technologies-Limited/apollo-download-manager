@@ -64,7 +64,8 @@ use serde::Serialize;
 /// Version 24 (#274) added [`domain::ConnectionLimit::NoRanges`].
 /// Version 25 (#277) added [`domain::DestinationCheck::path`].
 /// Version 26 (#278) added [`domain::ConnectionLimit::SpeedLimit`].
-pub const COMMAND_API_VERSION: u32 = 26;
+/// Version 27 (#313) added [`domain::DownloadRecord::file_count`].
+pub const COMMAND_API_VERSION: u32 = 27;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

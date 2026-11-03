@@ -12,6 +12,7 @@
     "message": "Service unavailable",
     "retryable": true
   },
+  "fileCount": null,
   "fileName": "archive.zip",
   "id": "d-0001",
   "kind": "http",

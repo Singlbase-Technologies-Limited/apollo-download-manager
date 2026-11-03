@@ -1,4 +1,4 @@
-import { Magnet } from 'lucide-react';
+import { File as FileIcon, Folder, Magnet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { CategoryGlyph } from '../../components/CategoryGlyph';
@@ -42,7 +42,14 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
     sort: 'name',
     render: (d, { category }) => (
       <span className="flex min-w-0 items-center gap-2">
-        <CategoryGlyph icon={category?.icon ?? 'folder'} color={category?.color} className="size-4 shrink-0" />
+        {category ? (
+          <CategoryGlyph icon={category.icon} color={category.color} className="size-4 shrink-0" />
+        ) : (d.fileCount ?? 0) > 1 ? (
+          // Without a category: a folder only for a torrent of several files (#313).
+          <Folder className="size-4 shrink-0" aria-hidden />
+        ) : (
+          <FileIcon className="size-4 shrink-0" aria-hidden />
+        )}
         <span className="truncate font-medium text-fg" title={displayName(d)}>
           {displayName(d)}
         </span>

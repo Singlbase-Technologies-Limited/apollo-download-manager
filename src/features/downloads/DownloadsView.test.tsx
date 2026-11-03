@@ -64,6 +64,25 @@ describe('the download list (V1)', () => {
     expect(await screen.findByText('No downloads yet')).toBeTruthy();
   });
 
+  it('shows a folder only for a torrent of several files when there is no category (#313)', async () => {
+    const torrent = { kind: 'torrent' as const, categoryId: null, requestedConnections: null };
+    installFakeBackend({
+      snapshot: withDownloads([
+        makeRecord({ id: 'f', fileName: 'SHA256SUMS', categoryId: null, createdAtMs: 1 }),
+        makeRecord({ id: 'g', fileName: 'album', ...torrent, fileCount: 2, createdAtMs: 2 }),
+        makeRecord({ id: 'h', fileName: 'single.iso', ...torrent, fileCount: 1, createdAtMs: 3 }),
+        makeRecord({ id: 'i', fileName: 'not yet known', ...torrent, fileCount: null, createdAtMs: 4 }),
+      ]),
+    });
+    renderApp();
+    // The row's first icon is its kind; lucide names each by class.
+    const icon = async (name: string) => (await rowFor(name)).querySelector('svg')?.getAttribute('class') ?? '';
+    expect(await icon('SHA256SUMS')).toContain('lucide-file');
+    expect(await icon('album')).toContain('lucide-folder');
+    expect(await icon('single.iso')).toContain('lucide-file');
+    expect(await icon('not yet known')).toContain('lucide-file');
+  });
+
   it('renders status and real progress from the snapshot', async () => {
     renderApp();
     const row = await rowFor('archive.zip');
