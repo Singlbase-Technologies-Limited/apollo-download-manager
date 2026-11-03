@@ -28,14 +28,19 @@ use crate::domain::{
 };
 use crate::seeding::SeedPolicy;
 use crate::torrent::{
-    check_tracker, parse_magnet, parse_metadata, strip_trackers, MagnetInfo, TorrentMeta,
-    MAX_RESUME_BYTES, MAX_TORRENT_BYTES,
+    check_tracker, parse_magnet, parse_metadata, strip_trackers, MagnetInfo, MAX_RESUME_BYTES,
+    MAX_TORRENT_BYTES,
 };
 use crate::torrent_engine::{
     lost_by_helper, Chunk, TorrentEngine, TorrentEvent, TorrentId, TorrentSnapshot, TorrentSource,
     TorrentSpec, CHUNK_BYTES, MAX_RATE_LIMIT,
 };
 use crate::torrent_files::{delete_owned, owned_paths, Kept};
+
+/// How many of a torrent's snapshots, once its hashes are known, ask the helper for its metadata
+/// before giving up with a warning. Just after the metadata arrives the helper can't always give
+/// it yet, which a single try took for good (#268). One snapshot comes about every second.
+const METADATA_TRIES: u32 = 10;
 
 /// A torrent to add.
 #[derive(Clone, Debug, PartialEq)]
@@ -70,8 +75,10 @@ pub(super) struct TorrentJob {
     incoming: Option<(u64, Vec<u8>)>,
     /// How many times its resume data was saved, for [`Manager::prepare_to_close`].
     resume_saved: u64,
-    /// Its metadata was fetched once it was known, whether or not it could be kept.
-    metadata_fetched: bool,
+    /// Its metadata is in the database (#268).
+    metadata_kept: bool,
+    /// How many times its metadata was asked for since it was known, up to [`METADATA_TRIES`].
+    metadata_tries: u32,
     /// The info hashes and upload last saved.
     identity: (Option<String>, Option<String>, u64),
 }
@@ -85,7 +92,8 @@ impl TorrentJob {
             torrent: None,
             incoming: None,
             resume_saved: 0,
-            metadata_fetched: false,
+            metadata_kept: false,
+            metadata_tries: 0,
             identity: (None, None, 0),
         }
     }
@@ -427,8 +435,9 @@ impl Manager {
     }
 
     /// Deletes a removed torrent's own files ([`crate::torrent_files`]): those of the files ever
-    /// chosen, libtorrent's part file, and the folders left empty. Without stored metadata there
-    /// is nothing it can have written.
+    /// chosen, libtorrent's part file, and the folders left empty. Without metadata, a torrent
+    /// that wrote nothing has nothing to delete; one that wrote bytes has files that can't be
+    /// worked out, which are reported kept, never as deleted (#268).
     pub(super) fn delete_torrent_files(
         &self,
         id: &str,
@@ -445,7 +454,19 @@ impl Manager {
             .and_then(|t| t.metadata)
             .and_then(|m| parse_metadata(&m).ok())
         else {
-            return Vec::new();
+            let record = &download.record;
+            return match (&record.file_name, record.progress.completed_bytes) {
+                (Some(name), written) if written > 0 => {
+                    let path = PathBuf::from(&record.directory).join(name);
+                    tracing::warn!(
+                        "download {id}: its files couldn't be worked out without the torrent's \
+                         metadata, so they were left in {}",
+                        record.directory
+                    );
+                    vec![(path, Kept::Failed(ErrorCode::NotFound))]
+                }
+                _ => Vec::new(),
+            };
         };
         let chosen: Vec<u32> = match &job.options.files {
             Some(files) => files.clone(),
@@ -612,31 +633,74 @@ impl Manager {
         }
     }
 
-    /// Once the torrent's metadata is known, fetches it from the helper and keeps it if it is the
-    /// torrent's: checked with [`parse_metadata`], and with the info hash the helper reports.
+    /// Once the torrent's metadata is known, keeps it ([`Manager::keep_metadata`]): on each
+    /// snapshot until it is kept, up to [`METADATA_TRIES`], then a warning says why it wasn't.
     fn torrent_metadata(&mut self, id: &str, snapshot: &TorrentSnapshot, now_ms: u64) {
         let known = snapshot.info_hash_v1.is_some() || snapshot.info_hash_v2.is_some();
         let fetching = snapshot.status == DownloadStatus::FetchingMetadata;
+        let Ok(job) = self.torrent_job_mut(id) else {
+            return;
+        };
+        if job.metadata_kept || job.metadata_tries >= METADATA_TRIES || !known || fetching {
+            return;
+        }
+        job.metadata_tries += 1;
+        let tries = job.metadata_tries;
+        let hashes = (
+            snapshot.info_hash_v1.as_deref(),
+            snapshot.info_hash_v2.as_deref(),
+        );
+        if let Err(why) = self.keep_metadata(id, snapshot.id, hashes, now_ms) {
+            if tries == METADATA_TRIES {
+                tracing::warn!(
+                    "download {id}: the torrent's metadata wasn't kept after {tries} tries ({why}), so \
+                     Delete files can't find its files"
+                );
+            }
+        }
+    }
+
+    /// Fetches the torrent's metadata from the helper and keeps it if it is the torrent's:
+    /// checked with [`parse_metadata`], and with each info hash the helper reports. A hybrid
+    /// torrent's v2 hash may not be known yet, so only the hashes reported are compared (#268).
+    fn keep_metadata(
+        &mut self,
+        id: &str,
+        torrent: TorrentId,
+        (v1, v2): (Option<&str>, Option<&str>),
+        now_ms: u64,
+    ) -> Result<(), &'static str> {
+        let metadata = self
+            .fetch_metadata(torrent)
+            .ok_or("the helper couldn't give it")?;
+        let meta = parse_metadata(&metadata).map_err(|_| "it isn't valid metadata")?;
+        let same = |ours: &Option<String>, theirs: Option<&str>| {
+            theirs.is_none_or(|t| ours.as_deref() == Some(t))
+        };
+        if !(same(&meta.info_hash, v1) && same(&meta.info_hash_v2, v2)) {
+            return Err("its info hash isn't the torrent's");
+        }
+        if let Err(e) = self.database.save_torrent_metadata(id, &metadata, now_ms) {
+            self.storage_error = Some(e);
+            return Err("it couldn't be saved");
+        }
+        if let Ok(job) = self.torrent_job_mut(id) {
+            job.metadata_kept = true;
+        }
+        Ok(())
+    }
+
+    /// Before a torrent removed with its files is forgotten: its metadata, if it isn't kept yet,
+    /// so [`Manager::delete_torrent_files`] can find its files (#268).
+    pub(super) fn keep_metadata_to_delete(&mut self, id: &str, now_ms: u64) {
         let Ok(job) = self.torrent_job(id) else {
             return;
         };
-        if job.metadata_fetched || !known || fetching {
-            return;
-        }
-        if let Ok(job) = self.torrent_job_mut(id) {
-            job.metadata_fetched = true;
-        }
-        let Some(metadata) = self.fetch_metadata(snapshot.id) else {
+        let (Some(torrent), false) = (job.torrent, job.metadata_kept) else {
             return;
         };
-        let theirs = |meta: &TorrentMeta| {
-            meta.info_hash == snapshot.info_hash_v1 && meta.info_hash_v2 == snapshot.info_hash_v2
-        };
-        if parse_metadata(&metadata).is_ok_and(|meta| theirs(&meta)) {
-            if let Err(e) = self.database.save_torrent_metadata(id, &metadata, now_ms) {
-                self.storage_error = Some(e);
-            }
-        }
+        let (v1, v2) = (job.identity.0.clone(), job.identity.1.clone());
+        let _ = self.keep_metadata(id, torrent, (v1.as_deref(), v2.as_deref()), now_ms);
     }
 
     /// The torrent's metadata from the helper, in chunks; `None` when it can't be had whole.

@@ -90,6 +90,11 @@ impl Manager {
         let d = self.downloads.get(id).ok_or(ErrorCode::NotFound)?;
         let finished = d.record.status.is_terminal();
         let engine_had_it = d.transfer().is_some();
+        if delete_files && matches!(d.job, super::Job::Torrent(_)) {
+            // While the helper still knows it: its files are worked out from its metadata (#268).
+            // The time is only the row's last change, so the wall clock will do.
+            self.keep_metadata_to_delete(id, super::service::now_ms());
+        }
         self.forget_transfer(id, finished)?;
         let mut d = self.take(id);
         if !finished {

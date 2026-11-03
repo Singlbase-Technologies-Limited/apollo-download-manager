@@ -252,6 +252,47 @@ fn removing_a_torrent_with_its_files_deletes_only_its_own() {
     assert!(m.get(&id).is_none());
 }
 
+#[test]
+fn removing_a_magnets_torrent_with_its_files_deletes_them() {
+    // #268: a magnet's metadata comes from peers, and the field test found it often unsaved, so
+    // Delete files deleted nothing while saying it had. A hybrid torrent, whose magnet gives one
+    // hash first. Three times, since it was intermittent.
+    let name = "hybrid-multi";
+    let seed_dir = Dir::new("manager-magnet-seed");
+    let data = Dir::new("manager-magnet-db");
+    let seeder = seed(name, &seed_dir.0);
+    let tracker = tracker(seeder.port);
+    let db = Arc::new(Database::open(&data.0.join("velocity.db")).unwrap());
+    let (mut m, _pid) = app(&db, &tracker);
+    let uri = manifest()["magnets"][name].as_str().unwrap().to_owned();
+    for round in 0..3 {
+        let dir = Dir::new(&format!("manager-magnet-{round}"));
+        let id = m
+            .add_torrent(
+                TorrentRequest {
+                    origin: TorrentOrigin::Magnet { uri: uri.clone() },
+                    trackers: vec![tracker.clone()],
+                    ..request(&dir.0, SeedPolicy::Never {})
+                },
+                AddOptions::default(),
+                now(),
+            )
+            .unwrap();
+        until(
+            &mut m,
+            &id,
+            "completed",
+            status_is(&id, DownloadStatus::Completed),
+        );
+        assert_eq!(m.remove(&id, true), Ok(Vec::new()), "round {round}");
+        assert_eq!(
+            files_under(&dir.0),
+            Vec::<String>::new(),
+            "round {round}: its files were deleted"
+        );
+    }
+}
+
 /// #71: a private tracker's passkey, given with the torrent, is nowhere V2 writes or shows once
 /// the torrent has announced to it and finished: the database (resume data included), the
 /// downloaded files, temporary files, the app's log, the trackers as the details panel shows them,
