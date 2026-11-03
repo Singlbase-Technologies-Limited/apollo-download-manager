@@ -390,9 +390,14 @@ fn a_download_held_back_by_a_speed_limit_is_never_reset_for_being_slow() {
     let dest = dir.file("out.bin");
     let (control, seen) = recording();
     let control = control.with_limits(vec![RateLimit::new(Some(64 * 1024))]);
+    // The stall times are 2 s and 3 s, as for the slow server above: the limiter may hold a
+    // request for about a second while the others take their turn, and with FAST's 0.5 s that
+    // silence alone showed Stalled on a CI runner. Silence isn't what this tests; the floor is.
     let options = DownloadOptions {
         retry: RetryPolicy {
             least_rate_bps: 10 << 20,
+            stalled_after: Duration::from_secs(2),
+            reset_after: Duration::from_secs(3),
             ..FAST
         },
         ..OPTIONS
