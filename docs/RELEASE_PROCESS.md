@@ -10,7 +10,7 @@ How V2 is versioned, how a version's changelog is written, how candidates and re
   - **The browser extension's manifest** is built from it (`scripts/build-extension.mjs`).
   - **Cargo** can't read another file, so `[workspace.package] version` in `Cargo.toml` repeats it, and every crate takes it (`version.workspace = true`). The programs report it through `CARGO_PKG_VERSION`: the app's About screen, the user agent and the torrent client's identity.
 - **A test fails while they differ** ([`scripts/version-lib.test.mjs`](../scripts/version-lib.test.mjs)), and the release-candidate workflow refuses a tag whose version isn't `package.json`'s.
-- **Changing it:** `pnpm version:set <MAJOR.MINOR.PATCH>` sets `package.json` and `Cargo.toml`, then updates only V2's own crates in `Cargo.lock` (`cargo update --workspace`). Commit the three files in one pull request with the changelog section, such as `chore: version 0.2.0 (#N)`.
+- **Changing it:** `pnpm version:set <MAJOR.MINOR.PATCH>` sets `package.json` and `Cargo.toml`, then updates only V2's own crates in `Cargo.lock` (`cargo update --workspace`). The contract fixture `tests/fixtures/contract/app-info.json` holds the version too: regenerate it with `VELOCITY_UPDATE_FIXTURES=1 cargo test -p velocity-core --lib contract` (found on 0.1.1, #342). Commit the four files in one pull request with the changelog section, such as `chore: version 0.2.0 (#N)`.
 - **A pre-release is a tag, not a version:** the files say `0.2.0`, and its candidates are the tags `v0.2.0-rc.1`, `v0.2.0-rc.2`.
 
 ## Choosing the next version
