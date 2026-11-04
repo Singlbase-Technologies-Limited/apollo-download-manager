@@ -34,6 +34,9 @@ struct State {
     refused_name: Option<(String, ErrorCode)>,
     /// What `health` reports; running when `None`.
     health: Option<EngineHealth>,
+    /// Makes `cancel` of a running transfer wait for [`FakeControl::confirm_cancel`], as the
+    /// engine's worker reports Removed only once it has stopped (#339).
+    defer_cancels: bool,
 }
 
 struct Transfer {
@@ -258,6 +261,21 @@ impl FakeControl {
     pub fn set_unavailable(&self, code: Option<ErrorCode>) {
         lock(&self.state).unavailable = code;
     }
+
+    /// From now on a running transfer's `cancel` is accepted but not done until
+    /// [`Self::confirm_cancel`], as the engine's worker stops first (#339).
+    pub fn defer_cancels(&self) {
+        lock(&self.state).defer_cancels = true;
+    }
+
+    /// Ends a deferred cancel: the transfer reports Removed.
+    pub fn confirm_cancel(&self, id: TransferId) {
+        let mut s = lock(&self.state);
+        let mut from = ACTIVE.to_vec();
+        from.push(DownloadStatus::Paused);
+        s.transition(id, &from, DownloadStatus::Removed)
+            .expect("a deferred cancel of an unfinished transfer");
+    }
 }
 
 impl DirectTransfer for FakeTransfer {
@@ -299,6 +317,9 @@ impl DirectTransfer for FakeTransfer {
     fn cancel(&mut self, id: TransferId) -> Result<(), ErrorCode> {
         let mut s = lock(&self.state);
         s.command(format!("cancel {}", id.0))?;
+        if s.defer_cancels && ACTIVE.contains(&s.transfer(id)?.snapshot.status) {
+            return Ok(());
+        }
         let mut from = ACTIVE.to_vec();
         from.push(DownloadStatus::Paused);
         s.transition(id, &from, DownloadStatus::Removed)

@@ -217,6 +217,7 @@ impl Manager {
             running: false,
             paused,
             scheduled: options.scheduled,
+            cancelling: false,
             saved_at_ms: None,
             needs_login: false,
             activity: super::activity::Tracker::default(),

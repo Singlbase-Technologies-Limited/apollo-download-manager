@@ -112,6 +112,31 @@ fn cancel_ends_the_download_as_removed() {
     assert_eq!(r.completed_at_ms, None);
 }
 
+/// Regression (#339, field session 2a): while the engine was still stopping a cancelled
+/// download, the queue took its free slot for it and started it again. The engine refused, and
+/// the download showed Failed, "That action isn't possible in the download's current state.",
+/// until the engine's Removed came.
+#[test]
+fn a_cancel_the_engine_has_not_confirmed_is_never_started_again_or_failed() {
+    let (mut m, control, id) = setup();
+    control.progress(TransferId(1), 1024, Some(4096));
+    m.pump(T0);
+    control.defer_cancels();
+    m.cancel(&id).unwrap();
+    // The queue fills its slots while the engine is still stopping it.
+    m.pump(T0);
+    assert_ne!(status(&m, &id), DownloadStatus::Failed);
+    assert_eq!(m.get(&id).unwrap().error, None);
+    assert_eq!(control.log(), ["add", "cancel 1"]);
+    control.confirm_cancel(TransferId(1));
+    m.pump(T0);
+    assert_eq!(status(&m, &id), DownloadStatus::Removed);
+    // Once it has ended, a retry starts it again.
+    m.retry(&id).unwrap();
+    m.pump(T0);
+    assert_eq!(control.log().iter().filter(|c| *c == "add").count(), 2);
+}
+
 /// The user's action wins (#59): a running status the engine sent before it stopped the
 /// transfer doesn't show a paused or cancelled download running again.
 #[test]

@@ -47,6 +47,8 @@ struct Download {
     paused: bool,
     /// It runs only while the schedule's window is open.
     scheduled: bool,
+    /// The user cancelled it, and the engine hasn't confirmed yet: it never runs again (#339).
+    cancelling: bool,
     /// When the engine's events last saved it; progress alone is saved at most every
     /// [`persist::PROGRESS_SAVE_MS`].
     saved_at_ms: Option<u64>,
@@ -235,9 +237,13 @@ impl Download {
             }
     }
 
-    /// It may take a slot: not paused, not finished, and not waiting for the schedule.
+    /// It may take a slot: not paused, not cancelled, not finished, and not waiting for the
+    /// schedule.
     fn may_run(&self, window_open: bool) -> bool {
-        !self.paused && !self.record.status.is_terminal() && (!self.scheduled || window_open)
+        !self.paused
+            && !self.cancelling
+            && !self.record.status.is_terminal()
+            && (!self.scheduled || window_open)
     }
 
     /// Shows its own speed limit and connections on its record (#61): whenever they are set.
@@ -390,6 +396,7 @@ impl Manager {
             running: false,
             paused,
             scheduled: options.scheduled,
+            cancelling: false,
             saved_at_ms: None,
             needs_login: false,
             activity: activity::Tracker::default(),
@@ -594,7 +601,12 @@ impl Manager {
         let d = self.downloads.get_mut(id).expect("known");
         d.running = false;
         match d.transfer() {
-            Some(transfer) => self.engine.cancel(transfer),
+            Some(transfer) => {
+                self.engine.cancel(transfer)?;
+                // Until the engine's Removed, the queue mustn't start it again (#339).
+                self.downloads.get_mut(id).expect("known").cancelling = true;
+                Ok(())
+            }
             None => {
                 d.record.status = DownloadStatus::Removed;
                 self.order.retain(|o| o != id);
@@ -1071,6 +1083,7 @@ impl Manager {
                 }
                 if record.status.is_terminal() {
                     download.running = false;
+                    download.cancelling = false;
                     self.order.retain(|o| *o != app_id);
                 }
                 let record = &download.record;

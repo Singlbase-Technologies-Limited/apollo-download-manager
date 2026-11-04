@@ -238,6 +238,7 @@ impl Manager {
                 running: false,
                 paused,
                 scheduled,
+                cancelling: false,
                 saved_at_ms: None,
                 needs_login,
                 activity,
