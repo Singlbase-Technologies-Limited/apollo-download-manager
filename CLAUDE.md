@@ -18,7 +18,7 @@ Both are a safety net, not a security boundary. The guard can't see inside a scr
 
 The skills in the table below hold the details of each step.
 
-1. **Investigate and plan** (`/investigate-issue <N>`).
+1. **Investigate and plan** (`/investigate-issue <N>`). The skill runs in a conversation of its own and returns the plan; ask the PO any questions it lists.
    - Read the issue, its comments and dependencies, and check the live state. Trust the repository over summaries and memory.
    - Search for existing code to reuse.
    - Plan multi-file or architecture work before editing.
@@ -74,3 +74,13 @@ When you read or edit a matching file, Claude Code loads the rule for that area.
 - **Temporary files:** logs and other temporary output go to the session's scratch directory, never into the repository.
 - **Screenshots:** for docs or PRs, crop them to the app window only.
 - **Long runs:** don't run the full verification after every small edit. `pnpm check:pr` picks what a change needs.
+
+## Compact instructions
+
+When a conversation is summarised, keep these in full:
+
+- The issue and branch in progress, and what's left to do.
+- Everything already tried that failed, and why, so it isn't tried again.
+- Measurements and test results, with their numbers and the commands that produced them.
+- The exact text of errors still unsolved.
+- The PO's decisions, word for word.
