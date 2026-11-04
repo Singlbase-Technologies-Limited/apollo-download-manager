@@ -137,7 +137,7 @@ Tests check that every command, reply and event round-trips through JSON, and th
 - checks the record's status before sending a command, so a forbidden command never reaches the engine;
 - changes the status of a download the engine runs only when the engine reports it, never optimistically. A download the engine isn't running is Queued while it waits for a slot or the schedule, and Paused when the user paused it;
 - lets the user's action win (PO decision on #59): once the user paused or cancelled a download, a running status the engine sent before it stopped the transfer doesn't show it running again. Its bytes still count;
-- owns the queue (#50): it gives the engine a download only when a slot is free, at most `QueueSettings::max_concurrent_downloads` at once, in queue order (`move_download`), and runs scheduled downloads only while the window is open (`tick` reads the local time). `pause_all`, `resume_all` and new settings apply at once;
+- owns the queue (#50): it gives the engine a download only when a slot is free, at most `QueueSettings::max_concurrent_downloads` at once, in queue order (`move_download`), and runs scheduled downloads only while the window is open (`tick` reads the local time). Every download added while the schedule is on is scheduled; with the schedule off, none waits for a window (PO decision on #340). `pause_all`, `resume_all` and new settings apply at once;
 - treats engine events as untrusted: it ignores events for unknown or forgotten transfers, and shows a torrent-only status from a direct engine as `Unknown`.
 
 ### Saving and starting again (#58)

@@ -112,6 +112,31 @@ fn cancel_ends_the_download_as_removed() {
     assert_eq!(r.completed_at_ms, None);
 }
 
+/// Regression (#339, field session 2a): while the engine was still stopping a cancelled
+/// download, the queue took its free slot for it and started it again. The engine refused, and
+/// the download showed Failed, "That action isn't possible in the download's current state.",
+/// until the engine's Removed came.
+#[test]
+fn a_cancel_the_engine_has_not_confirmed_is_never_started_again_or_failed() {
+    let (mut m, control, id) = setup();
+    control.progress(TransferId(1), 1024, Some(4096));
+    m.pump(T0);
+    control.defer_cancels();
+    m.cancel(&id).unwrap();
+    // The queue fills its slots while the engine is still stopping it.
+    m.pump(T0);
+    assert_ne!(status(&m, &id), DownloadStatus::Failed);
+    assert_eq!(m.get(&id).unwrap().error, None);
+    assert_eq!(control.log(), ["add", "cancel 1"]);
+    control.confirm_cancel(TransferId(1));
+    m.pump(T0);
+    assert_eq!(status(&m, &id), DownloadStatus::Removed);
+    // Once it has ended, a retry starts it again.
+    m.retry(&id).unwrap();
+    m.pump(T0);
+    assert_eq!(control.log().iter().filter(|c| *c == "add").count(), 2);
+}
+
 /// The user's action wins (#59): a running status the engine sent before it stopped the
 /// transfer doesn't show a paused or cancelled download running again.
 #[test]
@@ -626,9 +651,14 @@ mod queue {
         );
     }
 
+    /// While the schedule is on, every new download waits for its window (PO decision on #340);
+    /// one added before it was turned on runs on.
     #[test]
     fn scheduled_downloads_start_when_the_window_opens_and_pause_when_it_closes() {
         let (mut m, control) = queue_of(3);
+        m.tick(T0, local(1, 59));
+        let before = add(&mut m, "before");
+        m.pump(T0);
         m.set_queue_settings(QueueSettings {
             schedule: ScheduleSettings {
                 enabled: true,
@@ -637,7 +667,6 @@ mod queue {
             ..QueueSettings::default()
         })
         .unwrap();
-        m.tick(T0, local(1, 59));
         let night = m
             .add_with(
                 DownloadKind::Http,
@@ -650,26 +679,66 @@ mod queue {
                 T0,
             )
             .unwrap();
-        let now = add(&mut m, "now");
+        // Added from the app, which never asks for the schedule itself (#340).
+        let later = add(&mut m, "later");
         m.tick(T0, local(1, 59));
-        assert_eq!(started(&control), ["now"], "the window is closed");
+        assert_eq!(started(&control), ["before"], "the window is closed");
         assert_eq!(status(&m, &night), DownloadStatus::Queued);
+        assert_eq!(status(&m, &later), DownloadStatus::Queued);
         m.tick(T0, local(2, 0));
         assert_eq!(
             started(&control),
-            ["now", "night"],
+            ["before", "night", "later"],
             "02:00: the window opens"
         );
         m.tick(T0, local(7, 0));
         assert!(
-            control.log().contains(&"pause 2".to_owned()),
+            control.log().contains(&"pause 2".to_owned())
+                && control.log().contains(&"pause 3".to_owned()),
             "07:00: it closes"
         );
         assert!(
             !control.log().contains(&"pause 1".to_owned()),
-            "an unscheduled one runs on"
+            "one added before the schedule was on runs on"
         );
-        let _ = now;
+        let _ = before;
+    }
+
+    /// Regression (#340, field session 2a): with the schedule on and its window closed, a new
+    /// download from the app started at once. Turning the schedule off lets it start.
+    #[test]
+    fn a_download_added_while_the_schedule_is_on_waits_until_it_is_turned_off() {
+        let (mut m, control) = queue_of(3);
+        let on = QueueSettings {
+            schedule: ScheduleSettings {
+                enabled: true,
+                ..ScheduleSettings::default()
+            },
+            ..QueueSettings::default()
+        };
+        m.set_queue_settings(on.clone()).unwrap();
+        m.tick(T0, local(14, 40));
+        let id = add(&mut m, "afternoon");
+        m.tick(T0, local(14, 40));
+        assert!(
+            started(&control).is_empty(),
+            "02:00 to 07:00 is closed at 14:40"
+        );
+        assert_eq!(status(&m, &id), DownloadStatus::Queued);
+        m.set_queue_settings(QueueSettings {
+            schedule: ScheduleSettings {
+                enabled: false,
+                ..on.schedule
+            },
+            ..on
+        })
+        .unwrap();
+        m.tick(T0, local(14, 41));
+        assert_eq!(
+            started(&control),
+            ["afternoon"],
+            "no schedule, no window to wait for"
+        );
     }
 
     #[test]

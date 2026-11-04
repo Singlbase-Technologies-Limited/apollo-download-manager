@@ -216,7 +216,9 @@ impl Manager {
             job: Job::Torrent(Box::new(job)),
             running: false,
             paused,
-            scheduled: options.scheduled,
+            // While the schedule is on, every new download waits for it (PO decision on #340).
+            scheduled: options.scheduled || self.settings.schedule.enabled,
+            cancelling: false,
             saved_at_ms: None,
             needs_login: false,
             activity: super::activity::Tracker::default(),

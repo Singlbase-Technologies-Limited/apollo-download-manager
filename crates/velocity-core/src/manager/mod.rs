@@ -25,7 +25,7 @@ use crate::domain::{
 use crate::keychain::{Keychain, NoKeychain};
 use crate::metalink::{self, Metalink};
 use crate::performance::PerformanceSettings;
-use crate::queue::QueueSettings;
+use crate::queue::{QueueSettings, ScheduleSettings};
 use crate::torrent_engine::{MissingTorrentEngine, TorrentEngine, TorrentEvent, TorrentId};
 use crate::transfer::{
     lost_by_engine, DirectTransfer, Limits, Resume, TransferEvent, TransferId, TransferSpec,
@@ -47,6 +47,8 @@ struct Download {
     paused: bool,
     /// It runs only while the schedule's window is open.
     scheduled: bool,
+    /// The user cancelled it, and the engine hasn't confirmed yet: it never runs again (#339).
+    cancelling: bool,
     /// When the engine's events last saved it; progress alone is saved at most every
     /// [`persist::PROGRESS_SAVE_MS`].
     saved_at_ms: Option<u64>,
@@ -57,6 +59,13 @@ struct Download {
     activity: activity::Tracker,
     /// What the app's log last said about it (#251); `None` until it is first looked at.
     logged: Option<lifecycle::Logged>,
+}
+
+/// Whether scheduled downloads may run at local time `local`: always while the schedule is off,
+/// so none is left waiting once it is turned off (PO decision on #340), and otherwise only in its
+/// window.
+fn window_open(schedule: &ScheduleSettings, local: Option<DateTime>) -> bool {
+    !schedule.enabled || local.is_some_and(|local| schedule.is_open(local))
 }
 
 /// What a download's engine needs: the direct-download engine's or the torrent helper's.
@@ -235,9 +244,13 @@ impl Download {
             }
     }
 
-    /// It may take a slot: not paused, not finished, and not waiting for the schedule.
+    /// It may take a slot: not paused, not cancelled, not finished, and not waiting for the
+    /// schedule.
     fn may_run(&self, window_open: bool) -> bool {
-        !self.paused && !self.record.status.is_terminal() && (!self.scheduled || window_open)
+        !self.paused
+            && !self.cancelling
+            && !self.record.status.is_terminal()
+            && (!self.scheduled || window_open)
     }
 
     /// Shows its own speed limit and connections on its record (#61): whenever they are set.
@@ -292,7 +305,8 @@ impl Manager {
             settings: QueueSettings::default(),
             performance: PerformanceSettings::default(),
             local: None,
-            window_open: false,
+            // The default schedule is off, so nothing waits for a window (#340).
+            window_open: true,
             metalink_enabled: false,
             torrents_enabled: true,
             user_agent: None,
@@ -389,7 +403,9 @@ impl Manager {
             job: Job::Direct(Box::new(DirectJob::new(spec, None))),
             running: false,
             paused,
-            scheduled: options.scheduled,
+            // While the schedule is on, every new download waits for it (PO decision on #340).
+            scheduled: options.scheduled || self.settings.schedule.enabled,
+            cancelling: false,
             saved_at_ms: None,
             needs_login: false,
             activity: activity::Tracker::default(),
@@ -594,7 +610,12 @@ impl Manager {
         let d = self.downloads.get_mut(id).expect("known");
         d.running = false;
         match d.transfer() {
-            Some(transfer) => self.engine.cancel(transfer),
+            Some(transfer) => {
+                self.engine.cancel(transfer)?;
+                // Until the engine's Removed, the queue mustn't start it again (#339).
+                self.downloads.get_mut(id).expect("known").cancelling = true;
+                Ok(())
+            }
             None => {
                 d.record.status = DownloadStatus::Removed;
                 self.order.retain(|o| o != id);
@@ -697,9 +718,7 @@ impl Manager {
     /// one lets the running ones finish. `InvalidInput` for settings out of bounds.
     pub fn set_queue_settings(&mut self, settings: QueueSettings) -> Result<(), ErrorCode> {
         settings.check()?;
-        self.window_open = self
-            .local
-            .is_some_and(|local| settings.schedule.is_open(local));
+        self.window_open = window_open(&settings.schedule, self.local);
         self.settings = settings;
         self.fill();
         Ok(())
@@ -755,7 +774,7 @@ impl Manager {
     /// how many events were applied. The app calls it regularly; tests pass any clock.
     pub fn tick(&mut self, now_ms: u64, local: DateTime) -> usize {
         self.local = Some(local);
-        self.window_open = self.settings.schedule.is_open(local);
+        self.window_open = window_open(&self.settings.schedule, Some(local));
         self.pump(now_ms)
     }
 
@@ -1071,6 +1090,7 @@ impl Manager {
                 }
                 if record.status.is_terminal() {
                     download.running = false;
+                    download.cancelling = false;
                     self.order.retain(|o| *o != app_id);
                 }
                 let record = &download.record;
