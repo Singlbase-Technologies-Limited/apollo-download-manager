@@ -9,7 +9,7 @@ use std::time::Duration;
 use velocity_core::domain::FailureClass;
 use velocity_core::transfer::{Checkpoint, Resume, CHECKPOINT_FORMAT};
 use velocity_curl::{CurlLoop, Libcurl, LoopOptions};
-use velocity_test_http::{seeded_bytes, RangeMode, ServerOptions, TestServer};
+use velocity_test_http::{seeded_bytes, CutRanges, RangeMode, ServerOptions, TestServer};
 use velocity_transfer::download::{
     download, download_resumable, download_with, Cadence, Control, DiskOptions, DownloadError,
     DownloadOptions, Expected, Mode,
@@ -296,6 +296,143 @@ fn a_segment_cut_short_has_its_remainder_requested_again() {
     assert_eq!(s.counters().faults, 1);
     assert_eq!(report.mode, Mode::Ranges);
     assert_eq!(report.written_bytes, 1_000_000);
+    assert!(every_get_was_a_range(&s), "{:?}", s.counters().ranges);
+}
+
+/// A server that closes the connection part way through some of its answers (#333).
+fn serve_cutting(
+    len: usize,
+    range_mode: RangeMode,
+    cut_ranges: CutRanges,
+) -> (TestServer, Vec<u8>) {
+    let data = seeded_bytes(len, 21);
+    (
+        TestServer::start(
+            vec![("f.bin".into(), data.clone())],
+            ServerOptions {
+                range_mode,
+                cut_ranges: Some(cut_ranges),
+                ..ServerOptions::default()
+            },
+        ),
+        data,
+    )
+}
+
+#[test]
+fn connections_cut_again_and_again_never_end_the_range_requests() {
+    // #333: a 115 GiB download lost a few connections at once, then asked for the whole file
+    // from byte 0, and its progress froze while it read the 24 GB it already had.
+    let (s, data) = serve(
+        1_000_000,
+        RangeMode::CutLaterBodies {
+            count: 8,
+            after: 50_000,
+        },
+    );
+    let dir = Dir::new("cut-often");
+    let dest = dir.file("out.bin");
+    let report =
+        download(&curl_loop(), &s.url("f.bin"), &dest, OPTIONS).expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(s.counters().faults, 8);
+    assert_eq!(report.mode, Mode::Ranges);
+    assert_eq!(report.written_bytes, 1_000_000, "each byte written once");
+    assert!(every_get_was_a_range(&s), "{:?}", s.counters().ranges);
+}
+
+#[test]
+fn every_connection_being_cut_still_finishes_on_ranges() {
+    // #333: a reset cuts every connection at once. Each brought bytes, so none is a failure
+    // that uses up the retries: that many at once would otherwise fail the download.
+    let (s, data) = serve(
+        1_000_000,
+        RangeMode::CutLaterBodies {
+            count: u32::MAX,
+            after: 50_000,
+        },
+    );
+    let dir = Dir::new("cut-always");
+    let dest = dir.file("out.bin");
+    let report =
+        download(&curl_loop(), &s.url("f.bin"), &dest, OPTIONS).expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(report.mode, Mode::Ranges);
+    assert!(every_get_was_a_range(&s), "{:?}", s.counters().ranges);
+}
+
+#[test]
+fn a_cut_sequential_range_continues_from_where_it_stopped() {
+    // #333, for a server that never says the total.
+    let (s, data) = serve_cutting(
+        1_000_000,
+        RangeMode::UnknownTotal,
+        CutRanges {
+            count: 3,
+            after: 50_000,
+            every: 1,
+        },
+    );
+    let dir = Dir::new("cut-sequential");
+    let dest = dir.file("out.bin");
+    let report =
+        download(&curl_loop(), &s.url("f.bin"), &dest, OPTIONS).expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(report.mode, Mode::SequentialRanges);
+    assert!(every_get_was_a_range(&s), "{:?}", s.counters().ranges);
+}
+
+#[test]
+fn ranges_that_are_cut_before_their_first_byte_fall_back_to_one_stream() {
+    // #333 keeps this: nothing ever comes on a range, so ranges really don't work here.
+    let (s, data) = serve(
+        1_000_000,
+        RangeMode::CutLaterBodies {
+            count: u32::MAX,
+            after: 0,
+        },
+    );
+    let dir = Dir::new("cut-empty");
+    let dest = dir.file("out.bin");
+    let control = Control::default();
+    let report = download_with(&curl_loop(), &s.url("f.bin"), &dest, OPTIONS, &control)
+        .expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(report.mode, Mode::RangesLost);
+    assert!(
+        control.connections_now().single_stream,
+        "says why it uses one"
+    );
+}
+
+#[test]
+fn only_anomalies_in_a_row_end_the_range_requests() {
+    // Report 5.1, step 7: "two consecutive anomalies". A good request between them clears the
+    // count, however many a long download meets (#333).
+    let (s, data) = serve_cutting(
+        1_000_000,
+        RangeMode::Honour,
+        CutRanges {
+            count: 3,
+            after: 0,
+            every: 2,
+        },
+    );
+    let dir = Dir::new("cut-apart");
+    let dest = dir.file("out.bin");
+    let options = DownloadOptions {
+        connections: 1,
+        leases: Sizes {
+            max_lease: 100_000,
+            ..Sizes::DEFAULT
+        },
+        ..OPTIONS
+    };
+    let report =
+        download(&curl_loop(), &s.url("f.bin"), &dest, options).expect("the download recovers");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    assert_eq!(s.counters().faults, 3);
+    assert_eq!(report.mode, Mode::Ranges);
     assert!(every_get_was_a_range(&s), "{:?}", s.counters().ranges);
 }
 

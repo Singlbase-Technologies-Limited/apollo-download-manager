@@ -63,8 +63,9 @@ use crate::validator::Representation;
 
 /// How often a waiting download checks whether it was cancelled.
 const CANCEL_CHECK: Duration = Duration::from_millis(100);
-/// Anomalous answers a download tolerates before ranges stop for it, and the rest comes as one
-/// stream (report section 5.1, step 7: "two consecutive anomalies").
+/// Anomalous answers in a row before ranges stop for a download, and the rest comes as one stream
+/// (report section 5.1, step 7: "two consecutive anomalies"). A request that brings good bytes
+/// clears the count (#333).
 const MAX_ANOMALIES: u32 = 2;
 /// How many times a bad piece is fetched again before the download fails (PO decision on #46).
 const PIECE_REFETCHES: u32 = 2;
@@ -2425,7 +2426,15 @@ fn fetch_ranges(
                     (Some(Err(SegmentRejection::EncodingChanged(t))), _) => {
                         encoding_changed = encoding_changed.or(Some(t));
                     }
-                    // Accepted, then cut off: the rest of the lease is leased again.
+                    // Cut off after it brought bytes: the network's doing, not a sign that ranges
+                    // fail, and the bytes are progress, so it costs no retry. A reset can cut every
+                    // connection at once. The rest of the lease is leased again (#333).
+                    (Some(Ok(_)), Err(_)) if a.fed => {
+                        if !a.overran {
+                            anomalies = 0;
+                        }
+                    }
+                    // Accepted, then cut off before its first byte.
                     (Some(Ok(_)), Err(_)) => anomalies += 1,
                     // Complete by its own account, but it stopped before the end its Content-Range
                     // gave (a chunked body that ended early). One stopped at its lease's end, or a
@@ -2433,6 +2442,8 @@ fn fetch_ranges(
                     (Some(Ok(end)), Ok(())) => {
                         if unfinished && a.position <= end {
                             anomalies += 1;
+                        } else if a.fed && !a.overran {
+                            anomalies = 0;
                         }
                     }
                     // Never answered: the connection itself failed.
@@ -2591,6 +2602,12 @@ fn fetch_sequential(
                 if total == Some(cursor) {
                     return Ok((fetches, cursor, Mode::SequentialRanges));
                 }
+                // Cut off after it brought bytes: the rest is asked for again (#333).
+                if matches!(done, Drained::Failed(_)) && part.written > before && !overran {
+                    anomalies = 0;
+                    retry(done.failure(policy).unwrap_or_else(loop_stopped), None)?;
+                    continue;
+                }
                 if !matches!(done, Drained::Complete) || cursor <= end || overran {
                     anomalies += 1;
                 }
@@ -2637,6 +2654,7 @@ fn stream_gaps(
     policy: &RetryPolicy,
 ) -> Result<(u64, u32), DownloadError> {
     control.running(1, false);
+    control.one_stream();
     let mut retrier = Retrier::new(*policy);
     let mut fetches = 0;
     loop {

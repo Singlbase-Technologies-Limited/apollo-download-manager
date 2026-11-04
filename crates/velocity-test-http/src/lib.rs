@@ -61,6 +61,17 @@ pub enum RangeMode {
 }
 
 /// What the server does, beyond serving its files.
+/// Which ranges after byte 0 are cut, in any [`RangeMode`] (#333).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CutRanges {
+    /// How many are cut in all.
+    pub count: u32,
+    /// Each is cut after this many body bytes, although `Content-Length` promised the range.
+    pub after: u64,
+    /// Every this many ranges is cut: 1 for each one, 2 for every other one.
+    pub every: u32,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct ServerOptions {
     pub range_mode: RangeMode,
@@ -96,6 +107,8 @@ pub struct ServerOptions {
     /// Closes the connection after this many body bytes of the first GET's answer, although its
     /// `Content-Length` promised more (#45).
     pub cut_first: Option<u64>,
+    /// Closes the connection part way through some ranges (#333).
+    pub cut_ranges: Option<CutRanges>,
     /// The first response over HTTP/1.1 whose body holds this byte of the file sends it with its
     /// bits flipped; later ones send it as it is: a piece that is bad once (#46).
     pub corrupt_once: Option<u64>,
@@ -211,6 +224,8 @@ pub struct Counters {
     pub if_ranges: Vec<Option<String>>,
     /// Responses that carried a limited misbehaviour, such as [`RangeMode::MalformedLaterRanges`].
     pub faults: u32,
+    /// Ranges after byte 0 that [`ServerOptions::cut_ranges`] has seen.
+    pub later_ranges: u32,
     /// Whether the response that [`ServerOptions::throttle_first_later_range`] slows was sent.
     pub slowed: bool,
     /// Whether the response that [`ServerOptions::trickle_first_later_range`] trickles was sent.
@@ -793,7 +808,14 @@ fn serve_connection(
             counters.lock().unwrap().outage_began = true;
             return;
         }
-        if let (RangeMode::CutLaterBodies { after, .. }, true) = (mode, fault) {
+        let cut_after = match (mode, fault) {
+            (RangeMode::CutLaterBodies { after, .. }, true) => Some(after),
+            _ => options
+                .cut_ranges
+                .filter(|cut| takes_cut(cut, range, counters))
+                .map(|cut| cut.after),
+        };
+        if let Some(after) = cut_after {
             // Send part of the body, then drop the connection.
             let cut = (after as usize).min(body.len());
             let _ = write_body(
@@ -898,6 +920,22 @@ fn take_fault(counters: &Mutex<Counters>, limit: u32) -> bool {
     } else {
         false
     }
+}
+
+/// Whether [`ServerOptions::cut_ranges`] cuts this response.
+fn takes_cut(
+    cut: &CutRanges,
+    range: Option<(u64, Option<u64>)>,
+    counters: &Mutex<Counters>,
+) -> bool {
+    if !range.is_some_and(|(start, _)| start > 0) {
+        return false;
+    }
+    let mut c = counters.lock().unwrap();
+    c.later_ranges += 1;
+    let chosen = c.later_ranges.is_multiple_of(cut.every.max(1)) && c.faults < cut.count;
+    c.faults += u32::from(chosen);
+    chosen
 }
 
 /// Whether this response carries `mode`'s limited misbehaviour. They apply only to ranges after
