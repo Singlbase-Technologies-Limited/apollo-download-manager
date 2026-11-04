@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/velocity-child", "crates/velocity-core", "crates/velocity-curl", "crates/velocity-lt", "crates/velocity-native-host", "crates/velocity-sftp", "crates/velocity-test-http", "crates/velocity-torrent", "crates/velocity-transfer", "crates/velocity-transfer-h2c", "src-tauri"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "GPL-3.0-only"
 publish = false

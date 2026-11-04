@@ -6,6 +6,40 @@ What changed in each version of Velocity Download Manager V2. Versions follow [S
 
 Nothing yet.
 
+## 0.1.1 - 2026-11-04
+
+Fixes only, found by using 0.1.0 with real downloads ([#262](https://github.com/Singlbase-Technologies-Limited/velocity_download_manager_v2/issues/262)). Install it over 0.1.0: your downloads, settings and history are kept.
+
+### Large downloads
+
+- **No more freezing on one connection:** when a server cut connections mid-download, a large download could fall back to one stream, start reading from byte 0 again, and seem to stop. A cut connection now just costs that request, which is asked for again (#333).
+- **Progress after a resume or a crash** counts what the download already had. It no longer starts again from a low figure, or from "0 B of unknown size" (#257).
+- **A network drop** keeps a download's bytes, and Velocity keeps trying for about 5 minutes, so Wi-Fi dropping out, a router restarting or the computer waking from sleep is ridden out (#317).
+- **A connection that trickles** a few bytes now and then is treated like a silent one: the download shows "No data received", and the connection is reset (#292).
+- **The speed shown** is measured over the last 3 seconds, so it holds steady (#246).
+
+### Retries and servers that slow you down
+
+- **Every retry says why,** such as "No data arrived for 30 s, so the connection was reset", and counts its tries, such as "Trying again (2 of 5)". A download whose server could never be reached isn't started again on its own (#245).
+- **A server name that can't be found** says what to check: the link, a proxy's address, the internet connection, or a network without IPv6 (#250).
+- **No network on this computer** is never blamed on the server: the message says so, and the download tries again within seconds instead of waiting minutes (#335).
+- **Servers that ask Velocity to slow down,** such as proof.ovh.net, get fewer requests, and connections are opened a step at a time, so the server doesn't block your computer (#247).
+- **Under a speed limit,** a download uses only the connections the limit needs, and says that the limit holds it back (#278).
+
+### The app
+
+- **Cancelling** a download no longer shows it as Failed, "That action isn't possible…", for a moment (#339).
+- **The download schedule** now works: while "Use the schedule" is on, every new download waits for its time window. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start (#340).
+- **The app's log** says what each download does: added, started, retried and why, paused, completed, removed (#251, #263, #264, #274).
+- **Delete files** deletes a magnet link's files, and never reports files it couldn't find as deleted (#268).
+- **The browser extension:** an installed Velocity writes its own name into the browser registration, so the extension finds it (#315).
+- **The Add download dialog** no longer loops between two questions, and shows a taken file name's path correctly on Windows (#266, #277).
+- **Smaller fixes:** long words in an error wrap inside the details panel (#248); a download without a name yet shows its link's file name, never the whole link (#275); Choose files is at the top of the details panel (#276); Ctrl+A works with Caps Lock on, and the speed limit's label and the folder icon are right (#310).
+
+### Security
+
+- **russh 0.65.0 and pageant 0.2.5,** for five advisories in the SFTP libraries (#255).
+
 ## 0.1.0 - 2026-10-31
 
 The first version of Velocity Download Manager V2: a new app, not an update of the original Velocity Download Manager (V1). V2 has its own download engine, on libcurl, and uses libtorrent for torrents. It installs and runs beside V1, and shares nothing with it ([V1 and V2](docs/user/v1-and-v2.md)).
