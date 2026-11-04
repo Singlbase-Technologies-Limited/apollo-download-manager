@@ -238,6 +238,12 @@ fn curl_failure(kind: CurlFailure) -> (FailureClass, &'static str) {
              IPv6, which this network may not have.",
         ),
         CurlFailure::Connect => (Transient, "Couldn't connect to the server."),
+        // This computer's network, not the server: tried again on the usual schedule (#335).
+        CurlFailure::NoNetwork => (
+            Transient,
+            "This computer has no network connection to the server. Check the Wi-Fi or the \
+             cable. Some servers can be reached only over IPv6, which this network may not have.",
+        ),
         CurlFailure::Timeout => (Transient, "The connection timed out."),
         CurlFailure::Interrupted => (Transient, "The connection was interrupted."),
         CurlFailure::TlsHandshake => (Transient, "The secure connection couldn't be set up."),

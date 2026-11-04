@@ -335,6 +335,9 @@ pub enum CurlFailure {
     Resolve,
     /// The connection couldn't be made, or was refused.
     Connect,
+    /// The connection couldn't be made because this computer has no route to the server: its
+    /// network is down or unreachable, by the OS error behind the failed connect (#335).
+    NoNetwork,
     /// libcurl's own timeout passed (the connect timeout).
     Timeout,
     /// The connection broke while the request or the response was under way.
@@ -1275,6 +1278,53 @@ fn curl_error(e: &curl::Error) -> FetchError {
     }
 }
 
+/// The OS errors for a connect that found no route from this computer: the network is down, or
+/// unreachable (#335). A server's refusal is another error (`CONNECTION_REFUSED`).
+#[cfg(windows)]
+const NO_ROUTE: &[i32] = &[
+    10050, // WSAENETDOWN
+    10051, // WSAENETUNREACH
+    10065, // WSAEHOSTUNREACH
+];
+#[cfg(target_os = "linux")]
+const NO_ROUTE: &[i32] = &[
+    100, // ENETDOWN
+    101, // ENETUNREACH
+    113, // EHOSTUNREACH
+];
+#[cfg(target_os = "macos")]
+const NO_ROUTE: &[i32] = &[
+    50, // ENETDOWN
+    51, // ENETUNREACH
+    65, // EHOSTUNREACH
+];
+#[cfg(test)]
+#[cfg(windows)]
+const CONNECTION_REFUSED: i32 = 10061; // WSAECONNREFUSED
+#[cfg(test)]
+#[cfg(target_os = "linux")]
+const CONNECTION_REFUSED: i32 = 111; // ECONNREFUSED
+#[cfg(test)]
+#[cfg(target_os = "macos")]
+const CONNECTION_REFUSED: i32 = 61; // ECONNREFUSED
+
+/// A failed connect becomes [`CurlFailure::NoNetwork`] when the OS error behind it (libcurl's
+/// `CURLINFO_OS_ERRNO`, 0 when there is none) says this computer has no route (#335).
+fn with_os_error(error: FetchError, os_errno: i32) -> FetchError {
+    match error {
+        FetchError::Curl {
+            kind: CurlFailure::Connect,
+            code,
+            message,
+        } if NO_ROUTE.contains(&os_errno) => FetchError::Curl {
+            kind: CurlFailure::NoNetwork,
+            code,
+            message,
+        },
+        other => other,
+    }
+}
+
 /// The loop thread: owns the `Multi`, starts and stops transfers, and reports how each ended.
 fn run_loop(
     inbox: Receiver<Command>,
@@ -1436,7 +1486,7 @@ fn run_loop(
                         {
                             Ok(())
                         }
-                        None => Err(curl_error(e)),
+                        None => Err(with_os_error(curl_error(e), handle.os_errno().unwrap_or(0))),
                     },
                 };
                 let mut handle = handle;
@@ -1607,6 +1657,36 @@ mod tests {
         for (code, expected) in cases {
             assert_eq!(kind(code), expected, "CURLcode {code}");
         }
+    }
+
+    /// Regression (#335, field session 5): with this computer's network off, a connect failed in
+    /// 0 ms and was taken for a server that refuses this computer. The OS error tells them apart.
+    #[test]
+    fn a_connect_failure_with_no_route_is_no_network() {
+        let connect = || curl_error(&curl::Error::new(curl_sys::CURLE_COULDNT_CONNECT));
+        let kind = |e: FetchError| match e {
+            FetchError::Curl { kind, .. } => kind,
+            other => panic!("{other:?}"),
+        };
+        for errno in NO_ROUTE {
+            assert_eq!(
+                kind(with_os_error(connect(), *errno)),
+                CurlFailure::NoNetwork,
+                "OS error {errno}"
+            );
+        }
+        // Refused by the server, or no OS error given: a connect failure as before.
+        assert_eq!(
+            kind(with_os_error(connect(), CONNECTION_REFUSED)),
+            CurlFailure::Connect
+        );
+        assert_eq!(kind(with_os_error(connect(), 0)), CurlFailure::Connect);
+        // Only a failed connect changes; another failure keeps its kind.
+        let timeout = curl_error(&curl::Error::new(curl_sys::CURLE_OPERATION_TIMEDOUT));
+        assert_eq!(
+            kind(with_os_error(timeout, NO_ROUTE[0])),
+            CurlFailure::Timeout
+        );
     }
 
     #[test]

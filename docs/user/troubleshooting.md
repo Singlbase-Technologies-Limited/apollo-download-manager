@@ -39,6 +39,7 @@ The most common messages:
 | Message | What to do |
 |---|---|
 | "The server name could not be resolved. Check the link's spelling, …" | Check the link's spelling, the proxy's address if you set one in Settings, Proxy, and your internet connection. Some servers can be reached only over IPv6: if your network has no IPv6 internet access, they can't be reached from it. Velocity tries a few times on its own before it shows this, then waits for you to **Retry** |
+| "This computer has no network connection to the server. …" | Check that Wi-Fi or the cable is connected. Some servers can be reached only over IPv6: if your network has no IPv6 internet access, they can't be reached from it. A download that had already started keeps trying for about 5 minutes on its own, and goes on from where it stopped once the network is back. Otherwise, **Retry** once it's back |
 | "The file was not found on the server (404). The link may have expired." | Get a new link from the site |
 | "The download link expired (403). Get a fresh link from the browser." | Copy the link again from the site, and add it again |
 | "Access was denied by the server (403)." or "The server requires authentication (401)." | The link needs a login: add it again with your user name and password, or get a new link |
