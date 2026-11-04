@@ -253,11 +253,11 @@ Each answer is checked in the header callback (`check_segment`):
 
 - **Ranges lost:** a `200` is aborted before its body is written. When the live leases end, the rest of the file comes as one stream that writes only the missing bytes, so the file is never mixed.
 - **Anomaly:** an answer that contradicts its request, such as a wrong or malformed `Content-Range`, a length that disagrees with it, or a multipart body. It also covers:
-  - a body cut off before its range ended;
+  - a body cut off before its first byte;
   - a chunked body that stopped short of its `Content-Range`;
   - a body that ran past its range.
 
-  The first anomaly is tolerated, and the lease's rest is leased again. At the **second** on the same download (`MAX_ANOMALIES`), no more leases are handed out, and the rest comes as one stream that writes only the missing bytes (`RangesLost`).
+  The first anomaly is tolerated, and the lease's rest is leased again. At the **second in a row** (`MAX_ANOMALIES`), no more leases are handed out, and the rest comes as one stream that writes only the missing bytes (`RangesLost`). A request that brings good bytes clears the count, so anomalies far apart on a long download never add up (#333). The stream starts at byte 0, so it reads everything already on disk before it can fill a gap, and shows `noRanges` meanwhile.
 - **Short answers:** a `206` with fewer bytes than asked is honest (RFC 9110 §14.2). Its lease fails, and only the remainder is leased again.
 - **Failure:** an error status, or an answer about another file ([changed files](#changed-files-45)). An error status worth retrying frees the connection for a wait, and the rest of the lease is leased again after it ([retries](#retries-waits-and-stalls-48)).
 
@@ -348,7 +348,8 @@ A failure is classified first ([`failure.rs`](../crates/velocity-transfer/src/fa
 - **The wait:** it doubles from 1 s up to 60 s, with full jitter, which means a random wait between zero and that value (`fastrand`).
 - **Bounded:** a download gives up after 5 failures in a row with no new byte in between. A retry that brings new bytes starts the count again, so every retry either makes progress or brings the end closer.
 - **The probe:** a probe whose answer gave the file's total and was then cut off isn't retried. Its bytes are kept, and the range scheduler fetches the rest.
-- **A connection cut mid-body** still counts as an anomaly (#41), and two anomalies switch the download to one stream. A stall and a connection that fails before any answer count as failures, not anomalies.
+- **A connection cut after it brought bytes** isn't an anomaly and costs no retry: the rest of its lease is leased again at once (#333). Its bytes are progress, and a server reset can cut every connection at the same moment. Counted as an anomaly, as it was until #333, two cuts sent a 115 GiB download back to byte 0 as one stream, and its progress froze at 24.6 GB.
+- **A connection cut before its first byte** is an anomaly, because nothing shows that ranges work there. A stall and a connection that fails before any answer count as failures, not anomalies.
 
 ### Stalls
 
