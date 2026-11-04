@@ -2454,7 +2454,7 @@ fn fetch_ranges(
                     }
                     (None, Err(e)) => {
                         let throttled = control.throttled_to.load(Ordering::Acquire) != 0;
-                        let refused = throttled && never_connected(&e);
+                        let refused = throttled && refused_by_server(&e);
                         retry_later(fetch_failure(e), None, part.written, refused)
                     }
                     (None, Ok(())) => {}
@@ -2861,17 +2861,33 @@ fn note_peak(peak: &AtomicU64, fetch: &Fetch) {
     peak.fetch_max(fetch.peak_buffered_bytes() as u64, Ordering::AcqRel);
 }
 
-/// The fetch never reached the server: the name didn't resolve, or the connection was refused or
-/// timed out (#245).
+/// The fetch never reached the server: the name didn't resolve, this computer had no network, or
+/// the connection was refused or timed out (#245, #335).
 fn never_connected(e: &FetchError) -> bool {
-    use velocity_curl::CurlFailure::{Connect, Resolve, Timeout};
+    use velocity_curl::CurlFailure::{Connect, NoNetwork, Resolve, Timeout};
     matches!(
         e,
         FetchError::Curl {
-            kind: Resolve | Connect | Timeout,
+            kind: Resolve | NoNetwork | Connect | Timeout,
             ..
         } | FetchError::Sftp {
-            kind: Resolve | Connect | Timeout,
+            kind: Resolve | NoNetwork | Connect | Timeout,
+            ..
+        }
+    )
+}
+
+/// The server may have refused the connection: it was refused or timed out. A name that didn't
+/// resolve, or no network on this computer, is never the server's doing (#335).
+fn refused_by_server(e: &FetchError) -> bool {
+    use velocity_curl::CurlFailure::{Connect, Timeout};
+    matches!(
+        e,
+        FetchError::Curl {
+            kind: Connect | Timeout,
+            ..
+        } | FetchError::Sftp {
+            kind: Connect | Timeout,
             ..
         }
     )
@@ -3555,6 +3571,26 @@ mod tests {
         assert!(!never_connected(&curl(
             velocity_curl::CurlFailure::Interrupted
         )));
+    }
+
+    #[test]
+    fn no_network_on_this_computer_is_never_the_server_refusing() {
+        // #335: with this computer's network off, a throttled download's failed connect was
+        // taken for the server's block, and waited minutes. It never reached the server, so it
+        // still counts as unreachable (#245), but only the server can refuse.
+        let curl = |kind| FetchError::Curl {
+            kind,
+            code: 7,
+            message: String::new(),
+        };
+        use velocity_curl::CurlFailure::{Connect, Interrupted, NoNetwork, Resolve, Timeout};
+        for kind in [NoNetwork, Resolve] {
+            assert!(never_connected(&curl(kind)), "{kind:?}");
+            assert!(!refused_by_server(&curl(kind)), "{kind:?}");
+        }
+        assert!(refused_by_server(&curl(Connect)));
+        assert!(refused_by_server(&curl(Timeout)));
+        assert!(!refused_by_server(&curl(Interrupted)));
     }
 
     #[test]
