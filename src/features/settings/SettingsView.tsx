@@ -116,7 +116,7 @@ export function SettingsView() {
         <Input type="search" aria-label="Search settings" placeholder="Search settings" value={query} onChange={(e) => { setQuery(e.target.value); }} className="pl-8" />
       </div>
     <div className="flex min-h-0 flex-1">
-      <nav aria-label="Settings sections" className="w-52 shrink-0 overflow-y-auto border-r border-border bg-surface-2 p-2">
+      <nav aria-label="Settings sections" className="w-44 lg:w-52 shrink-0 overflow-y-auto border-r border-border bg-surface-2 p-2">
         {SECTIONS.map((s) => (
           <button
             key={s.id}
@@ -135,7 +135,7 @@ export function SettingsView() {
         </div>
       </nav>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-4 px-8 py-6">
+        <div className="mx-auto max-w-3xl space-y-4 px-5 py-5 lg:px-8 lg:py-6">
           {state.kind === 'error' ? (
             <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{`Not saved: ${state.message}`}</p>
           ) : null}
@@ -186,7 +186,8 @@ export function SettingsView() {
 
 /**
  * Settings in a window over the app (#364, PO: as in VS Code): the list stays behind it. Close, Escape or a click
- * outside closes it, and focus goes back to what opened it.
+ * outside closes it, and focus goes back to what opened it. It grows and shrinks with the window, leaving the title
+ * bar and the status bar in view (PO, 2026-11-06).
  */
 export function SettingsDialog() {
   const open = useUiStore((s) => s.settingsOpen);
@@ -196,7 +197,7 @@ export function SettingsDialog() {
     <DialogPrimitive.Root open={open} onOpenChange={(o) => { if (!o) close(); }}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className={overlayClass} />
-        <DialogPrimitive.Content className={cn(contentClass, 'h-[min(48rem,calc(100vh-4rem))] max-w-6xl overflow-hidden')} aria-describedby={undefined} {...returnFocus}>
+        <DialogPrimitive.Content className={cn(contentClass, 'h-[calc(100vh-6rem)] max-h-none w-[min(80rem,calc(100vw-4rem))] max-w-none overflow-hidden')} aria-describedby={undefined} {...returnFocus}>
           <SettingsView />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
