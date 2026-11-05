@@ -10,6 +10,12 @@ The identity comes from #347. These are the PO's decisions there, all on 2026-11
 - The app icon is the A alone, without a tile.
 - The A is coloured in two flat tones.
 
+## The name in text
+
+- **Always "Apollo Download Manager", never "Apollo" alone.** This is the PO's rule on #347, to avoid trademark issues, since many products are called "Apollo" (ADR-0018).
+- **The short form is "Apollo DM",** for places with little room, such as the browser extension's short name or a badge.
+- **The full logo still shows the full name:** the mark stands in for the A of "Apollo", and "DOWNLOAD MANAGER" is always part of it.
+
 ## The mark
 
 A capital **A**, leaning **10° forward**, with a thin **streak** cut from its left leg. The streak runs parallel to the leg, like a motion line inside the letter.
