@@ -85,7 +85,7 @@ On dark backgrounds the lockup moves both halves one step lighter (`apollo-locku
 - **Equal width:** "DOWNLOAD MANAGER" is spaced to end exactly where "pollo" ends, so both edges line up.
 - **Equal margins:** the file's edges sit the same distance outside the block on all four sides, 40 units, about a quarter of the logo's height. Keep at least this much clear space around it.
 
-**In the window**, the sidebar shows the logo 136 px wide, and the first-run screen shows it above the welcome heading (`src/components/BrandLogo.tsx`). The narrow sidebar shows the icon alone. Inside the app the logo's A is the small drawing, so its streak stays visible at that size.
+**In the window**, the sidebar shows the logo 112 px wide, with the button that collapses the sidebar beside it, and the first-run screen shows it above the welcome heading (`src/components/BrandLogo.tsx`). The narrow sidebar shows the icon alone. Inside the app the logo's A is the small drawing, so its streak stays visible at that size.
 
 ## Type
 
