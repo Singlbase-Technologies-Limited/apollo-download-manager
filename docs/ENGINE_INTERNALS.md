@@ -325,7 +325,7 @@ A server may apply an encoding nobody asked for, such as a `.tar.gz` served with
 
 ### Expired links
 
-A `403` on any answer after the first fails with "The download link expired (403). Get a fresh link from the browser." (PO decision on #45: a message, with no new failure kind). A `403` on the first answer keeps "Access was denied by the server (403). The link may have expired.", as it may be a real refusal.
+A `403` on any answer after the first fails with "The download link expired. Get a fresh link from the browser." (PO decision on #45: a message, with no new failure kind). A `403` on the first answer keeps "The server denied access to the file. The link may have expired.", as it may be a real refusal.
 
 ### What can't be detected
 

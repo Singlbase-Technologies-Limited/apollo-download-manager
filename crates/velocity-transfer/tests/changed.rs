@@ -587,7 +587,7 @@ fn a_link_that_stops_working_after_the_first_answer_has_expired() {
     };
     assert_eq!(
         e.message,
-        "The download link expired (403). Get a fresh link from the browser."
+        "The download link expired. Get a fresh link from the browser."
     );
     assert!(!e.retryable);
     assert_eq!(s.counters().gets, 1, "never retried");

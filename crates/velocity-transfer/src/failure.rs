@@ -19,46 +19,48 @@ pub(crate) fn status_failure(status: u16) -> Option<TransferError> {
     let (class, message) = match status {
         401 => (
             Permanent,
-            "The server requires authentication (401).".to_owned(),
+            "The server requires a user name and password.".to_owned(),
         ),
         407 => (
             Permanent,
-            "The proxy requires authentication (407).".to_owned(),
+            "The proxy requires authentication. Check its user name and password in Settings, Proxy."
+                .to_owned(),
         ),
         403 => (
             Permanent,
-            "Access was denied by the server (403). The link may have expired.".to_owned(),
+            "The server denied access to the file. The link may have expired.".to_owned(),
         ),
         404 => (
             Permanent,
-            "The file was not found on the server (404). The link may have expired.".to_owned(),
+            "The file was not found on the server. The link may have expired.".to_owned(),
         ),
         410 => (
             Permanent,
-            "The file is no longer available (410).".to_owned(),
+            "The file is no longer available on the server.".to_owned(),
         ),
         // RFC 9110 §15.5.9: the server closed a connection it thought idle; the request may be
         // repeated.
         408 => (
             Transient,
-            "The server timed out waiting for the request (408).".to_owned(),
+            "The server timed out waiting for the request.".to_owned(),
         ),
         429 => (
             Throttled,
-            "The server is rate limiting requests (429).".to_owned(),
+            "The server is rate limiting requests. Apollo Download Manager waits before trying again."
+                .to_owned(),
         ),
         503 => (
             Throttled,
-            "The server is temporarily unavailable or overloaded (503).".to_owned(),
+            "The server is temporarily unavailable or overloaded.".to_owned(),
         ),
         416 => return None,
         400..=499 => (
             Permanent,
-            format!("The server refused the request (HTTP {status})."),
+            "The server refused the request.".to_owned(),
         ),
         500..=599 => (
             Transient,
-            format!("The server reported an error (HTTP {status})."),
+            "The server reported an error. It may work again later.".to_owned(),
         ),
         _ => return None,
     };
@@ -72,7 +74,7 @@ pub(crate) fn later_status_failure(status: u16) -> Option<TransferError> {
         return Some(TransferError::new(
             FailureClass::Permanent,
             Some(403),
-            "The download link expired (403). Get a fresh link from the browser.",
+            "The download link expired. Get a fresh link from the browser.",
         ));
     }
     status_failure(status)
@@ -365,7 +367,11 @@ mod tests {
     #[test]
     fn error_statuses_have_a_class_and_a_message() {
         for (status, class, words) in [
-            (401, FailureClass::Permanent, "requires authentication"),
+            (
+                401,
+                FailureClass::Permanent,
+                "requires a user name and password",
+            ),
             (
                 407,
                 FailureClass::Permanent,
@@ -374,18 +380,32 @@ mod tests {
             (403, FailureClass::Permanent, "denied"),
             (404, FailureClass::Permanent, "not found"),
             (410, FailureClass::Permanent, "no longer available"),
-            (400, FailureClass::Permanent, "HTTP 400"),
+            (400, FailureClass::Permanent, "refused the request"),
             // RFC 9110 §15.5.9: the server closed an idle connection; the request may be repeated.
             (408, FailureClass::Transient, "timed out"),
             (429, FailureClass::Throttled, "rate limiting"),
             (503, FailureClass::Throttled, "temporarily unavailable"),
-            (500, FailureClass::Transient, "HTTP 500"),
-            (502, FailureClass::Transient, "HTTP 502"),
+            (500, FailureClass::Transient, "reported an error"),
+            (502, FailureClass::Transient, "reported an error"),
         ] {
             let e = status_failure(status).unwrap_or_else(|| panic!("{status} is an error"));
             assert_eq!((e.class, e.http_status), (class, Some(status)), "{status}");
             assert!(e.message.contains(words), "{status}: {}", e.message);
+            // #252: the window shows "HTTP 404." beside the message; the words don't repeat it.
+            assert!(
+                !e.message.contains(&status.to_string()),
+                "{status}: {}",
+                e.message
+            );
         }
+        let expired = later_status_failure(403).unwrap();
+        assert_eq!(expired.http_status, Some(403));
+        assert!(
+            expired.message.contains("link expired"),
+            "{}",
+            expired.message
+        );
+        assert!(!expired.message.contains("403"), "{}", expired.message);
         for status in [200, 206, 301, 416] {
             assert_eq!(status_failure(status), None, "{status}");
         }

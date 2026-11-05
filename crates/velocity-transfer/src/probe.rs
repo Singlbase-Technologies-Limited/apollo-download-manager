@@ -599,7 +599,7 @@ mod tests {
             }
             other => panic!("expected a refusal, got {other:?}"),
         };
-        let message = "The download link expired (403). Get a fresh link from the browser.";
+        let message = "The download link expired. Get a fresh link from the browser.";
         let segment = check_segment(&head(403, &[]), 1000, 1999, 5000, &none());
         assert_eq!(expired(segment.map(|_| ())), message);
         let continuation = check_continuation(&head(403, &[]), 1000, &none());
@@ -607,7 +607,7 @@ mod tests {
         // On the first answer, a 403 may be a real refusal.
         assert!(error(classify_probe(&head(403, &[]), 999))
             .message
-            .contains("Access was denied"));
+            .contains("denied access"));
     }
 
     #[test]
