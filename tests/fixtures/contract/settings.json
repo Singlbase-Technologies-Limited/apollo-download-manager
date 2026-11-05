@@ -59,6 +59,7 @@
   },
   "queue": {
     "maxConcurrentDownloads": 2,
+    "restartOnNetwork": true,
     "schedule": {
       "days": [
         0,

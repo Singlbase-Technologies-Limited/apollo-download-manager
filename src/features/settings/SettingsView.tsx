@@ -383,6 +383,7 @@ function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
       <Group title="Queue">
         <Num title="Simultaneous downloads" value={q.maxConcurrentDownloads} min={1} max={32} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, maxConcurrentDownloads: v } })); }} />
         <Toggle title="Start new downloads at once" checked={q.startImmediately} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, startImmediately: v } })); }} />
+        <Toggle title="Restart downloads when the network is back" description="A download that failed because there was no network waits for it, and continues from where it stopped once the network returns." checked={q.restartOnNetwork} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, restartOnNetwork: v } })); }} />
         <Num title="Speed limit for direct downloads (KiB/s, 0 for none)" description="Torrents have their own limit, under BitTorrent." value={s.advanced.globalDownloadLimitKib} min={0} max={2_000_000} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, globalDownloadLimitKib: v } })); }} />
       </Group>
       <Group title="Schedule" description="Scheduled downloads run only in this window, in local time.">

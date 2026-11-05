@@ -12,6 +12,7 @@
         "hostKey": null,
         "httpStatus": 503,
         "message": "Service unavailable",
+        "noNetwork": false,
         "retryable": true
       },
       "fileCount": null,

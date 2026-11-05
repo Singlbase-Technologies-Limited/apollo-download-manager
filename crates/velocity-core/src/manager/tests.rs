@@ -6401,3 +6401,206 @@ fn removing_a_download_writes_its_line_to_the_app_log() {
         ]
     );
 }
+
+/// #318: a download that failed because there was no network waits for it, and starts again
+/// from its checkpoint when the system says the network changed (PO decisions, 2026-11-05).
+mod network {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    fn named(name: &str) -> TransferSpec {
+        TransferSpec {
+            file_name: Some(name.to_owned()),
+            ..spec()
+        }
+    }
+
+    fn no_network() -> TransferError {
+        TransferError::new(
+            FailureClass::Transient,
+            None,
+            "The server name could not be resolved.",
+        )
+        .with_no_network()
+    }
+
+    /// 2026-10-19 12:00, a Monday.
+    fn noon() -> DateTime {
+        jiff::civil::date(2026, 10, 19).at(12, 0, 0, 0)
+    }
+
+    /// A manager running one download at a time, and the signal the network watcher raises.
+    fn setup() -> (Manager, FakeControl, Arc<AtomicBool>) {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let signal = Arc::new(AtomicBool::new(false));
+        let mut m = in_memory(fake).with_network_signal(Arc::clone(&signal));
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 1,
+            ..QueueSettings::default()
+        })
+        .unwrap();
+        (m, control, signal)
+    }
+
+    fn adds(control: &FakeControl) -> usize {
+        control.log().iter().filter(|c| *c == "add").count()
+    }
+
+    #[test]
+    fn a_download_without_network_waits_for_it_and_frees_its_slot() {
+        let (mut m, control, _) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        let b = m.add(DownloadKind::Http, named("b.zip"), T0).unwrap();
+        control.progress(TransferId(1), 1024, Some(4096));
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        let record = m.get(&a).unwrap();
+        assert_eq!(record.progress.completed_bytes, 1024, "its bytes are kept");
+        assert!(
+            record.error.as_ref().is_some_and(|e| e.no_network),
+            "the reason shows"
+        );
+        assert_eq!(status(&m, &b), DownloadStatus::Queued);
+        assert_eq!(adds(&control), 2, "b took a's slot");
+        // Nothing starts it again until the network changes, however many ticks pass.
+        control.complete(TransferId(2));
+        m.pump(T0 + 2);
+        m.tick(T0 + 3, noon());
+        assert_eq!(adds(&control), 2);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+    }
+
+    #[test]
+    fn other_failures_stay_failed() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(
+            TransferId(1),
+            TransferError::new(FailureClass::Permanent, Some(404), "Not found"),
+        );
+        m.pump(T0 + 1);
+        assert_eq!(status(&m, &a), DownloadStatus::Failed);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 2, noon());
+        assert_eq!(
+            status(&m, &a),
+            DownloadStatus::Failed,
+            "the network isn't its problem"
+        );
+        assert_eq!(adds(&control), 1);
+    }
+
+    #[test]
+    fn when_the_network_changes_it_starts_again_from_its_checkpoint() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 2, noon());
+        assert!(!signal.load(Ordering::SeqCst), "the signal is taken");
+        assert_eq!(adds(&control), 2, "started again");
+        assert!(
+            control.spec(TransferId(2)).resume.is_some(),
+            "from what it kept"
+        );
+        assert_ne!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        assert_eq!(m.get(&a).unwrap().error, None);
+        // Still no network: it waits again, and the next change starts it again.
+        control.fail(TransferId(2), no_network());
+        m.pump(T0 + 3);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 4, noon());
+        assert_eq!(adds(&control), 3);
+    }
+
+    #[test]
+    fn a_waiting_download_waits_for_a_slot_like_any_other() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        let b = m.add(DownloadKind::Http, named("b.zip"), T0 + 1).unwrap();
+        m.pump(T0 + 1);
+        assert_eq!(adds(&control), 2, "b runs");
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 2, noon());
+        assert_eq!(status(&m, &a), DownloadStatus::Queued, "waits for b's slot");
+        assert_eq!(adds(&control), 2);
+        control.complete(TransferId(2));
+        m.pump(T0 + 3);
+        assert_eq!(status(&m, &b), DownloadStatus::Completed);
+        assert_eq!(adds(&control), 3, "then a starts");
+    }
+
+    #[test]
+    fn a_waiting_download_can_be_cancelled_retried_or_paused() {
+        let (mut m, control, _) = setup();
+        let mut ids = Vec::new();
+        for name in ["a.zip", "b.zip", "c.zip"] {
+            let id = m.add(DownloadKind::Http, named(name), T0).unwrap();
+            let transfer = TransferId(adds(&control) as u64);
+            control.fail(transfer, no_network());
+            m.pump(T0 + 1);
+            assert_eq!(status(&m, &id), DownloadStatus::WaitingForNetwork, "{name}");
+            ids.push(id);
+        }
+        m.cancel(&ids[0]).unwrap();
+        m.pump(T0 + 2);
+        assert_eq!(status(&m, &ids[0]), DownloadStatus::Removed);
+        m.retry(&ids[1]).unwrap();
+        assert_eq!(adds(&control), 4, "retried by hand at once");
+        m.pause(&ids[2]).unwrap();
+        assert_eq!(status(&m, &ids[2]), DownloadStatus::Paused);
+        control.complete(TransferId(4));
+        m.pump(T0 + 3);
+        assert_eq!(adds(&control), 4, "a paused download stays paused");
+    }
+
+    #[test]
+    fn with_the_setting_off_it_fails_as_before_and_turning_it_off_fails_those_waiting() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 1,
+            restart_on_network: false,
+            ..QueueSettings::default()
+        })
+        .unwrap();
+        assert_eq!(status(&m, &a), DownloadStatus::Failed, "no longer waits");
+        let b = m.add(DownloadKind::Http, named("b.zip"), T0).unwrap();
+        control.fail(TransferId(2), no_network());
+        m.pump(T0 + 2);
+        assert_eq!(status(&m, &b), DownloadStatus::Failed);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 3, noon());
+        assert_eq!(adds(&control), 2, "nothing starts by itself");
+    }
+
+    #[test]
+    fn after_a_restart_a_waiting_download_tries_again() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let a = {
+            let fake = FakeTransfer::new();
+            let control = fake.control();
+            let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+            let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+            control.fail(TransferId(1), no_network());
+            m.pump(T0 + 1);
+            assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+            a
+        };
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), db).unwrap();
+        m.pump(T0 + 2);
+        assert_eq!(adds(&control), 1, "a start of the app is a new try");
+        assert_ne!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+    }
+}

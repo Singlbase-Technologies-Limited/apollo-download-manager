@@ -6,7 +6,7 @@ export type ListView = 'all' | 'downloading' | 'queued' | 'completed' | 'seeding
 // V1's rules (src/features/downloads/logic.ts), without its seeding-queue flag, which V2's snapshot doesn't carry.
 const VIEW_STATUSES: Record<Exclude<ListView, 'all'>, readonly DownloadStatus[]> = {
   downloading: ['connecting', 'downloading', 'verifying', 'fetchingMetadata', 'stalled'],
-  queued: ['queued', 'paused', 'retrying', 'choosingFiles'],
+  queued: ['queued', 'paused', 'retrying', 'choosingFiles', 'waitingForNetwork'],
   // A seeding torrent has finished downloading, so it is listed as completed too.
   completed: ['completed', 'seeding'],
   seeding: ['seeding'],

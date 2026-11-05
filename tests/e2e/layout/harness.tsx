@@ -65,7 +65,7 @@ const downloads: DownloadRecord[] = [
     fileName: 'broken-download-with-a-long-name.tar.gz',
     status: 'failed',
     createdAtMs: at(2),
-    error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null },
+    error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false },
   }),
 ];
 for (let i = 0; i < 30; i += 1) {

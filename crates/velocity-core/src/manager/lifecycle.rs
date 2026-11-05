@@ -203,6 +203,9 @@ fn status_line(before: DownloadStatus, record: &DownloadRecord, at: &str) -> Opt
         DownloadStatus::Removed => Line::info(format!("download {id} removed")),
         DownloadStatus::Stalled => Line::warn(format!("download {id} stalled at {at}{why}")),
         DownloadStatus::Failed => Line::warn(format!("download {id} failed at {at}{why}")),
+        DownloadStatus::WaitingForNetwork => {
+            Line::warn(format!("download {id} waits for the network at {at}{why}"))
+        }
         // Told by [`Logged::lines`], which counts it.
         DownloadStatus::Retrying => return None,
         DownloadStatus::Unknown => Line::warn(format!(

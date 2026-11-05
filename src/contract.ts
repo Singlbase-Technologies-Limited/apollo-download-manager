@@ -24,6 +24,7 @@ export const DownloadStatusSchema = z.enum([
   'choosingFiles',
   'seeding',
   'unknown',
+  'waitingForNetwork',
 ]);
 export type DownloadStatus = z.infer<typeof DownloadStatusSchema>;
 
@@ -57,6 +58,8 @@ export const TransferErrorSchema = z.strictObject({
   retryable: z.boolean(),
   hostKey: HostKeyCheckSchema.nullable(),
   confirm: ConfirmSchema.nullable(),
+  // No connection could be made: the download waits for the network (#318).
+  noNetwork: z.boolean(),
 });
 export type TransferError = z.infer<typeof TransferErrorSchema>;
 
@@ -658,6 +661,7 @@ export const FolderSettingsSchema = z.strictObject({ defaultDirectory: z.string(
 export const QueueSettingsSchema = z.strictObject({
   maxConcurrentDownloads: z.number().int().min(1).max(32),
   startImmediately: z.boolean(),
+  restartOnNetwork: z.boolean(),
   schedule: z.strictObject({
     enabled: z.boolean(),
     /** `HH:MM`, 24-hour, local time. */

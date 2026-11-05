@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeRecord } from '../test/records';
-import { STATUS_LABEL, actionsFor, actionsForSelection, averageSpeedOf, displayName, etaSeconds, matchesSearch, nextTry, percentOf, sortDownloads, statusLabel, visibleDownloads } from './list';
+import { STATUS_LABEL, STATUS_TONE, actionsFor, actionsForSelection, averageSpeedOf, displayName, etaSeconds, matchesSearch, nextTry, percentOf, sortDownloads, statusLabel, visibleDownloads } from './list';
 import { countByView, matchesView } from './views';
 
 const progress = makeRecord().progress;
@@ -82,6 +82,22 @@ describe('download list logic', () => {
       expect(STATUS_LABEL.choosingFiles).toBe('Choose files');
       expect(STATUS_LABEL.stalled).toBe('Waiting for peers');
       expect(STATUS_LABEL.seeding).toBe('Seeding');
+    });
+  });
+
+  describe('waiting for the network (#318)', () => {
+    const waiting = makeRecord({ status: 'waitingForNetwork' });
+
+    it('says so, and is listed with the waiting downloads', () => {
+      expect(statusLabel(waiting, 0)).toBe('Waiting for network');
+      expect(STATUS_TONE.waitingForNetwork).toBe('warning');
+      expect(countByView([waiting])).toMatchObject({ queued: 1, failed: 0, downloading: 0 });
+    });
+
+    it('can still be retried, cancelled, paused or moved by hand', () => {
+      expect(actionsFor(waiting)).toEqual({
+        pause: true, resume: false, cancel: true, retry: true, move: true, remove: true, deleteFiles: true, stopSeeding: false,
+      });
     });
   });
 

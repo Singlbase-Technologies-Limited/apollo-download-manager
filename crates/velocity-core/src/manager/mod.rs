@@ -165,6 +165,9 @@ pub struct Manager {
     /// The local time at the last [`Manager::tick`], and whether the window was open then.
     local: Option<DateTime>,
     window_open: bool,
+    /// Raised by the system's network watcher when the network changed (#318); taken at the
+    /// next [`Manager::tick`]. None without a watcher.
+    network_signal: Option<Arc<std::sync::atomic::AtomicBool>>,
     /// Metalink is turned on (#54).
     metalink_enabled: bool,
     /// Torrents and magnet links can be added (#30; V1's `enable_bittorrent`).
@@ -245,11 +248,12 @@ impl Download {
     }
 
     /// It may take a slot: not paused, not cancelled, not finished, and not waiting for the
-    /// schedule.
+    /// schedule or the network (#318).
     fn may_run(&self, window_open: bool) -> bool {
         !self.paused
             && !self.cancelling
             && !self.record.status.is_terminal()
+            && self.record.status != DownloadStatus::WaitingForNetwork
             && (!self.scheduled || window_open)
     }
 
@@ -307,6 +311,7 @@ impl Manager {
             local: None,
             // The default schedule is off, so nothing waits for a window (#340).
             window_open: true,
+            network_signal: None,
             metalink_enabled: false,
             torrents_enabled: true,
             user_agent: None,
@@ -719,7 +724,11 @@ impl Manager {
     pub fn set_queue_settings(&mut self, settings: QueueSettings) -> Result<(), ErrorCode> {
         settings.check()?;
         self.window_open = window_open(&settings.schedule, self.local);
+        let stop_waiting = self.settings.restart_on_network && !settings.restart_on_network;
         self.settings = settings;
+        if stop_waiting {
+            self.fail_those_waiting_for_network();
+        }
         self.fill();
         Ok(())
     }
@@ -775,6 +784,7 @@ impl Manager {
     pub fn tick(&mut self, now_ms: u64, local: DateTime) -> usize {
         self.local = Some(local);
         self.window_open = window_open(&self.settings.schedule, Some(local));
+        self.take_network_signal();
         self.pump(now_ms)
     }
 
@@ -1041,7 +1051,14 @@ impl Manager {
                 // The engine pauses the downloads the queue holds back; they show as waiting. A
                 // running status sent before the engine stopped one the user paused or cancelled
                 // doesn't undo that (#59).
-                let shown = if download.running {
+                // No network (#318): it waits for the network, when the user's setting allows.
+                let waits = status == DownloadStatus::Failed
+                    && self.settings.restart_on_network
+                    && download.running
+                    && snapshot.error.as_ref().is_some_and(|e| e.no_network);
+                let shown = if waits {
+                    DownloadStatus::WaitingForNetwork
+                } else if download.running {
                     status
                 } else if status == DownloadStatus::Paused {
                     download.waiting_status()
@@ -1111,6 +1128,9 @@ impl Manager {
                     download.saved_at_ms = Some(now_ms);
                     self.mark(&app_id);
                 }
+                if waits {
+                    self.wait_for_network(&app_id);
+                }
                 true
             }
             TransferEvent::Removed { id } => {
@@ -1147,6 +1167,7 @@ mod categories;
 mod finished;
 mod history;
 mod lifecycle;
+mod network;
 mod opening;
 mod options;
 mod persist;

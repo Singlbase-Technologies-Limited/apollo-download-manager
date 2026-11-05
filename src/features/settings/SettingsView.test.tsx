@@ -56,6 +56,15 @@ describe('settings (V1)', () => {
     await waitFor(() => { expect(state.appSettings.queue.maxConcurrentDownloads).toBe(32); });
   });
 
+  it('turns off restarting downloads when the network is back (#318)', async () => {
+    const state = installFakeBackend();
+    const user = await openSettings('Queue and performance');
+    const toggle = await screen.findByRole('checkbox', { name: 'Restart downloads when the network is back' });
+    expect((toggle as HTMLInputElement).checked).toBe(true);
+    await user.click(toggle);
+    await waitFor(() => { expect(state.appSettings.queue.restartOnNetwork).toBe(false); });
+  });
+
   it('confirms before resetting settings', async () => {
     const state = installFakeBackend();
     const user = await openSettings();

@@ -30,6 +30,7 @@ On Linux the tray needs an AppIndicator library. Without a tray, closing the win
 |---|---|---|
 | Simultaneous downloads | 2 | Up to 32. The others wait in the queue. Paused downloads, torrents choosing their files and seeding torrents don't count. Updating from 0.1.x changes a saved 3, the old default, to 2 once; set it again if you want 3 |
 | Start new downloads at once | On | Off: new downloads wait in the queue until you start them |
+| Restart downloads when the network is back | On | A download that failed because there was no network shows **Waiting for network**, and continues from where it stopped when Windows or Linux says the network changed. Off: it shows Failed, and you retry it |
 | Speed limit for direct downloads | None | For all direct downloads together, in KiB/s. Torrents have their own limit, under BitTorrent (#312) |
 | Use the schedule | Off | Downloads you add while it's on run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose; they wait as Queued outside it. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start. No stop time runs to midnight; a stop before the start runs past midnight |
 | Profile | Balanced | How many connections a download may use, and the smallest piece of a file each connection takes |

@@ -7,6 +7,7 @@ What to do when a download doesn't go as expected. Every message a download can 
 | What you see | What it means | What to do |
 |---|---|---|
 | **Retrying in …** or **Waiting to retry** | The download failed in a way worth retrying | Nothing: Apollo Download Manager tries again by itself. If it ends as Failed, the message says why |
+| **Waiting for network** | No connection could be made: no Wi-Fi or cable, or the server's name didn't resolve | Nothing: it continues when the network is back. If the network works and it still waits, check the link and the proxy in Settings, then **Retry** |
 | **No data received** | The server stopped sending | Nothing at first: after 30 seconds Apollo Download Manager resets the connection and tries again. If it keeps happening, check your network connection |
 | **Queued** | The queue already runs as many downloads as Settings allows (2 by default), or the schedule is outside its hours | Wait, or raise **Simultaneous downloads** in Settings, Queue and performance |
 | **Needs its login** | Apollo Download Manager restarted, and didn't keep the download's login, headers or key | **Resume** it and enter them again. Tick **Remember this login** next time |

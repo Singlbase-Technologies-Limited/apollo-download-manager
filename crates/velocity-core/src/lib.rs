@@ -19,6 +19,7 @@ pub mod logs;
 pub mod manager;
 pub mod metalink;
 pub mod naming;
+pub mod network_watch;
 pub mod notices;
 pub mod paths;
 pub mod performance;

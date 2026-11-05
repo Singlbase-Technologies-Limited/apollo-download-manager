@@ -6,6 +6,7 @@ What changed in each version of Apollo Download Manager, named Velocity Download
 
 ### Changes
 
+- **Downloads wait for the network:** a download that failed because there was no network shows **Waiting for network**, and continues by itself from where it stopped when Windows or Linux says the network is back. On by default; Settings, Queue and performance (#318).
 - **Two downloads at once by default,** instead of 3, so each one gets more of your connection and finishes sooner. If you kept the old default of 3, updating sets it to 2 once; you can set it back in Settings, Queue and performance (#351).
 
 ### Fixes

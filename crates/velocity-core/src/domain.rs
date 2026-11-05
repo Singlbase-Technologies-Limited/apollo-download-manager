@@ -7,7 +7,8 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Where a download is in its life. The fourteen V1 values; new states need an ADR (#25).
+/// Where a download is in its life. The fourteen V1 values, and `WaitingForNetwork` (#318,
+/// ADR-0019); new states need an ADR (#25).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DownloadStatus {
@@ -30,11 +31,14 @@ pub enum DownloadStatus {
     Seeding,
     /// Reported by an engine the app doesn't recognise; shown, never acted on.
     Unknown,
+    /// Failed because no connection could be made; starts again by itself, from what it kept,
+    /// when the network changes (#318, ADR-0019). Set by the manager, never by an engine.
+    WaitingForNetwork,
 }
 
 impl DownloadStatus {
     /// Every status, in the order the UI lists them.
-    pub const ALL: [Self; 14] = [
+    pub const ALL: [Self; 15] = [
         Self::Queued,
         Self::Connecting,
         Self::Downloading,
@@ -49,6 +53,7 @@ impl DownloadStatus {
         Self::ChoosingFiles,
         Self::Seeding,
         Self::Unknown,
+        Self::WaitingForNetwork,
     ];
 
     /// A terminal download doesn't change state on its own any more.
@@ -100,6 +105,11 @@ pub struct TransferError {
     /// errors stored before it existed.
     #[serde(default)]
     pub confirm: Option<Box<Confirm>>,
+    /// No connection could be made (#318): the name didn't resolve, or the connection was refused
+    /// or timed out. The download then waits for the network instead of failing, when the user's
+    /// setting allows it. False otherwise; absent in errors stored before it existed.
+    #[serde(default)]
+    pub no_network: bool,
 }
 
 /// What a download stopped at, for the user to confirm (#67).
@@ -155,7 +165,14 @@ impl TransferError {
             retryable: class != FailureClass::Permanent,
             host_key: None,
             confirm: None,
+            no_network: false,
         }
+    }
+
+    /// The same error, marked as made by having no network (#318).
+    pub fn with_no_network(mut self) -> Self {
+        self.no_network = true;
+        self
     }
 
     /// The same error, about an SFTP server's untrusted host key (#53).
@@ -822,6 +839,7 @@ mod tests {
                 "choosingFiles",
                 "seeding",
                 "unknown",
+                "waitingForNetwork",
             ]
         );
     }
@@ -887,7 +905,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             json,
-            r#"{"class":"throttled","httpStatus":503,"message":"Service unavailable","retryable":true,"hostKey":null,"confirm":null}"#
+            r#"{"class":"throttled","httpStatus":503,"message":"Service unavailable","retryable":true,"hostKey":null,"confirm":null,"noNetwork":false}"#
         );
     }
 

@@ -66,6 +66,20 @@ fn clear_window_data_once(database: &Database, clear: impl FnOnce() -> Result<()
     }
 }
 
+/// Starts watching the system's network (#318) for as long as the app runs, and returns the
+/// signal it raises. Without a watcher the downloads waiting for the network start again when
+/// the app starts, or by hand; the failure is logged.
+fn watch_network(app: &AppHandle) -> Arc<std::sync::atomic::AtomicBool> {
+    let signal = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    match velocity_core::network_watch::NetworkWatch::start(Arc::clone(&signal)) {
+        Ok(watch) => {
+            app.manage(watch);
+        }
+        Err(code) => tracing::warn!("the network isn't watched: {code:?}"),
+    }
+    signal
+}
+
 /// Opens the database, starts the transfer engine, the torrent helper and the manager. An engine
 /// that can't start leaves the app running without it, saying why ([`MissingEngine`],
 /// [`MissingTorrentEngine`]); a database that can't open stops it.
@@ -121,6 +135,8 @@ pub fn start(app: &AppHandle, paths: &Paths) -> Result<Downloads, String> {
     let mut manager = Manager::open_with_keychain(engine, Arc::new(database), Box::new(keychain))
         .map_err(|e| e.to_string())?
         .with_torrents(torrents)
+        // Downloads waiting for the network start again when it changes (#318).
+        .with_network_signal(watch_network(app))
         // `.torrent` links are fetched into the app's own folder (#60).
         .with_torrent_links(paths.torrent_links_dir())
         .map_err(|code| {

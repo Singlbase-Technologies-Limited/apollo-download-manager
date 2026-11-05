@@ -101,6 +101,7 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 |---|---|---|
 | `maxConcurrentDownloads` | 2 (3 before 0.2.0, #351) | 1 to 32 |
 | `startImmediately` | on | — |
+| `restartOnNetwork` | on | A download that failed because there was no network waits for it, and starts again from its bytes when the system's network changes (#318, [ADR-0019](decisions/0019-waiting-for-network-status.md)) |
 | `schedule.enabled` | off | — |
 | `schedule.startTime`, `schedule.stopTime` | 02:00 to 07:00 | `HH:MM`, 24-hour; no stop time runs to midnight, and a stop before the start crosses midnight |
 | `schedule.days` | every day | 0 (Monday) to 6 (Sunday); at least one when the schedule is on |

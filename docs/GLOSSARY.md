@@ -68,3 +68,4 @@ Terms used across V2's documents, issues and code, in alphabetical order. Where 
 | **Verification levels (L1–L5)** | The test levels: L1 fast local checks, L2 focused tests, L3 pre-merge selection, L4 expensive suites, L5 production acceptance. See [TESTING.md](TESTING.md) and #15 |
 | **Version floor** | The oldest libcurl V2 accepts, today 8.23.0. A build below it fails, and the engine refuses to start (report §8.1; #35) |
 | **Wasted bytes** | Bytes received but not accepted into coverage, such as from a revoked lease, an overrun or a rejected response. Counted and reported, never hidden (report §5.1) |
+| **Waiting for network** | The status of a download that failed because no connection could be made. It keeps its bytes and starts again when the system's network changes (#318, [ADR-0019](decisions/0019-waiting-for-network-status.md)) |

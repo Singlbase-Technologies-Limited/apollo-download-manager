@@ -46,6 +46,9 @@ pub struct QueueSettings {
     /// A new download that isn't scheduled starts at once; otherwise it is added paused.
     pub start_immediately: bool,
     pub schedule: ScheduleSettings,
+    /// A download that failed because there was no network waits for it, and starts again by
+    /// itself when the network is back (#318; PO decision: on by default).
+    pub restart_on_network: bool,
 }
 
 impl Default for QueueSettings {
@@ -56,6 +59,7 @@ impl Default for QueueSettings {
             max_concurrent_downloads: 2,
             start_immediately: true,
             schedule: ScheduleSettings::default(),
+            restart_on_network: true,
         }
     }
 }
@@ -145,6 +149,7 @@ mod tests {
         assert_eq!(q.max_concurrent_downloads, 2);
         assert!(q.start_immediately);
         assert!(!q.schedule.enabled);
+        assert!(q.restart_on_network, "#318");
         assert_eq!(q.schedule.start_time, "02:00");
         assert_eq!(q.schedule.stop_time.as_deref(), Some("07:00"));
         assert_eq!(q.schedule.days, (0..7).collect::<Vec<u8>>());
