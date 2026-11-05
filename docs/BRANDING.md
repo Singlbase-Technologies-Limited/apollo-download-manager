@@ -76,6 +76,16 @@ The identity uses the app's existing theme tokens in [`src/index.css`](../src/in
 
 On dark backgrounds the lockup moves both halves one step lighter (`apollo-lockup-dark.svg`), so the mark keeps its weight.
 
+## The window's layout
+
+The window is laid out like VS Code's (PO requests on #347):
+
+- **The frame:** the title bar, the status bar and the gaps share one colour, `--frame` (`#D9DFE7` light, `#07090D` dark), so they read as the window's background.
+- **Floating panels:** the sidebar, the download list, the details panel and the other views each sit on the frame as their own rounded panel, 8 px apart (`src/layout/panel.ts`). The resize handles sit in the gaps between them.
+- **The sidebar is white,** like the main page (`--sidebar` matches `--surface`). The selected item has a light grey fill and the hover a light blue one.
+- **The title bar is the app's own** (`src/app/TitleBar.tsx`): the system's is turned off (`"decorations": false`). It shows the icon and the name, drags the window, maximises it on a double-click, and has its own minimise, maximise and close buttons. Close goes through the same close handling as before, so it still hides to the tray when the settings say so.
+- **Known limit:** on Windows 11, resting the mouse on the maximise button doesn't show the system's box of snap layouts, because the button is the app's own. Dragging the window to a screen edge, Win+Z and Win+arrow keys still snap it (PO: leave it for now; #359).
+
 ## The full logo
 
 **The mark stands in for the A of "Apollo",** followed by "pollo", with "DOWNLOAD MANAGER" spaced out underneath (PO decision on #347, design "L4"). The files are `apollo-lockup-light.svg` and `apollo-lockup-dark.svg`.

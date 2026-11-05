@@ -5,6 +5,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { CategoryGlyph } from '../components/CategoryGlyph';
 import type { AppInfo } from '../contract';
 import { countByView, type ListView } from '../downloads/views';
+import { PANEL } from '../layout/panel';
 import { cn } from '../lib/cn';
 import { useCategories } from '../lib/queries';
 import { useDownloadsStore } from '../stores/downloads';
@@ -48,7 +49,7 @@ function NavButton({
         'group flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
         compact ? 'relative justify-center px-0' : 'px-2.5',
         // The hover tints the row with the accent, so it shows against the sidebar in both themes (PO, #347).
-        active ? 'bg-surface font-medium text-fg shadow-xs ring-1 ring-border' : 'text-fg-muted hover:bg-accent-soft hover:text-fg',
+        active ? 'bg-surface-3 font-medium text-fg' : 'text-fg-muted hover:bg-accent-soft hover:text-fg',
       )}
     >
       {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-accent')} aria-hidden /> : children}
@@ -96,7 +97,7 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
   );
 
   return (
-    <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className="flex shrink-0 flex-col overflow-hidden bg-sidebar" style={{ width: 'var(--sidebar-w)' }}>
+    <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className={cn(PANEL, 'flex shrink-0 flex-col bg-sidebar')} style={{ width: 'var(--sidebar-w)' }}>
       {compact ? (
         <div className="flex shrink-0 flex-col items-center gap-1 pb-1 pt-3">
           <span className="flex size-7 shrink-0" title={app.name}>

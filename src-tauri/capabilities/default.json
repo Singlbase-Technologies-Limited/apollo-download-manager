@@ -1,11 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Main window: the app's own typed commands plus the core app, event and window defaults. No shell, filesystem, dialog or HTTP plugin access is granted to the web layer.",
+  "description": "Main window: the app's own typed commands plus the core app, event and window defaults, and the window controls its own title bar needs (minimise, maximise, close, drag). No shell, filesystem, dialog or HTTP plugin access is granted to the web layer.",
   "windows": ["main"],
   "permissions": [
     "core:app:default",
     "core:event:default",
-    "core:window:default"
+    "core:window:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging"
   ]
 }

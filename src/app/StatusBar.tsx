@@ -32,7 +32,7 @@ export function StatusBar() {
   const problem = error ?? (snapshot?.storageError ? ERROR_MESSAGES[snapshot.storageError] : null);
 
   return (
-    <footer className="flex h-7 shrink-0 items-center gap-4 border-t border-border bg-surface px-3 text-[11px] text-fg-muted" aria-label="Status">
+    <footer className="flex h-7 shrink-0 items-center gap-4 bg-frame px-3 text-[11px] text-fg-muted" aria-label="Status">
       {[engine, torrents].map((s) =>
         s ? (
           <span key={s.label} className="flex items-center gap-1.5 px-1" title={s.reason}>

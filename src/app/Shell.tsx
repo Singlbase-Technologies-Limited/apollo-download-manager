@@ -14,6 +14,8 @@ import { commitSidebarWidth, LAYOUT, resolveLayout } from '../layout/layoutLogic
 import { ShellLayoutContext, useLayoutPersistence, useViewportWidth, type ShellLayout } from '../layout/useLayout';
 import { api } from '../lib/api';
 import { onQuitRequested } from '../lib/events';
+import { PANEL, PANEL_GAP } from '../layout/panel';
+import { cn } from '../lib/cn';
 import { useUiStore } from '../stores/ui';
 import { quitQuestion } from './quitQuestion';
 import { Sidebar } from './Sidebar';
@@ -66,11 +68,11 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   const content = useMemo(() => {
     switch (view) {
       case 'categories':
-        return <CategoriesView />;
+        return <div className={cn(PANEL, 'flex min-h-0 flex-1 flex-col bg-bg')}><CategoriesView /></div>;
       case 'history':
-        return <HistoryView />;
+        return <div className={cn(PANEL, 'flex min-h-0 flex-1 flex-col bg-bg')}><HistoryView /></div>;
       case 'settings':
-        return <SettingsView />;
+        return <div className={cn(PANEL, 'flex min-h-0 flex-1 flex-col bg-bg')}><SettingsView /></div>;
       default:
         return <DownloadsView view={view} />;
     }
@@ -79,13 +81,15 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   const rail = sidebar.mode === 'rail';
 
   return (
-    <div className="flex h-full flex-col">
-      <div ref={rootRef} className="flex min-h-0 flex-1">
+    // Each area is its own rounded panel on the window's frame, with the splitters in the gaps (PO, #347).
+    <div className="flex h-full flex-col bg-frame">
+      <div ref={rootRef} className="flex min-h-0 flex-1 px-2 pb-2 pt-0.5">
         {sidebar.mode !== 'hidden' ? (
           <>
             <Sidebar app={app} compact={rail} autoCompact={sidebar.autoCompact} />
             <Splitter
               label="Resize navigation"
+              className={PANEL_GAP}
               controls="app-sidebar"
               side="start"
               value={sidebar.width}
@@ -101,7 +105,7 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
             />
           </>
         ) : null}
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg" aria-label="Main content">
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden" aria-label="Main content">
           <ShellLayoutContext.Provider value={shellLayout}>{content}</ShellLayoutContext.Provider>
         </main>
       </div>

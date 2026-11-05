@@ -194,9 +194,9 @@ mod tests {
     }
 
     /// The dialog and notification plugins are used by native code only (#29): the web layer is
-    /// granted V1's core defaults and nothing else.
+    /// granted V1's core defaults, plus the four window controls its own title bar needs (#347).
     #[test]
-    fn the_web_layer_gets_only_the_core_permissions() {
+    fn the_web_layer_gets_only_the_core_and_title_bar_permissions() {
         let capability: serde_json::Value =
             serde_json::from_str(include_str!("../capabilities/default.json")).unwrap();
         assert_eq!(
@@ -204,7 +204,11 @@ mod tests {
             serde_json::json!([
                 "core:app:default",
                 "core:event:default",
-                "core:window:default"
+                "core:window:default",
+                "core:window:allow-minimize",
+                "core:window:allow-toggle-maximize",
+                "core:window:allow-close",
+                "core:window:allow-start-dragging"
             ])
         );
         assert_eq!(capability["windows"], serde_json::json!(["main"]));

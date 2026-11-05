@@ -10,6 +10,7 @@ import { toApiError } from '../lib/errors';
 import { createQueryClient, keys, useShellSettings } from '../lib/queries';
 import { FatalError } from './FatalError';
 import { Shell } from './Shell';
+import { TitleBar } from './TitleBar';
 import { useSnapshotFeed } from './useSnapshotFeed';
 import { useTheme } from './useTheme';
 
@@ -67,7 +68,11 @@ function Root() {
   }
   return (
     <>
-      {content}
+      {/* The desktop window has no system title bar (tauri.conf.json), so it draws its own. */}
+      <div className="flex h-full flex-col bg-frame">
+        {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} /> : null}
+        <div className="min-h-0 flex-1 bg-bg">{content}</div>
+      </div>
       <Toaster position="bottom-right" theme={theme} richColors closeButton duration={3500} />
     </>
   );

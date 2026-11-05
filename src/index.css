@@ -31,7 +31,8 @@
   --danger: #c2271d;
   --danger-soft: #fde8e6;
   --ring: #3b82f6;
-  --sidebar: #eef1f5;
+  --sidebar: #ffffff;
+  --frame: #d9dfe7;
   --row-hover: #f1f5fb;
   --row-selected: #e2ecfb;
   --shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px rgb(15 23 42 / 0.05);
@@ -59,7 +60,8 @@
   --danger: #f87171;
   --danger-soft: #2f1414;
   --ring: #60a5fa;
-  --sidebar: #0f141c;
+  --sidebar: #131922;
+  --frame: #07090d;
   --row-hover: #18202c;
   --row-selected: #1b2b44;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
@@ -90,6 +92,7 @@
   --color-danger-soft: var(--danger-soft);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
+  --color-frame: var(--frame);
   --color-row-hover: var(--row-hover);
   --color-row-selected: var(--row-selected);
   --shadow-panel: var(--shadow);
