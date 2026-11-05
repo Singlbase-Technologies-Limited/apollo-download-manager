@@ -1,6 +1,6 @@
 # ADR-0016: The released app is named "Velocity Download Manager V2"
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0018
 - **Date:** 2026-10-30
 - **Decided by:** the Product Owner
 - **Issue:** #81
