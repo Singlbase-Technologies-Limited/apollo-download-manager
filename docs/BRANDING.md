@@ -67,12 +67,18 @@ The identity uses the app's existing theme tokens in [`src/index.css`](../src/in
 
 On dark backgrounds the lockup moves both halves one step lighter (`apollo-lockup-dark.svg`), so the mark keeps its weight.
 
+## The full logo
+
+**The mark stands in for the A of "Apollo",** followed by "pollo", with "DOWNLOAD MANAGER" spaced out underneath (PO decision on #347, design "L4"). The files are `apollo-lockup-light.svg` and `apollo-lockup-dark.svg`.
+
 ## Type
 
-The wordmark and the app both use **Inter**, the window's font (`--font-sans`):
-
-- **"Apollo":** weight 700, tracking −4 at 150 units.
-- **"DOWNLOAD MANAGER":** weight 550, letter-spaced 9.5, in the muted text colour.
+- **The wordmark is set in Outfit,** a geometric sans-serif from Google Fonts:
+  - **"pollo":** weight 700, tracking −3 at 142 units. Its cap height matches the mark.
+  - **"DOWNLOAD MANAGER":** weight 600, letter-spaced 9, in the muted text colour.
+  - **Licence:** Outfit is under the SIL Open Font License (by Smartsheet Inc and Rodrigo Fuenzalida; the `METADATA.pb` file in Google's fonts repository, `ofl/outfit`).
+  - **The font isn't shipped.** The lockups use it as live text, so it is neither in the app nor a dependency.
+- **The window stays in Inter** (`--font-sans`).
 
 ## Using the mark
 
@@ -84,7 +90,8 @@ The wordmark and the app both use **Inter**, the window's font (`--font-sans`):
   - change the lean;
   - recolour one half only;
   - stretch the mark;
-  - set the wordmark in another font.
+  - set the wordmark in another font;
+  - put an ordinary letter A in front of the mark: the mark is the A.
 
 ## Generating the icons
 
@@ -95,4 +102,5 @@ The desktop icons in `src-tauri/icons/` are generated from the SVG sources, neve
 - **The product name in the app, the installer and the docs,** and the upgrade from 0.1.x. These are the next PR.
 - **The browser extension's icons.** They come with the extension redesign (#356).
 - **The `.ico` file's 16, 24 and 32 px sizes.** They still come from the full drawing (see the assets README).
-- **The wordmark as outlines** for use outside the app.
+- **The wordmark as outlines** for use outside the app. Until then, the lockups render in a fallback font wherever Outfit isn't installed.
+- **Showing the full logo inside the app** (for example on the first-run screen) would need Outfit bundled with the app, which is a new dependency for the PO to approve.

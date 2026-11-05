@@ -7,7 +7,7 @@ The source artwork for Apollo Download Manager's mark, app icon and wordmark (#3
 | `apollo-icon.svg` | The app icon, at 48 px and larger: the A alone, in two tones |
 | `apollo-icon-small.svg` | The app icon drawn heavier for 16 to 32 px, so the split still shows |
 | `apollo-mark.svg` | The A in one colour (ink), for single-colour uses |
-| `apollo-lockup-light.svg`, `apollo-lockup-dark.svg` | The mark and wordmark, for light and dark backgrounds |
+| `apollo-lockup-light.svg`, `apollo-lockup-dark.svg` | The full logo, where the mark stands in for the A of "Apollo", for light and dark backgrounds |
 
 The app draws the small icon inline (`src/components/BrandIcon.tsx`) in the sidebar and on the first-run screen.
 
@@ -25,4 +25,4 @@ pnpm tauri icon assets/brand/apollo-icon-small.svg -o <tmp>/small -p 32
 
 ## Before a public release
 
-The lockups set the wordmark as live text in Inter, so they look different where Inter isn't installed. Convert the text to outlines before using a lockup outside the app.
+The lockups set the wordmark as live text in Outfit, so they look different where Outfit isn't installed. Convert the text to outlines before using a lockup outside the app.

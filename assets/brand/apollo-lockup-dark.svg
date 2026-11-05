@@ -1,12 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 232" width="640" height="232">
   <title>Apollo Download Manager</title>
-  <!-- For dark backgrounds. Wordmark uses live text (Inter). Convert text to outlines before using this file in a release. -->
+  <!-- For dark backgrounds. The mark stands in for the A of "Apollo" (PO decision on #347). The wordmark uses
+       live text (Outfit). Convert the text to outlines before using this file outside the app. -->
   <defs>
     <clipPath id="front">
       <rect x="64" y="0" width="80" height="128"/>
     </clipPath>
   </defs>
-  <svg x="16" y="32" width="256" height="256" viewBox="0 0 128 128">
+  <svg x="16" y="38" width="132" height="132" viewBox="0 0 128 128">
     <g transform="translate(2 2) skewX(-10) translate(19 0)">
       <path fill="#2F80E4" fill-rule="evenodd"
             d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z M20 112 L51.6 36 L55.8 36 L24.2 112 Z"/>
@@ -14,6 +15,6 @@
             d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z"/>
     </g>
   </svg>
-  <text x="312" y="190" fill="#FFFFFF" font-family="Inter Variable, Inter, 'Segoe UI', system-ui, sans-serif" font-size="150" font-weight="700" letter-spacing="-4">Apollo</text>
-  <text x="318" y="256" fill="#9AA6B8" font-family="Inter Variable, Inter, 'Segoe UI', system-ui, sans-serif" font-size="42" font-weight="550" letter-spacing="9.5">DOWNLOAD MANAGER</text>
+  <text x="140" y="155" fill="#FFFFFF" font-family="Outfit, sans-serif" font-size="142" font-weight="700" letter-spacing="-3">pollo</text>
+  <text x="34" y="212" fill="#9AA6B8" font-family="Outfit, sans-serif" font-size="27" font-weight="600" letter-spacing="9">DOWNLOAD MANAGER</text>
 </svg>
