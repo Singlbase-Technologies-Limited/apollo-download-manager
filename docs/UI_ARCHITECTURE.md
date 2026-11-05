@@ -31,7 +31,7 @@ How the window (`src/`) is built: where its state lives, how it talks to the nat
 - **Events go through `events.ts`:**
   - Each payload is checked too. One that doesn't match is dropped, because the next snapshot brings the state again.
   - The window listens to three events: `downloads-snapshot`, `quit-requested` and `torrents-dropped`.
-- **Permissions:** the web layer gets only Tauri's core app, event and window permissions (`src-tauri/capabilities/default.json`), and a test keeps it that way. The folder, `.torrent` and SSH key choosers and notifications are Rust's, through the app's own commands, so the page can't open a dialog or send a notification by itself. Files dropped on the window reach Rust too, which sends the page only the `.torrent` files among them.
+- **Permissions:** the web layer gets only Tauri's core app, event and window permissions (`src-tauri/capabilities/default.json`), plus minimise, maximise, close and drag for the window's own title bar (#347), and a test keeps it that way. The folder, `.torrent` and SSH key choosers and notifications are Rust's, through the app's own commands, so the page can't open a dialog or send a notification by itself. Files dropped on the window reach Rust too, which sends the page only the `.torrent` files among them.
 
 ## Starting up
 

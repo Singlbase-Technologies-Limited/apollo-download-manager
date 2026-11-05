@@ -29,30 +29,30 @@ describe('availability', () => {
   it('a protocol the engine doesn’t list is unavailable, saying so', () => {
     expect(availability(caps, 'sftp')).toEqual({
       available: false,
-      reason: 'This version of Velocity can’t download over SFTP yet.',
+      reason: 'This version of Apollo Download Manager can’t download over SFTP yet.',
     });
-    expect(availability(caps, 'torrent').reason).toBe('This version of Velocity can’t download torrents yet.');
+    expect(availability(caps, 'torrent').reason).toBe('This version of Apollo Download Manager can’t download torrents yet.');
   });
 
   it('Metalink is available when the engine says so, not from the protocol list (#54)', () => {
     expect(availability({ ...caps, metalink: true }, 'metalink')).toEqual({ available: true, reason: null });
     expect(availability(caps, 'metalink')).toEqual({
       available: false,
-      reason: 'This version of Velocity can’t open Metalink files yet.',
+      reason: 'This version of Apollo Download Manager can’t open Metalink files yet.',
     });
   });
 
   it('a feature a protocol lacks is unavailable, saying which', () => {
     expect(availability(withFtp, 'ftp', 'segmented')).toEqual({
       available: false,
-      reason: 'Downloads over FTP use one connection in this version of Velocity.',
+      reason: 'Downloads over FTP use one connection in this version of Apollo Download Manager.',
     });
     expect(availability(withFtp, 'ftp', 'http2').reason).toBe('HTTP/2 is only for HTTP and HTTPS.');
     expect(availability(withFtp, 'ftp', 'encryption').reason).toBe(
-      'Downloads over FTP can’t be encrypted in this version of Velocity.',
+      'Downloads over FTP can’t be encrypted in this version of Apollo Download Manager.',
     );
     // A feature of a protocol that isn't there gives the protocol's reason.
-    expect(availability(caps, 'sftp', 'resume').reason).toBe('This version of Velocity can’t download over SFTP yet.');
+    expect(availability(caps, 'sftp', 'resume').reason).toBe('This version of Apollo Download Manager can’t download over SFTP yet.');
   });
 });
 
@@ -79,7 +79,7 @@ describe('CapabilityOption', () => {
       <CapabilityOption label="Use several connections" availability={availability(withFtp, 'ftp', 'segmented')} checked={false} />,
     );
     expect(html).toMatch(/<input[^>]*disabled=""/);
-    expect(html).toContain('Downloads over FTP use one connection in this version of Velocity.');
+    expect(html).toContain('Downloads over FTP use one connection in this version of Apollo Download Manager.');
     const described = /aria-describedby="([^"]+)"/.exec(html)?.[1];
     expect(described).toBeTruthy();
     expect(html).toContain(`id="${described ?? ''}"`);

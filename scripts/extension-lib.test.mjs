@@ -45,10 +45,16 @@ describe('manifest', () => {
     expect(m).not.toHaveProperty('key');
   });
 
-  it('names the development and release builds apart, both with V2', () => {
+  // ADR-0018 replaced ADR-0016's "… V2" names: both builds carry the full product name, and never V1's.
+  it('names the development and release builds apart, both with the full product name', () => {
+    const release = manifest('chrome', { release: true, version: '0.1.0', branding }).name;
     expect(dev('chrome').name).toBe(branding.extensionName);
-    expect(manifest('chrome', { release: true, version: '0.1.0', branding }).name).toBe(branding.releaseExtensionName);
-    expect(dev('chrome').name).toMatch(/V2/);
+    expect(release).toBe(branding.releaseExtensionName);
+    expect(dev('chrome').name).not.toBe(release);
+    for (const name of [dev('chrome').name, release]) {
+      expect(name).toMatch(/^Apollo Download Manager/);
+      expect(name).not.toMatch(/Velocity/);
+    }
   });
 
   it('runs only its own scripts on its pages', () => {

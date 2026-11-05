@@ -155,7 +155,7 @@ pub fn route(
         return Route::Reply(BrowserResponse::err(
             "",
             "FORBIDDEN_CALLER",
-            "This extension is not allowed to use Velocity V2.",
+            "This extension is not allowed to use Apollo Download Manager.",
         ));
     }
     let bytes = serde_json::to_vec(&env.message).unwrap_or_default();
@@ -187,7 +187,7 @@ pub fn route(
             Route::Reply(BrowserResponse::err(
                 &id,
                 "DISABLED",
-                "Browser requests are turned off in Velocity V2's settings.",
+                "Browser requests are turned off in Apollo Download Manager's settings.",
             ))
         }
         BrowserCommand::AddDownload(add) => {

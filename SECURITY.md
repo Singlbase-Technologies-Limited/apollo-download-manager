@@ -19,7 +19,7 @@ V2 is before 1.0. Only the latest release gets security fixes; please update bef
 
 ## What is in scope
 
-Velocity Download Manager V2: the app, the transfer engine, the torrent helper, the browser extension and its native host, and the installers. What V2 protects, and how, is in [docs/SECURITY.md](docs/SECURITY.md): TLS verification, the link and redirect rules, secrets kept out of storage, and file safety.
+Apollo Download Manager: the app, the transfer engine, the torrent helper, the browser extension and its native host, and the installers. What V2 protects, and how, is in [docs/SECURITY.md](docs/SECURITY.md): TLS verification, the link and redirect rules, secrets kept out of storage, and file safety.
 
 Vulnerabilities in a library V2 uses, such as libcurl, OpenSSL or libtorrent, are best reported to that project. Tell us too if V2 is affected; V2 tracks its libraries' advisories ([docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)).
 

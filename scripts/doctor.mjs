@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `pnpm check:prereqs`: checks the prerequisites for building Velocity Download Manager V2 and prints
+// `pnpm check:prereqs`: checks the prerequisites for building Apollo Download Manager and prints
 // the documented fix for anything missing. Exits 1 if a prerequisite is missing. Changes nothing.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -96,7 +96,7 @@ const findings = evaluate(
   { node: pkg.engines.node, pnpm: pinned.version },
 );
 
-console.log(`Velocity Download Manager V2 — prerequisite check (${platform}, pinned Rust toolchain ${toolchain ?? 'none'})\n`);
+console.log(`Apollo Download Manager — prerequisite check (${platform}, pinned Rust toolchain ${toolchain ?? 'none'})\n`);
 for (const f of findings) {
   console.log(`${f.ok ? 'OK     ' : 'MISSING'} ${f.name}: ${f.detail}`);
   if (!f.ok) console.log(`        Fix: ${f.fix}`);

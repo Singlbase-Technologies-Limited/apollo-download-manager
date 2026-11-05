@@ -25,7 +25,7 @@
   },
   {
     "code": "PERMISSION_DENIED",
-    "message": "Velocity isn't allowed to write to that location."
+    "message": "Apollo Download Manager isn't allowed to write to that location."
   },
   {
     "code": "FILE_EXISTS",
@@ -49,7 +49,7 @@
   },
   {
     "code": "ENGINE_INCOMPATIBLE",
-    "message": "The transfer engine doesn't match this version of Velocity."
+    "message": "The transfer engine doesn't match this version of Apollo Download Manager."
   },
   {
     "code": "ENGINE_START_FAILED",
@@ -61,11 +61,11 @@
   },
   {
     "code": "DATABASE",
-    "message": "Velocity couldn't read or save its data."
+    "message": "Apollo Download Manager couldn't read or save its data."
   },
   {
     "code": "DATABASE_MIGRATION",
-    "message": "Velocity couldn't upgrade its data to this version."
+    "message": "Apollo Download Manager couldn't upgrade its data to this version."
   },
   {
     "code": "IO",
@@ -97,6 +97,6 @@
   },
   {
     "code": "INTERNAL",
-    "message": "Something went wrong inside Velocity."
+    "message": "Something went wrong inside Apollo Download Manager."
   }
 ]

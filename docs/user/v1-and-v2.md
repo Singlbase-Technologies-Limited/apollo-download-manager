@@ -8,10 +8,10 @@ You can install and run V1 and V2 at the same time. They share nothing:
 
 | | V2 | V1 |
 |---|---|---|
-| Name in menus and in Apps & features | Velocity Download Manager V2 | Velocity Download Manager |
+| Name in menus and in Apps & features | Apollo Download Manager ("Velocity Download Manager V2" until 0.2.0) | Velocity Download Manager |
 | Data (Windows) | `%APPDATA%\com.velocity.downloadmanager.v2` | `%APPDATA%\com.velocity.downloadmanager` |
 | Data (Linux) | `~/.local/share/com.velocity.downloadmanager.v2` | `~/.local/share/com.velocity.downloadmanager` |
-| Browser extension | Velocity Download Manager V2, "Download with Velocity V2" | Velocity Download Manager |
+| Browser extension | Apollo Download Manager, "Download with Apollo Download Manager" | Velocity Download Manager |
 | Torrent listening port | 6890 | 6881, 6882 |
 
 - **Downloads, settings and history are separate.** V2 doesn't read V1's, and V1 doesn't read V2's.

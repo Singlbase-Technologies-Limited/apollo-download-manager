@@ -4,7 +4,7 @@ How V2 is run as an open-source project, and the checklist for making the reposi
 
 ## Governance
 
-- **Owner:** Singlbase Technologies Limited owns V2 and its name, and the repository: `Singlbase-Technologies-Limited/velocity_download_manager_v2`, public since 2026-10-31, with its board as the organisation's [project 4](https://github.com/orgs/Singlbase-Technologies-Limited/projects/4).
+- **Owner:** Singlbase Technologies Limited owns V2 and its name, and the repository: `Singlbase-Technologies-Limited/apollo-download-manager`, public since 2026-10-31, with its board as the organisation's [project 4](https://github.com/orgs/Singlbase-Technologies-Limited/projects/4).
 - **V1's code:** V2 ports parts of the original Velocity Download Manager (the browser extension and native host, naming and request rules, test servers). Singlbase wrote V1 and owns it, so those parts are published under V2's licence by Singlbase's own decision (PO, 2026-10-31).
 - **Decisions:** the Product Owner decides scope, architecture, dependencies, licensing, security trade-offs, repository settings, merges and releases ([AGENTS.md](../AGENTS.md#project-and-authority)). Accepted decisions are in [decisions/](decisions/README.md).
 - **Maintainers:** the Product Owner (`vincentarisawork`), and the machine account `velocity-claude-agent` for AI-agent work, an outside collaborator that never approves, releases or changes settings ([AI_AGENT_ACCOUNT.md](AI_AGENT_ACCOUNT.md)).

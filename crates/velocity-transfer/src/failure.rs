@@ -299,7 +299,7 @@ pub(crate) fn disk_message(e: &io::Error) -> Option<&'static str> {
             Some("There is not enough disk space.")
         }
         io::ErrorKind::PermissionDenied | io::ErrorKind::ReadOnlyFilesystem => {
-            Some("Velocity isn't allowed to write to that location.")
+            Some("Apollo Download Manager isn't allowed to write to that location.")
         }
         _ => None,
     }

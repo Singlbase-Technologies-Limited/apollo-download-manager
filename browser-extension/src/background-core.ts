@@ -122,7 +122,7 @@ export function createBackground(api: ExtApi) {
     return r;
   }
 
-  /** Hand the download to Velocity; on any failure let the browser continue it. */
+  /** Hand the download to Apollo Download Manager; on any failure let the browser continue it. */
   async function transfer(downloadId: number, payload: AddPayload): Promise<Response> {
     const r = await handOff(payload);
     if (r.ok) {
@@ -141,10 +141,10 @@ export function createBackground(api: ExtApi) {
       const d = decide(candidateOf(item), s, api.selfId);
       if (!d.intercept) return 'ignored';
       const url = item.finalUrl || item.url;
-      // Pause first so the browser does not keep downloading while Velocity takes over.
+      // Pause first so the browser does not keep downloading while Apollo Download Manager takes over.
       await api.pauseDownload(item.id).catch(() => undefined);
       if (recent.check(url)) {
-        // The same link was handed to Velocity moments ago (double click or redirect echo).
+        // The same link was handed to Apollo Download Manager moments ago (double click or redirect echo).
         await api.cancelDownload(item.id).catch(() => undefined);
         await api.eraseDownload(item.id).catch(() => undefined);
         return 'duplicate';
@@ -190,7 +190,7 @@ export function createBackground(api: ExtApi) {
 
     /**
      * A magnet link click caught by the content script (only registered when torrent
-     * capture is on). Velocity always asks before adding it.
+     * capture is on). Apollo Download Manager always asks before adding it.
      */
     async onCapturedMagnet(url: string, pageUrl: string | undefined): Promise<'ignored' | 'handed-off' | 'failed' | 'duplicate'> {
       const s = await settings();

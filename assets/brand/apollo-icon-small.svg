@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Apollo Download Manager</title>
+  <!-- The A drawn heavier for 16 to 32 px: thicker legs, a smaller counter and a wider streak, so the split still shows. -->
+  <defs>
+    <clipPath id="front">
+      <rect x="64" y="0" width="80" height="128"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(2 2) skewX(-10) translate(19 0)">
+    <path fill="#1659B3" fill-rule="evenodd"
+          d="M8 112 L52 10 H76 L120 112 H92 L83.6 92 H44.4 L36 112 Z M64 56 L70.6 72 H57.4 Z M17 112 L50.4 34 L57.4 34 L24 112 Z"/>
+    <path fill="#2F80E4" fill-rule="evenodd" clip-path="url(#front)"
+          d="M8 112 L52 10 H76 L120 112 H92 L83.6 92 H44.4 L36 112 Z M64 56 L70.6 72 H57.4 Z"/>
+  </g>
+</svg>

@@ -10,6 +10,7 @@ import { toApiError } from '../lib/errors';
 import { createQueryClient, keys, useShellSettings } from '../lib/queries';
 import { FatalError } from './FatalError';
 import { Shell } from './Shell';
+import { TitleBar } from './TitleBar';
 import { useSnapshotFeed } from './useSnapshotFeed';
 import { useTheme } from './useTheme';
 
@@ -42,21 +43,21 @@ function Root() {
           <MonitorX className="size-10 text-fg-subtle" aria-hidden />
           <h1 className="text-base font-semibold">Desktop application required</h1>
           <p className="text-[13px] text-fg-muted">
-            This window controls the downloads on this computer, so it runs only inside the Velocity desktop app. Start it with <code className="font-mono">pnpm dev</code>.
+            This window controls the downloads on this computer, so it runs only inside the Apollo Download Manager desktop app. Start it with <code className="font-mono">pnpm dev</code>.
           </p>
         </div>
       </Centered>
     );
   } else if (info.isError) {
-    content = <FatalError title="Velocity couldn't start" error={toApiError(info.error)} />;
+    content = <FatalError title="Apollo Download Manager couldn't start" error={toApiError(info.error)} />;
   } else if (settings.isError) {
-    content = <FatalError title="Velocity couldn't read its settings" error={toApiError(settings.error)} onRetry={() => void settings.refetch()} />;
+    content = <FatalError title="Apollo Download Manager couldn't read its settings" error={toApiError(settings.error)} onRetry={() => void settings.refetch()} />;
   } else if (!info.data || !settings.data) {
     content = (
       <Centered>
         <div className="flex items-center gap-3 text-fg-muted" role="status">
           <Spinner />
-          <span>Starting Velocity…</span>
+          <span>Starting Apollo Download Manager…</span>
         </div>
       </Centered>
     );
@@ -67,7 +68,11 @@ function Root() {
   }
   return (
     <>
-      {content}
+      {/* The desktop window has no system title bar (tauri.conf.json), so it draws its own. */}
+      <div className="flex h-full flex-col bg-frame">
+        {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} /> : null}
+        <div className="min-h-0 flex-1 bg-bg">{content}</div>
+      </div>
       <Toaster position="bottom-right" theme={theme} richColors closeButton duration={3500} />
     </>
   );

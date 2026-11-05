@@ -8,7 +8,7 @@ The browser extension offers the browser's downloads to V2, and lets the browser
 - **Modes:** send matching downloads to V2 (the default), ask first in a small window, or leave every download to the browser. Closing the ask window lets the browser continue.
 - **Rules:** file types (archives, disk images, installers, video, audio, PDF and e-books by default), a size threshold (20 MiB by default; only when the browser knows the size), allow and deny lists of domains with their subdomains, and private windows (off by default).
 - **Never intercepted:** `blob:`, `data:`, `file:` and other browser-only links; downloads the extension started itself as a fallback; and the same link twice within 5 seconds.
-- **Context menu:** "Download with Velocity V2" on links, images, video and audio. If V2 can't take the link, the browser downloads it.
+- **Context menu:** "Download with Apollo Download Manager" on links, images, video and audio. If V2 can't take the link, the browser downloads it.
 - **Popup:** shows whether V2 is reachable, switches the mode, and sends a typed link.
 - **Magnet links and `.torrent` downloads:** off by default. Turning them on asks for access to pages, which magnet clicks need; `.torrent` downloads work without it. V2 always asks before adding a torrent.
 - **Failures:** the toolbar badge turns red with "!", and its tooltip says what went wrong, for example that the connection isn't set up or that V2 didn't answer within 10 seconds.
@@ -20,12 +20,12 @@ V2's extension uses none of V1's names or IDs ([ADR-0003](decisions/0003-v2-app-
 
 | | V2 development build | V2 release build | V1 |
 |---|---|---|---|
-| Name | Velocity Download Manager V2 (dev) | Velocity Download Manager V2 | Velocity Download Manager |
+| Name | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
 | Native host it talks to | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 | Chrome extension ID | `adhefdmekgeafmopfbiappajaolcbhkc` | the same | `eecopkgfiffjgmngfmjmdaejbkbbippo` |
 | Firefox add-on ID | `velocity-download-manager-v2@velocity.local` | the same | `velocity-download-manager@velocity.local` |
 
-- **Telling them apart:** V2's name, toolbar title, context-menu item and messages all say "Velocity V2".
+- **Telling them apart:** V2's name, toolbar title and context-menu item say "Apollo Download Manager", and its short name and messages "Apollo DM" (the short form, docs/BRANDING.md).
 - **The Chrome key:** the manifest's `key` is the public half of a key pair generated for V2 in #64, and it pins the Chrome extension ID. The private half is held by the Product Owner, outside the repository; the repository ignores `*.pem` and `*.key` files. A test derives the ID from the key and checks it against `branding.json` (`scripts/extension-lib.test.mjs`).
 - **Store publication** isn't part of #64.
 

@@ -267,7 +267,7 @@ describe('the Add download dialog', () => {
     renderApp();
     const dialog = await openDialog(user);
     await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
-    expect(await within(dialog).findByText(/This version of Velocity can’t download over SFTP yet\./)).toBeTruthy();
+    expect(await within(dialog).findByText(/This version of Apollo Download Manager can’t download over SFTP yet\./)).toBeTruthy();
     expect(within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Start download' }).disabled).toBe(true);
     expect(requests(state)).toEqual([]);
   });
@@ -513,7 +513,7 @@ describe('torrents', () => {
     const dialog = await openDialog(user);
     const button = within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Choose Metalink files…' });
     expect(button.disabled).toBe(true);
-    expect(button.title).toBe('This version of Velocity can’t open Metalink files yet.');
+    expect(button.title).toBe('This version of Apollo Download Manager can’t open Metalink files yet.');
   });
 
   it('accepts magnet links and .torrent links, and sends no torrent choice for ordinary links', async () => {

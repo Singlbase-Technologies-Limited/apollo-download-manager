@@ -81,11 +81,11 @@ export function HostKeyPrompt() {
         <div className="min-w-0">
           {changed ? (
             <p>
-              This server shows a different key from the one you trusted. Someone may be pretending to be it, so Velocity won’t connect. If the server’s owner changed its key on purpose, remove the old one
-              from Velocity’s known hosts before trying again.
+              This server shows a different key from the one you trusted. Someone may be pretending to be it, so Apollo Download Manager won’t connect. If the server’s owner changed its key on purpose, remove the old one
+              from Apollo Download Manager’s known hosts before trying again.
             </p>
           ) : (
-            <p>Velocity hasn’t connected to this server before. Check the fingerprint with the server’s owner, then trust it to continue the download.</p>
+            <p>Apollo Download Manager hasn’t connected to this server before. Check the fingerprint with the server’s owner, then trust it to continue the download.</p>
           )}
           {server}
         </div>

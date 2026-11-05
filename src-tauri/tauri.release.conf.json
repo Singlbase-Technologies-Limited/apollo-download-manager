@@ -1,16 +1,17 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Velocity Download Manager V2",
+  "productName": "Apollo Download Manager",
   "identifier": "com.velocity.downloadmanager.v2",
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "Velocity Download Manager V2",
+        "title": "Apollo Download Manager",
         "width": 1100,
         "height": 720,
         "minWidth": 800,
         "minHeight": 520,
+        "decorations": false,
         "center": true,
         "visible": false
       }
@@ -19,7 +20,7 @@
   "bundle": {
     "active": true,
     "targets": ["nsis", "deb", "rpm"],
-    "publisher": "Velocity Project",
+    "publisher": "Singlbase Technologies Limited",
     "copyright": "Copyright (C) 2026 Singlbase Technologies Limited",
     "license": "GPL-3.0-only",
     "category": "Utility",
@@ -32,7 +33,12 @@
     },
     "linux": {
       "deb": {
-        "section": "net"
+        "section": "net",
+        "conflicts": ["velocity-download-manager-v2"],
+        "replaces": ["velocity-download-manager-v2"]
+      },
+      "rpm": {
+        "obsoletes": ["velocity-download-manager-v2"]
       }
     },
     "windows": {

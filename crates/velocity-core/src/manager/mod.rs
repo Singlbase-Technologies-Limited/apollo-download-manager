@@ -852,7 +852,7 @@ impl Manager {
                 FailureClass::Permanent,
                 None,
                 &format!(
-                    "Velocity downloaded this Metalink file but couldn't add its files: {why}"
+                    "Apollo Download Manager downloaded this Metalink file but couldn't add its files: {why}"
                 ),
             ));
         }

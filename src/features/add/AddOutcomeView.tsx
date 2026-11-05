@@ -27,7 +27,7 @@ export function AddOutcomeView({ outcome }: { outcome: Outcome }) {
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-fg-muted">Velocity never replaces a file that is already there.</p>
+          <p className="mt-2 text-xs text-fg-muted">Apollo Download Manager never replaces a file that is already there.</p>
         </section>
       ) : null}
       {torrents.length > 0 ? (
@@ -54,7 +54,7 @@ export function AddOutcomeView({ outcome }: { outcome: Outcome }) {
             ))}
           </ul>
           <p className="mt-2 text-xs text-fg-muted">
-            Velocity can’t run two copies of the same torrent: they would download the same pieces into the same files. Resume the one in your list, or remove it first.
+            Apollo Download Manager can’t run two copies of the same torrent: they would download the same pieces into the same files. Resume the one in your list, or remove it first.
           </p>
         </section>
       ) : null}

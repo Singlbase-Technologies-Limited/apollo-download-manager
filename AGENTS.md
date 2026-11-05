@@ -1,4 +1,4 @@
-# Velocity Download Manager V2 — contributor and agent rules
+# Apollo Download Manager — contributor and agent rules
 
 These rules apply to every contributor, human or AI agent. Each rule has one home: this file holds the rules for the whole repository, and it links to the documents that hold the details. Claude Code also reads [CLAUDE.md](CLAUDE.md) and the path-scoped rules in `.claude/rules/`.
 

@@ -27,6 +27,7 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [FILE_NAMING.md](FILE_NAMING.md) | Change how a download's file is named, its category and folder are chosen, and what happens when the name is taken |
 | [ACCESSIBILITY.md](ACCESSIBILITY.md) | See what V2 does for keyboard and screen-reader users, how each behaviour is tested, the contrast rules, and the manual screen-reader check |
 | [UI_ARCHITECTURE.md](UI_ARCHITECTURE.md) | Change the window: where its state lives, the command bridge, starting up, the shell, the tray and notifications, styling and UI tests |
+| [BRANDING.md](BRANDING.md) | Use the Apollo mark, app icon, colours and type, and see the rules behind them |
 | [CONTRACTS.md](CONTRACTS.md) | Change a type shared by the UI and Rust: the domain types, contract fixtures and the contract version |
 | [CONVENTIONS.md](CONVENTIONS.md) | Name Rust and TypeScript code, files, tests, commands, events and error codes |
 

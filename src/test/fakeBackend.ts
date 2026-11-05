@@ -1,6 +1,6 @@
 // A fake native side for the window's tests (#29): the commands of docs/CONTRACTS.md over Tauri's
 // IPC mock, answering with the generated contract fixtures, and recording every call.
-import { mockIPC } from '@tauri-apps/api/mocks';
+import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -102,7 +102,7 @@ export function emptySnapshot(): DownloadsSnapshot {
 
 export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
   const state: FakeState = {
-    appInfo: { name: 'Velocity Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION },
+    appInfo: { name: 'Apollo Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION },
     settings: setUp(),
     snapshot: emptySnapshot(),
     categories: [fixture('category.json') as Category],
@@ -152,7 +152,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
   mockIPC(
     async (cmd, payload) => {
       const args = (payload ?? {}) as Record<string, unknown>;
-      if (!cmd.startsWith('plugin:')) state.calls.push({ cmd, args });
+      if (!cmd.startsWith('plugin:') || cmd.startsWith('plugin:window|')) state.calls.push({ cmd, args });
       await state.hold[cmd];
       const failure = state.failures[cmd];
       // Tauri rejects a failed command with its serialised error: the code, a string.
@@ -283,12 +283,20 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           return 2;
         case 'delete_history_entries':
           return null;
+        // The title bar's window buttons.
+        case 'plugin:window|is_maximized':
+          return false;
+        case 'plugin:window|minimize':
+        case 'plugin:window|toggle_maximize':
+        case 'plugin:window|close':
+          return null;
         default:
           throw new Error(`the fake backend has no command ${cmd}`);
       }
     },
     { shouldMockEvents: true },
   );
+  mockWindows('main');
   return state;
 }
 

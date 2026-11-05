@@ -59,7 +59,7 @@ beforeEach(() => {
 
 describe('starting', () => {
   it('refuses a native side built for another contract, saying so', async () => {
-    installFakeBackend({ appInfo: { name: 'Velocity', version: '0.1.0', commandApiVersion: 1 } });
+    installFakeBackend({ appInfo: { name: 'Apollo Download Manager', version: '0.1.0', commandApiVersion: 1 } });
     renderApp();
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/contract version 1, but this window expects/);
@@ -309,12 +309,12 @@ describe('quitting with downloads active', () => {
     renderApp();
     await screen.findByRole('navigation', { name: 'Primary' });
     await act(() => emit('quit-requested', { active: 2 }));
-    const dialog = await screen.findByRole('alertdialog', { name: 'Quit Velocity?' });
+    const dialog = await screen.findByRole('alertdialog', { name: 'Quit Apollo Download Manager?' });
     expect(dialog.textContent).toContain('2 downloads are still running');
     await user.click(within(dialog).getByRole('button', { name: 'Keep downloading' }));
     expect(callsOf(backend, 'quit_app')).toEqual([]);
     await act(() => emit('quit-requested', { active: 1 }));
-    const again = await screen.findByRole('alertdialog', { name: 'Quit Velocity?' });
+    const again = await screen.findByRole('alertdialog', { name: 'Quit Apollo Download Manager?' });
     expect(again.textContent).toContain('1 download is still running');
     await user.click(within(again).getByRole('button', { name: 'Quit' }));
     await waitFor(() => { expect(callsOf(backend, 'quit_app')).toHaveLength(1); });

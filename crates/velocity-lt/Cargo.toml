@@ -1,6 +1,6 @@
 [package]
 name = "velocity-lt"
-description = "The torrent bridge of Velocity Download Manager V2: the only crate that calls libtorrent (ADR-0002)"
+description = "The torrent bridge of Apollo Download Manager: the only crate that calls libtorrent (ADR-0002)"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

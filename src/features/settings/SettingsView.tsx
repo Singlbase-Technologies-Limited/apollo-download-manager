@@ -162,7 +162,7 @@ function SectionContent({ section, s, patch }: { section: Exclude<SettingsSectio
       );
     case 'storage':
       return (
-        <Group title="History" description="Entries are forgotten by age and by number when Velocity starts and when these change. A download still in the list is never forgotten, and no file is ever deleted.">
+        <Group title="History" description="Entries are forgotten by age and by number when Apollo Download Manager starts and when these change. A download still in the list is never forgotten, and no file is ever deleted.">
           <Num title="Keep history for (days, 0 for ever)" value={s.storage.historyRetentionDays} min={0} max={3650} onChange={(v) => { patch((x) => ({ ...x, storage: { ...x.storage, historyRetentionDays: v } })); }} />
           <Num title="Most history entries" value={s.storage.maxHistoryEntries} min={100} max={1_000_000} onChange={(v) => { patch((x) => ({ ...x, storage: { ...x.storage, maxHistoryEntries: v } })); }} />
         </Group>
@@ -252,7 +252,7 @@ function ProxySection({ s, patch }: { s: Settings; patch: Patch }) {
         )}
         <Toggle
           title="Remember the password in the system keychain"
-          description="Unticked, Velocity asks for it again after it restarts."
+          description="Unticked, Apollo Download Manager asks for it again after it restarts."
           checked={proxy.rememberPassword}
           onChange={(v) => { patch((x) => ({ ...x, proxy: { ...x.proxy, rememberPassword: v } })); }}
         />
@@ -287,7 +287,7 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
   };
   return (
     <>
-      <Group title="Links from the browser" description="The Velocity V2 browser extension sends downloads here. It never sends cookies or logins.">
+      <Group title="Links from the browser" description="The Apollo Download Manager browser extension sends downloads here. It never sends cookies or logins.">
         <Toggle title="Take links from the browser" checked={s.browser.acceptRequests} onChange={(v) => { patch((x) => ({ ...x, browser: { ...x.browser, acceptRequests: v } })); }} />
         <Toggle
           title="Ask before adding"
@@ -299,7 +299,7 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
       </Group>
       <Group
         title="Browsers"
-        description="Registering lets a browser start Velocity V2’s connection, for your user only. It never changes the original Velocity Download Manager’s registration."
+        description="Registering lets a browser start Apollo Download Manager’s connection, for your user only. It never changes the registration of V1 (Velocity Download Manager)."
       >
         {integration.isPending ? (
           <div className="flex items-center gap-2 py-2.5 text-xs text-fg-muted">
@@ -313,7 +313,7 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
           <>
             {integration.data.hostPath === null ? (
               <p role="alert" className="py-2.5 text-xs text-danger">
-                The browser connection program isn’t installed beside Velocity V2, so no browser can be registered. Reinstall Velocity V2.
+                The browser connection program isn’t installed beside Apollo Download Manager, so no browser can be registered. Reinstall Apollo Download Manager.
               </p>
             ) : null}
             {integration.data.registrations.map((r) => (
@@ -321,7 +321,7 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
                 <div className="min-w-0">
                   <p className="text-[13px]">{BROWSER_NAMES[r.browser]}</p>
                   <p className="text-xs text-fg-muted">
-                    {!r.registered ? 'Not registered' : r.hostMatches ? 'Registered' : 'Registered for another copy of Velocity V2. Register again to use this one.'}
+                    {!r.registered ? 'Not registered' : r.hostMatches ? 'Registered' : 'Registered for another copy of Apollo Download Manager. Register again to use this one.'}
                   </p>
                 </div>
                 {r.registered && r.hostMatches ? (
@@ -398,7 +398,7 @@ function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
           ))}
         </div>
       </Group>
-      <Group title="Performance" description="A profile caps the connections; within it, Velocity keeps only the connections that help.">
+      <Group title="Performance" description="A profile caps the connections; within it, Apollo Download Manager keeps only the connections that help.">
         <Choice<PerformanceProfile>
           title="Profile"
           description={PROFILE_TEXT[s.performance.profile]}
@@ -429,7 +429,7 @@ function TorrentSection({ s, patch }: { s: Settings; patch: Patch }) {
   const kib = (bps: number) => Math.round(bps / KIB);
   return (
     <>
-      <Group title="BitTorrent" description="Torrents run in Velocity’s torrent helper, on libtorrent.">
+      <Group title="BitTorrent" description="Torrents run in Apollo Download Manager’s torrent helper, on libtorrent.">
         <Toggle title="BitTorrent" description="Add torrents and magnet links. Metalink has its own switch, under Advanced." checked={s.advanced.enableBittorrent} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, enableBittorrent: v } })); }} />
         <Toggle title="DHT" description="Find peers without a tracker. Private torrents never use it." checked={t.dht} onChange={(v) => { patch((x) => ({ ...x, torrent: { ...x.torrent, dht: v } })); }} />
         <Toggle title="Peer exchange" checked={t.peerExchange} onChange={(v) => { patch((x) => ({ ...x, torrent: { ...x.torrent, peerExchange: v } })); }} />
@@ -480,7 +480,7 @@ function AdvancedSection({ s, patch }: { s: Settings; patch: Patch }) {
             <CapabilityOption label="Metalink" availability={availability(capabilities, 'metalink')} checked={s.advanced.enableMetalink} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, enableMetalink: v } })); }} />
           </div>
         ) : null}
-        <Text title="User agent" description="What new downloads tell servers they are; empty for Velocity’s own." value={s.advanced.userAgent} placeholder="VelocityDownloadManager/…" onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, userAgent: v } })); }} />
+        <Text title="User agent" description="What new downloads tell servers they are; empty for Apollo Download Manager’s own." value={s.advanced.userAgent} placeholder="ApolloDownloadManager/…" onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, userAgent: v } })); }} />
       </Group>
       <Group title="Retries and timeouts" description="For downloads that start or retry after a change.">
         <Num title="Failures in a row before giving up" value={e.failuresInARow} min={1} max={100} onChange={(v) => { engine({ failuresInARow: v }); }} />

@@ -160,11 +160,15 @@ mod tests {
         assert_ne!(b.firefox_extension_id, V1_FIREFOX_ID);
         assert!(!b.chrome_extension_ids.iter().any(|i| i == V1_CHROME_ID));
         assert_ne!(b.chrome_extension_key, V1_CHROME_KEY);
-        for name in [&b.extension_name, &b.release_extension_name] {
+        // Since ADR-0018 the names don't carry V1's "Velocity" at all, so they can't be taken for V1's.
+        for name in [
+            &b.extension_name,
+            &b.release_extension_name,
+            &b.extension_short_name,
+        ] {
             assert_ne!(name, V1_EXTENSION_NAME);
-            assert!(name.contains("V2"), "{name}");
+            assert!(!name.contains("Velocity"), "{name}");
         }
-        assert!(b.extension_short_name.contains("V2"));
     }
 
     /// Windows installers name the install folder and the uninstall entry after the product
@@ -173,7 +177,7 @@ mod tests {
     fn the_release_product_name_is_not_v1s() {
         let b = branding();
         assert_ne!(b.release_product_name, V1_PRODUCT_NAME);
-        assert!(b.release_product_name.contains("V2"));
+        assert!(!b.release_product_name.contains("Velocity"));
     }
 
     /// Tests run without the release-identity feature, as every build but packaging does.
@@ -217,7 +221,10 @@ mod tests {
             "velocity-download-manager-v2@velocity.local"
         );
         assert_eq!(b.identifier, "dev.velocity.downloadmanager.v2");
-        // ADR-0016 replaced ADR-0003's "Velocity Download Manager" (PO decision on #81).
-        assert_eq!(b.release_product_name, "Velocity Download Manager V2");
+        // ADR-0018 replaced ADR-0016's "Velocity Download Manager V2" (PO decision on #346).
+        assert_eq!(b.release_product_name, "Apollo Download Manager");
+        assert_eq!(b.release_extension_name, "Apollo Download Manager");
+        // PO rule on #347: the only short form is "Apollo DM", never "Apollo" alone.
+        assert_eq!(b.extension_short_name, "Apollo DM");
     }
 }

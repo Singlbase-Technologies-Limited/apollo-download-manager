@@ -1,6 +1,6 @@
-# Velocity Download Manager V2: user guide
+# Apollo Download Manager: user guide
 
-These guides are for people who use Velocity Download Manager V2. How V2 is built and tested is in the [developer documents](../README.md).
+These guides are for people who use Apollo Download Manager. How V2 is built and tested is in the [developer documents](../README.md).
 
 V2 is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other ([V1 and V2](v1-and-v2.md)).
 

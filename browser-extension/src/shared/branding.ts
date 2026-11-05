@@ -11,5 +11,5 @@ const release = typeof __VELOCITY_RELEASE__ === 'boolean' && __VELOCITY_RELEASE_
 
 export const NATIVE_HOST_NAME: string = release ? branding.releaseNativeHostName : branding.nativeHostName;
 export const EXTENSION_NAME: string = release ? branding.releaseExtensionName : branding.extensionName;
-/** "Velocity V2": what menus, badges and messages call the app, so it can't be mistaken for V1. */
+/** "Apollo DM": the short form badges and messages use where the full name doesn't fit (PO rule on #347: never "Apollo" alone). */
 export const SHORT_NAME: string = branding.extensionShortName;

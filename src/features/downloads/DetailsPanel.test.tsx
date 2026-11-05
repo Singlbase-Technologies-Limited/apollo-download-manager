@@ -132,7 +132,7 @@ describe('the details panel (V1)', () => {
   // #250: the hint under an error follows its class, and never promises that a retry helps.
   it.each([
     ['transient', true, 'Retrying may help once the cause is fixed.'],
-    ['throttled', true, 'The server asked Velocity to slow down. Retrying later may help.'],
+    ['throttled', true, 'The server asked Apollo Download Manager to slow down. Retrying later may help.'],
     ['permanent', false, 'Retrying is unlikely to help without changing the request.'],
   ] as const)('shows the retry hint for a %s failure', async (failureClass, retryable, hint) => {
     const failed = makeRecord({
@@ -228,7 +228,7 @@ describe('the details panel (#61)', () => {
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
     const transfer = within(await panel()).getByRole('region', { name: 'Transfer' });
-    expect(transfer.textContent).toContain('Using 3 connections, up to 4 of the 8 asked for: the server asked Velocity to slow down.');
+    expect(transfer.textContent).toContain('Using 3 connections, up to 4 of the 8 asked for: the server asked Apollo Download Manager to slow down.');
   });
 
   it('says a download that isn’t running isn’t connected, without the reason it had while it ran', async () => {

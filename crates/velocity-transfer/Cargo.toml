@@ -1,6 +1,6 @@
 [package]
 name = "velocity-transfer"
-description = "The direct-download engine of Velocity Download Manager V2: probe, segments, writer and finalisation (ADR-0002)"
+description = "The direct-download engine of Apollo Download Manager: probe, segments, writer and finalisation (ADR-0002)"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

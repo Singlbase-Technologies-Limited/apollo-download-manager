@@ -6,9 +6,9 @@ V2 installs beside the original Velocity Download Manager (V1): each has its own
 
 ## Windows
 
-The installer is `Velocity Download Manager V2_<version>_x64-setup.exe`.
+The installer is `Apollo Download Manager_<version>_x64-setup.exe`.
 
-- **For your user only:** it installs without an administrator prompt, into `%LOCALAPPDATA%\Velocity Download Manager V2`, with a Start menu entry and an Apps & features entry, all named "Velocity Download Manager V2".
+- **For your user only:** it installs without an administrator prompt, into `%LOCALAPPDATA%\Apollo Download Manager`, with a Start menu entry and an Apps & features entry, all named "Apollo Download Manager".
 - **Unsigned:** Windows SmartScreen warns the first time ("Windows protected your PC"). Choose **More info**, then **Run anyway**.
 - **WebView2:** if the PC lacks Microsoft's WebView2, the installer downloads it. Windows 10 and 11 normally have it.
 - **Your data** is kept in `%APPDATA%\com.velocity.downloadmanager.v2`, apart from V1's.
@@ -26,11 +26,11 @@ Two packages, for 64-bit PCs:
 Install it with your package manager, which also installs the WebKitGTK, GTK and AppIndicator libraries V2 needs:
 
 ```sh
-sudo apt install "./Velocity Download Manager V2_<version>_amd64.deb"   # Ubuntu, Debian
-sudo dnf install "./Velocity Download Manager V2-<version>-1.x86_64.rpm" # Fedora
+sudo apt install "./Apollo Download Manager_<version>_amd64.deb"   # Ubuntu, Debian
+sudo dnf install "./Apollo Download Manager-<version>-1.x86_64.rpm" # Fedora
 ```
 
-Use the file name of the package you have, in quotes because it has spaces. A release candidate's files have other names, such as `velocity-v2-0.1.0-rc.1-<commit>-<date>-linux-amd64.deb`. V2 then appears in your applications menu as "Velocity Download Manager V2". Its data is kept in `~/.local/share/com.velocity.downloadmanager.v2`, apart from V1's, and its licence and the third-party licences are in `/usr/lib/Velocity Download Manager V2/` (`LICENSE`, `THIRD_PARTY_NOTICES.md`).
+Use the file name of the package you have, in quotes because it has spaces. A release candidate's files have other names, such as `apollo-download-manager-0.2.0-rc.1-<commit>-<date>-linux-amd64.deb`. V2 then appears in your applications menu as "Apollo Download Manager". Its data is kept in `~/.local/share/com.velocity.downloadmanager.v2`, apart from V1's, and its licence and the third-party licences are in `/usr/lib/Apollo Download Manager/` (`LICENSE`, `THIRD_PARTY_NOTICES.md`).
 
 No AppImage is made for now.
 
@@ -38,9 +38,11 @@ No AppImage is made for now.
 
 Install a newer version over the old one: run the newer Windows installer, or install the newer Linux package. Your downloads, settings, history and browser registrations are kept.
 
+**From 0.1.x,** which was named "Velocity Download Manager V2": install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed.
+
 ## Removing V2
 
-- **Windows:** remove "Velocity Download Manager V2" in Apps & features. That removes the program and V2's browser registrations. Your downloads, settings and history stay unless you tick **Delete the application data**.
-- **Linux:** `sudo apt remove velocity-download-manager-v2`, or `sudo dnf remove velocity-download-manager-v2`. That removes the programs, the menu entry and the icons. Your downloads, settings and history stay in your home folder. **First unregister the browsers** in Settings, Browser: a package can't reach the registrations in your home folder, so they would stay, pointing to a program that is gone.
+- **Windows:** remove "Apollo Download Manager" in Apps & features. That removes the program and V2's browser registrations. Your downloads, settings and history stay unless you tick **Delete the application data**.
+- **Linux:** `sudo apt remove apollo-download-manager`, or `sudo dnf remove apollo-download-manager`. That removes the programs, the menu entry and the icons. Your downloads, settings and history stay in your home folder. **First unregister the browsers** in Settings, Browser: a package can't reach the registrations in your home folder, so they would stay, pointing to a program that is gone.
 
 Downloaded files are never removed, on either system. Removing V2 never changes V1.

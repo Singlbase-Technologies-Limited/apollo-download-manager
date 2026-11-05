@@ -29,7 +29,7 @@ describe('the diagnostics panel (#28)', () => {
   it('says what the app and its engines are, and that nothing is sent anywhere', async () => {
     installFakeBackend({ diagnostics: () => sample });
     renderPanel();
-    const app = await screen.findByRole('region', { name: 'Velocity Download Manager (dev)' });
+    const app = await screen.findByRole('region', { name: 'Apollo Download Manager (dev)' });
     expect(app.textContent).toContain('Version 0.1.0');
     expect(app.textContent).toContain('linux x86_64');
     expect(app.textContent).toContain('no analytics or telemetry');

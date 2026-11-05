@@ -172,9 +172,9 @@ describe('the Settings screen (#30)', () => {
     const state = installFakeBackend();
     const user = await openSettings('Advanced');
     const agent = await screen.findByLabelText<HTMLInputElement>('User agent');
-    await user.type(agent, 'Velocity-Test/1');
+    await user.type(agent, 'Apollo Download Manager-Test/1');
     await user.tab();
-    await waitFor(() => { expect(state.appSettings.advanced.userAgent).toBe('Velocity-Test/1'); });
+    await waitFor(() => { expect(state.appSettings.advanced.userAgent).toBe('Apollo Download Manager-Test/1'); });
     await user.clear(agent);
     await user.tab();
     await waitFor(() => { expect(state.appSettings.advanced.userAgent).toBeNull(); });
@@ -227,7 +227,7 @@ describe('the Browser section (#65)', () => {
     const state = installFakeBackend();
     state.browser = { ...state.browser, hostPath: null };
     await openSettings('Browser');
-    expect(await screen.findByText(/isn’t installed beside Velocity V2/)).toBeTruthy();
+    expect(await screen.findByText(/isn’t installed beside Apollo Download Manager/)).toBeTruthy();
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Register with Mozilla Firefox' }).disabled).toBe(true);
   });
 });

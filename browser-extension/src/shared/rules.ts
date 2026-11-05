@@ -1,4 +1,4 @@
-/** Pure decision logic for which browser downloads are handed to Velocity. */
+/** Pure decision logic for which browser downloads are handed to Apollo Download Manager. */
 import type { ExtensionSettings } from './settings';
 
 export interface DownloadCandidate {

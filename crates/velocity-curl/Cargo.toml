@@ -1,6 +1,6 @@
 [package]
 name = "velocity-curl"
-description = "The libcurl layer of Velocity Download Manager V2: the only crate that calls libcurl (ADR-0002)"
+description = "The libcurl layer of Apollo Download Manager: the only crate that calls libcurl (ADR-0002)"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

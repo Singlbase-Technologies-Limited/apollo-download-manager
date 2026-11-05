@@ -30,8 +30,23 @@ pub(crate) const HOST_PROGRAM: &str = "velocity-native-host-v2";
 /// Writes this launch's token and starts serving the native host. A failure leaves the app
 /// running without the bridge, and is logged: the browser then says the app isn't running.
 pub fn start(app: &AppHandle, paths: &Paths, downloads: Downloads) {
+    repair_registrations(paths);
     if let Err(code) = serve(app, paths, downloads) {
         tracing::warn!("the browser bridge couldn't start: {code:?}");
+    }
+}
+
+/// Points V2's browser registrations at this install's host when the one they name is gone, as
+/// after the upgrade from 0.1.x moved the install folder (#347). A failure is logged, and the
+/// Settings screen's Browser section still shows it and fixes it.
+fn repair_registrations(paths: &Paths) {
+    let Some(host) = host_path() else { return };
+    match Locations::for_user(paths).and_then(|l| l.repair_moved_host(&host)) {
+        Ok(repaired) if !repaired.is_empty() => {
+            tracing::info!("browser registrations pointed at this install: {repaired:?}");
+        }
+        Ok(_) => {}
+        Err(code) => tracing::warn!("the browser registrations couldn't be repaired: {code:?}"),
     }
 }
 

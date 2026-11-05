@@ -1,9 +1,11 @@
 import { AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, FolderCog, History, Layers, PanelLeftClose, PanelLeftOpen, Plus, Settings, type LucideIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
+import { BrandLogo } from '../components/BrandLogo';
 import { CategoryGlyph } from '../components/CategoryGlyph';
 import type { AppInfo } from '../contract';
 import { countByView, type ListView } from '../downloads/views';
+import { PANEL } from '../layout/panel';
 import { cn } from '../lib/cn';
 import { useCategories } from '../lib/queries';
 import { useDownloadsStore } from '../stores/downloads';
@@ -44,12 +46,13 @@ function NavButton({
       // Icons only: the label stays the accessible name and shows as a tooltip.
       title={compact ? label : undefined}
       className={cn(
-        'group flex h-8 w-full items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
+        'group flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
         compact ? 'relative justify-center px-0' : 'px-2.5',
-        active ? 'bg-surface font-medium text-fg shadow-xs ring-1 ring-border' : 'text-fg-muted hover:bg-surface-3 hover:text-fg',
+        // The hover tints the row with the accent, so it shows against the sidebar in both themes (PO, #347).
+        active ? 'bg-surface-3 font-medium text-fg' : 'text-fg-muted hover:bg-accent-soft hover:text-fg',
       )}
     >
-      {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-fg-muted')} aria-hidden /> : children}
+      {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-accent')} aria-hidden /> : children}
       <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{label}</span>
       {counted && !compact ? <span className="text-[11px] tabular-nums text-fg-subtle">{count}</span> : null}
       {counted && compact ? <span className="sr-only">, {count}</span> : null}
@@ -80,31 +83,52 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
     return m;
   }, [downloads]);
 
+  // Collapsing sits beside the logo; when the window is too narrow, the shell collapses it instead.
+  const toggle = autoCompact ? null : (
+    <button
+      type="button"
+      onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
+      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+      title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+    >
+      {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
+    </button>
+  );
+
   return (
-    <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className="flex shrink-0 flex-col overflow-hidden bg-sidebar" style={{ width: 'var(--sidebar-w)' }}>
-      <div className={cn('flex h-12 shrink-0 items-center gap-2.5', compact ? 'justify-center' : 'px-4')}>
-        <span className="flex size-7 shrink-0 drop-shadow-sm" title={compact ? app.name : undefined}>
-          <BrandIcon className="size-7" />
-        </span>
-        <div className={compact ? 'sr-only' : 'min-w-0'}>
-          <p className="truncate text-[13px] font-semibold leading-tight">Velocity</p>
-          <p className="truncate text-[10px] leading-tight text-fg-subtle">Download Manager</p>
+    <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className={cn(PANEL, 'flex shrink-0 flex-col bg-sidebar')} style={{ width: 'var(--sidebar-w)' }}>
+      {compact ? (
+        <div className="flex shrink-0 flex-col items-center gap-1 pb-1 pt-3">
+          <span className="flex size-7 shrink-0" title={app.name}>
+            <BrandIcon className="size-7" />
+          </span>
+          <span className="sr-only">Apollo Download Manager</span>
+          {toggle}
         </div>
-      </div>
-      <div className={cn('flex-1 space-y-5 overflow-y-auto overflow-x-hidden py-2', compact ? 'px-2' : 'px-2.5')}>
+      ) : (
+        <div className="flex shrink-0 items-center justify-between gap-2 pb-3 pl-5 pr-2.5 pt-4">
+          <BrandLogo className="h-auto w-[112px] max-w-full" />
+          {toggle}
+        </div>
+      )}
+      {/* The button stays put while the list below it scrolls; a line marks where the scrolling starts. */}
+      <div className={cn('shrink-0 border-b border-border-strong pb-3', compact ? 'px-2 pt-1' : 'px-2.5')}>
         <button
           type="button"
           onClick={() => { openAdd(); }}
           title={compact ? 'Add download (Ctrl+N)' : undefined}
           aria-keyshortcuts="Control+N"
           className={cn(
-            'flex h-8 w-full items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm hover:bg-accent-strong',
+            'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
             compact ? 'justify-center' : 'px-2.5',
           )}
         >
           <Plus className="size-4 shrink-0" aria-hidden />
           <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate text-left'}>Add download</span>
         </button>
+      </div>
+      <div className={cn('flex-1 space-y-5 overflow-y-auto overflow-x-hidden py-2', compact ? 'px-2' : 'px-2.5')}>
         <div className="space-y-0.5">
           {LIST_ITEMS.map((it) => (
             <NavButton key={it.view} compact={compact} active={view === it.view && categoryFilter === null} icon={it.icon} label={it.label} count={counts[it.view]} onClick={() => { setView(it.view); }} />
@@ -129,20 +153,11 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
           <NavButton compact={compact} active={view === 'settings'} icon={Settings} label="Settings" onClick={() => { setView('settings'); }} />
         </div>
       </div>
-      <div className={cn('flex shrink-0 items-center gap-2 border-t border-border py-1.5 text-[10px] text-fg-subtle', compact ? 'justify-center' : 'pl-4 pr-1.5')}>
-        {compact ? null : <span className="min-w-0 flex-1 truncate">v{app.version}</span>}
-        {autoCompact ? null : (
-          <button
-            type="button"
-            onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
-            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className="flex size-7 shrink-0 items-center justify-center rounded-md text-fg-subtle hover:bg-surface-3 hover:text-fg"
-          >
-            {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
-          </button>
-        )}
-      </div>
+      {compact ? null : (
+        <div className="flex shrink-0 items-center border-t border-border py-2 pl-4 pr-1.5 text-[10px] text-fg-subtle">
+          <span className="min-w-0 flex-1 truncate">v{app.version}</span>
+        </div>
+      )}
     </nav>
   );
 }

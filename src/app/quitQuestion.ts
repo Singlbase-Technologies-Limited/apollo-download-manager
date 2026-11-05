@@ -2,8 +2,8 @@
 export function quitQuestion(active: number) {
   const one = active === 1;
   return {
-    title: 'Quit Velocity?',
-    description: `${String(active)} ${one ? 'download is' : 'downloads are'} still running. Quitting stops ${one ? 'it' : 'them'}. Unfinished downloads wait in the queue and continue from where they stopped, when they can, the next time Velocity starts.`,
+    title: 'Quit Apollo Download Manager?',
+    description: `${String(active)} ${one ? 'download is' : 'downloads are'} still running. Quitting stops ${one ? 'it' : 'them'}. Unfinished downloads wait in the queue and continue from where they stopped, when they can, the next time Apollo Download Manager starts.`,
     confirmLabel: 'Quit',
     cancelLabel: 'Keep downloading',
   };

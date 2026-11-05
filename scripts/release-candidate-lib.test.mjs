@@ -67,21 +67,21 @@ describe('which commits may become a release candidate', () => {
 describe('names', () => {
   it('carry the version, the candidate, the short commit and the UTC date', () => {
     expect(compactDate(new Date('2026-12-31T23:59:59Z'))).toBe('20261231');
-    expect(candidateName({ version: '0.1.0', tag: 'v0.1.0-rc.2', commit, date })).toBe('velocity-v2-0.1.0-rc.2-3a93690-20261031');
-    expect(candidateName({ version: '0.1.0', tag: null, commit, date })).toBe('velocity-v2-0.1.0-main-3a93690-20261031');
+    expect(candidateName({ version: '0.1.0', tag: 'v0.1.0-rc.2', commit, date })).toBe('apollo-download-manager-0.1.0-rc.2-3a93690-20261031');
+    expect(candidateName({ version: '0.1.0', tag: null, commit, date })).toBe('apollo-download-manager-0.1.0-main-3a93690-20261031');
   });
 
   it('rename each package the packaging workflows made', () => {
     const files = [
-      'Velocity Download Manager V2_0.1.0_x64-setup.exe',
-      'Velocity Download Manager V2_0.1.0_amd64.deb',
-      'Velocity Download Manager V2-0.1.0-1.x86_64.rpm',
+      'Apollo Download Manager_0.1.0_x64-setup.exe',
+      'Apollo Download Manager_0.1.0_amd64.deb',
+      'Apollo Download Manager-0.1.0-1.x86_64.rpm',
       'expected-files.txt',
     ];
-    expect(packageNames('velocity-v2-0.1.0-rc.1-3a93690-20261031', files)).toEqual([
-      { from: files[0], to: 'velocity-v2-0.1.0-rc.1-3a93690-20261031-windows-x64-setup.exe' },
-      { from: files[1], to: 'velocity-v2-0.1.0-rc.1-3a93690-20261031-linux-amd64.deb' },
-      { from: files[2], to: 'velocity-v2-0.1.0-rc.1-3a93690-20261031-linux-x86_64.rpm' },
+    expect(packageNames('apollo-download-manager-0.1.0-rc.1-3a93690-20261031', files)).toEqual([
+      { from: files[0], to: 'apollo-download-manager-0.1.0-rc.1-3a93690-20261031-windows-x64-setup.exe' },
+      { from: files[1], to: 'apollo-download-manager-0.1.0-rc.1-3a93690-20261031-linux-amd64.deb' },
+      { from: files[2], to: 'apollo-download-manager-0.1.0-rc.1-3a93690-20261031-linux-x86_64.rpm' },
     ]);
   });
 
@@ -102,7 +102,7 @@ describe('the records', () => {
   it('build-info.json says what was built, from which commit and run, with each platform\'s native records', () => {
     const platforms = { windows: { native: { schema: 1, target: 'x86_64-pc-windows-msvc' } } };
     const info = candidateBuildInfo({
-      name: 'velocity-v2-0.1.0-rc.1-3a93690-20261031',
+      name: 'apollo-download-manager-0.1.0-rc.1-3a93690-20261031',
       version: '0.1.0',
       tag: 'v0.1.0-rc.1',
       commit,
@@ -113,7 +113,7 @@ describe('the records', () => {
     });
     expect(info).toEqual({
       schema: 1,
-      name: 'velocity-v2-0.1.0-rc.1-3a93690-20261031',
+      name: 'apollo-download-manager-0.1.0-rc.1-3a93690-20261031',
       version: '0.1.0',
       tag: 'v0.1.0-rc.1',
       commit,

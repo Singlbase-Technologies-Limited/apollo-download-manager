@@ -14,7 +14,7 @@ import { useUiStore, type LoginRequest } from '../../stores/ui';
 import { parseHeaders } from '../add/addLogic';
 
 /**
- * Asks for the login, custom headers or SSH key a download had, which Velocity never keeps after it closes (PO
+ * Asks for the login, custom headers or SSH key a download had, which Apollo Download Manager never keeps after it closes (PO
  * decisions on #58 and #59), then resumes or retries it. What is typed stays in memory; the core checks it as the
  * Add dialog's.
  */
@@ -72,7 +72,7 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
       open
       onOpenChange={(open) => { if (!open) onClose(); }}
       title="Enter the login again"
-      description={`Velocity doesn’t keep logins, custom headers or SSH keys after it closes. Enter what “${download ? displayName(download) : 'this download'}” needs to continue.`}
+      description={`Apollo Download Manager doesn’t keep logins, custom headers or SSH keys after it closes. Enter what “${download ? displayName(download) : 'this download'}” needs to continue.`}
       footer={
         <>
           <Button onClick={onClose}>Not now</Button>

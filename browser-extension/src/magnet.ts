@@ -1,8 +1,8 @@
 /**
  * Optional content script, registered only while "Send magnet links and .torrent
- * downloads to Velocity" is on and the user granted access to pages. It catches plain
+ * downloads to Apollo Download Manager" is on and the user granted access to pages. It catches plain
  * clicks on magnet links and hands the link to the background. It reads nothing else
- * from the page, and Velocity always asks before adding the torrent.
+ * from the page, and Apollo Download Manager always asks before adding the torrent.
  */
 import { ext } from './shared/ext';
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <title>Apollo Download Manager</title>
+  <!-- Drawn for 48 px on its own pixel grid (#347): every corner on a whole pixel. Render it at exactly 48 px. -->
+  <path fill="#1B68CB" fill-rule="evenodd" d="M3 43 L27 5 L36 5 L45 43 L35 43 L33 35 L18 35 L14 43 Z M28 22 L30 28 L25 28 Z M7 43 L25 14 L27 14 L9 43 Z"/>
+  <path fill="#2F80E4" fill-rule="evenodd" d="M31 5 L36 5 L45 43 L35 43 L33 35 L26 35 Z M28 22 L30 28 L27 28 Z"/>
+</svg>

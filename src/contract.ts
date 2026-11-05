@@ -499,7 +499,7 @@ export function parseAppInfo(value: unknown): AppInfo {
   if (!parsed.success) throw new Error('Unexpected app_info response');
   if (parsed.data.commandApiVersion !== COMMAND_API_VERSION) {
     throw new Error(
-      `The native side uses contract version ${String(parsed.data.commandApiVersion)}, but this window expects ${String(COMMAND_API_VERSION)}. Reinstall or rebuild Velocity so both parts match.`,
+      `The native side uses contract version ${String(parsed.data.commandApiVersion)}, but this window expects ${String(COMMAND_API_VERSION)}. Reinstall or rebuild Apollo Download Manager so both parts match.`,
     );
   }
   return parsed.data;

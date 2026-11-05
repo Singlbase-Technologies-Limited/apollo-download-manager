@@ -29,7 +29,7 @@ pub fn install_crash_logs(crash_dir: PathBuf) {
     let default = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
         let report = format!(
-            "Velocity {} panicked\n{info}\n\n{}",
+            "Apollo Download Manager {} panicked\n{info}\n\n{}",
             velocity_core::app_info().version,
             std::backtrace::Backtrace::force_capture()
         );

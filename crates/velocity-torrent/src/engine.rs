@@ -78,10 +78,10 @@ pub fn peer_fingerprint(version: &str) -> String {
     format!("-VD{a}{b}{c}0-")
 }
 
-/// The user agent trackers see: `Velocity V2/0.1.0 libtorrent/2.0.15.0`.
+/// The user agent trackers see: `Apollo Download Manager/0.2.0 libtorrent/2.0.15.0`.
 pub fn user_agent() -> String {
     format!(
-        "Velocity V2/{} libtorrent/{}",
+        "Apollo Download Manager/{} libtorrent/{}",
         env!("CARGO_PKG_VERSION"),
         velocity_lt::version()
     )
@@ -1566,7 +1566,7 @@ mod tests {
         // A part with two digits doesn't fit Azureus style; it becomes 0, as in V1.
         assert_eq!(peer_fingerprint("10.0.1"), "-VD0010-");
         assert_eq!(peer_fingerprint("x"), "-VD0000-");
-        assert!(user_agent().starts_with("Velocity V2/"));
+        assert!(user_agent().starts_with("Apollo Download Manager/"));
     }
 
     #[test]

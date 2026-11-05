@@ -74,7 +74,7 @@ try {
     const t = (await popup.textContent('#status')) ?? '';
     return t && !t.startsWith('Checking') ? t : null;
   }, 15000, 'the popup status');
-  check("V2's popup reaches V2 through V2's native host", status.startsWith('Connected to Velocity V2'), status);
+  check("V2's popup reaches V2 through V2's native host", status.startsWith('Connected to Apollo DM'), status);
 
   const page = await context.newPage();
   await page.goto(`${w.base}/`);

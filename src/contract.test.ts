@@ -225,7 +225,7 @@ describe('the window’s own messages (#29)', () => {
 });
 
 describe('parseAppInfo', () => {
-  const ok = { name: 'Velocity Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
+  const ok = { name: 'Apollo Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
 
   it('accepts the native response for this contract version', () => {
     expect(parseAppInfo(ok)).toEqual(ok);

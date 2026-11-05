@@ -51,16 +51,16 @@ describe("the candidate's files", () => {
   it("are found as the candidate's artifact, unless it expired", () => {
     const artifacts = [
       { name: 'velocity-v2-windows-installer', expired: false },
-      { name: 'velocity-v2-0.1.0-rc.2-3a93690-20261102', expired: false },
+      { name: 'apollo-download-manager-0.1.0-rc.2-3a93690-20261102', expired: false },
     ];
-    expect(candidateArtifact(artifacts, 'v0.1.0-rc.2', commit)?.name).toBe('velocity-v2-0.1.0-rc.2-3a93690-20261102');
+    expect(candidateArtifact(artifacts, 'v0.1.0-rc.2', commit)?.name).toBe('apollo-download-manager-0.1.0-rc.2-3a93690-20261102');
     expect(candidateArtifact([{ ...artifacts[1], expired: true }], 'v0.1.0-rc.2', commit)).toBeNull();
     expect(candidateArtifact(artifacts, 'v0.1.0-rc.1', commit)).toBeNull();
   });
 
   it('are renamed for the release, keeping what each is', () => {
-    expect(releaseFileName('velocity-v2-0.1.0-rc.2-3a93690-20261102-windows-x64-setup.exe', '0.1.0')).toBe('velocity-v2-0.1.0-windows-x64-setup.exe');
-    expect(releaseFileName('velocity-v2-0.1.0-rc.2-3a93690-20261102-licence-report-linux.json', '0.1.0')).toBe('velocity-v2-0.1.0-licence-report-linux.json');
+    expect(releaseFileName('apollo-download-manager-0.1.0-rc.2-3a93690-20261102-windows-x64-setup.exe', '0.1.0')).toBe('apollo-download-manager-0.1.0-windows-x64-setup.exe');
+    expect(releaseFileName('apollo-download-manager-0.1.0-rc.2-3a93690-20261102-licence-report-linux.json', '0.1.0')).toBe('apollo-download-manager-0.1.0-licence-report-linux.json');
     expect(() => releaseFileName('SHA256SUMS', '0.1.0')).toThrow(/isn't a release candidate's file/);
   });
 });

@@ -6,6 +6,8 @@ import { Input } from '../../components/Input';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Select } from '../../components/Select';
 import { ConnectionLine } from '../../ConnectionLine';
+import { PANEL } from '../../layout/panel';
+import { cn } from '../../lib/cn';
 import type { FailureClass, Verification } from '../../contract';
 import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
@@ -16,7 +18,7 @@ import { TorrentSection } from '../torrents/TorrentSection';
 import type { DownloadActions } from './useDownloadActions';
 
 const NO_CATEGORY = '__none';
-/** Set by the shell from the saved width, fitted to the window; the splitter draws the border. */
+/** Set by the shell from the saved width, fitted to the window. */
 const PANEL_WIDTH = { width: 'var(--details-w, 20rem)' };
 const KIB = 1024;
 
@@ -29,7 +31,7 @@ const VERIFICATION: Record<Verification, string> = {
 /** The hint under an error, by its class: what a retry may do, never a promise (#250). */
 const RETRY_HINT: Record<FailureClass, string> = {
   transient: 'Retrying may help once the cause is fixed.',
-  throttled: 'The server asked Velocity to slow down. Retrying later may help.',
+  throttled: 'The server asked Apollo Download Manager to slow down. Retrying later may help.',
   permanent: 'Retrying is unlikely to help without changing the request.',
 };
 
@@ -54,7 +56,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 function Shell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
-    <aside id="details-panel" aria-label="Download details" className="flex min-w-0 shrink-0 flex-col items-center justify-center gap-3 bg-surface p-6 text-center text-xs text-fg-muted" style={PANEL_WIDTH}>
+    <aside id="details-panel" aria-label="Download details" className={cn(PANEL, 'flex min-w-0 shrink-0 flex-col items-center justify-center gap-3 bg-surface p-6 text-center text-xs text-fg-muted')} style={PANEL_WIDTH}>
       {children}
       <Button size="sm" onClick={onClose}>
         Close
@@ -106,7 +108,7 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
   const connectionsChanged = Number.isInteger(wanted) && wanted >= 1 && wanted !== d.requestedConnections;
 
   return (
-    <aside id="details-panel" aria-label="Download details" className="flex min-w-0 shrink-0 flex-col bg-surface" style={PANEL_WIDTH}>
+    <aside id="details-panel" aria-label="Download details" className={cn(PANEL, 'flex min-w-0 shrink-0 flex-col bg-surface')} style={PANEL_WIDTH}>
       <div className="flex items-start gap-2 border-b border-border px-4 py-3">
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-[13px] font-semibold" title={displayName(d)}>
