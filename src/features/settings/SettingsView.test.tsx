@@ -23,7 +23,7 @@ async function openSettings(section?: string) {
   const user = userEvent.setup();
   renderApp();
   await screen.findByText('No downloads yet');
-  act(() => { useUiStore.getState().setView('settings'); });
+  act(() => { useUiStore.getState().openSettings(); });
   if (section) await user.click(await screen.findByRole('button', { name: section }));
   return user;
 }
@@ -33,7 +33,7 @@ beforeEach(() => {
     configurable: true,
     value: () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }),
   });
-  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, settingsSection: 'general' });
+  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, settingsSection: 'general', settingsOpen: false });
   useDownloadsStore.setState({ snapshot: null, error: null, ...INITIAL_LIST });
 });
 
@@ -149,10 +149,45 @@ describe('the Settings screen (#30)', () => {
     await screen.findByText('No downloads yet');
     await user.keyboard('{Control>},{/Control}');
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
-    act(() => { useUiStore.getState().setView('all'); });
+    act(() => { useUiStore.getState().closeSettings(); });
     // #363: Settings sits at the bottom of the icon bar, always shown.
     await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' }));
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
+  });
+
+  // #364 (PO): Settings opens in a window over the app, as in VS Code, and the list stays behind it.
+  it('opens in a window over the list, which stays behind it', async () => {
+    installFakeBackend();
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    expect(within(dialog).getByRole('navigation', { name: 'Settings sections' })).toBeTruthy();
+    expect(useUiStore.getState().view).toBe('all');
+    expect(document.body.textContent).toContain('No downloads yet');
+  });
+
+  it('closes with Escape and gives focus back to the Settings button', async () => {
+    installFakeBackend();
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    const button = within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' });
+    await user.click(button);
+    await screen.findByRole('dialog', { name: 'Settings' });
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Settings' })).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('opens at the section asked for', async () => {
+    installFakeBackend();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    act(() => { useUiStore.getState().openSettings('proxy'); });
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    expect(within(dialog).getByRole('button', { name: 'Proxy' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('says why a value was refused, and shows what is saved', async () => {

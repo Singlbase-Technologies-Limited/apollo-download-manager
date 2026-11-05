@@ -1,11 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { RotateCcw } from 'lucide-react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { RotateCcw, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { availability } from '../../capabilities';
 import { CapabilityOption } from '../../CapabilityOption';
 import { Button } from '../../components/Button';
 import { confirmAction } from '../../components/confirmStore';
+import { contentClass, overlayClass } from '../../components/dialogStyles';
+import { useReturnFocus } from '../../components/returnFocus';
 import { Spinner } from '../../components/Spinner';
 import type { AppearanceSettings, Browser, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme, TimeFormat } from '../../contract';
 import { api } from '../../lib/api';
@@ -87,9 +90,25 @@ export function SettingsView() {
   };
 
   return (
+    <>
+      <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border pl-5 pr-3">
+        <DialogPrimitive.Title asChild>
+          <h1 className="text-[14px] font-semibold">Settings</h1>
+        </DialogPrimitive.Title>
+        {state.kind === 'error' ? null : (
+          <p role="status" className="text-xs text-fg-subtle">
+            {state.kind === 'saving' ? 'Saving…' : state.kind === 'saved' ? 'Saved. It applies at once.' : ''}
+          </p>
+        )}
+        <div className="flex-1" />
+        <DialogPrimitive.Close asChild>
+          <Button variant="ghost" size="icon-sm" aria-label="Close settings">
+            <X />
+          </Button>
+        </DialogPrimitive.Close>
+      </div>
     <div className="flex min-h-0 flex-1">
-      <nav aria-label="Settings sections" className="w-52 shrink-0 border-r border-border bg-surface p-2">
-        <h1 className="px-2.5 pb-2 pt-1.5 text-[13px] font-semibold">Settings</h1>
+      <nav aria-label="Settings sections" className="w-52 shrink-0 overflow-y-auto border-r border-border bg-surface-2 p-2">
         {SECTIONS.map((s) => (
           <button
             key={s.id}
@@ -111,11 +130,7 @@ export function SettingsView() {
         <div className="mx-auto max-w-3xl space-y-4 px-8 py-6">
           {state.kind === 'error' ? (
             <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{`Not saved: ${state.message}`}</p>
-          ) : (
-            <p role="status" className="h-4 text-xs text-fg-subtle">
-              {state.kind === 'saving' ? 'Saving…' : state.kind === 'saved' ? 'Saved. It applies at once.' : ''}
-            </p>
-          )}
+          ) : null}
           {section === 'about' ? (
             <DiagnosticsPanel />
           ) : settings.isPending ? (
@@ -134,6 +149,27 @@ export function SettingsView() {
         </div>
       </div>
     </div>
+    </>
+  );
+}
+
+/**
+ * Settings in a window over the app (#364, PO: as in VS Code): the list stays behind it. Close, Escape or a click
+ * outside closes it, and focus goes back to what opened it.
+ */
+export function SettingsDialog() {
+  const open = useUiStore((s) => s.settingsOpen);
+  const close = useUiStore((s) => s.closeSettings);
+  const returnFocus = useReturnFocus(open);
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={(o) => { if (!o) close(); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className={overlayClass} />
+        <DialogPrimitive.Content className={cn(contentClass, 'h-[min(48rem,calc(100vh-4rem))] max-w-6xl overflow-hidden')} aria-describedby={undefined} {...returnFocus}>
+          <SettingsView />
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 

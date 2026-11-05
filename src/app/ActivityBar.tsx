@@ -43,7 +43,7 @@ function WhatsNewDialog({ app, onClose }: { app: AppInfo; onClose: () => void })
   );
 }
 
-const isList = (v: View) => v !== 'history' && v !== 'categories' && v !== 'settings';
+const isList = (v: View) => v !== 'history' && v !== 'categories';
 
 /**
  * The icon bar on the window's left (#363, PO decision: option C, like VS Code's): the sections at the top, What's
@@ -53,6 +53,7 @@ export function ActivityBar({ app, listsShown }: { app: AppInfo; /** The lists p
   const view = useUiStore((s) => s.view);
   const setView = useUiStore((s) => s.setView);
   const setLayout = useUiStore((s) => s.setLayout);
+  const openSettings = useUiStore((s) => s.openSettings);
   // On another section, Downloads goes back to the lists; on them, it shows or hides their panel, as VS Code's does.
   const downloads = () => {
     if (!isList(view)) {
@@ -72,7 +73,8 @@ export function ActivityBar({ app, listsShown }: { app: AppInfo; /** The lists p
       <div className="flex-1" />
       <BarButton label="What’s new" icon={ScrollText} onClick={() => { setWhatsNew(true); }} />
       <BarButton label="Feedback" icon={MessageSquare} onClick={feedback} />
-      <BarButton label="Settings" icon={Settings} shortcut="Ctrl+," current={view === 'settings'} onClick={() => { setView('settings'); }} />
+      {/* A window over the app (#364), so it is opened rather than marked current. */}
+      <BarButton label="Settings" icon={Settings} shortcut="Ctrl+," onClick={() => { openSettings(); }} />
       {whatsNew ? <WhatsNewDialog app={app} onClose={() => { setWhatsNew(false); }} /> : null}
     </nav>
   );

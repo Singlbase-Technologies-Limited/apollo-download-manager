@@ -15,7 +15,7 @@ export function useAddEntryPoints() {
       // Ctrl+, (⌘, on macOS) opens Settings, as in V1 (#30).
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key === ',') {
         e.preventDefault();
-        useUiStore.getState().setView('settings');
+        useUiStore.getState().openSettings();
         return;
       }
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'n') {

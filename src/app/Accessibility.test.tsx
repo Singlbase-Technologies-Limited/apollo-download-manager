@@ -59,7 +59,7 @@ beforeEach(() => {
     value: () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }),
   });
   Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: 1366 });
-  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, detailsId: null, settingsSection: 'general' });
+  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, detailsId: null, settingsSection: 'general', settingsOpen: false });
   useDownloadsStore.setState({ snapshot: null, error: null, ...INITIAL_LIST });
 });
 
@@ -218,8 +218,7 @@ describe('every control has a name, and icons stay silent', () => {
       renderApp();
       await screen.findByText('No downloads yet');
       act(() => {
-        useUiStore.getState().setView('settings');
-        useUiStore.getState().setSettingsSection(section);
+        useUiStore.getState().openSettings(section);
       });
       await screen.findByRole('navigation', { name: 'Settings sections' });
       await waitFor(() => { expect(screen.queryByText('Loading settings…')).toBeNull(); });
