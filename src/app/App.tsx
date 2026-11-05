@@ -3,7 +3,6 @@ import { MonitorX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ConfirmHost } from '../components/ConfirmHost';
-import { Spinner } from '../components/Spinner';
 import { TooltipProvider } from '../components/Tooltip';
 import { Onboarding } from '../features/onboarding/Onboarding';
 import { api, isDesktop } from '../lib/api';
@@ -11,6 +10,7 @@ import { toApiError } from '../lib/errors';
 import { createQueryClient, keys, useShellSettings } from '../lib/queries';
 import { FatalError } from './FatalError';
 import { Shell } from './Shell';
+import { StartupLoader } from './StartupLoader';
 import { TitleBar } from './TitleBar';
 import { useSnapshotFeed } from './useSnapshotFeed';
 import { useTheme } from './useTheme';
@@ -59,14 +59,7 @@ function Root() {
   } else if (settings.isError) {
     content = <FatalError title="Apollo Download Manager couldn't read its settings" error={toApiError(settings.error)} onRetry={() => void settings.refetch()} />;
   } else if (!info.data || !settings.data) {
-    content = (
-      <Centered>
-        <div className="flex items-center gap-3 text-fg-muted" role="status">
-          <Spinner />
-          <span>Starting Apollo Download Manager…</span>
-        </div>
-      </Centered>
-    );
+    content = <StartupLoader />;
   } else if (!settings.data.onboardingCompleted) {
     content = <Onboarding app={info.data} defaultDirectory={settings.data.defaultDirectory ?? ''} />;
   } else {

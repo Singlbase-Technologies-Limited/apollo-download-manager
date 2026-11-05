@@ -1,6 +1,6 @@
 # Settings
 
-Open **Settings** in the navigation's Library, or press **Ctrl+,** (**⌘,** on macOS).
+Open **Settings** at the bottom of the icon bar on the window's left, or press **Ctrl+,** (**⌘,** on macOS).
 
 - **Every change is saved and applies at once;** no setting needs a restart. The screen says "Saving…", then "Saved", or why a value was refused, and shows what is saved.
 - **Numbers** are saved when you leave the field or press Enter, and brought within their limits.

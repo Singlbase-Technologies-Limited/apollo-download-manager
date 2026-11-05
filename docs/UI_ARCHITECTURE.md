@@ -6,7 +6,7 @@ How the window (`src/`) is built: where its state lives, how it talks to the nat
 
 | Folder | What it holds |
 |---|---|
-| `src/app/` | The window as a whole. `App` handles starting up, `Shell` the window once it is set up, plus `Sidebar`, `StatusBar`, the theme hook and the error screen |
+| `src/app/` | The window as a whole. `App` handles starting up (with `StartupLoader`, the full logo while it loads, #363), `Shell` the window once it is set up, plus `ActivityBar` (the icon bar: sections, What's new, Feedback, Settings), `Sidebar` (the collapsible lists panel), `StatusBar`, the theme hook and the error screen |
 | `src/features/` | One folder for each screen: `onboarding/` (the first-run setup), `categories/` (the Categories screen and its editor), `add/` (the Add download dialog and the SFTP host-key question, #60), and `downloads/` (the download list, its menus and the login dialog, #59) |
 | `src/components/` | Shared pieces, one per file: `Button`, `Dialog`, `ConfirmDialog` and `confirmAction`, `Field`, `Input`, `Textarea`, `Select`, `Checkbox` (the form controls share `fieldStyles.ts`), `Splitter`, `EmptyState`, `Spinner`, `Badge` (with a status tone), `ProgressBar`, `Menu` (`ContextMenu` and `DropdownMenu`), `BrandIcon` and `CategoryGlyph` |
 | `src/layout/` | The panel rules (`layoutLogic.ts`, V1's), and saving the layout (`useLayout.ts`) |

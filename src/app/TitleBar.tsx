@@ -47,8 +47,9 @@ export function TitleBar({ title }: { title: string }) {
 
   return (
     <header data-tauri-drag-region className="flex h-8 shrink-0 select-none items-center bg-frame">
+      {/* The A mark, a little bigger than before so it reads at a glance (#363); the full logo isn't in the main window. */}
       <span className="pointer-events-none flex items-center gap-2 pl-3 text-xs text-fg-muted">
-        <BrandIcon className="size-4" />
+        <BrandIcon className="size-5" />
         <span>{title}</span>
       </span>
       <div className="flex-1" data-tauri-drag-region />

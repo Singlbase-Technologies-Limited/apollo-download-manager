@@ -80,6 +80,10 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   }, [view]);
   const sidebar = resolved.sidebar;
   const rail = sidebar.mode === 'rail';
+  // Collapsed by the user, a drag of its edge opens it at its own width at once (#363); a window too narrow for
+  // it keeps it collapsed.
+  const opensOnDrag = rail && !sidebar.autoCompact;
+  const openWidth = useMemo(() => resolveLayout({ ...layout, sidebarCollapsed: false }, viewport, detailsOpen).sidebar.width, [layout, viewport, detailsOpen]);
 
   return (
     // Each area is its own rounded panel on the window's frame, with the splitters in the gaps (PO, #347).
@@ -104,6 +108,8 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
               }}
               onToggle={() => { setLayout({ sidebarCollapsed: !layout.sidebarCollapsed }); }}
               onReset={() => { setLayout({ sidebarWidth: null, sidebarCollapsed: false }); }}
+              openTo={opensOnDrag ? openWidth : undefined}
+              onDragStart={opensOnDrag ? () => { setLayout({ sidebarCollapsed: false }); } : undefined}
             />
           </>
         ) : null}

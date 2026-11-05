@@ -21,6 +21,10 @@ interface Props {
   onToggle?: () => void;
   /** Double click restores the default width. */
   onReset?: () => void;
+  /** A drag started: the owner can open a collapsed panel at once (#363). */
+  onDragStart?: () => void;
+  /** Where a drag starts from instead of `value`: a collapsed panel opens to this width at once and follows the pointer from there (#363). */
+  openTo?: number;
   className?: string;
 }
 
@@ -43,7 +47,7 @@ interface Drag {
  * through `onPreview` and committed once on release, so a drag never re-renders the
  * download table on every pointer move or saves on every move.
  */
-export function Splitter({ label, controls, side, value, min, max, onPreview, onCommit, onToggle, onReset, className }: Props) {
+export function Splitter({ label, controls, side, value, min, max, onPreview, onCommit, onToggle, onReset, onDragStart, openTo, className }: Props) {
   const drag = useRef<Drag | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const clampW = (w: number) => Math.min(max, Math.max(min, w));
@@ -99,11 +103,12 @@ export function Splitter({ label, controls, side, value, min, max, onPreview, on
     body.userSelect = 'none';
     const onBlur = () => { finish(true); };
     window.addEventListener('blur', onBlur);
+    const start = openTo ?? value;
     drag.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
-      startValue: value,
-      raw: value,
+      startValue: start,
+      raw: start,
       frame: 0,
       restore: () => {
         body.cursor = prev.cursor;
@@ -112,6 +117,9 @@ export function Splitter({ label, controls, side, value, min, max, onPreview, on
       },
     };
     el.dataset.dragging = 'true';
+    onDragStart?.();
+    // A collapsed panel shows at its width at once, before the pointer moves.
+    if (openTo !== undefined) onPreview?.(clampW(openTo));
   };
 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {

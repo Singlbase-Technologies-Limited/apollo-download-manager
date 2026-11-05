@@ -4,7 +4,7 @@ How to add downloads, follow them in the list, and find them again later. Torren
 
 ## Adding downloads
 
-Open the Add dialog with **Add download** at the top of the navigation, or **Ctrl+N** (**⌘N** on macOS). Dropping `.torrent` files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or `.torrent` link anywhere outside a text field also opens it, with the link filled in.
+Open the Add dialog with **Add download** at the top of the lists panel, or **Ctrl+N** (**⌘N** on macOS). Dropping `.torrent` files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or `.torrent` link anywhere outside a text field also opens it, with the link filled in.
 
 **What you can add:**
 
@@ -55,7 +55,7 @@ The first download from an SFTP server stops before logging in and asks **Trust 
 
 ## The download list
 
-**The lists** in the navigation are All, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. **Search** (**Ctrl+F**) looks in the name, the link and the folder.
+**The lists** in the lists panel, beside the icon bar, are All, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. **Search** (**Ctrl+F**) looks in the name, the link and the folder. To make room, collapse the lists panel with the button at its bottom; **Downloads** in the icon bar, or a drag of the panel's edge, opens it again.
 
 **Columns:** click a column's name to sort by it, and again to reverse. **Choose columns** shows or hides any of the 13 columns; Name is always shown, and **Reset to default columns** brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; **Home** or a double-click restores its width. Widths are kept.
 
@@ -103,7 +103,7 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 
 ## The history
 
-**History**, in the navigation's Library, lists every finished download, newest first, 100 a page, including those removed from the list: how each ended and, for a failure, why.
+**History**, in the icon bar on the window's left, lists every finished download, newest first, 100 a page, including those removed from the list: how each ended and, for a failure, why.
 
 - **Search** it, and **filter** it by completed, failed or cancelled.
 - **Again** opens the Add dialog with the entry's link.

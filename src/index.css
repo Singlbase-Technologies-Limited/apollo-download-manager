@@ -138,6 +138,20 @@
   }
 }
 
+/* The start-up loader's bar (#363), sliding across; still under reduced motion, by the rule above. */
+@keyframes velocity-loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.loader-bar {
+  animation: velocity-loading 1.4s ease-in-out infinite;
+}
+
 /* An active progress bar's moving stripes (V1's); still under reduced motion, by the rule above. */
 @keyframes velocity-stripes {
   to {
