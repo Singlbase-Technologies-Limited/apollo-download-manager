@@ -72,7 +72,24 @@ function Root() {
         {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} /> : null}
         <div className="min-h-0 flex-1 bg-bg">{content}</div>
       </div>
-      <Toaster position="bottom-right" theme={theme} richColors closeButton duration={3500} />
+      {/* Themed with the app's tokens, and above the status bar so it never covers it (#348 D). */}
+      <Toaster
+        position="bottom-right"
+        theme={theme}
+        closeButton
+        duration={3500}
+        offset={{ bottom: 40, right: 16 }}
+        toastOptions={{
+          classNames: {
+            toast: '!border-border !bg-surface !text-fg !shadow-panel !text-[12.5px]',
+            description: '!text-fg-muted',
+            success: '[&_[data-icon]]:!text-success',
+            error: '[&_[data-icon]]:!text-danger',
+            warning: '[&_[data-icon]]:!text-warning',
+            info: '[&_[data-icon]]:!text-accent',
+          },
+        }}
+      />
     </>
   );
 }

@@ -18,14 +18,15 @@ export function Group({ title, description, children }: { title: string; descrip
 
 function Row({ id, title, description, children }: { id: string; title: string; description?: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2.5">
-      <div className="min-w-0">
+    // In a narrow window the control goes under its label instead of past the edge (#348 A).
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 py-2.5">
+      <div className="min-w-0 flex-[1_1_16rem]">
         <label htmlFor={id} className="text-[13px]">
           {title}
         </label>
         {description ? <p className="text-xs text-fg-muted">{description}</p> : null}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="max-w-full shrink-0">{children}</div>
     </div>
   );
 }
@@ -85,7 +86,7 @@ export function Text({ title, description, value, placeholder, onChange }: { tit
   };
   return (
     <Row id={id} title={title} description={description}>
-      <Input id={id} className="h-8 w-72" placeholder={placeholder} value={typed ?? value ?? ''} onChange={(e) => { setTyped(e.target.value); }} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
+      <Input id={id} className="h-8 w-72 max-w-full" placeholder={placeholder} value={typed ?? value ?? ''} onChange={(e) => { setTyped(e.target.value); }} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
     </Row>
   );
 }
@@ -105,7 +106,7 @@ export function Choice<T extends string>({ title, description, value, options, o
   const id = useId();
   return (
     <Row id={id} title={title} description={description}>
-      <Select id={id} className="w-56" value={value} options={options} onValueChange={(v) => { onChange(v as T); }} />
+      <Select id={id} className="w-56 max-w-full" value={value} options={options} onValueChange={(v) => { onChange(v as T); }} />
     </Row>
   );
 }

@@ -114,6 +114,21 @@ describe('the download list (V1)', () => {
     await waitFor(() => { expect(callsOf(state, 'resume_downloads')[0]?.args).toEqual({ ids: ['b'] }); });
   });
 
+  // #348 D: no toast for a routine action the list already shows; a failure still says so (next tests).
+  it('shows no toast for a pause or resume that worked, since the row shows it', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('archive.zip'));
+    await user.click(button('Pause selected'));
+    await waitFor(() => { expect(callsOf(state, 'pause_downloads')).toHaveLength(1); });
+    await user.click(await rowFor('movie.mp4'));
+    await user.click(button('Resume selected'));
+    await waitFor(() => { expect(callsOf(state, 'resume_downloads')).toHaveLength(1); });
+    await new Promise((r) => setTimeout(r, 50));
+    const toasts = screen.queryByRole('region', { name: /Notifications/ });
+    expect(toasts?.textContent ?? '').not.toMatch(/Paused|Resumed/);
+  });
+
   it('retries a failed download', async () => {
     const user = userEvent.setup();
     renderApp();

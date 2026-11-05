@@ -548,16 +548,18 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
               {loginFields}
             </fieldset>
           ) : null}
+          {/* A full-width header with a line above it, so it reads as a section that opens (#348 F). */}
           <button
             type="button"
-            className="flex items-center gap-1 text-xs font-medium text-fg-muted hover:text-fg"
+            className="flex w-full items-center gap-1.5 border-t border-border pt-3 text-left text-[13px] font-semibold text-fg hover:text-accent"
             aria-expanded={advanced}
+            aria-controls="add-advanced"
             onClick={() => { setAdvanced((a) => !a); }}
           >
-            {advanced ? <ChevronDown className="size-3.5" aria-hidden /> : <ChevronRight className="size-3.5" aria-hidden />} Advanced options
+            {advanced ? <ChevronDown className="size-4" aria-hidden /> : <ChevronRight className="size-4" aria-hidden />} Advanced options
           </button>
           {advanced ? (
-            <div className="space-y-3 rounded-lg border border-border p-3">
+            <div id="add-advanced" className="space-y-3 rounded-lg border border-border p-3">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Connections" hint="Empty uses the performance profile.">
                   {(p) => <Input {...p} type="number" min={1} max={64} value={connections} onChange={(e) => { setConnections(e.target.value); }} />}

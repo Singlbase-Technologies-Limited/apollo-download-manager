@@ -121,6 +121,22 @@
   [data-selectable] {
     user-select: text;
   }
+  /* A hand over what can be clicked, and "not allowed" over what is disabled (#348 E). Tailwind's reset gives buttons
+     the arrow; menu items keep it, as desktop menus do. Components may still set their own. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  a[href],
+  label:has(> input:not(:disabled)) {
+    cursor: pointer;
+  }
+  button:disabled,
+  input:disabled,
+  textarea:disabled,
+  [aria-disabled='true']:not([role='menuitem']) {
+    cursor: not-allowed;
+  }
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 1px;

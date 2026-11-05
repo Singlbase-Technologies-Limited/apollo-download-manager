@@ -25,10 +25,15 @@ function reportKept(kept: readonly KeptFile[]) {
   if (first) toast.warning(`${plural(kept.length, 'file')} left in place, as ${KEPT[first.reason]}: ${first.path}`);
 }
 
-/** What a command over several downloads did (V1's report): every one, or how many and why the rest couldn't. */
-function report(r: BatchResult, verb: string) {
+/**
+ * What a command over several downloads did (V1's report): every one, or how many and why the rest couldn't.
+ * `quiet`: a routine action the list already shows, such as a pause, says nothing when it fully worked (#348 D).
+ */
+function report(r: BatchResult, verb: string, quiet = false) {
   const first = r.failed[0];
-  if (!first) toast.success(r.done.length > 1 ? `${verb} ${plural(r.done.length, 'download')}` : verb);
+  if (!first) {
+    if (!quiet) toast.success(r.done.length > 1 ? `${verb} ${plural(r.done.length, 'download')}` : verb);
+  }
   else if (r.done.length > 0) toast.warning(`${verb} ${String(r.done.length)}; ${String(r.failed.length)} couldn’t be changed: ${ERROR_MESSAGES[first.code]}`);
   else toast.error(ERROR_MESSAGES[first.code]);
   reportKept(r.kept);
@@ -70,10 +75,10 @@ export function useDownloadActions() {
       const ready = ids.filter((id) => !waiting.has(id));
       const first = ids.find((id) => waiting.has(id));
       if (first) askLogin({ id: first, then });
-      return ready.length > 0 ? send(async () => { report(await fn(ready), verb); }) : Promise.resolve();
+      return ready.length > 0 ? send(async () => { report(await fn(ready), verb, true); }) : Promise.resolve();
     }
     return {
-      pause: (ids: string[]) => send(async () => { report(await api.pauseDownloads(ids), 'Paused'); }),
+      pause: (ids: string[]) => send(async () => { report(await api.pauseDownloads(ids), 'Paused', true); }),
       resume: (ids: string[]) => withLogin(ids, 'resume', api.resumeDownloads, 'Resumed'),
       retry: (ids: string[]) => withLogin(ids, 'retry', api.retryDownloads, 'Retrying'),
       /** Allows what the download stopped at for the user's confirmation, which retries it (#67). */
