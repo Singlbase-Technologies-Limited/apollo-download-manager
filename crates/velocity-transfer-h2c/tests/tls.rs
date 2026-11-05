@@ -149,8 +149,9 @@ fn a_refused_certificate_fails_permanently_with_nothing_on_disk() {
             Err(DownloadError::Transfer(e)) => {
                 assert_eq!(e.class, FailureClass::Permanent, "{leaf:?}: {e:?}");
                 assert!(!e.retryable, "{leaf:?}: never retried");
+                // #252: each refusal says why in its own words; all name the certificate.
                 assert!(
-                    e.message.contains("certificate isn't trusted"),
+                    e.message.contains("security certificate"),
                     "{leaf:?}: {}",
                     e.message
                 );
