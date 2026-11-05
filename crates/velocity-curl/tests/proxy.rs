@@ -84,6 +84,96 @@ fn a_download_goes_through_an_http_proxy_as_a_tunnel() {
     );
 }
 
+/// The proxy's own answer to `CONNECT` never reaches the gate as the server's (#344). It has no
+/// ETag, so on every new tunnel after the first the engine took it for a file that changed.
+#[test]
+fn only_the_servers_answer_reaches_the_gate_through_an_http_proxy() {
+    let data = seeded_bytes(200_000, 344);
+    let server = TestServer::start(
+        vec![("a.bin".into(), data.clone())],
+        ServerOptions {
+            file_headers: velocity_test_http::FileHeaders {
+                etag: Some("\"v344\"".to_owned()),
+                ..Default::default()
+            },
+            ..ServerOptions::default()
+        },
+    );
+    let proxy_server = HttpProxy::start(None);
+    let options = Arc::new(RequestOptions {
+        proxy: Some(proxy(ProxyKind::Http, proxy_server.port(), false)),
+        ..RequestOptions::default()
+    });
+    let l = curl_loop();
+    // Two ranges, as two connections of one download would ask.
+    for (start, end) in [(0, 99_999), (100_000, 199_999)] {
+        let heads = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let seen = Arc::clone(&heads);
+        let f = l.fetch(
+            FetchRequest::range(server.url("a.bin"), start, Some(end))
+                .with_options(Arc::clone(&options)),
+            move |head| {
+                seen.lock()
+                    .expect("not poisoned")
+                    .push((head.status, head.header("etag").map(str::to_owned)));
+                Gate::Accept
+            },
+        );
+        let mut body = Vec::new();
+        let done = loop {
+            match f
+                .next_event(Duration::from_secs(30))
+                .expect("an event in time")
+            {
+                FetchEvent::Head(_) => {}
+                FetchEvent::Data(chunk) => body.extend_from_slice(&chunk),
+                FetchEvent::Done(done) => break done,
+            }
+        };
+        assert_eq!(done, Ok(()), "bytes {start}-{end}");
+        assert!(body == data[start as usize..=end as usize]);
+        assert_eq!(
+            *heads.lock().expect("not poisoned"),
+            [(206, Some("\"v344\"".to_owned()))],
+            "bytes {start}-{end}: the gate saw only the server's answer"
+        );
+    }
+}
+
+/// A proxy that wants a login when none is set refuses as a proxy (#344), not as the server's
+/// `407`, so the message points to Settings, Proxy.
+#[test]
+fn a_proxy_asking_for_a_login_none_was_given_says_so() {
+    let server = server(&seeded_bytes(1_000, 345));
+    let http = HttpProxy::start(Some((PROXY_USER, PROXY_PASSWORD)));
+    let options = Arc::new(RequestOptions {
+        proxy: Some(proxy(ProxyKind::Http, http.port(), false)),
+        ..RequestOptions::default()
+    });
+    // The engine's gate refuses a `407` head as the server's own refusal, so none may reach it.
+    let heads = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let seen = Arc::clone(&heads);
+    let l = curl_loop();
+    let f = l.fetch(
+        FetchRequest::get(server.url("a.bin")).with_options(options),
+        move |head| {
+            seen.lock().expect("not poisoned").push(head.status);
+            Gate::Abort(format!("HTTP {}", head.status))
+        },
+    );
+    let done = loop {
+        if let FetchEvent::Done(done) = f.next_event(Duration::from_secs(30)).expect("an event") {
+            break done;
+        }
+    };
+    assert_eq!(*heads.lock().expect("not poisoned"), Vec::<u16>::new());
+    match done {
+        Err(FetchError::Curl { kind, .. }) => assert_eq!(kind, CurlFailure::ProxyRefused),
+        other => panic!("{other:?}"),
+    }
+    assert_eq!(server.counters().gets, 0, "nothing reached the server");
+}
+
 #[test]
 fn a_download_goes_through_a_socks5_proxy_which_resolves_the_name() {
     let data = seeded_bytes(200_000, 193);

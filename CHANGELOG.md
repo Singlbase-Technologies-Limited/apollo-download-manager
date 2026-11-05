@@ -4,7 +4,9 @@ What changed in each version of Velocity Download Manager V2. Versions follow [S
 
 ## Unreleased
 
-Nothing yet.
+### Fixes
+
+- **Through an HTTP proxy,** a download no longer fails with "The file changed on the server" as soon as it opens a second connection, and a proxy that wants a login none was set for says "The proxy refused the connection" (#344).
 
 ## 0.1.1 - 2026-11-04
 
