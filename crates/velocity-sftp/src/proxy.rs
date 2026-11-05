@@ -139,7 +139,11 @@ async fn socks5(
                 return Err(refused("its login was refused"));
             }
         }
-        [0x05, _] => return Err(refused("no way to log in that V2 offers")),
+        [0x05, _] => {
+            return Err(refused(
+                "no way to log in that Apollo Download Manager offers",
+            ))
+        }
         _ => {
             return Err(failure(
                 CurlFailure::Protocol,

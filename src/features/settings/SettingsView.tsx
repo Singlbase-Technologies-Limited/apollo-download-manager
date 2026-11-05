@@ -301,7 +301,7 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
       </Group>
       <Group
         title="Browsers"
-        description="Registering lets a browser start Apollo Download Manager’s connection, for your user only. It never changes the registration of V1 (Velocity Download Manager)."
+        description="Registering lets a browser start Apollo Download Manager’s connection, for your user only."
       >
         {integration.isPending ? (
           <div className="flex items-center gap-2 py-2.5 text-xs text-fg-muted">
