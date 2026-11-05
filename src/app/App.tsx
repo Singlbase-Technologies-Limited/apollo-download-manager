@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ConfirmHost } from '../components/ConfirmHost';
 import { Spinner } from '../components/Spinner';
+import { TooltipProvider } from '../components/Tooltip';
 import { Onboarding } from '../features/onboarding/Onboarding';
 import { api, isDesktop } from '../lib/api';
 import { toApiError } from '../lib/errors';
@@ -18,8 +19,10 @@ import { setTimeFormat } from '../lib/format';
 export function App({ client = createQueryClient() }: { client?: QueryClient }) {
   return (
     <QueryClientProvider client={client}>
-      <Root />
-      <ConfirmHost />
+      <TooltipProvider>
+        <Root />
+        <ConfirmHost />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
