@@ -45,7 +45,7 @@ const broken = makeRecord({
   fileName: 'broken.iso',
   status: 'failed',
   createdAtMs: 3,
-  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false },
+  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null },
 });
 const done = makeRecord({ id: 'd', fileName: 'setup.exe', status: 'completed', createdAtMs: 4, completedAtMs: 5, verification: 'notVerified' });
 const album = makeRecord({
@@ -105,7 +105,7 @@ describe('the details panel (V1)', () => {
       fileName: 'test-50mb.bin',
       status: 'failed',
       createdAtMs: 7,
-      error: { class: 'permanent', httpStatus: null, message: `The server's identity isn't confirmed yet. Check that its host key fingerprint is ${fingerprint}, then trust it to continue.`, retryable: false, hostKey: null, confirm: null, noNetwork: false },
+      error: { class: 'permanent', httpStatus: null, message: `The server's identity isn't confirmed yet. Check that its host key fingerprint is ${fingerprint}, then trust it to continue.`, retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null },
     });
     installFakeBackend({ snapshot: withDownloads([host]) });
     const user = userEvent.setup();
@@ -141,7 +141,7 @@ describe('the details panel (V1)', () => {
       fileName: 'test-50mb.bin',
       status: 'failed',
       createdAtMs: 7,
-      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null, noNetwork: false },
+      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null, noNetwork: false, detail: null },
     });
     installFakeBackend({ snapshot: withDownloads([failed]) });
     const user = userEvent.setup();
@@ -150,6 +150,59 @@ describe('the details panel (V1)', () => {
     const alert = within(await panel()).getByRole('alert');
     expect(alert.textContent).toContain(hint);
     expect(alert.textContent).not.toContain('usually');
+  });
+
+  // #252: plain words first; the library's own text only behind a closed toggle, ready to copy.
+  const expired = makeRecord({
+    id: 'g',
+    fileName: 'dataset.tar.gz',
+    status: 'failed',
+    createdAtMs: 8,
+    error: {
+      class: 'permanent',
+      httpStatus: null,
+      message: 'This website’s security certificate has expired.',
+      retryable: false,
+      hostKey: null,
+      confirm: null,
+      noNetwork: false,
+      detail: 'libcurl error 60: SSL certificate problem: certificate has expired',
+    },
+  });
+
+  it('shows the plain message, and the technical text only behind a closed toggle', async () => {
+    installFakeBackend({ snapshot: withDownloads([expired]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('dataset.tar.gz'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(alert.textContent).toContain('This website’s security certificate has expired.');
+    expect(alert.textContent).not.toContain('libcurl');
+    const toggle = within(alert).getByRole('button', { name: 'Technical details' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    await user.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(alert.textContent).toContain('libcurl error 60: SSL certificate problem: certificate has expired');
+  });
+
+  it('copies the technical text', async () => {
+    installFakeBackend({ snapshot: withDownloads([expired]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('dataset.tar.gz'));
+    const alert = within(await panel()).getByRole('alert');
+    await user.click(within(alert).getByRole('button', { name: 'Technical details' }));
+    await user.click(within(alert).getByRole('button', { name: 'Copy technical details' }));
+    // user-event gives the page a clipboard of its own; it holds what was copied.
+    expect(await navigator.clipboard.readText()).toBe('libcurl error 60: SSL certificate problem: certificate has expired');
+  });
+
+  it('offers no technical details when there are none', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('broken.iso'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(within(alert).queryByRole('button', { name: 'Technical details' })).toBeNull();
   });
 
   it('keeps the open details panel on the selected download', async () => {

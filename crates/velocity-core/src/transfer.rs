@@ -57,7 +57,9 @@ use std::sync::mpsc::Receiver;
 /// Version 19 (#278) added [`crate::domain::ConnectionLimit::SpeedLimit`].
 /// Version 20 (#318) added [`crate::domain::TransferError::no_network`]: an engine marks a
 /// failure made by having no network, so the download waits for it.
-pub const TRANSFER_CONTRACT_VERSION: u32 = 20;
+/// Version 21 (#252) added [`crate::domain::TransferError::detail`]: the technical text behind
+/// the plain message.
+pub const TRANSFER_CONTRACT_VERSION: u32 = 21;
 
 /// An engine's id for one transfer. Assigned by the engine, never reused, and never shown as the
 /// app's download id.

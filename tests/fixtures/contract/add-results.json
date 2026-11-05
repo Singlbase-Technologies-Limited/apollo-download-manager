@@ -58,6 +58,7 @@
       "error": {
         "class": "permanent",
         "confirm": null,
+        "detail": null,
         "hostKey": null,
         "httpStatus": 404,
         "message": "Not found",

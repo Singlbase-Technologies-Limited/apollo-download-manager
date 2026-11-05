@@ -35,6 +35,8 @@ The details panel shows the message, the server's HTTP status when there is one,
 - **"The server asked Apollo Download Manager to slow down. Retrying later may help."** The server is busy or limits how many requests it accepts.
 - **"Retrying is unlikely to help without changing the request."** For example a missing file, a refused login or a full disk: fix the cause first.
 
+The message says what happened in plain words. When the download engine has more to say, such as a library's error code, **Technical details** under the message shows it, with a button to copy it for a bug report.
+
 The most common messages:
 
 | Message | What to do |
@@ -44,7 +46,10 @@ The most common messages:
 | "The file was not found on the server (404). The link may have expired." | Get a new link from the site |
 | "The download link expired (403). Get a fresh link from the browser." | Copy the link again from the site, and add it again |
 | "Access was denied by the server (403)." or "The server requires authentication (401)." | The link needs a login: add it again with your user name and password, or get a new link |
-| "The server's certificate isn't trusted, so the connection was refused." | Check your computer's date and time, and whether a proxy or security program intercepts connections. Otherwise the site must fix its certificate. Apollo Download Manager never skips this check |
+| "The website's security certificate has expired, …" | The site's owner must renew its certificate. If it is your own server, also check this computer's date and time. Apollo Download Manager never skips this check |
+| "The website's security certificate is for another website, …" | Check the link's address: a mistyped name, or a link to a server under another name, can cause this. Apollo Download Manager never skips this check |
+| "The website's security certificate isn't trusted on this computer, …" | The certificate is self-signed or from an authority your computer doesn't know. Check whether a proxy or security program intercepts connections. For your own server, add its certificate authority to the system's trusted certificates. Apollo Download Manager never skips this check |
+| "The website's security certificate was refused, …" | The certificate may have been revoked, or isn't meant for a website. Only the site's owner can fix it. Apollo Download Manager never skips this check |
 | "The server's host key changed …" (SFTP) | Ask the server's owner whether the key changed, and why. Apollo Download Manager never trusts a changed key: after checking, remove the old entry from the `known_hosts` file in Apollo Download Manager's data folder by hand |
 | "The downloaded file doesn't match its SHA-256 checksum …" | Check that the checksum is the one the site gives for this exact file. The unfinished file is kept as `<name>.vdmpart` |
 | "There is not enough disk space." | Free some space, then **Retry**: the download goes on from where it stopped |

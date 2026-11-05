@@ -251,7 +251,8 @@ fn why(error: Option<&TransferError>) -> String {
         .http_status
         .map(|s| format!(", HTTP {s}"))
         .unwrap_or_default();
-    format!(": {} [{class}{status}]", e.message)
+    // The log keeps the technical detail the window hides behind a toggle (#251, #252).
+    format!(": {} [{class}{status}]", e.with_details_text())
 }
 
 impl super::Download {

@@ -8,7 +8,9 @@ use std::time::{Duration, SystemTime};
 
 use velocity_core::domain::{Confirm, FailureClass, HostKeyCheck, TransferError};
 use velocity_core::transfer::HashAlgorithm;
-use velocity_curl::{AddressProblem, CurlFailure, FetchError, HostKeyProblem, ResponseHead};
+use velocity_curl::{
+    AddressProblem, CertificateProblem, CurlFailure, FetchError, HostKeyProblem, ResponseHead,
+};
 
 /// The failure an error status stands for, or `None` for a status that isn't one here (`416` is
 /// read by the probe and the segment checks).
@@ -155,25 +157,23 @@ pub(crate) fn fetch_failure(e: FetchError) -> TransferError {
             code,
             message,
         } => {
+            // #252: plain words for the user; libcurl's code and words behind them.
             let (class, words) = curl_failure(kind);
             no_network(
                 kind,
-                TransferError::new(
-                    class,
-                    None,
-                    &format!("{words} (libcurl error {code}: {message})"),
-                ),
+                TransferError::new(class, None, words)
+                    .with_detail(format!("libcurl error {code}: {message}")),
             )
         }
         FetchError::RedirectRefused { kind, message } => {
             let (class, words) = curl_failure(kind);
-            TransferError::new(class, None, &format!("{words} ({message})"))
+            TransferError::new(class, None, words).with_detail(message)
         }
         FetchError::Sftp { kind, message } => {
             let (class, words) = curl_failure(kind);
             no_network(
                 kind,
-                TransferError::new(class, None, &format!("{words} (SFTP: {message})")),
+                TransferError::new(class, None, words).with_detail(format!("SFTP: {message}")),
             )
         }
         FetchError::HostKey(problem) => host_key_failure(problem),
@@ -266,9 +266,23 @@ fn curl_failure(kind: CurlFailure) -> (FailureClass, &'static str) {
         CurlFailure::Timeout => (Transient, "The connection timed out."),
         CurlFailure::Interrupted => (Transient, "The connection was interrupted."),
         CurlFailure::TlsHandshake => (Transient, "The secure connection couldn't be set up."),
-        CurlFailure::Certificate => (
+        // #252: why, and what can be done. Verification is never turned off (#69), so none of
+        // these suggests it.
+        CurlFailure::Certificate(CertificateProblem::Expired) => (
             Permanent,
-            "The server's certificate isn't trusted, so the connection was refused.",
+            "The website's security certificate has expired, so the connection was refused.              Its owner needs to renew it. If this is your own server, check this computer's date              and time too.",
+        ),
+        CurlFailure::Certificate(CertificateProblem::WrongHost) => (
+            Permanent,
+            "The website's security certificate is for another website, so the connection was              refused. Check that the link's address is right.",
+        ),
+        CurlFailure::Certificate(CertificateProblem::NotTrusted) => (
+            Permanent,
+            "The website's security certificate isn't trusted on this computer, so the connection              was refused. It may be self-signed, or from an authority this computer doesn't know.",
+        ),
+        CurlFailure::Certificate(CertificateProblem::Other) => (
+            Permanent,
+            "The website's security certificate was refused, so the connection was closed. It may              have been revoked, or not be meant for a website.",
         ),
         CurlFailure::TooManyRedirects => (Permanent, "The server redirected too many times."),
         CurlFailure::Refused => (
@@ -416,7 +430,7 @@ mod tests {
         for kind in [
             CurlFailure::Interrupted,
             CurlFailure::TlsHandshake,
-            CurlFailure::Certificate,
+            CurlFailure::Certificate(CertificateProblem::Other),
             CurlFailure::NotFound,
             CurlFailure::AccessDenied,
             CurlFailure::ProxyRefused,
@@ -454,7 +468,7 @@ mod tests {
                 "network problem",
             ),
             (
-                CurlFailure::Certificate,
+                CurlFailure::Certificate(CertificateProblem::Other),
                 FailureClass::Permanent,
                 "certificate",
             ),
@@ -494,12 +508,37 @@ mod tests {
             let e = curl(kind);
             assert_eq!(e.class, class, "{kind:?}");
             assert!(e.message.contains(words), "{kind:?}: {}", e.message);
-            // libcurl's code and words stay in the message, for diagnostics.
-            assert!(
-                e.message.contains("libcurl error 99"),
-                "{kind:?}: {}",
-                e.message
+            // #252: the message is plain words; libcurl's code and words go to the detail, which
+            // the window shows behind "Technical details" and the log keeps.
+            assert!(!e.message.contains("libcurl"), "{kind:?}: {}", e.message);
+            assert_eq!(
+                e.detail.as_deref(),
+                Some("libcurl error 99: libcurl's own words"),
+                "{kind:?}"
             );
+        }
+    }
+
+    #[test]
+    fn a_refused_certificate_says_why_and_what_to_do_without_offering_to_skip_the_check() {
+        // #252: each case in its own plain words. TLS verification is never turned off (#69), so
+        // no message may suggest it.
+        for (problem, words) in [
+            (CertificateProblem::Expired, "expired"),
+            (CertificateProblem::WrongHost, "for another website"),
+            (
+                CertificateProblem::NotTrusted,
+                "isn't trusted on this computer",
+            ),
+            (CertificateProblem::Other, "refused"),
+        ] {
+            let e = curl(CurlFailure::Certificate(problem));
+            assert_eq!(e.class, FailureClass::Permanent, "{problem:?}");
+            assert!(e.message.contains(words), "{problem:?}: {}", e.message);
+            let lower = e.message.to_lowercase();
+            for never in ["ignore", "skip", "disable", "turn off", "insecure"] {
+                assert!(!lower.contains(never), "{problem:?}: {}", e.message);
+            }
         }
     }
 
@@ -553,7 +592,8 @@ mod tests {
         });
         assert_eq!(e.class, FailureClass::Permanent);
         assert!(e.message.contains("wasn't found"), "{}", e.message);
-        assert!(e.message.contains("SFTP: no such file"), "{}", e.message);
+        assert!(!e.message.contains("no such file"), "{}", e.message);
+        assert_eq!(e.detail.as_deref(), Some("SFTP: no such file"));
         assert!(e.host_key.is_none());
     }
 
@@ -565,12 +605,11 @@ mod tests {
         });
         assert_eq!((e.class, e.http_status), (FailureClass::Permanent, None));
         assert!(e.message.contains("insecure http://"), "{}", e.message);
-        assert!(
-            e.message.contains("from https:// to http://"),
-            "{}",
-            e.message
+        assert_eq!(
+            e.detail.as_deref(),
+            Some("a redirect from https:// to http://, which isn't allowed")
         );
-        assert!(!e.message.contains("libcurl error"), "{}", e.message);
+        assert!(!e.message.contains("libcurl"), "{}", e.message);
     }
 
     #[test]

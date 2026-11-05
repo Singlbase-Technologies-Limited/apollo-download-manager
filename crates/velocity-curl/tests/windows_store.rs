@@ -9,8 +9,8 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 
 use velocity_curl::{
-    CurlFailure, CurlLoop, FetchError, FetchEvent, FetchRequest, Gate, Libcurl, LoopOptions,
-    ResponseHead,
+    CertificateProblem, CurlFailure, CurlLoop, FetchError, FetchEvent, FetchRequest, Gate, Libcurl,
+    LoopOptions, ResponseHead,
 };
 use velocity_test_http::tls::{Alpn, Leaf, TlsFront};
 use velocity_test_http::{seeded_bytes, ServerOptions, TestServer};
@@ -89,12 +89,12 @@ fn a_ca_in_the_windows_store_is_trusted_and_every_refusal_is_a_certificate_failu
     // Through the store, Schannel reports a refused certificate as a connect error (code 35) with
     // the reason in its detail; it must still be a certificate failure, never a transient one that
     // is retried (the regression this test found on CI).
-    for (leaf, reason) in [
-        (Leaf::Revoked, "0x80092010"),
-        (Leaf::Expired, "expired"),
-        (Leaf::WrongHost, ""),
-        (Leaf::UntrustedIssuer, ""),
-        (Leaf::ClientAuthOnly, ""),
+    for (leaf, reason, problem) in [
+        (Leaf::Revoked, "0x80092010", CertificateProblem::Other),
+        (Leaf::Expired, "expired", CertificateProblem::Expired),
+        (Leaf::WrongHost, "", CertificateProblem::WrongHost),
+        (Leaf::UntrustedIssuer, "", CertificateProblem::NotTrusted),
+        (Leaf::ClientAuthOnly, "", CertificateProblem::Other),
     ] {
         let front = TlsFront::start(server.addr(), leaf, Alpn::Http1);
         let _trusted = TrustedInStore::add(&front);
@@ -103,7 +103,11 @@ fn a_ca_in_the_windows_store_is_trusted_and_every_refusal_is_a_certificate_failu
         eprintln!("{leaf:?} through the store: {done:?}");
         match done {
             Err(FetchError::Curl { kind, message, .. }) => {
-                assert_eq!(kind, CurlFailure::Certificate, "{leaf:?}: {message}");
+                assert_eq!(
+                    kind,
+                    CurlFailure::Certificate(problem),
+                    "{leaf:?}: {message}"
+                );
                 assert!(
                     message.to_ascii_lowercase().contains(reason),
                     "{leaf:?}: {message}"

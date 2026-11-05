@@ -8,13 +8,14 @@ import { Select } from '../../components/Select';
 import { ConnectionLine } from '../../ConnectionLine';
 import { PANEL } from '../../layout/panel';
 import { cn } from '../../lib/cn';
-import type { FailureClass, Verification } from '../../contract';
+import type { Verification } from '../../contract';
 import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
 import { useCategories } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { TorrentSection } from '../torrents/TorrentSection';
+import { ErrorNotice } from './ErrorNotice';
 import type { DownloadActions } from './useDownloadActions';
 
 const NO_CATEGORY = '__none';
@@ -29,12 +30,6 @@ const VERIFICATION: Record<Verification, string> = {
 };
 
 /** The hint under an error, by its class: what a retry may do, never a promise (#250). */
-const RETRY_HINT: Record<FailureClass, string> = {
-  transient: 'Retrying may help once the cause is fixed.',
-  throttled: 'The server asked Apollo Download Manager to slow down. Retrying later may help.',
-  permanent: 'Retrying is unlikely to help without changing the request.',
-};
-
 /** A titled group of rows, so the panel reads as sections (V1 #45). */
 function DetailsGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -155,13 +150,7 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
         ) : null}
 
         {d.error ? (
-          // A long word, such as a host key's fingerprint or a path, wraps inside the panel (#248), as the rows do.
-          <div role="alert" className="mt-3 min-w-0 break-words rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">
-            <p className="font-medium">{d.error.message}</p>
-            <p className="mt-1 opacity-80">
-              {d.error.httpStatus !== null ? `HTTP ${String(d.error.httpStatus)}. ` : ''}
-              {RETRY_HINT[d.error.class]}
-            </p>
+          <ErrorNotice error={d.error} className="mt-3">
             {d.status === 'failed' && d.error.confirm ? (
               // The user's answer, for this download only (#67): a plain retry would only stop at the same place.
               <Button size="sm" variant="secondary" className="mt-2" disabled={busy} onClick={() => { if (d.error?.confirm) void actions.allow(d.id, d.error.confirm.kind); }}>
@@ -172,7 +161,7 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
                 <RotateCcw /> Retry
               </Button>
             ) : null}
-          </div>
+          </ErrorNotice>
         ) : null}
 
         <DetailsGroup title="Transfer">

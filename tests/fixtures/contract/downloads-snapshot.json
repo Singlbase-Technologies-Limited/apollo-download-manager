@@ -9,6 +9,7 @@
       "error": {
         "class": "throttled",
         "confirm": null,
+        "detail": null,
         "hostKey": null,
         "httpStatus": 503,
         "message": "Service unavailable",

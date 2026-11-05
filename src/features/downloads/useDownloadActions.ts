@@ -4,6 +4,7 @@ import { confirmAction } from '../../components/confirmStore';
 import type { BatchResult, ConfirmKind, DownloadRecord, ErrorCode, KeptFile, KeptReason, MoveDirection } from '../../contract';
 import { displayName } from '../../downloads/list';
 import { api } from '../../lib/api';
+import { copyText } from '../../lib/clipboard';
 import { ApiError, ERROR_MESSAGES, toApiError } from '../../lib/errors';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
@@ -42,14 +43,6 @@ const OPEN_FAILED: Partial<Record<ErrorCode, string>> = {
   IO: 'The system couldn’t start the program that opens it.',
 };
 
-async function copy(text: string, what: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success(`${what} copied`);
-  } catch {
-    toast.error(`Couldn’t copy the ${what.toLowerCase()}`);
-  }
-}
 
 /**
  * Everything the user does to downloads (V1's useDownloadActions): confirmations before destructive ones, a toast
@@ -153,8 +146,8 @@ export function useDownloadActions() {
         });
         return ok;
       },
-      copyLink: (d: DownloadRecord) => copy(d.sourceUrl, 'Link'),
-      copyName: (d: DownloadRecord) => copy(displayName(d), 'Name'),
+      copyLink: (d: DownloadRecord) => copyText(d.sourceUrl, 'Link'),
+      copyName: (d: DownloadRecord) => copyText(displayName(d), 'Name'),
       pauseAll: () => send(async () => { await api.pauseAll(); toast.success('Paused all downloads'); }),
       resumeAll: () => send(async () => { await api.resumeAll(); toast.success('Resumed all downloads'); }),
       retryFailed: () => send(async () => { await api.retryFailed(); toast.success('Retrying the failed downloads'); }),
