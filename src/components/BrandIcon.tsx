@@ -1,24 +1,30 @@
 import { useId } from 'react';
 
 /**
- * The Velocity app icon, drawn from `assets/brand/velocity-icon-small.svg` (the variant
- * simplified for small sizes). Decorative: the app name next to it is the accessible label.
+ * The Apollo app icon, drawn from `assets/brand/apollo-icon-small.svg` (the A drawn heavier
+ * for small sizes). Decorative: the app name next to it is the accessible label.
  */
 export function BrandIcon({ className }: { className?: string }) {
-  const gradient = useId();
+  const front = useId();
   return (
-    <svg viewBox="0 0 1024 1024" className={className} aria-hidden focusable="false">
+    <svg viewBox="0 0 128 128" className={className} aria-hidden focusable="false">
       <defs>
-        <linearGradient id={gradient} x1="128" y1="0" x2="896" y2="1024" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#14B8C4" />
-          <stop offset="0.48" stopColor="#1D6FD8" />
-          <stop offset="1" stopColor="#2236B8" />
-        </linearGradient>
+        <clipPath id={front}>
+          <rect x="64" y="0" width="80" height="128" />
+        </clipPath>
       </defs>
-      <rect x="16" y="16" width="992" height="992" rx="224" fill={`url(#${gradient})`} />
-      <g fill="#FFFFFF">
-        <path stroke="#FFFFFF" strokeWidth="24" strokeLinejoin="round" d="M216 232 H392 L512 486 L632 232 H808 L512 790 Z" />
-        <rect x="300" y="842" width="424" height="86" rx="43" />
+      <g transform="translate(2 2) skewX(-10) translate(19 0)">
+        <path
+          fill="#1659B3"
+          fillRule="evenodd"
+          d="M8 112 L52 10 H76 L120 112 H92 L83.6 92 H44.4 L36 112 Z M64 56 L70.6 72 H57.4 Z M17 112 L50.4 34 L57.4 34 L24 112 Z"
+        />
+        <path
+          fill="#2F80E4"
+          fillRule="evenodd"
+          clipPath={`url(#${front})`}
+          d="M8 112 L52 10 H76 L120 112 H92 L83.6 92 H44.4 L36 112 Z M64 56 L70.6 72 H57.4 Z"
+        />
       </g>
     </svg>
   );

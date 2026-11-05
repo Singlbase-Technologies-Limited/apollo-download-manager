@@ -1,13 +1,13 @@
-# Velocity brand assets
+# Apollo brand assets
 
-The source artwork for Velocity's icon and wordmark. It is V1's artwork, which the Product Owner authorised in V1 issue #35 and approved for V2 on #29 (2026-10-29). That isn't a release approval.
+The source artwork for Apollo Download Manager's mark, app icon and wordmark (#347). How to use them, the colours and the rules are in [docs/BRANDING.md](../../docs/BRANDING.md).
 
 | File | Use |
 |---|---|
-| `velocity-icon.svg` | The app icon, at 48 px and larger |
-| `velocity-icon-small.svg` | The app icon, simplified for 16 to 32 px: no sheen, shadow or speed cuts |
-| `velocity-mark.svg` | The glyph alone, on a transparent background |
-| `velocity-lockup-light.svg`, `velocity-lockup-dark.svg` | The icon and wordmark, for light and dark backgrounds |
+| `apollo-icon.svg` | The app icon, at 48 px and larger: the A alone, in two tones |
+| `apollo-icon-small.svg` | The app icon drawn heavier for 16 to 32 px, so the split still shows |
+| `apollo-mark.svg` | The A in one colour (ink), for single-colour uses |
+| `apollo-lockup-light.svg`, `apollo-lockup-dark.svg` | The mark and wordmark, for light and dark backgrounds |
 
 The app draws the small icon inline (`src/components/BrandIcon.tsx`) in the sidebar and on the first-run screen.
 
@@ -16,12 +16,12 @@ The app draws the small icon inline (`src/components/BrandIcon.tsx`) in the side
 The desktop icons in `src-tauri/icons/` are generated from these files, never edited by hand. Write the output to a temporary folder, then copy only the files `src-tauri/icons/` already has:
 
 ```sh
-pnpm tauri icon assets/brand/velocity-icon.svg -o <tmp>/full
-pnpm tauri icon assets/brand/velocity-icon-small.svg -o <tmp>/small -p 32
+pnpm tauri icon assets/brand/apollo-icon.svg -o <tmp>/full
+pnpm tauri icon assets/brand/apollo-icon-small.svg -o <tmp>/small -p 32
 ```
 
 - **`32x32.png`** comes from the small icon, and every other file from the full icon.
-- **`icon.ico`** is Tauri's, so all its sizes come from the full icon. V1 built its `.ico` with the 16, 24 and 32 px sizes from the small icon, which needs ImageMagick. That is left for packaging (#81).
+- **`icon.ico`** is Tauri's, so all its sizes come from the full icon. Building it with the 16, 24 and 32 px sizes from the small icon needs another tool, which is left for later (#347).
 
 ## Before a public release
 

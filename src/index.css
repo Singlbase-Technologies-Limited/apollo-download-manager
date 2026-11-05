@@ -6,8 +6,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Velocity design tokens. Neutral slate surfaces with a teal-to-cobalt accent that
- * matches the app icon. Light and dark themes are defined as CSS variables and
+ * Design tokens. Neutral slate surfaces with a blue accent that the Apollo icon
+ * shares (docs/BRANDING.md). Light and dark themes are defined as CSS variables and
  * exposed to Tailwind through @theme so utilities like bg-surface work in both.
  */
 :root {

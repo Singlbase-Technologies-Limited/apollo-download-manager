@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="1024" height="1024">
+  <title>Apollo Download Manager</title>
+  <!-- The split-leg A, leaning 10° forward, without a tile (PO decisions on #347).
+       Two flat tones: the back half deeper, the front half brighter. -->
+  <defs>
+    <clipPath id="front">
+      <rect x="64" y="0" width="80" height="128"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(2 2) skewX(-10) translate(19 0)">
+    <path fill="#1659B3" fill-rule="evenodd"
+          d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z M20 112 L51.6 36 L55.8 36 L24.2 112 Z"/>
+    <path fill="#2F80E4" fill-rule="evenodd" clip-path="url(#front)"
+          d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z"/>
+  </g>
+</svg>

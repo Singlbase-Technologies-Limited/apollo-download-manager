@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320">
+  <title>Apollo Download Manager</title>
+  <!-- Wordmark uses live text (Inter). Convert text to outlines before using this file in a release. -->
+  <defs>
+    <clipPath id="front">
+      <rect x="64" y="0" width="80" height="128"/>
+    </clipPath>
+  </defs>
+  <svg x="16" y="32" width="256" height="256" viewBox="0 0 128 128">
+    <g transform="translate(2 2) skewX(-10) translate(19 0)">
+      <path fill="#1659B3" fill-rule="evenodd"
+            d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z M20 112 L51.6 36 L55.8 36 L24.2 112 Z"/>
+      <path fill="#2F80E4" fill-rule="evenodd" clip-path="url(#front)"
+            d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z"/>
+    </g>
+  </svg>
+  <text x="312" y="190" fill="#0F172A" font-family="Inter Variable, Inter, 'Segoe UI', system-ui, sans-serif" font-size="150" font-weight="700" letter-spacing="-4">Apollo</text>
+  <text x="318" y="256" fill="#526077" font-family="Inter Variable, Inter, 'Segoe UI', system-ui, sans-serif" font-size="42" font-weight="550" letter-spacing="9.5">DOWNLOAD MANAGER</text>
+</svg>
