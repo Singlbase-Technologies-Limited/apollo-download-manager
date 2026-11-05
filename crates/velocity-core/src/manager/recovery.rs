@@ -38,7 +38,8 @@ use crate::transfer::{
 };
 
 /// The note on a download that came back without the login it had.
-const LOGIN_NOTE: &str = "Velocity doesn't keep logins, custom headers or SSH keys after it \
+const LOGIN_NOTE: &str =
+    "Apollo Download Manager doesn't keep logins, custom headers or SSH keys after it \
                           closes. Resume this download to enter its login again.";
 /// The note on a download whose remembered login couldn't be read from the keychain (#70).
 const KEYCHAIN_NOTE: &str = "The system keychain couldn't be read, so this download's saved \

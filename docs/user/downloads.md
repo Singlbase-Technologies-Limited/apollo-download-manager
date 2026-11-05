@@ -9,16 +9,16 @@ Open the Add dialog with **Add download** at the top of the navigation, or **Ctr
 **What you can add:**
 
 - **Links,** one per line, up to 500 at once: `http://`, `https://`, `ftp://`, `ftps://` and `sftp://` ([Protocols and limits](protocols.md)).
-- **Magnet links,** and **links to `.torrent` files**: Velocity downloads the `.torrent` file first, for up to 60 seconds, then adds the torrent.
+- **Magnet links,** and **links to `.torrent` files**: Apollo Download Manager downloads the `.torrent` file first, for up to 60 seconds, then adds the torrent.
 - **`.torrent` files** on your computer, with **Choose .torrent files…**.
 - **Metalink files** (`.metalink`, `.meta4`) on your computer, with **Choose Metalink files…**: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason ([Protocols and limits](protocols.md#metalink)).
 
-A link Velocity can't download is refused in the dialog, with the reason, for example "Only http, https, ftp, ftps, sftp and magnet links are supported." Links with spaces or control characters are refused too.
+A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example "Only http, https, ftp, ftps, sftp and magnet links are supported." Links with spaces or control characters are refused too.
 
 **Before you add,** the dialog shows:
 
-- **The file's name.** You can type another one; Velocity keeps the link's file type at the end.
-- **The category and folder** Velocity chooses from the file type ([Categories](categories.md)). You can choose others.
+- **The file's name.** You can type another one; Apollo Download Manager keeps the link's file type at the end.
+- **The category and folder** Apollo Download Manager chooses from the file type ([Categories](categories.md)). You can choose others.
 - **A folder that doesn't exist yet:** **Create this folder** makes it.
 - **A name already taken** in that folder, as a warning.
 
@@ -26,8 +26,8 @@ A link Velocity can't download is refused in the dialog, with the reason, for ex
 
 | Option | What it does |
 |---|---|
-| Connections | The most connections this download may use. Velocity starts with all of them and keeps those that make it faster |
-| Speed limit | This download's own limit, on top of the global one in Settings. Under a limit, Velocity uses only the connections that reach it, and the details say so |
+| Connections | The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster |
+| Speed limit | This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so |
 | Referrer, extra headers | Sent to the server, for sites that need them |
 | User name and password | The login for the server |
 | SSH key and its passphrase | For SFTP servers that use keys |
@@ -38,7 +38,7 @@ A link Velocity can't download is refused in the dialog, with the reason, for ex
 
 **After you choose Add:**
 
-- **A name already taken:** choose **Keep both (rename)** or **Skip**. Velocity never replaces a file that is already there.
+- **A name already taken:** choose **Keep both (rename)** or **Skip**. Apollo Download Manager never replaces a file that is already there.
 - **A link added before:** **Add anyway** starts a separate download, and **Show download** selects the one already in the list.
 - **Links that failed** are listed, each with the reason.
 
@@ -47,7 +47,7 @@ A link Velocity can't download is refused in the dialog, with the reason, for ex
 The first download from an SFTP server stops before logging in and asks **Trust this server?**, with the server's key fingerprint (`SHA256:…`). Nothing has been sent yet: no login, no file name.
 
 - **Check the fingerprint** with the server's owner before trusting it. On the server, `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` prints it. Choose **Trust and continue** only if they match.
-- **"The server's host key changed"** means the server shows another key than the one you trusted. A reinstalled server does that, and so does an attacker. Velocity refuses it every time. Ask the server's owner whether and why the key changed ([Troubleshooting](troubleshooting.md#a-download-failed)).
+- **"The server's host key changed"** means the server shows another key than the one you trusted. A reinstalled server does that, and so does an attacker. Apollo Download Manager refuses it every time. Ask the server's owner whether and why the key changed ([Troubleshooting](troubleshooting.md#a-download-failed)).
 
 ## The download list
 
@@ -79,10 +79,10 @@ The right-click menu needs a pointer, as in V1. Its actions are also on the tool
 
 | Status | Meaning |
 |---|---|
-| Retrying in 1m 30s | The download failed in a way worth retrying; Velocity tries again by itself at that time. **Waiting to retry** when the time isn't known. A server that asks Velocity to slow down for 30 s or less isn't shown here: the download stays Downloading, and the details' Connections line says the server asked Velocity to slow down |
-| No data received | The server stopped sending. Velocity resets the connection and tries again |
+| Retrying in 1m 30s | The download failed in a way worth retrying; Apollo Download Manager tries again by itself at that time. **Waiting to retry** when the time isn't known. A server that asks Apollo Download Manager to slow down for 30 s or less isn't shown here: the download stays Downloading, and the details' Connections line says the server asked Apollo Download Manager to slow down |
+| No data received | The server stopped sending. Apollo Download Manager resets the connection and tries again |
 | Waiting for peers | A torrent with no one to download from yet |
-| Needs its login | After Velocity restarts, a download that had a login, headers or a key it didn't remember waits for them. **Resume** or **Retry** asks for them again |
+| Needs its login | After Apollo Download Manager restarts, a download that had a login, headers or a key it didn't remember waits for them. **Resume** or **Retry** asks for them again |
 | Choose files | A torrent waiting for you to choose its files ([Torrents](torrents.md)) |
 
 Speed and time left show only while data arrives. **Avg. speed** is the average while the download ran, shown once data has arrived, and **Started** is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones.
@@ -107,7 +107,7 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 
 ## Files and folders
 
-- **No file is ever overwritten.** If a file appears at a download's name while it downloads, from V1 or any other program, Velocity keeps it and stops the download: "the destination file already exists; it is never replaced".
+- **No file is ever overwritten.** If a file appears at a download's name while it downloads, from V1 or any other program, Apollo Download Manager keeps it and stops the download: "the destination file already exists; it is never replaced".
 - **While downloading,** the data goes to `<name>.vdmpart` beside the final file, which gets its name only once the download is complete and, with a checksum, verified.
 - **Look-alike names:** two names that look the same but are typed differently are two files. On Windows, names that differ only in upper and lower case are the same file.
 - **Long paths:** downloads into folders deeper than Windows' old 260-character limit work.
@@ -116,12 +116,12 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 
 ## Logins, headers and keys
 
-Passwords, custom header values (such as cookies or tokens) and SSH key passphrases are secrets. Velocity never writes them to its database, its saved progress or its log.
+Passwords, custom header values (such as cookies or tokens) and SSH key passphrases are secrets. Apollo Download Manager never writes them to its database, its saved progress or its log.
 
 - **Remember this login in the system keychain,** in the Add dialog, is off by default. Ticked, the download's login is kept in Windows Credential Manager, the Secret Service on Linux (GNOME Keyring, KWallet) or the macOS Keychain, and removing the download deletes it there.
 - **After a restart:** a download whose login was remembered carries on. Otherwise it comes back paused, as "Needs its login", and asks for it again when you resume it, as V1 did.
-- **No keychain** (for example a minimal Linux without a Secret Service): Velocity says "The system keychain isn't available, so the login wasn't saved." The download still works until Velocity closes.
+- **No keychain** (for example a minimal Linux without a Secret Service): Apollo Download Manager says "The system keychain isn't available, so the login wasn't saved." The download still works until Apollo Download Manager closes.
 
-## If Velocity closes suddenly
+## If Apollo Download Manager closes suddenly
 
-After a crash, a forced quit or a power cut, the downloads come back when Velocity starts again and continue from their last saved progress. Velocity saves progress every 2 seconds or 16 MiB, and when you pause.
+After a crash, a forced quit or a power cut, the downloads come back when Apollo Download Manager starts again and continue from their last saved progress. Apollo Download Manager saves progress every 2 seconds or 16 MiB, and when you pause.

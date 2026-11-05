@@ -591,7 +591,7 @@ fn a_server_known_to_throttle_is_asked_once_from_the_start() {
 
 #[test]
 fn a_short_wait_for_a_throttling_server_isnt_shown_as_retrying() {
-    // #247 (PO decision): a 429 that Velocity handles within 30 s keeps the download Downloading,
+    // #247 (PO decision): a 429 that Apollo Download Manager handles within 30 s keeps the download Downloading,
     // with no error to read; only a longer wait shows.
     let data = seeded_bytes(4 << 20, 2471);
     let s = TestServer::start(

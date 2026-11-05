@@ -328,7 +328,7 @@ fn session(sock: TcpStream, shared: &Shared) -> io::Result<()> {
         control = control.into_tls(config)?;
         shared.record.lock().unwrap().tls_controls += 1;
     }
-    reply(&mut control, "220 Velocity test FTP")?;
+    reply(&mut control, "220 Apollo Download Manager test FTP")?;
     let mut s = Session {
         user: String::new(),
         logged_in: false,

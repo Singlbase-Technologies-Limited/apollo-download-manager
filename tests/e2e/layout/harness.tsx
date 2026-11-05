@@ -82,7 +82,7 @@ mockIPC(
     const args = (payload ?? {}) as Record<string, unknown>;
     switch (cmd) {
       case 'app_info':
-        return { name: 'Velocity Download Manager (layout harness)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
+        return { name: 'Apollo Download Manager (layout harness)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
       case 'get_shell_settings':
         return settings;
       case 'set_appearance':

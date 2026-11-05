@@ -530,6 +530,23 @@ mod queue {
         );
     }
 
+    /// #351: with nothing saved, 2 run at once, and a cancelled one frees its slot.
+    #[test]
+    fn by_default_two_run_at_once_and_a_cancel_frees_a_slot() {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = in_memory(fake);
+        let a = add(&mut m, "a");
+        add(&mut m, "b");
+        let c = add(&mut m, "c");
+        m.pump(T0);
+        assert_eq!(started(&control), ["a", "b"]);
+        assert_eq!(status(&m, &c), DownloadStatus::Queued);
+        m.cancel(&a).unwrap();
+        m.pump(T0);
+        assert_eq!(started(&control), ["a", "b", "c"], "a's slot went to c");
+    }
+
     #[test]
     fn a_retrying_or_stalled_download_keeps_its_slot() {
         let (mut m, control) = queue_of(1);
@@ -664,6 +681,7 @@ mod queue {
                 enabled: true,
                 ..ScheduleSettings::default()
             },
+            max_concurrent_downloads: 3,
             ..QueueSettings::default()
         })
         .unwrap();
@@ -2105,6 +2123,12 @@ mod retry {
         let fake = FakeTransfer::new();
         let control = fake.control();
         let mut m = in_memory(fake);
+        // Three run at once, as before the default became 2 (#351).
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 3,
+            ..QueueSettings::default()
+        })
+        .unwrap();
         let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
         let b = m.add(DownloadKind::Http, named("b.zip"), T0).unwrap();
         let done = m.add(DownloadKind::Http, named("done.zip"), T0).unwrap();
@@ -4624,6 +4648,12 @@ mod categories {
     fn a_name_learned_after_the_start_sets_the_automatic_category_and_keeps_the_folder() {
         // PO decision on #31: the server's name categorises the download; nothing is moved.
         let (mut m, control, db, dir) = in_folder("learned");
+        // Three run at once, as before the default became 2 (#351).
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 3,
+            ..QueueSettings::default()
+        })
+        .unwrap();
         let unnamed = || TransferSpec {
             urls: vec!["https://example.com/download.php?id=3".to_owned()],
             directory: dir.clone(),

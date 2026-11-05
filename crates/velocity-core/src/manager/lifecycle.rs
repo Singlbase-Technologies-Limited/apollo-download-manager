@@ -402,7 +402,7 @@ mod tests {
         r.error = Some(TransferError::new(
             FailureClass::Transient,
             None,
-            "Velocity couldn't connect to the server (libcurl error 28: Failed to connect to \
+            "Apollo Download Manager couldn't connect to the server (libcurl error 28: Failed to connect to \
              example.com port 443 after 21073 ms)",
         ));
         r
@@ -489,7 +489,7 @@ mod tests {
         assert!(lines.iter().all(|l| l.warn));
         assert_eq!(
             lines[0].text,
-            "download d-0001 retry 1 in 11 s at 1048576 of 4194304 bytes: Velocity couldn't \
+            "download d-0001 retry 1 in 11 s at 1048576 of 4194304 bytes: Apollo Download Manager couldn't \
              connect to the server (libcurl error 28: Failed to connect to example.com port 443 \
              after 21073 ms) [transient]"
         );

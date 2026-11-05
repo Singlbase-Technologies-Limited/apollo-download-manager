@@ -49,10 +49,11 @@ pub struct QueueSettings {
 }
 
 impl Default for QueueSettings {
-    /// V1's: 3 at once, new downloads start at once, no schedule.
+    /// 2 at once (#351; V1's was 3), so each download gets more of the line; new downloads start
+    /// at once, and no schedule, as V1's.
     fn default() -> Self {
         QueueSettings {
-            max_concurrent_downloads: 3,
+            max_concurrent_downloads: 2,
             start_immediately: true,
             schedule: ScheduleSettings::default(),
         }
@@ -139,9 +140,9 @@ mod tests {
     }
 
     #[test]
-    fn the_defaults_are_v1s() {
+    fn the_defaults_are_two_at_once_and_otherwise_v1s() {
         let q = QueueSettings::default();
-        assert_eq!(q.max_concurrent_downloads, 3);
+        assert_eq!(q.max_concurrent_downloads, 2);
         assert!(q.start_immediately);
         assert!(!q.schedule.enabled);
         assert_eq!(q.schedule.start_time, "02:00");

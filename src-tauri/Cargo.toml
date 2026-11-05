@@ -1,6 +1,6 @@
 [package]
 name = "velocity-desktop-v2"
-description = "Tauri desktop shell for Velocity Download Manager V2"
+description = "Tauri desktop shell for Apollo Download Manager"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

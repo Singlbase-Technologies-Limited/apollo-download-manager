@@ -94,7 +94,7 @@ impl fmt::Display for MetalinkError {
         match self {
             MetalinkError::TooLarge => write!(
                 f,
-                "The Metalink file is too large: Velocity reads at most 16 MiB, {MAX_FILES} files, \
+                "The Metalink file is too large: Apollo Download Manager reads at most 16 MiB, {MAX_FILES} files, \
                  {MAX_URLS_PER_FILE} sources per file and {MAX_DEPTH} levels of nesting."
             ),
             MetalinkError::NotUtf8 => f.write_str("The Metalink file isn't UTF-8 text."),
@@ -102,7 +102,7 @@ impl fmt::Display for MetalinkError {
                 write!(f, "The Metalink file isn't valid: {detail}.")
             }
             MetalinkError::DocType => f.write_str(
-                "The Metalink file declares a document type, which Velocity refuses: it could \
+                "The Metalink file declares a document type, which Apollo Download Manager refuses: it could \
                  define entities that expand without limit or read other files.",
             ),
             MetalinkError::NotMetalink => {
@@ -131,7 +131,7 @@ impl fmt::Display for MetalinkError {
                 code.user_message()
             ),
             MetalinkError::NoFiles => f.write_str(
-                "The Metalink file has no file Velocity can download: it uses only http, https, \
+                "The Metalink file has no file Apollo Download Manager can download: it uses only http, https, \
                  ftp and ftps sources.",
             ),
         }
@@ -624,7 +624,7 @@ fn reference(reference: &BytesRef) -> Result<String, MetalinkError> {
 
 /// Reads a Metalink 4 or Metalink 3 document: UTF-8, at most [`MAX_DOCUMENT_BYTES`], with no
 /// document type declaration (so no entity can expand). Files without a usable source are skipped
-/// and counted; a file Velocity won't create refuses the whole document.
+/// and counted; a file Apollo Download Manager won't create refuses the whole document.
 pub fn parse(document: &[u8]) -> Result<Metalink, MetalinkError> {
     if document.len() > MAX_DOCUMENT_BYTES {
         return Err(MetalinkError::TooLarge);

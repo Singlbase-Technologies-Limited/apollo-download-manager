@@ -229,7 +229,7 @@ mod tests {
         let s = Settings::default();
         assert_eq!(s.checked(), Ok(s.clone()));
         assert!(s.advanced.enable_bittorrent && !s.advanced.enable_metalink);
-        assert_eq!(s.queue.max_concurrent_downloads, 3);
+        assert_eq!(s.queue.max_concurrent_downloads, 2);
         assert_eq!(s.engine, EngineSettings::DEFAULT);
         assert_eq!(s.storage.history_retention_days, 90);
         assert!(s.browser.accept_requests && s.browser.confirm_before_adding);

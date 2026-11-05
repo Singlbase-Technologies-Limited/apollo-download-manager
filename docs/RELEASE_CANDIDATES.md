@@ -45,7 +45,7 @@ The installers are V2's release identity, so they install beside V1 and never to
 
 ## Going back to an earlier version
 
-A newer V2 may have changed the format of its data, and an older one can't always read it: the download list then says the saved downloads are from a newer Velocity. So:
+A newer V2 may have changed the format of its data, and an older one can't always read it: the download list then says the saved downloads are from a newer Apollo Download Manager. So:
 
 1. **Before installing a candidate,** copy V2's data folder: `%APPDATA%\com.velocity.downloadmanager.v2` on Windows, `~/.local/share/com.velocity.downloadmanager.v2` on Linux. Quit V2 first.
 2. **To go back:**

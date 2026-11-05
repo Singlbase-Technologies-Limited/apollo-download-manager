@@ -13,11 +13,11 @@ The limits of every setting are in the [developer documents](../SETTINGS.md).
 
 | Setting | Default |
 |---|---|
-| Close to tray: closing the window keeps Velocity running in the tray | On |
+| Close to tray: closing the window keeps Apollo Download Manager running in the tray | On |
 | Start minimized, in the tray | Off |
 | Confirm before quitting with active downloads | On |
 
-On Linux the tray needs an AppIndicator library. Without a tray, closing the window quits Velocity, and it never starts hidden.
+On Linux the tray needs an AppIndicator library. Without a tray, closing the window quits Apollo Download Manager, and it never starts hidden.
 
 ## Downloads
 
@@ -28,7 +28,7 @@ On Linux the tray needs an AppIndicator library. Without a tray, closing the win
 
 | Setting | Default | What it does |
 |---|---|---|
-| Simultaneous downloads | 3 | Up to 32. The others wait in the queue |
+| Simultaneous downloads | 2 | Up to 32. The others wait in the queue. Paused downloads, torrents choosing their files and seeding torrents don't count. Updating from 0.1.x changes a saved 3, the old default, to 2 once; set it again if you want 3 |
 | Start new downloads at once | On | Off: new downloads wait in the queue until you start them |
 | Speed limit for direct downloads | None | For all direct downloads together, in KiB/s. Torrents have their own limit, under BitTorrent (#312) |
 | Use the schedule | Off | Downloads you add while it's on run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose; they wait as Queued outside it. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start. No stop time runs to midnight; a stop before the start runs past midnight |
@@ -44,7 +44,7 @@ On Linux the tray needs an AppIndicator library. Without a tray, closing the win
 | Maximum | 16 | 1 MiB |
 | Custom | 1 to 16, your choice | 1 to 1024 MiB, your choice |
 
-A profile sets the most a download may use. Within it, Velocity starts with all of those connections and keeps only those that make the download faster, so a server that gains nothing from more gets fewer. More than 8 connections helps only a server that limits each connection's speed. A lower limit applies to running downloads at once; the smallest piece applies to downloads that start after the change.
+A profile sets the most a download may use. Within it, Apollo Download Manager starts with all of those connections and keeps only those that make the download faster, so a server that gains nothing from more gets fewer. More than 8 connections helps only a server that limits each connection's speed. A lower limit applies to running downloads at once; the smallest piece applies to downloads that start after the change.
 
 ## BitTorrent
 
@@ -64,7 +64,7 @@ A profile sets the most a download may use. Within it, Velocity starts with all 
 | New torrents: seeding | Never |
 | New torrents: upload limit for each | None |
 
-If the listening port is taken, Velocity uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded.
+If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded.
 
 ## Browser
 
@@ -76,7 +76,7 @@ For networks, such as a company's or a school's, that require one. Only this pro
 
 - **Type:** No proxy, HTTP, HTTPS or SOCKS5. Fill in **Host** (a name or an IP address, without `http://` or a port) and **Port** (8080 at first) first, then choose the type; a type without a host isn't saved, and the screen says why.
 - **Proxy login,** only for a proxy that asks for one: the **User name**, then the **Password** with **Save password**. The password is never shown again: the screen says only "A password is set." or "No password is set.", and **Clear** removes it. It is sent to the proxy alone, never to a site you download from.
-- **Remember the password in the system keychain** is off at first. Off, Velocity asks for the password again after it restarts. On, it is kept in Windows Credential Manager or the Linux keyring.
+- **Remember the password in the system keychain** is off at first. Off, Apollo Download Manager asks for the password again after it restarts. On, it is kept in Windows Credential Manager or the Linux keyring.
 - **What goes through it:** HTTP, HTTPS, FTP and SFTP downloads that start, resume or are retried after the change, and torrents at once.
 - **SFTP and torrents can't use an HTTPS proxy.** An SFTP download then fails saying so, and torrents don't start. Choose an HTTP or SOCKS5 proxy for them.
 - **Torrents through a proxy** don't look for peers on the local network or map a port, and use the DHT only through a SOCKS5 proxy, so nothing goes around the proxy. They may find fewer peers.
@@ -101,14 +101,14 @@ The theme (follow the system, light or dark) and the list's density (compact or 
 ## Advanced
 
 - **Metalink:** off by default, as in V1. On, links to Metalink files add the files they describe ([Protocols and limits](protocols.md#metalink)).
-- **User agent:** what Velocity tells servers it is, `VelocityDownloadManager/<version>` by default. For downloads added after a change.
+- **User agent:** what Apollo Download Manager tells servers it is, `ApolloDownloadManager/<version>` by default. For downloads added after a change.
 - **Retries and timeouts,** for downloads that start or retry after a change:
 
   | Setting | Default |
   |---|---|
   | Failures in a row before giving up | 5 |
   | Longest wait before a retry | 60 s |
-  | Times a failed download starts again | 2; after a lost network connection, Velocity keeps trying for up to 5 minutes, keeping what it downloaded |
+  | Times a failed download starts again | 2; after a lost network connection, Apollo Download Manager keeps trying for up to 5 minutes, keeping what it downloaded |
   | Shown as stalled after | 15 s without data, or with less than 1 KiB/s |
   | A request starts again after | 30 s without data, or with less than 1 KiB/s; never while a speed limit slows it |
   | Connect timeout | 30 s |
@@ -117,4 +117,4 @@ The theme (follow the system, light or dark) and the list's density (compact or 
 
 ## About and diagnostics
 
-The versions of Velocity and its engines, what the download engine supports, the recent log, **Export diagnostics…**, and restarting the transfer engine or the torrent helper. See [Troubleshooting](troubleshooting.md#the-diagnostics-report).
+The versions of Apollo Download Manager and its engines, what the download engine supports, the recent log, **Export diagnostics…**, and restarting the transfer engine or the torrent helper. See [Troubleshooting](troubleshooting.md#the-diagnostics-report).

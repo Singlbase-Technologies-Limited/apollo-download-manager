@@ -291,7 +291,7 @@ pub enum FetchError {
         code: i64,
         message: String,
     },
-    /// Velocity refused to follow a redirect (`redirect.rs`, #40): too many, or to another
+    /// Apollo Download Manager refused to follow a redirect (`redirect.rs`, #40): too many, or to another
     /// protocol. The message names no URL.
     RedirectRefused { kind: CurlFailure, message: String },
     /// A redirect from `https` to `http` that the user hasn't confirmed for this download (#67):
@@ -801,7 +801,7 @@ impl Handler for Collector {
         if head.status < 200 {
             return true;
         }
-        // A redirect: Velocity follows it itself once this response ends (#40).
+        // A redirect: Apollo Download Manager follows it itself once this response ends (#40).
         if (300..400).contains(&head.status) && head.header("location").is_some() {
             self.redirecting = true;
             return true;
@@ -954,7 +954,7 @@ fn set_options(
         }
         easy.referer(referrer)?;
     }
-    // Velocity follows redirects itself (`follow`, `redirect.rs`): libcurl would send the custom
+    // Apollo Download Manager follows redirects itself (`follow`, `redirect.rs`): libcurl would send the custom
     // headers to another host.
     easy.follow_location(false)?;
     set_proxy(easy, extra.proxy.as_ref())?;
@@ -1116,7 +1116,7 @@ fn is_header_line_safe(name: &str, value: &str) -> bool {
         && !value.chars().any(|c| c.is_control() && c != '\t')
 }
 
-/// Follows the redirect a fetch's response ended with, when Velocity's rules allow it
+/// Follows the redirect a fetch's response ended with, when Apollo Download Manager's rules allow it
 /// (`redirect.rs`): the same handle, reset and set up again for the next URL, carries on under
 /// the same token. On the loop thread. On a refusal, the fetch's events and why.
 fn follow(

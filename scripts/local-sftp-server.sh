@@ -131,7 +131,7 @@ unit_text="$(
   cat <<EOF
 # Written by scripts/local-sftp-server.sh (#176).
 [Unit]
-Description=Velocity V2 password-login SFTP test server (127.0.0.1:$port)
+Description=Apollo Download Manager password-login SFTP test server (127.0.0.1:$port)
 After=network.target
 
 [Service]

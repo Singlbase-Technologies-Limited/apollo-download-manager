@@ -124,22 +124,28 @@ mod tests {
 
     #[test]
     fn the_tooltip_names_the_app_and_says_what_is_active() {
-        assert_eq!(tooltip("Velocity", &snapshot(&[])), "Velocity");
         assert_eq!(
-            tooltip("Velocity", &snapshot(&[(DownloadStatus::Paused, 0)])),
-            "Velocity",
+            tooltip("Apollo Download Manager", &snapshot(&[])),
+            "Apollo Download Manager"
+        );
+        assert_eq!(
+            tooltip(
+                "Apollo Download Manager",
+                &snapshot(&[(DownloadStatus::Paused, 0)])
+            ),
+            "Apollo Download Manager",
             "nothing active"
         );
         assert_eq!(
             tooltip(
-                "Velocity",
+                "Apollo Download Manager",
                 &snapshot(&[
                     (DownloadStatus::Downloading, 1024 * 1024),
                     (DownloadStatus::Downloading, 512 * 1024),
                     (DownloadStatus::Queued, 0),
                 ])
             ),
-            "Velocity — 2 active, 1.5 MiB/s"
+            "Apollo Download Manager — 2 active, 1.5 MiB/s"
         );
     }
 

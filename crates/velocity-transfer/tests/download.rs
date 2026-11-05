@@ -969,8 +969,8 @@ fn a_slow_writer_holds_back_the_network_instead_of_queueing_the_file() {
     // server stops once the sockets' own buffers are full too (#38 found the file queued whole,
     // so the server sent all of it during the pause).
     //
-    // What Velocity controls is checked exactly: no request ever held more than its buffer's cap
-    // (#49). What the sockets hold isn't Velocity's: their buffers belong to the kernel, and grow
+    // What Apollo Download Manager controls is checked exactly: no request ever held more than its buffer's cap
+    // (#49). What the sockets hold isn't Apollo Download Manager's: their buffers belong to the kernel, and grow
     // with the system's settings (up to 6 and 4 MiB each on WSL2, and on Windows they kept
     // growing during the pause, #147 and #150). So only that the server never sent the whole
     // file is checked there.
@@ -1000,7 +1000,7 @@ fn a_slow_writer_holds_back_the_network_instead_of_queueing_the_file() {
         sent.load(Ordering::Relaxed) < LEN as u64,
         "the server sent the whole file while the writer was paused"
     );
-    // Velocity's own buffers: each request's filled up while the writer was paused, and never
+    // Apollo Download Manager's own buffers: each request's filled up while the writer was paused, and never
     // went past its cap by more than the one write libcurl hands over at a time (16 KiB).
     let cap = LoopOptions::default().buffer_bytes_per_fetch as u64;
     let peak = report.peak_buffered_bytes;

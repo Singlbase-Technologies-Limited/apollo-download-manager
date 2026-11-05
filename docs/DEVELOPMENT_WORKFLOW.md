@@ -104,7 +104,7 @@ The PO installs the release candidate. If it fails, the fixes go through normal 
 ### 4. Release
 
 ```sh
-git tag -a v0.5.0 <commit of the accepted rc> -m "Velocity Download Manager 0.5.0"
+git tag -a v0.5.0 <commit of the accepted rc> -m "Apollo Download Manager 0.5.0"
 git push origin v0.5.0           # release workflow stops at the PO approval gate (#18)
 ```
 

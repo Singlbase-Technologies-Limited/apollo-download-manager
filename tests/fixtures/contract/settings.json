@@ -58,7 +58,7 @@
     "userName": ""
   },
   "queue": {
-    "maxConcurrentDownloads": 3,
+    "maxConcurrentDownloads": 2,
     "schedule": {
       "days": [
         0,

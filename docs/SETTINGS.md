@@ -41,7 +41,7 @@ The screen (#30, `src/features/settings/SettingsView.tsx`) edits every section b
 | `advanced` | `globalDownloadLimitKib` | 0: none | 0, or at least 1 KiB/s (#49). Direct downloads only: torrents have their own `downloadLimit` ([TORRENTS.md](TORRENTS.md#settings-and-identity), #312) |
 | | `enableBittorrent` | on (V1's) | Off refuses torrents and magnet links with `PROTOCOL_DISABLED` |
 | | `enableMetalink` | off (V1's) | Offered when the engine reads Metalink, as it does since #54 |
-| | `userAgent` | `null`: `VelocityDownloadManager/<version>` | At most 256 bytes, no control characters; for downloads added after it |
+| | `userAgent` | `null`: `ApolloDownloadManager/<version>` | At most 256 bytes, no control characters; for downloads added after it |
 | `newTorrents` | `chooseFilesForMagnets` | off | The Add dialog's "Choose files before downloading" |
 | | `seeding` | never | As a torrent's seeding policy ([TORRENTS.md](TORRENTS.md)) |
 | | `uploadLimitKib` | 0: none | The Add dialog's upload limit |
@@ -99,13 +99,15 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 
 | Setting | Default | Bounds |
 |---|---|---|
-| `maxConcurrentDownloads` | 3 | 1 to 32 |
+| `maxConcurrentDownloads` | 2 (3 before 0.2.0, #351) | 1 to 32 |
 | `startImmediately` | on | — |
 | `schedule.enabled` | off | — |
 | `schedule.startTime`, `schedule.stopTime` | 02:00 to 07:00 | `HH:MM`, 24-hour; no stop time runs to midnight, and a stop before the start crosses midnight |
 | `schedule.days` | every day | 0 (Monday) to 6 (Sunday); at least one when the schedule is on |
 
 How the queue applies them is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#the-managers-side).
+
+**Updating from 0.1.x** (#351, option B, PO decision): a saved `maxConcurrentDownloads` of 3, the old default, becomes 2 once, through migration 8 ([DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md)). V2 can't tell a chosen 3 from the old default, since the queue section is saved whole. Every other value is kept, and a 3 chosen after the update stays.
 
 ## Folders
 
