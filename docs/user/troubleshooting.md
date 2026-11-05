@@ -54,6 +54,8 @@ The most common messages:
 | "The downloaded file doesn't match its SHA-256 checksum …" | Check that the checksum is the one the site gives for this exact file. The unfinished file is kept as `<name>.vdmpart` |
 | "There is not enough disk space." | Free some space, then **Retry**: the download goes on from where it stopped |
 | "Apollo Download Manager isn't allowed to write to that location." | The folder stopped accepting writes (its permissions changed, or the drive became read-only). Give your user write access again, then **Retry** |
+| "A file or folder of the torrent is no longer there." | A torrent's file or its folder was moved or deleted while it downloaded or seeded. Put it back, or remove the torrent and add it again |
+| "The torrent stopped because of an error." | The torrent engine reported a problem Apollo Download Manager has no plain words for. **Technical details** shows its own message; include it when you report the problem |
 | "The proxy refused the connection. Check its user name and password in Settings, Proxy." | Check the proxy's login, then retry. Ask the proxy's administrator whether it allows that site |
 | "The server can't encrypt the connection, and this download requires encryption." | The FTP server doesn't offer FTPS. Ask for an `ftps://` or `https://` link |
 | "The destination file already exists; it is never replaced" | A file appeared at the download's name while it downloaded. Apollo Download Manager kept it. Move or rename that file, or add the download again with another name |
