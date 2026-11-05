@@ -279,6 +279,20 @@ pub async fn move_download(
     on_manager(&downloads, move |m| m.move_download(&id, direction)).await?
 }
 
+/// Gives a waiting download its own start time, local `YYYY-MM-DDTHH:MM`, or takes it away with
+/// `null` (#350). The time is parsed here, at the boundary: any other form is refused.
+#[tauri::command]
+pub async fn set_start_at(
+    downloads: State<'_, Downloads>,
+    id: String,
+    start_at: Option<velocity_core::queue::LocalTime>,
+) -> Result<(), ErrorCode> {
+    on_manager(&downloads, move |m| {
+        m.set_start_at(&id, start_at.map(|t| t.0))
+    })
+    .await?
+}
+
 #[tauri::command]
 pub async fn set_download_connections(
     downloads: State<'_, Downloads>,

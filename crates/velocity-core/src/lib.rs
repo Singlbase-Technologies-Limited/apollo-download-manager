@@ -66,7 +66,11 @@ use serde::Serialize;
 /// Version 25 (#277) added [`domain::DestinationCheck::path`].
 /// Version 26 (#278) added [`domain::ConnectionLimit::SpeedLimit`].
 /// Version 27 (#313) added [`domain::DownloadRecord::file_count`].
-pub const COMMAND_API_VERSION: u32 = 27;
+/// Version 28 (#318) added [`domain::DownloadStatus::WaitingForNetwork`],
+/// [`domain::TransferError::no_network`] and [`queue::QueueSettings::restart_on_network`].
+/// Version 29 (#350) added [`domain::DownloadRecord::waits_until`],
+/// [`domain::DownloadsSnapshot::schedule`], [`manager::AddRequest::start_at`] and `set_start_at`.
+pub const COMMAND_API_VERSION: u32 = 29;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -43,6 +43,7 @@ const MIGRATIONS: &[M<'static>] = &[
     M::up(include_str!("../../migrations/0006_builtin_categories.sql")),
     M::up(include_str!("../../migrations/0007_activity.sql")),
     M::up(include_str!("../../migrations/0008_two_at_once.sql")),
+    M::up(include_str!("../../migrations/0009_start_at.sql")),
 ];
 
 /// The migrations this build applies.
@@ -377,7 +378,7 @@ mod tests {
     #[test]
     fn the_migrations_are_valid() {
         assert_eq!(migrations().validate(), Ok(()));
-        assert_eq!(latest_schema_version(), 8);
+        assert_eq!(latest_schema_version(), 9);
     }
 
     #[test]
@@ -537,6 +538,7 @@ mod tests {
         assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         assert_eq!(db.downloads().unwrap()[0].id, "d-0001");
         let entry = QueueEntry {
+            start_at: None,
             id: "d-0001".to_owned(),
             scheduled: true,
         };
@@ -618,6 +620,57 @@ mod tests {
                 assert_eq!(db.settings().unwrap(), Some(queue(3)));
             }
         }
+    }
+
+    /// #350: migration 0009, from schema 8 with a queued download in it, gains its own start time,
+    /// none at first.
+    #[test]
+    fn schema_8_is_upgraded_with_its_queue_and_gains_a_start_time() {
+        let dir = Dir::new("v8-to-v9");
+        {
+            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..8])).unwrap();
+            assert_eq!(db.schema_version(), Ok(8));
+            db.insert_download(&sample("d-0001")).unwrap();
+            db.conn()
+                .execute(
+                    "UPDATE downloads SET queue_position = 0, scheduled = 1 WHERE id = 'd-0001'",
+                    [],
+                )
+                .unwrap();
+        }
+        let db = Database::open(&dir.db()).expect("upgrades");
+        assert_eq!(db.schema_version(), Ok(9));
+        let queue = db.queue().unwrap();
+        assert_eq!(
+            queue,
+            [QueueEntry {
+                id: "d-0001".to_owned(),
+                scheduled: true,
+                start_at: None,
+            }],
+            "its place and its schedule are kept"
+        );
+        db.save_queue(&[QueueEntry {
+            start_at: Some("2026-10-24T03:00".to_owned()),
+            ..queue[0].clone()
+        }])
+        .unwrap();
+        assert_eq!(
+            db.queue().unwrap()[0].start_at.as_deref(),
+            Some("2026-10-24T03:00")
+        );
+        // Leaving the queue drops the time with the place.
+        db.save_queue(&[]).unwrap();
+        let start_at: Option<String> = db
+            .conn()
+            .query_row(
+                "SELECT start_at FROM downloads WHERE id = 'd-0001'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(start_at, None);
+        assert!(dir.names().iter().any(|n| n.contains(".bak-v8-")));
     }
 
     #[test]
@@ -703,6 +756,7 @@ mod tests {
     fn the_queue_comes_back_after_a_restart_with_a_paused_download_still_paused() {
         let dir = Dir::new("queue-restart");
         let entry = |id: &str, scheduled| QueueEntry {
+            start_at: None,
             id: id.to_owned(),
             scheduled,
         };
@@ -745,6 +799,7 @@ mod tests {
             db.insert_download(&sample(id)).unwrap();
         }
         let entry = |id: &str| QueueEntry {
+            start_at: None,
             id: id.to_owned(),
             scheduled: false,
         };

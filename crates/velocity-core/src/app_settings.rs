@@ -93,6 +93,18 @@ impl Density {
     pub const ALL: [Self; 2] = [Self::Compact, Self::Comfortable];
 }
 
+/// How times are shown everywhere in the app (#350; PO decision: 24-hour by default, and the
+/// setting applies to every time shown).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TimeFormat {
+    /// 14:30.
+    #[default]
+    TwentyFourHour,
+    /// 2:30 PM.
+    TwelveHour,
+}
+
 /// Bounds for saved panel widths, in CSS pixels, V1's. Mirrored in `src/layout/layoutLogic.ts`.
 pub const SIDEBAR_MIN_WIDTH: u32 = 184;
 pub const SIDEBAR_MAX_WIDTH: u32 = 360;
@@ -190,6 +202,8 @@ pub struct AppearanceSettings {
     pub visible_columns: Vec<ColumnId>,
     /// The widths the user set, in CSS pixels; a column not listed has its default width (#59).
     pub column_widths: BTreeMap<ColumnId, u32>,
+    /// 24-hour or 12-hour times (#350).
+    pub time_format: TimeFormat,
 }
 
 impl Default for AppearanceSettings {
@@ -200,6 +214,7 @@ impl Default for AppearanceSettings {
             layout: LayoutSettings::default(),
             visible_columns: ColumnId::DEFAULT.to_vec(),
             column_widths: BTreeMap::new(),
+            time_format: TimeFormat::default(),
         }
     }
 }
@@ -310,6 +325,7 @@ mod tests {
             (look.theme, look.density),
             (Theme::System, Density::Compact)
         );
+        assert_eq!(look.time_format, TimeFormat::TwentyFourHour, "#350");
         assert_eq!(look.layout.sidebar_width, None);
         assert!(look.layout.sidebar_visible && !look.layout.sidebar_collapsed);
         assert!(!look.layout.details_visible);

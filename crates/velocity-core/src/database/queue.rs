@@ -11,6 +11,8 @@ pub struct QueueEntry {
     pub id: String,
     /// It runs only while the schedule's window is open.
     pub scheduled: bool,
+    /// Its own start time, local `YYYY-MM-DDTHH:MM` (#350); schema 9.
+    pub start_at: Option<String>,
 }
 
 impl Database {
@@ -21,11 +23,20 @@ impl Database {
         let mut conn = self.conn();
         // Dropped without a commit on an error: the last queue stays.
         let tx = conn.transaction()?;
-        tx.execute("UPDATE downloads SET queue_position = NULL", [])?;
+        tx.execute(
+            "UPDATE downloads SET queue_position = NULL, start_at = NULL",
+            [],
+        )?;
         for (position, entry) in entries.iter().enumerate() {
             let changed = tx.execute(
-                "UPDATE downloads SET queue_position = ?1, scheduled = ?2 WHERE id = ?3",
-                rusqlite::params![to_sql_int(position as u64)?, entry.scheduled, entry.id],
+                "UPDATE downloads SET queue_position = ?1, scheduled = ?2, start_at = ?3
+                 WHERE id = ?4",
+                rusqlite::params![
+                    to_sql_int(position as u64)?,
+                    entry.scheduled,
+                    entry.start_at,
+                    entry.id
+                ],
             )?;
             if changed != 1 {
                 return Err(DatabaseError::new(
@@ -42,12 +53,13 @@ impl Database {
     pub fn queue(&self) -> Result<Vec<QueueEntry>, DatabaseError> {
         let conn = self.conn();
         let mut statement = conn.prepare(
-            "SELECT id, scheduled FROM downloads WHERE queue_position IS NOT NULL              ORDER BY queue_position, id",
+            "SELECT id, scheduled, start_at FROM downloads WHERE queue_position IS NOT NULL              ORDER BY queue_position, id",
         )?;
         let rows = statement.query_map([], |r| {
             Ok(QueueEntry {
                 id: r.get(0)?,
                 scheduled: r.get(1)?,
+                start_at: r.get(2)?,
             })
         })?;
         Ok(rows.collect::<Result<_, _>>()?)

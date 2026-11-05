@@ -122,6 +122,85 @@ impl ScheduleSettings {
     }
 }
 
+/// A local date and time to the minute, `YYYY-MM-DDTHH:MM`, as the UI sends and shows it (#350):
+/// a download's own start time. Anything else is refused when it is read.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LocalTime(pub DateTime);
+
+impl LocalTime {
+    /// `text` as `YYYY-MM-DDTHH:MM`, or `None`.
+    pub fn parse(text: &str) -> Option<Self> {
+        let ok = text.len() == 16 && text.as_bytes()[10] == b'T';
+        let at: DateTime = text.parse().ok().filter(|_| ok)?;
+        Some(LocalTime(at))
+    }
+}
+
+impl std::fmt::Display for LocalTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.strftime("%Y-%m-%dT%H:%M"))
+    }
+}
+
+impl Serialize for LocalTime {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(self)
+    }
+}
+
+impl<'de> Deserialize<'de> for LocalTime {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let text = String::deserialize(d)?;
+        LocalTime::parse(&text)
+            .ok_or_else(|| serde::de::Error::custom("a local time must be YYYY-MM-DDTHH:MM"))
+    }
+}
+
+/// One opening of the schedule's window, in local time (#350).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Window {
+    pub opens: DateTime,
+    /// Midnight after the start when there is no stop time.
+    pub closes: DateTime,
+}
+
+impl ScheduleSettings {
+    /// The window open at local time `now`, or the next one to open within a week; `None` when
+    /// the schedule is off or never opens. Follows [`ScheduleSettings::is_open`]'s rules.
+    pub fn window_from(&self, now: DateTime) -> Option<Window> {
+        if !self.enabled {
+            return None;
+        }
+        let start = parse_hhmm(&self.start_time)?;
+        let stop = match self.stop_time.as_deref() {
+            Some(text) => Some(parse_hhmm(text)?),
+            None => None,
+        };
+        if stop == Some(start) {
+            return None;
+        }
+        // From yesterday, whose window may cross midnight into today, to a week ahead.
+        (-1..=7).find_map(|offset: i64| {
+            let day = now
+                .date()
+                .checked_add(jiff::Span::new().days(offset))
+                .ok()?;
+            let weekday = day.weekday().to_monday_zero_offset() as u8;
+            if !self.days.contains(&weekday) {
+                return None;
+            }
+            let next_day = day.tomorrow().ok()?;
+            let opens = day.to_datetime(start);
+            let closes = match stop {
+                None => next_day.to_datetime(Time::midnight()),
+                Some(stop) if stop > start => day.to_datetime(stop),
+                Some(stop) => next_day.to_datetime(stop),
+            };
+            (closes > now).then_some(Window { opens, closes })
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,5 +323,56 @@ mod tests {
             "03:00 local, the jump"
         );
         assert!(!s.is_open(local("2026-03-29T03:00:00Z")), "05:00 local");
+    }
+
+    /// #350: the screen says when the schedule next opens and closes.
+    #[test]
+    fn the_window_open_now_or_the_next_one() {
+        let s = schedule("02:00", Some("07:00"), (0..7).collect());
+        let w = |opens: DateTime, closes: DateTime| Some(Window { opens, closes });
+        assert_eq!(
+            s.window_from(at(19, 1, 0)),
+            w(at(19, 2, 0), at(19, 7, 0)),
+            "later today"
+        );
+        assert_eq!(
+            s.window_from(at(19, 3, 0)),
+            w(at(19, 2, 0), at(19, 7, 0)),
+            "open now"
+        );
+        assert_eq!(
+            s.window_from(at(19, 7, 0)),
+            w(at(20, 2, 0), at(20, 7, 0)),
+            "tomorrow"
+        );
+        // Across midnight: the early hours are the day before's window.
+        let night = schedule("23:00", Some("06:00"), vec![0]);
+        assert_eq!(
+            night.window_from(at(20, 5, 0)),
+            w(at(19, 23, 0), at(20, 6, 0))
+        );
+        assert_eq!(
+            night.window_from(at(20, 6, 0)),
+            w(at(26, 23, 0), at(27, 6, 0)),
+            "next Monday"
+        );
+        // No stop time: until midnight.
+        let evening = schedule("18:00", None, (0..7).collect());
+        assert_eq!(
+            evening.window_from(at(19, 12, 0)),
+            w(at(19, 18, 0), at(20, 0, 0))
+        );
+        // Never: off, no day, or a start equal to the stop.
+        let mut off = s.clone();
+        off.enabled = false;
+        assert_eq!(off.window_from(at(19, 1, 0)), None);
+        assert_eq!(
+            schedule("02:00", Some("02:00"), (0..7).collect()).window_from(at(19, 1, 0)),
+            None
+        );
+        assert_eq!(
+            schedule("02:00", Some("07:00"), vec![]).window_from(at(19, 1, 0)),
+            None
+        );
     }
 }

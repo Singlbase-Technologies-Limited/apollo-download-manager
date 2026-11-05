@@ -47,6 +47,9 @@ struct Download {
     paused: bool,
     /// It runs only while the schedule's window is open.
     scheduled: bool,
+    /// Its own start time, local (#350): it waits until then, whatever the window, and the time
+    /// is cleared once it starts, so it never starts twice.
+    start_at: Option<DateTime>,
     /// The user cancelled it, and the engine hasn't confirmed yet: it never runs again (#339).
     cancelling: bool,
     /// When the engine's events last saved it; progress alone is saved at most every
@@ -112,6 +115,8 @@ pub struct AddOptions {
     pub scheduled: bool,
     /// Its category, which must exist; `None` for none yet ([`Manager::place`] chooses one).
     pub category_id: Option<String>,
+    /// Its own start time, local (#350): it waits until then, whatever the schedule's window.
+    pub start_at: Option<DateTime>,
 }
 
 /// Which of a Metalink document's files to download, and where (#54).
@@ -247,14 +252,18 @@ impl Download {
             }
     }
 
-    /// It may take a slot: not paused, not cancelled, not finished, and not waiting for the
-    /// schedule or the network (#318).
-    fn may_run(&self, window_open: bool) -> bool {
+    /// It may take a slot: not paused, not cancelled, not finished, not waiting for the network
+    /// (#318), and its own start time reached at local time `local`, or else not waiting for the
+    /// schedule (#350).
+    fn may_run(&self, window_open: bool, local: Option<DateTime>) -> bool {
         !self.paused
             && !self.cancelling
             && !self.record.status.is_terminal()
             && self.record.status != DownloadStatus::WaitingForNetwork
-            && (!self.scheduled || window_open)
+            && match self.start_at {
+                Some(at) => local.is_some_and(|now| now >= at),
+                None => !self.scheduled || window_open,
+            }
     }
 
     /// Shows its own speed limit and connections on its record (#61): whenever they are set.
@@ -370,8 +379,10 @@ impl Manager {
         // No name yet when the server names the file; the engine reports it (#40).
         let file_name = spec.file_name.clone();
         let directory = spec.directory.to_string_lossy().into_owned();
-        let paused =
-            options.start_paused || (!self.settings.start_immediately && !options.scheduled);
+        let paused = options.start_paused
+            || (!self.settings.start_immediately
+                && !options.scheduled
+                && options.start_at.is_none());
 
         self.next_id += 1;
         let id = format!("d-{:04}", self.next_id);
@@ -404,12 +415,16 @@ impl Manager {
                 requested_connections: None,
                 torrent: None,
                 file_count: None,
+                waits_until: None,
             },
             job: Job::Direct(Box::new(DirectJob::new(spec, None))),
             running: false,
             paused,
             // While the schedule is on, every new download waits for it (PO decision on #340).
-            scheduled: options.scheduled || self.settings.schedule.enabled,
+            // Its own start time beats the window (PO decision on #350).
+            scheduled: options.start_at.is_none()
+                && (options.scheduled || self.settings.schedule.enabled),
+            start_at: options.start_at,
             cancelling: false,
             saved_at_ms: None,
             needs_login: false,
@@ -423,7 +438,7 @@ impl Manager {
         new.status = download.record.status;
         new.category_id = category_id;
         self.database.insert_download(&new).map_err(|e| e.code)?;
-        let starts_now = download.may_run(self.window_open) && self.free_slots() > 0;
+        let starts_now = download.may_run(self.window_open, self.local) && self.free_slots() > 0;
         self.downloads.insert(id.clone(), download);
         self.order.push(id.clone());
         if starts_now {
@@ -838,6 +853,7 @@ impl Manager {
         }
         let directory = PathBuf::from(&record.directory);
         let options = AddOptions {
+            start_at: None,
             start_paused: false,
             scheduled: download.scheduled,
             category_id: None,
@@ -876,6 +892,9 @@ impl Manager {
             .map(|id| QueueEntry {
                 id: id.clone(),
                 scheduled: self.downloads[id].scheduled,
+                start_at: self.downloads[id]
+                    .start_at
+                    .map(|t| crate::queue::LocalTime(t).to_string()),
             })
             .collect()
     }
@@ -893,9 +912,14 @@ impl Manager {
         let downloads = self
             .order
             .iter()
-            .map(|id| &self.downloads[id].record)
-            .chain(finished)
-            .cloned()
+            .map(|id| {
+                let d = &self.downloads[id];
+                DownloadRecord {
+                    waits_until: self.waits_until(d),
+                    ..d.record.clone()
+                }
+            })
+            .chain(finished.into_iter().cloned())
             .collect();
         DownloadsSnapshot {
             downloads,
@@ -919,6 +943,7 @@ impl Manager {
             engine: self.engine_health(),
             torrent_engine: self.torrents.health(),
             storage_error: self.storage_error.as_ref().map(|e| e.code),
+            schedule: self.schedule_window(),
         }
     }
 
@@ -936,13 +961,13 @@ impl Manager {
     /// ones in queue order while slots are free. A download the engine refuses to start fails
     /// with the reason; one it refuses to pause keeps its slot until its next event.
     fn fill(&mut self) {
-        let window_open = self.window_open;
+        let (window_open, local) = (self.window_open, self.local);
         let stopping: Vec<String> = self
             .order
             .iter()
             .filter(|id| {
                 let d = &self.downloads[*id];
-                d.running && !d.may_run(window_open)
+                d.running && !d.may_run(window_open, local)
             })
             .cloned()
             .collect();
@@ -956,7 +981,7 @@ impl Manager {
             .iter()
             .filter(|id| {
                 let d = &self.downloads[*id];
-                !d.running && d.may_run(window_open)
+                !d.running && d.may_run(window_open, local)
             })
             .cloned()
             .collect();
@@ -998,6 +1023,17 @@ impl Manager {
     /// resume after that. A new transfer for a download that ran before resumes from what it left
     /// on disk, under the name it was saved as.
     fn start(&mut self, id: &str) -> Result<(), ErrorCode> {
+        self.start_in_engine(id)?;
+        // Its own start time is spent, and the window no longer holds it back (#350).
+        let d = self.downloads.get_mut(id).expect("known");
+        if d.start_at.take().is_some() {
+            d.scheduled = false;
+            self.unsaved.insert(id.to_owned());
+        }
+        Ok(())
+    }
+
+    fn start_in_engine(&mut self, id: &str) -> Result<(), ErrorCode> {
         let d = self.downloads.get_mut(id).expect("known");
         let name = d.record.file_name.clone();
         let Some(job) = d.direct_mut() else {
@@ -1175,6 +1211,7 @@ mod proxy;
 mod recovery;
 mod service;
 mod settings;
+mod start_time;
 mod torrent_details;
 mod torrent_links;
 mod torrents;

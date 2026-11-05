@@ -322,6 +322,28 @@ pub struct DownloadRecord {
     /// How many files a torrent has, padding left out, once its metadata is known (#313), so
     /// the list shows a folder only for several. `None` for a direct download, and before.
     pub file_count: Option<u32>,
+    /// Why a queued download waits, and until when (#350): its own start time, or the schedule's
+    /// next window. Worked out for each snapshot, never saved. `None` for any other download.
+    pub waits_until: Option<WaitsUntil>,
+}
+
+/// Until when a queued download waits, and why (#350).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WaitsUntil {
+    pub reason: WaitReason,
+    /// Local date and time, `YYYY-MM-DDTHH:MM`.
+    pub at: String,
+}
+
+/// Why a queued download waits (#350).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum WaitReason {
+    /// For the schedule's window to open.
+    Schedule,
+    /// For the start time the user chose for it.
+    ChosenTime,
 }
 
 /// A torrent's peers and seeding, as the torrent helper reports them (#61).
@@ -356,6 +378,19 @@ pub struct DownloadsSnapshot {
     pub torrent_engine: EngineHealth,
     /// The last failure to save a download, if any.
     pub storage_error: Option<ErrorCode>,
+    /// The schedule's window open now, or the next one (#350); `None` while the schedule is off
+    /// or never opens.
+    pub schedule: Option<ScheduleWindow>,
+}
+
+/// One opening of the schedule's window, in local `YYYY-MM-DDTHH:MM` (#350).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ScheduleWindow {
+    pub opens: String,
+    pub closes: String,
+    /// It is open now.
+    pub open: bool,
 }
 
 /// What adding a download would do, before it is added (#31, V1's destination check): the
@@ -675,6 +710,7 @@ impl DownloadRecord {
             requested_connections: Some(8),
             torrent: None,
             file_count: None,
+            waits_until: None,
         }
     }
 }
@@ -712,6 +748,7 @@ impl DownloadsSnapshot {
                 seed_queued: false,
             }),
             file_count: Some(2),
+            waits_until: None,
             ..DownloadRecord::sample()
         };
         Self {
@@ -727,6 +764,11 @@ impl DownloadsSnapshot {
             engine: EngineHealth::Restarting { attempt: 1 },
             torrent_engine: EngineHealth::Running,
             storage_error: Some(ErrorCode::Database),
+            schedule: Some(ScheduleWindow {
+                opens: "2026-10-20T02:00".to_owned(),
+                closes: "2026-10-20T07:00".to_owned(),
+                open: false,
+            }),
         }
     }
 }

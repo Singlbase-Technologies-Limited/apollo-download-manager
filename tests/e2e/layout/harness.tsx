@@ -30,6 +30,7 @@ const settings: ShellSettings = saved
         layout: { sidebarWidth: null, sidebarCollapsed: false, sidebarVisible: true, detailsWidth: null, detailsVisible: false },
         visibleColumns: [...DEFAULT_COLUMNS],
         columnWidths: {},
+        timeFormat: 'twentyFourHour',
       },
       onboardingCompleted: true,
       defaultDirectory: '/home/user/Downloads',
@@ -71,7 +72,7 @@ const downloads: DownloadRecord[] = [
 for (let i = 0; i < 30; i += 1) {
   downloads.push(make({ id: `bulk${String(i)}`, fileName: `dataset-part-${String(i).padStart(3, '0')}.bin`, status: i % 3 === 0 ? 'queued' : 'paused', createdAtMs: Date.UTC(2026, 8, (i % 28) + 1, 10) }));
 }
-const snapshot: DownloadsSnapshot = { downloads, unavailable: [], needsLogin: [], engine: { state: 'running' }, torrentEngine: { state: 'running' }, storageError: null };
+const snapshot: DownloadsSnapshot = { downloads, unavailable: [], needsLogin: [], engine: { state: 'running' }, torrentEngine: { state: 'running' }, storageError: null, schedule: null };
 
 /** Each `set_appearance`, counted, so a check can see a drag saves once. */
 const win = window as unknown as { appearanceSaves: number };

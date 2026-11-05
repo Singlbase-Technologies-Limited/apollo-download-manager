@@ -24,6 +24,8 @@ import { fileChoice, selectedSize, VERSION_LABEL } from '../torrents/torrentLogi
 import { AddOutcomeFooter, AddOutcomeView } from './AddOutcomeView';
 import { plural, sortOutcome, type Outcome } from './outcome';
 import { linkKind, linkProblem, MAX_ADD, parseChecksum, parseHeaders, splitLinks } from './addLogic';
+import { StartAtFields } from '../../components/StartAtFields';
+import { nextFullHour } from '../../lib/format';
 
 const AUTOMATIC = '';
 
@@ -64,6 +66,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const [directory, setDirectory] = useState('');
   const [categoryId, setCategoryId] = useState(AUTOMATIC);
   const [createDirectory, setCreateDirectory] = useState(false);
+  const [startAtOn, setStartAtOn] = useState(false);
+  const [startAt, setStartAt] = useState(() => nextFullHour());
   const [requireEncryption, setRequireEncryption] = useState(false);
   const [chooseFiles, setChooseFiles] = useState(defaults?.chooseFilesForMagnets ?? false);
   // A torrent's seeding, upload limit and, for a single `.torrent` file, its files (#63).
@@ -194,6 +198,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     uploadLimitKib: torrentMode && Number(uploadLimit) > 0 ? Math.floor(Number(uploadLimit)) : 0,
     // The browser's link, unchanged, waits for the user at a local address; one typed or pasted here doesn't (#67, ADR-0006).
     fromBrowser: prefill?.fromBrowser !== undefined && text.trim() === (prefill.links ?? '').trim(),
+    startAt: startAtOn ? startAt : null,
     ...over,
   });
 
@@ -440,6 +445,13 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
               Create this folder
             </Checkbox>
           ) : null}
+          {/* Its own start time (#350): it beats the schedule, and a time already past starts it now. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Checkbox checked={startAtOn} onChange={setStartAtOn}>
+              Start at a chosen time
+            </Checkbox>
+            {startAtOn ? <StartAtFields value={startAt} onChange={setStartAt} /> : null}
+          </div>
           {singleDirect !== undefined && dest?.fileName && (dest.fileExists || dest.partialDownloadExists) ? (
             <p className="flex items-center gap-2 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
               <TriangleAlert className="size-4 shrink-0" aria-hidden />

@@ -37,5 +37,6 @@
   "startedOver": "The file on the server changed, so the download started again.",
   "status": "retrying",
   "torrent": null,
-  "verification": null
+  "verification": null,
+  "waitsUntil": null
 }

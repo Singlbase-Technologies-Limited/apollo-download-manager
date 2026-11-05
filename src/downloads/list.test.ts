@@ -85,6 +85,15 @@ describe('download list logic', () => {
     });
   });
 
+  it('says when a waiting download starts, by its own time or the schedule (#350)', () => {
+    const now = new Date(2026, 9, 19, 15, 0).getTime();
+    const own = makeRecord({ status: 'queued', waitsUntil: { reason: 'chosenTime', at: '2026-10-19T18:30' } });
+    const scheduled = makeRecord({ status: 'queued', waitsUntil: { reason: 'schedule', at: '2026-10-20T02:00' } });
+    expect(statusLabel(own, now)).toBe('Starts today 18:30');
+    expect(statusLabel(scheduled, now)).toBe('Scheduled: tomorrow 02:00');
+    expect(statusLabel(makeRecord({ status: 'queued', waitsUntil: null }), now)).toBe('Queued');
+  });
+
   describe('waiting for the network (#318)', () => {
     const waiting = makeRecord({ status: 'waitingForNetwork' });
 

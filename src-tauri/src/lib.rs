@@ -89,6 +89,7 @@ pub fn run() {
             downloads::resume_all,
             downloads::clear_completed,
             downloads::move_download,
+            downloads::set_start_at,
             downloads::set_download_login,
             downloads::set_download_connections,
             downloads::set_download_speed_limit,

@@ -6,6 +6,9 @@ What changed in each version of Apollo Download Manager, named Velocity Download
 
 ### Changes
 
+- **A schedule that's easier to set and to follow:** choose its start and stop with hour and minute boxes instead of typing them; Settings says when it next runs (**Next: tomorrow 02:00 to 07:00**); and the list says when each scheduled download starts (#350).
+- **A start time for each download:** in the Add window, or later with **Start at…** in a waiting download's menu. It beats the schedule, and a time missed while the app was closed starts it as soon as the app opens (#350).
+- **12-hour times:** Settings, Appearance, Time format switches every time the app shows to 12-hour with AM and PM; 24-hour stays the default (#350).
 - **Downloads wait for the network:** a download that failed because there was no network shows **Waiting for network**, and continues by itself from where it stopped when Windows or Linux says the network is back. On by default; Settings, Queue and performance (#318).
 - **Two downloads at once by default,** instead of 3, so each one gets more of your connection and finishes sooner. If you kept the old default of 3, updating sets it to 2 once; you can set it back in Settings, Queue and performance (#351).
 

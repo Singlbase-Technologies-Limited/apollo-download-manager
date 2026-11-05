@@ -103,7 +103,7 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 | `startImmediately` | on | — |
 | `restartOnNetwork` | on | A download that failed because there was no network waits for it, and starts again from its bytes when the system's network changes (#318, [ADR-0019](decisions/0019-waiting-for-network-status.md)) |
 | `schedule.enabled` | off | — |
-| `schedule.startTime`, `schedule.stopTime` | 02:00 to 07:00 | `HH:MM`, 24-hour; no stop time runs to midnight, and a stop before the start crosses midnight |
+| `schedule.startTime`, `schedule.stopTime` | 02:00 to 07:00 | `HH:MM`, 24-hour, whatever the time format shown; chosen on the screen with hour and minute boxes (#350). No stop time, or `00:00`, runs to midnight, and a stop before the start crosses midnight |
 | `schedule.days` | every day | 0 (Monday) to 6 (Sunday); at least one when the schedule is on |
 
 How the queue applies them is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#the-managers-side).
@@ -151,6 +151,7 @@ V1's `general`, `notifications` and `appearance` settings and its first-run flag
 | | `onEngineFailure` | on | When the transfer engine or the torrent helper becomes unavailable |
 | `appearance` | `theme` | `system` | `system`, `light` or `dark` |
 | | `density` | `compact` | `compact` or `comfortable`, for the download list (#59) |
+| | `timeFormat` | `twentyFourHour` | `twentyFourHour` or `twelveHour`, for every time the app shows (#350; PO decision) |
 | | `layout.sidebarWidth` | `null`: about 17% of the window, 220 to 240 px | 184 to 360 px |
 | | `layout.sidebarCollapsed`, `layout.sidebarVisible` | off, on | — |
 | | `layout.detailsWidth` | `null`: a fifth of the window, 300 to 340 px | 280 to 600 px, for the details panel (#61) |

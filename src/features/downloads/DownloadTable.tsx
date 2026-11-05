@@ -115,6 +115,7 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
   const clearSelection = useDownloadsStore((s) => s.clearSelection);
   const showDetails = useUiStore((s) => s.showDetails);
   const openChooseFiles = useUiStore((s) => s.openChooseFiles);
+  const openStartAt = useUiStore((s) => s.openStartAt);
   const byId = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const rowHeight = density === 'compact' ? 32 : 40;
   const template = [`${String(CHECK_WIDTH)}px`, ...columns.map((c) => { const w = widths[c.id]; return w ? `${String(w)}px` : c.width; })].join(' ');
@@ -261,7 +262,7 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
             return (
               <ContextMenu
                 key={d.id}
-                items={() => buildMenu(selection.has(d.id) ? selectedRows() : [d], actions, busy, { showDetails, chooseFiles: openChooseFiles })}
+                items={() => buildMenu(selection.has(d.id) ? selectedRows() : [d], actions, busy, { showDetails, chooseFiles: openChooseFiles, startAt: openStartAt })}
                 onOpenChange={(open) => {
                   if (open && !selection.has(d.id)) select(d.id, 'single', ids);
                 }}

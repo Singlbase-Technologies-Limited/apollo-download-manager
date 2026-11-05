@@ -39,7 +39,8 @@
       "startedOver": "The file on the server changed, so the download started again.",
       "status": "retrying",
       "torrent": null,
-      "verification": null
+      "verification": null,
+      "waitsUntil": null
     },
     {
       "averageSpeedBps": 262144,
@@ -74,7 +75,8 @@
         "seeds": 2,
         "uploadedBytes": 8388608
       },
-      "verification": null
+      "verification": null,
+      "waitsUntil": null
     }
   ],
   "engine": {
@@ -84,6 +86,11 @@
   "needsLogin": [
     "d-0001"
   ],
+  "schedule": {
+    "closes": "2026-10-20T07:00",
+    "open": false,
+    "opens": "2026-10-20T02:00"
+  },
   "storageError": "DATABASE",
   "torrentEngine": {
     "state": "running"

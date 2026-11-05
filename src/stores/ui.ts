@@ -39,6 +39,8 @@ interface UiState {
   loginRequest: LoginRequest | null;
   /** The torrent whose files are being chosen (#63). */
   chooseFilesId: string | null;
+  /** The download whose own start time is being chosen (#350). */
+  startAtId: string | null;
   /** The Settings screen's section shown (#30). */
   settingsSection: SettingsSection;
   setView: (view: View) => void;
@@ -52,6 +54,8 @@ interface UiState {
   askLogin: (request: LoginRequest) => void;
   closeLogin: () => void;
   openChooseFiles: (id: string) => void;
+  openStartAt: (id: string) => void;
+  closeStartAt: () => void;
   setSettingsSection: (section: SettingsSection) => void;
   closeChooseFiles: () => void;
 }
@@ -64,6 +68,7 @@ export const useUiStore = create<UiState>((set) => ({
   addDialog: { open: false, prefill: null },
   loginRequest: null,
   chooseFilesId: null,
+  startAtId: null,
   settingsSection: 'general',
   setView: (view) => { set({ view, categoryFilter: null }); },
   setCategoryFilter: (categoryFilter) => { set({ categoryFilter, view: 'all' }); },
@@ -76,6 +81,8 @@ export const useUiStore = create<UiState>((set) => ({
   askLogin: (loginRequest) => { set({ loginRequest }); },
   closeLogin: () => { set({ loginRequest: null }); },
   openChooseFiles: (chooseFilesId) => { set({ chooseFilesId }); },
+  openStartAt: (startAtId) => { set({ startAtId }); },
+  closeStartAt: () => { set({ startAtId: null }); },
   setSettingsSection: (settingsSection) => { set({ settingsSection }); },
   closeChooseFiles: () => { set({ chooseFilesId: null }); },
 }));

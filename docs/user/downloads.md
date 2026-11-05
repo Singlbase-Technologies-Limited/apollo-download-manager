@@ -42,6 +42,10 @@ A link Apollo Download Manager can't download is refused in the dialog, with the
 - **A link added before:** **Add anyway** starts a separate download, and **Show download** selects the one already in the list.
 - **Links that failed** are listed, each with the reason.
 
+### A start time of its own
+
+Tick **Start at a chosen time** in the Add window, then choose a date and a time, or later right-click a waiting download (queued or paused) and choose **Start at…**. The download waits until then, even outside the schedule's hours, and the list says **Starts Sat 03:00**. A time that passed while Apollo Download Manager was closed starts it as soon as it opens, within the number of downloads that run at once. It starts once; **Start at…** then **Clear the time** takes the time away, so it starts as soon as it may.
+
 ### SFTP servers
 
 The first download from an SFTP server stops before logging in and asks **Trust this server?**, with the server's key fingerprint (`SHA256:…`). Nothing has been sent yet: no login, no file name.

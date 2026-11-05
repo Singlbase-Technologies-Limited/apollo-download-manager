@@ -155,6 +155,7 @@ mod tests {
             engine: EngineHealth::Running,
             torrent_engine: EngineHealth::Running,
             storage_error: None,
+            schedule: None,
         }
     }
 

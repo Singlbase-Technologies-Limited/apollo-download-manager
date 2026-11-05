@@ -32,6 +32,7 @@ use crate::domain::{
     DownloadRecord, DownloadStatus, ErrorCode, FailureClass, Progress, TransferError,
 };
 use crate::keychain::{Keychain, NoKeychain};
+use crate::queue::LocalTime;
 use crate::torrent::parse_metadata;
 use crate::transfer::{
     Credentials, DirectTransfer, Header, Limits, SshKey, TransferId, TransferSpec,
@@ -193,10 +194,12 @@ impl Manager {
             };
             let needs_login = stored.has_sensitive_options && !login_restored;
             let paused = !finished && (status == DownloadStatus::Paused || needs_login);
-            let scheduled = queue
-                .iter()
-                .find(|e| e.id == stored.id)
-                .is_some_and(|e| e.scheduled);
+            let entry = queue.iter().find(|e| e.id == stored.id);
+            let scheduled = entry.is_some_and(|e| e.scheduled);
+            let start_at = entry
+                .and_then(|e| e.start_at.as_deref())
+                .and_then(LocalTime::parse)
+                .map(|t| t.0);
             let error = match &stored.error {
                 Some(crate::database::Stored::Known(e)) => Some(e.clone()),
                 _ => None,
@@ -234,11 +237,13 @@ impl Manager {
                     requested_connections: None,
                     torrent: None,
                     file_count,
+                    waits_until: None,
                 },
                 job,
                 running: false,
                 paused,
                 scheduled,
+                start_at,
                 cancelling: false,
                 saved_at_ms: None,
                 needs_login,

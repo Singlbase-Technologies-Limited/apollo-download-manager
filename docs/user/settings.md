@@ -32,7 +32,7 @@ On Linux the tray needs an AppIndicator library. Without a tray, closing the win
 | Start new downloads at once | On | Off: new downloads wait in the queue until you start them |
 | Restart downloads when the network is back | On | A download that failed because there was no network shows **Waiting for network**, and continues from where it stopped when Windows or Linux says the network changed. Off: it shows Failed, and you retry it |
 | Speed limit for direct downloads | None | For all direct downloads together, in KiB/s. Torrents have their own limit, under BitTorrent (#312) |
-| Use the schedule | Off | Downloads you add while it's on run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose; they wait as Queued outside it. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start. No stop time runs to midnight; a stop before the start runs past midnight |
+| Use the schedule | Off | Downloads you add while it's on run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose; they wait outside it, and the list says when they start, such as **Scheduled: tomorrow 02:00**. You choose the times with hour and minute boxes, in the app's time format. A stop of 00:00 runs to midnight; a stop before the start runs past midnight. Under the switch, a line says what it does: **Next: tomorrow 02:00 to 07:00**, **Open now, until …**, or **Off**. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start. If the app was closed when the window opened, its downloads start as soon as it opens inside the window; outside it, they wait for the next one. A download with its own start time starts at that time instead ([Downloads](downloads.md)) |
 | Profile | Balanced | How many connections a download may use, and the smallest piece of a file each connection takes |
 | Connections for all downloads together | 48 | Shared fairly between the running downloads |
 
@@ -93,7 +93,7 @@ For networks, such as a company's or a school's, that require one. Only this pro
 
 ## Appearance
 
-The theme (follow the system, light or dark) and the list's density (compact or comfortable). The panel widths and the list's columns are kept as you leave them.
+The theme (follow the system, light or dark), the list's density (compact or comfortable), and the **time format**: 24-hour (14:30), the default, or 12-hour (2:30 PM). The time format applies to every time the app shows, the schedule and start times included. The panel widths and the list's columns are kept as you leave them.
 
 ## History and storage
 

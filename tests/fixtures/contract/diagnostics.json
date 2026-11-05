@@ -1,6 +1,6 @@
 {
   "app": {
-    "commandApiVersion": 27,
+    "commandApiVersion": 29,
     "name": "Apollo Download Manager (dev)",
     "version": "0.1.0"
   },

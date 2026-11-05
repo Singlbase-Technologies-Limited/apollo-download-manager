@@ -312,3 +312,37 @@ describe('the download list (#59)', () => {
     expect(screen.getByRole('status', { name: 'Transfer engine' }).textContent).toMatch(/isn’t running/);
   });
 });
+
+// #350 (PO decision): a waiting download gets its own start time from its menu.
+describe('a download’s own start time', () => {
+  const waiting = makeRecord({ id: 'w', fileName: 'night.iso', status: 'queued', createdAtMs: 4 });
+
+  it('is chosen from the menu of a waiting download, and sent as local time', async () => {
+    const state = installFakeBackend({ snapshot: withDownloads([waiting, archive]) });
+    renderApp();
+    fireEvent.contextMenu(await rowFor('archive.zip'));
+    expect((await screen.findByRole('menuitem', { name: 'Start at…' })).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    fireEvent.contextMenu(await rowFor('night.iso'));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Start at…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Start at' });
+    fireEvent.change(within(dialog).getByLabelText('Start date'), { target: { value: '2030-01-05' } });
+    fireEvent.change(within(dialog).getByLabelText('Start time, hour'), { target: { value: '3' } });
+    fireEvent.change(within(dialog).getByLabelText('Start time, minute'), { target: { value: '15' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Start at this time' }));
+    await waitFor(() => { expect(callsOf(state, 'set_start_at').map((c) => c.args)).toEqual([{ id: 'w', startAt: '2030-01-05T03:15' }]); });
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'Start at' })).toBeNull(); });
+  });
+
+  it('can be taken away again', async () => {
+    const own = { ...waiting, waitsUntil: { reason: 'chosenTime' as const, at: '2030-01-05T03:15' } };
+    const state = installFakeBackend({ snapshot: withDownloads([own]) });
+    renderApp();
+    expect(await within(await rowFor('night.iso')).findByText(/^Starts /)).toBeTruthy();
+    act(() => { useUiStore.getState().openStartAt('w'); });
+    const dialog = await screen.findByRole('dialog', { name: 'Start at' });
+    expect(within(dialog).getByLabelText<HTMLInputElement>('Start date').value).toBe('2030-01-05');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Clear the time' }));
+    await waitFor(() => { expect(callsOf(state, 'set_start_at').map((c) => c.args)).toEqual([{ id: 'w', startAt: null }]); });
+  });
+});

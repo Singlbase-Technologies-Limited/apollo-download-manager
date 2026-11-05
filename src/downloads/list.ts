@@ -1,5 +1,5 @@
 import type { DownloadRecord, DownloadStatus } from '../contract';
-import { formatDuration } from '../lib/format';
+import { formatDuration, formatWhen } from '../lib/format';
 import { fileNameFromUrl } from '../naming';
 import { matchesView, type ListView } from './views';
 
@@ -213,6 +213,11 @@ export function statusLabel(d: DownloadRecord, now: number, opts: { needsLogin?:
   if (d.status === 'retrying' && d.retryAtMs !== null) {
     const left = secondsToRetry(d.retryAtMs, now);
     return left > 0 ? `Retrying in ${formatDuration(left)}` : 'Retrying now';
+  }
+  // Waiting for its own start time or for the schedule's window (#350).
+  if (d.status === 'queued' && d.waitsUntil) {
+    const when = formatWhen(d.waitsUntil.at, new Date(now));
+    return d.waitsUntil.reason === 'chosenTime' ? `Starts ${when}` : `Scheduled: ${when}`;
   }
   // Completed, and waiting for a free seeding slot (#63).
   if (d.status === 'completed' && d.torrent?.seedQueued) return 'Waiting to seed';
