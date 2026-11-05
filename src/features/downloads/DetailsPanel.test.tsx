@@ -97,6 +97,19 @@ describe('the details panel (V1)', () => {
     expect(within(source).getByText('https://example.com/a.zip')).toBeTruthy();
   });
 
+  it('fits a very long link in the panel, keeps it whole for screen readers, and copies all of it', async () => {
+    const long = `https://releases.example.com/2026/images/server/disk-image-amd64.iso?session=${'0123456789'.repeat(28)}`;
+    installFakeBackend({ snapshot: withDownloads([makeRecord({ id: 'l', fileName: 'disk-image-amd64.iso', sourceUrl: long, createdAtMs: 9 })]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('disk-image-amd64.iso'));
+    const source = within(await panel()).getByRole('region', { name: 'Source and destination' });
+    expect(within(source).getByText('releases.example.com/…/disk-image-amd64.iso')).toBeTruthy();
+    expect(within(source).getByText(long).className).toContain('sr-only');
+    await user.click(within(source).getByRole('button', { name: 'Copy link' }));
+    expect(await navigator.clipboard.readText()).toBe(long);
+  });
+
   it('shows errors in the details panel', async () => {
     const user = userEvent.setup();
     renderApp();

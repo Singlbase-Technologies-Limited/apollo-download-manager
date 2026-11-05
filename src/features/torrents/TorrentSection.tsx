@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import type { DownloadRecord } from '../../contract';
@@ -7,6 +7,7 @@ import { ApiError, toApiError } from '../../lib/errors';
 import { formatBytes, formatDuration, formatSpeed } from '../../lib/format';
 import { keys, useSwarm, useTorrentDetails } from '../../lib/queries';
 import { FINISHED } from '../../downloads/list';
+import { Row, SECTION_HEADING } from '../downloads/detailsParts';
 import type { DownloadActions } from '../downloads/useDownloadActions';
 import { FileTree } from './FileTree';
 import { sameSelection, seedingSummary, TRACKER_STATE, trackerSummary, VERSION_LABEL } from './torrentLogic';
@@ -14,16 +15,6 @@ import { sameSelection, seedingSummary, TRACKER_STATE, trackerSummary, VERSION_L
 const PEERS_SHOWN = 20;
 /** Its files can change while the helper still downloads it (V1's). */
 const FILES_EDITABLE: readonly DownloadRecord['status'][] = ['downloading', 'stalled', 'connecting', 'paused', 'queued'];
-/** The helper has nothing to say about a torrent in these. */
-
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-[104px_1fr] gap-2 py-1 text-xs">
-      <dt className="text-fg-subtle">{label}</dt>
-      <dd className="min-w-0 break-words text-fg">{children}</dd>
-    </div>
-  );
-}
 
 /**
  * The torrent part of the details panel (V1's TorrentSection; #61, #63): what the snapshot carries, the torrent's
@@ -60,8 +51,8 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
   };
 
   return (
-    <section className="mt-4 border-t border-border pt-3" aria-label="Torrent">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">Torrent</h3>
+    <section className="border-t border-border px-4 py-3" aria-label="Torrent">
+      <h3 className={SECTION_HEADING}>Torrent</h3>
       <dl className="mt-1">
         {contents?.infoHashV1 ? (
           <Row label={contents.infoHashV2 ? 'Info hash (v1)' : 'Info hash'}>
