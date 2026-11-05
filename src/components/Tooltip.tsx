@@ -1,5 +1,8 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import type { ReactElement, ReactNode } from 'react';
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode, Ref } from 'react';
+
+/** What a parent trigger (a menu's, with `asChild`) hands down; passed on to the element inside. */
+type PassedOn = Omit<ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>, 'asChild' | 'children'> & { ref?: Ref<HTMLButtonElement> };
 
 /**
  * The window's one tooltip (#348 H), in place of the browser's own `title` tooltips: it follows the theme,
@@ -20,18 +23,26 @@ export function Tooltip({
   label,
   shortcut,
   side = 'top',
+  canBeDisabled = false,
   children,
-}: {
+  ...passedOn
+}: PassedOn & {
   label: string;
   /** Shown beside the label, as the menus show theirs, e.g. "Ctrl+N". */
   shortcut?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
-  /** One element that takes a ref and focus, usually a button. */
+  /**
+   * The button can be disabled. A disabled button gets no pointer events (`Button` sets `pointer-events: none`),
+   * so it is wrapped in a span that takes the hover. The span is always there, not only while disabled, so the
+   * button is never remounted and keeps keyboard focus when it turns disabled.
+   */
+  canBeDisabled?: boolean;
+  /** One element that takes a ref and focus, usually a button. A menu's trigger can wrap the tooltip around it. */
   children: ReactElement;
 }) {
   return (
     <TooltipPrimitive.Root>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Trigger asChild {...passedOn}>{canBeDisabled ? <span className="inline-flex">{children}</span> : children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           side={side}

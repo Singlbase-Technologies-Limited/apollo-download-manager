@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { availability, cleartextWarning } from '../../capabilities';
 import { Button } from '../../components/Button';
+import { Tooltip } from '../../components/Tooltip';
 import { Checkbox } from '../../components/Checkbox';
 import { Dialog } from '../../components/Dialog';
 import { Field } from '../../components/Field';
@@ -382,9 +383,18 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                 <Button size="sm" onClick={() => void pickTorrents()}>
                   <FileUp aria-hidden /> Choose .torrent files…
                 </Button>
-                <Button size="sm" disabled={!metalink.available} title={metalink.available ? undefined : (metalink.reason ?? undefined)} onClick={() => void pickMetalinks()}>
-                  <FileUp aria-hidden /> Choose Metalink files…
-                </Button>
+                {metalink.available || !metalink.reason ? (
+                  <Button size="sm" disabled={!metalink.available} onClick={() => void pickMetalinks()}>
+                    <FileUp aria-hidden /> Choose Metalink files…
+                  </Button>
+                ) : (
+                  // Unavailable for the whole dialog (the engine's capabilities): the tooltip says why.
+                  <Tooltip label={metalink.reason} canBeDisabled>
+                    <Button size="sm" disabled>
+                      <FileUp aria-hidden /> Choose Metalink files…
+                    </Button>
+                  </Tooltip>
+                )}
                 <span>or drop .torrent files on the window.</span>
               </div>
             </>
@@ -526,9 +536,11 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                     {(p) => (
                       <div className="flex gap-2">
                         <Input {...p} value={keyPath} onChange={(e) => { setKeyPath(e.target.value); }} placeholder="None: log in with the password" />
-                        <Button aria-label="Choose a key" title="Choose a key" onClick={() => void pickKey()}>
-                          <KeyRound aria-hidden />
-                        </Button>
+                        <Tooltip label="Choose a key">
+                          <Button aria-label="Choose a key" onClick={() => void pickKey()}>
+                            <KeyRound aria-hidden />
+                          </Button>
+                        </Tooltip>
                       </div>
                     )}
                   </Field>

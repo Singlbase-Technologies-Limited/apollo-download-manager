@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { Tooltip } from '../../components/Tooltip';
 import { confirmAction } from '../../components/confirmStore';
 import { Spinner } from '../../components/Spinner';
 import type { EngineHealth } from '../../contract';
@@ -148,9 +149,11 @@ export function DiagnosticsPanel() {
         description="Logins, cookies, keys, tokens, magnet links and tracker passkeys are removed from everything here."
         actions={
           <>
-            <Button size="sm" variant="ghost" aria-label="Read the diagnostics again" title="Read again" onClick={() => void report.refetch()}>
-              <RefreshCw />
-            </Button>
+            <Tooltip label="Read again">
+              <Button size="sm" variant="ghost" aria-label="Read the diagnostics again" onClick={() => void report.refetch()}>
+                <RefreshCw />
+              </Button>
+            </Tooltip>
             <Button size="sm" variant="secondary" busy={busy === 'export'} disabled={busy !== null} onClick={() => void exportReport()}>
               <Download /> Export diagnostics…
             </Button>

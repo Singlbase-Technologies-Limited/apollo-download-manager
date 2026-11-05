@@ -2,6 +2,7 @@ import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../components/Button';
+import { Tooltip } from '../../components/Tooltip';
 import { Dialog } from '../../components/Dialog';
 import { Field } from '../../components/Field';
 import { Input } from '../../components/Input';
@@ -95,9 +96,11 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
               {(p) => (
                 <div className="flex gap-2">
                   <Input {...p} value={keyPath} onChange={(e) => { setKeyPath(e.target.value); }} placeholder="None: log in with the password" />
-                  <Button aria-label="Choose a key" title="Choose a key" onClick={() => void pickKey()}>
-                    <KeyRound aria-hidden />
-                  </Button>
+                  <Tooltip label="Choose a key">
+                    <Button aria-label="Choose a key" onClick={() => void pickKey()}>
+                      <KeyRound aria-hidden />
+                    </Button>
+                  </Tooltip>
                 </div>
               )}
             </Field>

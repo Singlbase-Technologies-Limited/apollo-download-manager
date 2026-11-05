@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
+import { Tooltip } from '../../components/Tooltip';
 import { confirmAction } from '../../components/confirmStore';
 import { EmptyState } from '../../components/EmptyState';
 import { Input } from '../../components/Input';
@@ -174,9 +175,11 @@ export function HistoryView() {
                   </td>
                   <td className="px-2">{formatShortDate(e.completedAtMs ?? e.createdAtMs)}</td>
                   <td className="px-2 text-right">
-                    <Button size="sm" variant="ghost" aria-label={`Download ${nameOf(e)} again`} title="Download again" onClick={() => { openAdd({ links: e.sourceUrl }); }}>
-                      <RotateCcw /> Again
-                    </Button>
+                    <Tooltip label="Download again">
+                      <Button size="sm" variant="ghost" aria-label={`Download ${nameOf(e)} again`} onClick={() => { openAdd({ links: e.sourceUrl }); }}>
+                        <RotateCcw /> Again
+                      </Button>
+                    </Tooltip>
                   </td>
                 </tr>
               ))}

@@ -1,23 +1,25 @@
 import { Copy, Minus, Square, X } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
+import { Tooltip } from '../components/Tooltip';
 import { cn } from '../lib/cn';
 import { closeWindow, minimizeWindow, toggleMaximizeWindow, watchMaximized } from '../lib/window';
 
 function WindowButton({ label, onClick, danger, children }: { label: string; onClick: () => Promise<void>; danger?: boolean; children: ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={() => void onClick()}
-      className={cn(
-        'flex h-full w-11 cursor-pointer items-center justify-center text-fg-muted transition-colors',
-        danger ? 'hover:bg-[#c42b1c] hover:text-white' : 'hover:bg-fg/10 hover:text-fg',
-      )}
-    >
-      {children}
-    </button>
+    <Tooltip label={label} side="bottom">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => void onClick()}
+        className={cn(
+          'flex h-full w-11 cursor-pointer items-center justify-center text-fg-muted transition-colors',
+          danger ? 'hover:bg-[#c42b1c] hover:text-white' : 'hover:bg-fg/10 hover:text-fg',
+        )}
+      >
+        {children}
+      </button>
+    </Tooltip>
   );
 }
 

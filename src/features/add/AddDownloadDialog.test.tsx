@@ -514,7 +514,9 @@ describe('torrents', () => {
     const dialog = await openDialog(user);
     const button = within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Choose Metalink files…' });
     expect(button.disabled).toBe(true);
-    expect(button.title).toBe('This version of Apollo Download Manager can’t open Metalink files yet.');
+    // The reason shows in the window's tooltip when the pointer rests on the button (#348 H).
+    await user.hover(button.parentElement ?? button);
+    expect((await screen.findByRole('tooltip')).textContent).toBe('This version of Apollo Download Manager can’t open Metalink files yet.');
   });
 
   it('accepts magnet links and .torrent links, and sends no torrent choice for ordinary links', async () => {

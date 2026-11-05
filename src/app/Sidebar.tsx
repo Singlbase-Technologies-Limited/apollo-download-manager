@@ -3,6 +3,7 @@ import { useMemo, type ReactNode } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
 import { BrandLogo } from '../components/BrandLogo';
 import { CategoryGlyph } from '../components/CategoryGlyph';
+import { Tooltip } from '../components/Tooltip';
 import type { AppInfo } from '../contract';
 import { countByView, type ListView } from '../downloads/views';
 import { PANEL } from '../layout/panel';
@@ -38,13 +39,11 @@ function NavButton({
   children?: ReactNode;
 }) {
   const counted = count !== undefined && count > 0;
-  return (
+  const button = (
     <button
       type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      // Icons only: the label stays the accessible name and shows as a tooltip.
-      title={compact ? label : undefined}
       className={cn(
         'group flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
         compact ? 'relative justify-center px-0' : 'px-2.5',
@@ -58,6 +57,8 @@ function NavButton({
       {counted && compact ? <span className="sr-only">, {count}</span> : null}
     </button>
   );
+  // Icons only: the label stays the accessible name and shows in a tooltip beside the rail.
+  return compact ? <Tooltip label={label} side="right">{button}</Tooltip> : button;
 }
 
 const groupLabel = 'px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle';
@@ -83,24 +84,40 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
     return m;
   }, [downloads]);
 
-  // Collapsing sits beside the logo; when the window is too narrow, the shell collapses it instead.
-  const toggle = autoCompact ? null : (
+  const addButton = (
     <button
       type="button"
-      onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
-      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-      title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+      onClick={() => { openAdd(); }}
+      aria-keyshortcuts="Control+N"
+      className={cn(
+        'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
+        compact ? 'justify-center' : 'px-2.5',
+      )}
     >
-      {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
+      <Plus className="size-4 shrink-0" aria-hidden />
+      <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate text-left'}>Add download</span>
     </button>
+  );
+
+  // Collapsing sits beside the logo; when the window is too narrow, the shell collapses it instead.
+  const toggle = autoCompact ? null : (
+    <Tooltip label={collapsed ? 'Expand navigation' : 'Collapse navigation'} side="right">
+      <button
+        type="button"
+        onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
+        aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+      >
+        {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
+      </button>
+    </Tooltip>
   );
 
   return (
     <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className={cn(PANEL, 'flex shrink-0 flex-col bg-sidebar')} style={{ width: 'var(--sidebar-w)' }}>
       {compact ? (
         <div className="flex shrink-0 flex-col items-center gap-1 pb-1 pt-3">
-          <span className="flex size-7 shrink-0" title={app.name}>
+          <span className="flex size-7 shrink-0">
             <BrandIcon className="size-7" />
           </span>
           <span className="sr-only">Apollo Download Manager</span>
@@ -114,19 +131,7 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
       )}
       {/* The button stays put while the list below it scrolls; a line marks where the scrolling starts. */}
       <div className={cn('shrink-0 border-b border-border-strong pb-3', compact ? 'px-2 pt-1' : 'px-2.5')}>
-        <button
-          type="button"
-          onClick={() => { openAdd(); }}
-          title={compact ? 'Add download (Ctrl+N)' : undefined}
-          aria-keyshortcuts="Control+N"
-          className={cn(
-            'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
-            compact ? 'justify-center' : 'px-2.5',
-          )}
-        >
-          <Plus className="size-4 shrink-0" aria-hidden />
-          <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate text-left'}>Add download</span>
-        </button>
+        {compact ? <Tooltip label="Add download" shortcut="Ctrl+N" side="right">{addButton}</Tooltip> : addButton}
       </div>
       <div className={cn('flex-1 space-y-5 overflow-y-auto overflow-x-hidden py-2', compact ? 'px-2' : 'px-2.5')}>
         <div className="space-y-0.5">

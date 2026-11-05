@@ -2,12 +2,16 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { callsOf, installFakeBackend } from '../test/fakeBackend';
+import { TooltipProvider } from '../components/Tooltip';
 import { TitleBar } from './TitleBar';
+
+// The bar's buttons have tooltips; App mounts their provider in the window.
+const renderBar = () => render(<TooltipProvider><TitleBar title="Apollo Download Manager" /></TooltipProvider>);
 
 describe('TitleBar', () => {
   it('names the app and lets the window be dragged by it', async () => {
     const state = installFakeBackend();
-    render(<TitleBar title="Apollo Download Manager" />);
+    renderBar();
     const bar = screen.getByRole('banner');
     expect(within(bar).getByText('Apollo Download Manager').textContent).toBe('Apollo Download Manager');
     expect(bar.hasAttribute('data-tauri-drag-region')).toBe(true);
@@ -17,7 +21,7 @@ describe('TitleBar', () => {
   it('minimises, maximises and closes the window from its own buttons', async () => {
     const state = installFakeBackend();
     const user = userEvent.setup();
-    render(<TitleBar title="Apollo Download Manager" />);
+    renderBar();
     await user.click(screen.getByRole('button', { name: 'Minimize' }));
     await user.click(screen.getByRole('button', { name: 'Maximize' }));
     await user.click(screen.getByRole('button', { name: 'Close' }));
