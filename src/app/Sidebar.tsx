@@ -45,12 +45,13 @@ function NavButton({
       // Icons only: the label stays the accessible name and shows as a tooltip.
       title={compact ? label : undefined}
       className={cn(
-        'group flex h-8 w-full items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
+        'group flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
         compact ? 'relative justify-center px-0' : 'px-2.5',
-        active ? 'bg-surface font-medium text-fg shadow-xs ring-1 ring-border' : 'text-fg-muted hover:bg-surface-3 hover:text-fg',
+        // The hover tints the row with the accent, so it shows against the sidebar in both themes (PO, #347).
+        active ? 'bg-surface font-medium text-fg shadow-xs ring-1 ring-border' : 'text-fg-muted hover:bg-accent-soft hover:text-fg',
       )}
     >
-      {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-fg-muted')} aria-hidden /> : children}
+      {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-accent')} aria-hidden /> : children}
       <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{label}</span>
       {counted && !compact ? <span className="text-[11px] tabular-nums text-fg-subtle">{count}</span> : null}
       {counted && compact ? <span className="sr-only">, {count}</span> : null}
@@ -88,7 +89,7 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
       onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
       aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
       title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-      className="flex size-7 shrink-0 items-center justify-center rounded-md text-fg-subtle hover:bg-surface-3 hover:text-fg"
+      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-accent-soft hover:text-accent"
     >
       {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
     </button>
@@ -118,7 +119,7 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
           title={compact ? 'Add download (Ctrl+N)' : undefined}
           aria-keyshortcuts="Control+N"
           className={cn(
-            'flex h-8 w-full items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm hover:bg-accent-strong',
+            'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
             compact ? 'justify-center' : 'px-2.5',
           )}
         >
