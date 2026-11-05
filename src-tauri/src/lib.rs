@@ -118,6 +118,7 @@ pub fn run() {
             downloads::set_torrent_upload_limit,
             opening::open_download_file,
             opening::open_download_folder,
+            opening::open_feedback_page,
             adding::add_downloads,
             adding::get_capabilities,
             adding::choose_torrents,

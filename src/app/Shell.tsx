@@ -18,6 +18,7 @@ import { PANEL } from '../layout/panel';
 import { cn } from '../lib/cn';
 import { useUiStore } from '../stores/ui';
 import { quitQuestion } from './quitQuestion';
+import { ActivityBar } from './ActivityBar';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 
@@ -83,10 +84,12 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   return (
     // Each area is its own rounded panel on the window's frame, with the splitters in the gaps (PO, #347).
     <div className="flex h-full flex-col bg-frame">
-      <div ref={rootRef} className="flex min-h-0 flex-1 px-1 pb-1">
+      <div ref={rootRef} className="flex min-h-0 flex-1 pb-1 pr-1">
+        <ActivityBar app={app} listsShown={sidebar.mode === 'full'} />
         {sidebar.mode !== 'hidden' ? (
           <>
-            <Sidebar app={app} compact={rail} autoCompact={sidebar.autoCompact} />
+            {/* Collapsed, the lists panel isn't shown; its edge stays, so a drag opens it at once (#363). */}
+            {rail ? null : <Sidebar app={app} autoCompact={sidebar.autoCompact} />}
             <Splitter
               label="Resize navigation"
               controls="app-sidebar"

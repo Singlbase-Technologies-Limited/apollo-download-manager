@@ -65,8 +65,9 @@ describe('width bounds', () => {
 
   it('lowers each maximum so the table keeps its minimum width', () => {
     const r = resolveLayout(prefs({ sidebarWidth: 300 }), 1100, true);
-    expect(r.details.max).toBe(1100 - 300 - LAYOUT.TABLE_MIN);
-    expect(r.sidebar.max).toBe(1100 - r.details.width - LAYOUT.TABLE_MIN);
+    // The icon bar (#363) is always there, so it comes off the budget too.
+    expect(r.details.max).toBe(1100 - LAYOUT.ACTIVITY_BAR - 300 - LAYOUT.TABLE_MIN);
+    expect(r.sidebar.max).toBe(1100 - LAYOUT.ACTIVITY_BAR - r.details.width - LAYOUT.TABLE_MIN);
   });
 });
 
@@ -77,10 +78,10 @@ describe('window resizing', () => {
     expect([wide.sidebar.width, wide.details.width]).toEqual([340, 560]);
     const mid = resolveLayout(p, 1200, true);
     expect(mid.sidebar.width).toBe(340);
-    expect(mid.details.width).toBe(1200 - 340 - LAYOUT.TABLE_MIN);
+    expect(mid.details.width).toBe(1200 - LAYOUT.ACTIVITY_BAR - 340 - LAYOUT.TABLE_MIN);
     const narrow = resolveLayout(p, 960, true);
     expect(narrow.details.width).toBe(LAYOUT.DETAILS_MIN);
-    expect(narrow.sidebar.width).toBe(960 - LAYOUT.DETAILS_MIN - LAYOUT.TABLE_MIN);
+    expect(narrow.sidebar.width).toBe(960 - LAYOUT.ACTIVITY_BAR - LAYOUT.DETAILS_MIN - LAYOUT.TABLE_MIN);
     expect(p).toEqual(prefs({ sidebarWidth: 340, detailsWidth: 560 }));
   });
 
@@ -132,7 +133,8 @@ describe('navigation collapse by dragging', () => {
 
   it('expands from the rail when dragged wider', () => {
     expect(commitSidebarWidth(prefs({ sidebarCollapsed: true }), 150)).toEqual({ sidebarCollapsed: false, sidebarWidth: LAYOUT.SIDEBAR_MIN });
-    expect(commitSidebarWidth(prefs({ sidebarCollapsed: true }), 70)).toEqual({});
+    // Collapsed is 0 px wide now (#363): a drag shorter than the snap leaves it collapsed.
+    expect(commitSidebarWidth(prefs({ sidebarCollapsed: true }), LAYOUT.EXPAND_SNAP - 10)).toEqual({});
   });
 
   it('saves a clamped width otherwise', () => {

@@ -150,7 +150,8 @@ describe('the Settings screen (#30)', () => {
     await user.keyboard('{Control>},{/Control}');
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
     act(() => { useUiStore.getState().setView('all'); });
-    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: /^Settings/ }));
+    // #363: Settings sits at the bottom of the icon bar, always shown.
+    await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' }));
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
   });
 

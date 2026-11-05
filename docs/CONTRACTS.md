@@ -59,6 +59,7 @@ The commands of [`src-tauri/src/downloads.rs`](../src-tauri/src/downloads.rs) (#
 | `set_download_speed_limit` | `id`, `kib` (KiB/s; 0 for no limit, otherwise at least 1) | nothing |
 | `set_download_category` | `id`, `categoryId` (`null` for none) | nothing; nothing is moved (#31) |
 | `open_download_file` | `id`, `allowProgram` | nothing; opens the finished file, or a torrent's folder, with the system's program. `INVALID_STATE` before it finished, `NOT_FOUND` when the file is gone, `INVALID_PATH` for a link, `CONFIRMATION_REQUIRED` for a program until `allowProgram`, and `IO` when the program can't start (#61) |
+| `open_feedback_page` | none | nothing; opens the repository's "new issue" chooser in the default browser, a fixed address the window can't change. Sends nothing itself (#363) |
 | `open_download_folder` | `id` | nothing; shows the file selected in its folder (on Linux, the folder), or the folder when the file is gone. `DESTINATION_MISSING` when the folder is gone (#61) |
 | `restart_engine` | — | `EngineHealth` |
 | `trust_host_key` | `host`, `port`, `fingerprint` | nothing; the UI then retries the download |

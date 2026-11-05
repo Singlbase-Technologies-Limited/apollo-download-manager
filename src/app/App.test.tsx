@@ -11,6 +11,9 @@ import { useUiStore } from '../stores/ui';
 import { callsOf, emptySnapshot, firstRun, fixture, installFakeBackend, setUp } from '../test/fakeBackend';
 import { App } from './App';
 
+/** #363: the icon bar's Downloads button, which shows or hides the lists panel on a download list. */
+const listsToggle = () => within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Downloads' });
+
 function renderApp() {
   return render(<App client={createQueryClient()} />);
 }
@@ -192,26 +195,28 @@ describe('the panels', () => {
     const backend = installFakeBackend();
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Expand navigation' }));
+    fireEvent.click(listsToggle());
     await new Promise((r) => setTimeout(r, 400));
     expect(callsOf(backend, 'set_appearance')).toEqual([]);
   });
 
-  it('collapsing the navigation to icons is saved too', async () => {
+  it('collapsing the lists panel is saved too', async () => {
     const user = userEvent.setup();
     const backend = installFakeBackend();
     renderApp();
     await user.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
-    expect(screen.getByRole('navigation', { name: 'Primary' }).getAttribute('data-mode')).toBe('rail');
+    // #363: collapsed, the panel isn't shown; the icon bar stays, and its Downloads button brings it back.
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
+    expect(listsToggle().getAttribute('aria-expanded')).toBe('false');
     await waitFor(() => { expect(callsOf(backend, 'set_appearance').at(-1)?.args).toMatchObject({ appearance: { layout: { sidebarCollapsed: true } } }); });
   });
 
-  it('keeps the list its room in a narrow window by showing the navigation as icons', async () => {
-    setViewport(LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1);
+  it('keeps the list its room in a narrow window by collapsing the lists panel, the icon bar staying', async () => {
+    setViewport(LAYOUT.ACTIVITY_BAR + LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1);
     installFakeBackend();
     renderApp();
-    const nav = await screen.findByRole('navigation', { name: 'Primary' });
-    expect(nav.getAttribute('data-mode')).toBe('rail');
+    await screen.findByRole('navigation', { name: 'Sections' });
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
   });
 
   // V1's details-panel layout tests (tests/unit/layout.test.tsx), with the panel (#61).
@@ -274,9 +279,9 @@ describe('the panels', () => {
     withLayout({ detailsVisible: true });
     renderApp();
     await screen.findByRole('complementary', { name: 'Download details' });
-    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: /Categories/ }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Categories' }));
     await waitFor(() => { expect(screen.queryByRole('complementary', { name: 'Download details' })).toBeNull(); });
-    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: /All Downloads/ }));
+    await user.click(listsToggle());
     expect(await screen.findByRole('complementary', { name: 'Download details' })).toBeTruthy();
   });
 
@@ -286,10 +291,10 @@ describe('the panels', () => {
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
     await waitFor(() => { expect(callsOf(backend, 'set_appearance')).toHaveLength(1); });
-    // The collapse is being saved; the user expands the navigation again before it is.
-    fireEvent.click(screen.getByRole('button', { name: 'Expand navigation' }));
+    // The collapse is being saved; the user opens the lists panel again before it is.
+    fireEvent.click(listsToggle());
     await act(async () => { release(); await new Promise((r) => setTimeout(r, 50)); });
-    expect(screen.getByRole('navigation', { name: 'Primary' }).getAttribute('data-mode')).toBe('full');
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeTruthy();
     await waitFor(() => { expect(callsOf(backend, 'set_appearance').at(-1)?.args).toMatchObject({ appearance: { layout: { sidebarCollapsed: false } } }); });
   });
 

@@ -178,11 +178,12 @@ describe('every control has a name, and icons stay silent', () => {
     expect(browserTooltips()).toEqual([]);
   });
 
-  it('with the navigation shown as icons', async () => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1 });
+  it('with the lists panel collapsed, only the icon bar beside the list', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: LAYOUT.ACTIVITY_BAR + LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1 });
     installFakeBackend({ snapshot: withDownloads([archive]) });
     renderApp();
-    expect((await screen.findByRole('navigation', { name: 'Primary' })).getAttribute('data-mode')).toBe('rail');
+    await screen.findByRole('navigation', { name: 'Sections' });
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
     expect(unnamed()).toEqual([]);
     expect(spokenIcons()).toEqual([]);
     expect(browserTooltips()).toEqual([]);

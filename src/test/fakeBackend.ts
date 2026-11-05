@@ -235,6 +235,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'set_download_speed_limit':
         case 'set_download_category':
         case 'open_download_folder':
+        case 'open_feedback_page':
           return null;
         case 'set_download_connections':
           return args.connections;
