@@ -17,7 +17,7 @@ import { homedir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { LIBTORRENT_INFO_SCHEMA, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets } from './libtorrent-lib.mjs';
+import { LIBTORRENT_INFO_SCHEMA, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
 import { NATIVE_DIR, hostTarget } from './fetch.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -76,7 +76,7 @@ function reusable(infoPath, key) {
     const info = JSON.parse(readFileSync(infoPath, 'utf8'));
     if (info.cacheKey !== key || checkLibtorrentInfo(info).length) return false;
     return info.artifacts.every((a) => {
-      const p = join(info.prefix, ...a.path.split('/'));
+      const p = join(prefixFor(NATIVE_DIR, info.prefix), ...a.path.split('/'));
       return existsSync(p) && sha256(readFileSync(p)) === a.sha256;
     });
   } catch {
@@ -113,7 +113,8 @@ export function buildLibtorrent({ target = hostTarget(), force = false, log = co
     libtorrent: parsePackageVersion(readFileSync(join(share, 'LibtorrentRasterbarConfigVersion.cmake'), 'utf8')),
     triplet,
     vcpkgBaseline: manifest['builtin-baseline'],
-    prefix,
+    // Relative to target/native, so a moved or renamed checkout still finds it.
+    prefix: recordedPrefix(NATIVE_DIR, prefix),
     defines,
     staticLibs,
     systemLibs,

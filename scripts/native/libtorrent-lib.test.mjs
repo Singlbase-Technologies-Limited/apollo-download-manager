@@ -1,5 +1,6 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LIBTORRENT_VERSION, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets } from './libtorrent-lib.mjs';
+import { LIBTORRENT_VERSION, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
 
 // The two lines that matter, as vcpkg's libtorrent 2.0.15 package writes them (#62).
 const WINDOWS_TARGETS = String.raw`
@@ -109,5 +110,21 @@ describe('checkLibtorrentInfo', () => {
   it('requires the ABI-relevant definitions libtorrent was built with', () => {
     const problems = checkLibtorrentInfo({ ...good, defines: COMMON_DEFINES.filter((d) => d !== 'TORRENT_SSL_PEERS') });
     expect(problems).toEqual([expect.stringMatching(/TORRENT_SSL_PEERS/)]);
+  });
+});
+
+// The repository's rename moved every checkout; a record holding the absolute prefix it was built at
+// then pointed at a folder that no longer existed, and CI rebuilt libtorrent without vcpkg (#344's PR).
+describe('the recorded prefix', () => {
+  const native = join(process.cwd(), 'target', 'native');
+
+  it('is written relative to target/native, with forward slashes', () => {
+    expect(recordedPrefix(native, join(native, 'vcpkg-installed', 'x64-linux-release'))).toBe('vcpkg-installed/x64-linux-release');
+  });
+
+  it('is read from target/native wherever the checkout is, and an absolute one as it is', () => {
+    expect(prefixFor(native, 'vcpkg-installed/x64-linux-release')).toBe(join(native, 'vcpkg-installed', 'x64-linux-release'));
+    const absolute = join(process.cwd(), 'old', 'vcpkg-installed', 't');
+    expect(prefixFor(native, absolute)).toBe(absolute);
   });
 });
