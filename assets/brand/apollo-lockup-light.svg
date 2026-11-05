@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 232" width="640" height="232">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10.3 12.4 496.3 239.6" width="496" height="240">
   <title>Apollo Download Manager</title>
   <!-- The mark stands in for the A of "Apollo" (PO decision on #347). The wordmark uses live text (Outfit).
        Convert the text to outlines before using this file outside the app. -->
@@ -15,6 +15,6 @@
             d="M12 112 L54 12 H74 L116 112 H90 L81.4 92 H46.6 L38 112 Z M64 52 L71.8 72 H56.2 Z"/>
     </g>
   </svg>
-  <text x="140" y="155" fill="#0F172A" font-family="Outfit, sans-serif" font-size="142" font-weight="700" letter-spacing="-3">pollo</text>
-  <text x="34" y="212" fill="#526077" font-family="Outfit, sans-serif" font-size="27" font-weight="600" letter-spacing="9">DOWNLOAD MANAGER</text>
+  <text x="140" y="155" fill="#0F172A" font-family="Outfit, sans-serif" font-size="142" font-weight="700" textLength="306" lengthAdjust="spacing">pollo</text>
+  <text x="29.7" y="212" fill="#526077" font-family="Outfit, sans-serif" font-size="27" font-weight="600" textLength="416.3" lengthAdjust="spacing">DOWNLOAD MANAGER</text>
 </svg>

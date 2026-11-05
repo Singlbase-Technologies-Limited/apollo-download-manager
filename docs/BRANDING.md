@@ -71,6 +71,11 @@ On dark backgrounds the lockup moves both halves one step lighter (`apollo-locku
 
 **The mark stands in for the A of "Apollo",** followed by "pollo", with "DOWNLOAD MANAGER" spaced out underneath (PO decision on #347, design "L4"). The files are `apollo-lockup-light.svg` and `apollo-lockup-dark.svg`.
 
+**It is an aligned block, "equal all round in a perfect rectangle"** (PO decision on #347):
+
+- **Equal width:** "DOWNLOAD MANAGER" is spaced to end exactly where "pollo" ends, so both edges line up. The SVG sets `textLength` on both lines, so the width holds whatever the font's own spacing.
+- **Equal margins:** the file's edges sit the same distance outside the block on all four sides, 40 units, about a quarter of the logo's height. Keep at least this much clear space around it.
+
 ## Type
 
 - **The wordmark is set in Outfit,** a geometric sans-serif from Google Fonts:
