@@ -123,7 +123,11 @@ The window is laid out like VS Code's (PO requests on #347):
 
 The desktop icons in `src-tauri/icons/` are generated from the SVG sources, never edited by hand. The steps are in [`assets/brand/README.md`](../assets/brand/README.md#regenerating-the-icons).
 
-## Still to do (#347)
+## The repository
 
-- **The product name in the app, the installer and the docs,** and the upgrade from 0.1.x. These are the next PR.
+- **Name:** `Singlbase-Technologies-Limited/apollo-download-manager` (PO decision on #347); it was `velocity_download_manager_v2`, and GitHub redirects the old address.
+- **Social preview:** `assets/brand/apollo-social-preview.png`, 1280 × 640, the light full logo on the app's light background. How to render it is in [`assets/brand/README.md`](../assets/brand/README.md#the-social-preview).
+
+## Still to do
+
 - **The browser extension's icons.** They come with the extension redesign (#356), from the pixel-grid drawings.

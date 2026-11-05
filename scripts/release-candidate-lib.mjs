@@ -46,12 +46,12 @@ export function compactDate(date) {
 
 /**
  * The name every file of the candidate starts with:
- * `velocity-v2-<version>-<rc.N, or main>-<short commit>-<YYYYMMDD>`.
+ * `apollo-download-manager-<version>-<rc.N, or main>-<short commit>-<YYYYMMDD>`.
  */
 export function candidateName({ version, tag, commit, date }) {
   const parsed = tag ? parseRcTag(tag) : null;
   const label = parsed ? `rc.${parsed.rc}` : 'main';
-  return `velocity-v2-${version}-${label}-${commit.slice(0, 7)}-${compactDate(date)}`;
+  return `apollo-download-manager-${version}-${label}-${commit.slice(0, 7)}-${compactDate(date)}`;
 }
 
 /** The packages a candidate carries: where each comes from in the packaging artifacts, and its suffix. */

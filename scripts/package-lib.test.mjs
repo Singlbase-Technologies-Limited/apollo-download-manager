@@ -97,10 +97,10 @@ describe('Linux packages', () => {
       'usr/bin/velocity-transfer',
       'usr/bin/velocity-torrent',
       'usr/bin/velocity-native-host-v2',
-      'usr/lib/Velocity Download Manager V2/LICENSE',
-      'usr/lib/Velocity Download Manager V2/THIRD_PARTY_NOTICES.md',
-      'usr/lib/Velocity Download Manager V2/build-info.json',
-      'usr/share/applications/Velocity Download Manager V2.desktop',
+      'usr/lib/Apollo Download Manager/LICENSE',
+      'usr/lib/Apollo Download Manager/THIRD_PARTY_NOTICES.md',
+      'usr/lib/Apollo Download Manager/build-info.json',
+      'usr/share/applications/Apollo Download Manager.desktop',
     ]);
   });
 
@@ -109,12 +109,12 @@ describe('Linux packages', () => {
       'drwxr-xr-x root/root         0 2026-10-31 10:00 ./',
       'drwxr-xr-x root/root         0 2026-10-31 10:00 ./usr/bin/',
       '-rwxr-xr-x root/root  12345678 2026-10-31 10:00 ./usr/bin/velocity-desktop-v2',
-      '-rw-r--r-- root/root      2048 2026-10-31 10:00 ./usr/share/applications/Velocity Download Manager V2.desktop',
+      '-rw-r--r-- root/root      2048 2026-10-31 10:00 ./usr/share/applications/Apollo Download Manager.desktop',
       'lrwxrwxrwx root/root         0 2026-10-31 10:00 ./usr/bin/vdm -> velocity-desktop-v2',
     ].join('\n');
     expect(packagePaths(listing)).toEqual([
       'usr/bin/velocity-desktop-v2',
-      'usr/share/applications/Velocity Download Manager V2.desktop',
+      'usr/share/applications/Apollo Download Manager.desktop',
       'usr/bin/vdm',
     ]);
   });
@@ -125,16 +125,16 @@ describe('Linux packages', () => {
       'drwxr-xr-x 0/0               0 2026-10-30 21:39 usr',
       'drwxr-xr-x 0/0               0 2026-10-30 21:39 usr/bin',
       '-rwxr-xr-x 0/0        13064808 2026-10-30 21:39 usr/bin/velocity-torrent',
-      '-rw-r--r-- 0/0             223 2026-10-30 21:39 usr/share/applications/Velocity Download Manager V2.desktop',
+      '-rw-r--r-- 0/0             223 2026-10-30 21:39 usr/share/applications/Apollo Download Manager.desktop',
       'drwxr-xr-x 0/0               0 2026-10-30 21:39 usr/share/icons/hicolor/32x32',
     ].join('\n');
-    expect(packagePaths(listing)).toEqual(['usr/bin/velocity-torrent', 'usr/share/applications/Velocity Download Manager V2.desktop']);
+    expect(packagePaths(listing)).toEqual(['usr/bin/velocity-torrent', 'usr/share/applications/Apollo Download Manager.desktop']);
   });
 
   it('reads the paths of an rpm listing', () => {
-    expect(packagePaths('/usr/bin/velocity-desktop-v2\n/usr/lib/Velocity Download Manager V2/build-info.json\n')).toEqual([
+    expect(packagePaths('/usr/bin/velocity-desktop-v2\n/usr/lib/Apollo Download Manager/build-info.json\n')).toEqual([
       'usr/bin/velocity-desktop-v2',
-      'usr/lib/Velocity Download Manager V2/build-info.json',
+      'usr/lib/Apollo Download Manager/build-info.json',
     ]);
   });
 
@@ -160,7 +160,7 @@ describe('Linux packages', () => {
   it('name what is missing', () => {
     expect(linuxPackageProblems(files.filter((f) => !f.endsWith('velocity-torrent') && !f.endsWith('.desktop')))).toEqual([
       'it lacks usr/bin/velocity-torrent',
-      'it lacks usr/share/applications/Velocity Download Manager V2.desktop',
+      'it lacks usr/share/applications/Apollo Download Manager.desktop',
     ]);
   });
 });

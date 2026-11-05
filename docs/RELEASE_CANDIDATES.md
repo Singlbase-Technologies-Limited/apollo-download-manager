@@ -4,7 +4,7 @@ A release candidate is a set of installers built from one verified commit on `ma
 
 ## What one holds
 
-The *Release candidate* workflow ([`release-candidate.yml`](../.github/workflows/release-candidate.yml)) uploads one artifact, named like its files, `velocity-v2-<version>-<candidate>-<short commit>-<YYYYMMDD>`, where `<candidate>` is `rc.N` for a tag and `main` for a hand-started run. For example `velocity-v2-0.1.0-rc.1-3a93690-20261031`:
+The *Release candidate* workflow ([`release-candidate.yml`](../.github/workflows/release-candidate.yml)) uploads one artifact, named like its files, `apollo-download-manager-<version>-<candidate>-<short commit>-<YYYYMMDD>`, where `<candidate>` is `rc.N` for a tag and `main` for a hand-started run. For example `apollo-download-manager-0.2.0-rc.1-3a93690-20261031` (`velocity-v2-…` until 0.1.1):
 
 | File | What |
 |---|---|

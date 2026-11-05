@@ -33,7 +33,7 @@ function fakeApi(reply: Reply, settings: unknown = DEFAULT_SETTINGS) {
 }
 
 const ok: Reply = (m) => ({ v: 1, id: m.id, ok: true, result: { action: 'prompted' } });
-const notRunning: Reply = (m) => ({ v: 1, id: m.id, ok: false, error: { code: 'DESKTOP_NOT_RUNNING', message: 'Velocity V2 is not running.' } });
+const notRunning: Reply = (m) => ({ v: 1, id: m.id, ok: false, error: { code: 'DESKTOP_NOT_RUNNING', message: 'Apollo Download Manager is not running.' } });
 const item = (over: Record<string, unknown> = {}) => ({ id: 7, url: 'https://cdn.test/big.iso', referrer: 'https://site.test/', filename: '', mime: 'application/octet-stream', fileSize: 1 << 30, incognito: false, state: 'in_progress', ...over });
 
 describe('background interception', () => {

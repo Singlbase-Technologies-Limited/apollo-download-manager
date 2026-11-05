@@ -1,6 +1,6 @@
 [package]
 name = "velocity-sftp"
-description = "The SFTP layer of Velocity Download Manager V2: the only crate that calls russh (ADR-0013)"
+description = "The SFTP layer of Apollo Download Manager: the only crate that calls russh (ADR-0013)"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

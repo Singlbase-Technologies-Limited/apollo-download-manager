@@ -64,6 +64,19 @@ jobs:
           path: target/native
       - name: Build the installer
         run: pnpm package:windows --require-listing
+      # The upgrade from the last release before the rename (#347): one install and one Apps &
+      # features entry must remain, with the data and the browser keys kept. Only this runner's
+      # user is touched.
+      - name: Upgrade from 0.1.1
+        env:
+          OLD: velocity-v2-0.1.1-windows-x64-setup.exe
+          RELEASE: https://github.com/${{ github.repository }}/releases/download/v0.1.1
+        run: |
+          mkdir -p old && cd old
+          curl -sSfLO "$RELEASE/$OLD" && curl -sSfLO "$RELEASE/SHA256SUMS"
+          grep " $OLD\$" SHA256SUMS | sha256sum -c -
+          cd ..
+          pwsh -NoProfile -File scripts/package-upgrade-test.ps1 "old/$OLD" target/release/bundle/nsis/*-setup.exe
       - name: Upload the installer
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

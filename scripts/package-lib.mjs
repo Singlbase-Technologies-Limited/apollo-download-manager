@@ -28,8 +28,8 @@ export const RELEASE_FEATURE = 'velocity-core/release-identity';
 /** The app's own program: src-tauri's Cargo package name. */
 export const APP_PROGRAM = 'velocity-desktop-v2';
 
-/** The release product name (branding.json's `releaseProductName`, ADR-0016). */
-export const PRODUCT_NAME = 'Velocity Download Manager V2';
+/** The release product name (branding.json's `releaseProductName`, ADR-0018). */
+export const PRODUCT_NAME = 'Apollo Download Manager';
 
 /** What Tauri builds on each platform (PO decisions on #81 and #82: no MSI, no AppImage). */
 export const BUNDLES = { windows: ['nsis'], linux: ['deb', 'rpm'] };

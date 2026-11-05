@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in Velocity Download Manager V2
+description: Report a reproducible problem in Apollo Download Manager
 title: "fix: "
 labels: ["bug"]
 body:

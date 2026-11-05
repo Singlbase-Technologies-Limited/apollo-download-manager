@@ -1,6 +1,6 @@
 [package]
 name = "velocity-torrent"
-description = "The torrent engine of Velocity Download Manager V2: libtorrent in a supervised helper process (ADR-0014)"
+description = "The torrent engine of Apollo Download Manager: libtorrent in a supervised helper process (ADR-0014)"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

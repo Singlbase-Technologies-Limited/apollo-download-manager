@@ -42,24 +42,24 @@ export function releaseRefusal({ tag, version, commit, onMain, mainChecks, candi
 
 /**
  * The candidate's artifact among a run's artifacts (`GET …/actions/runs/{id}/artifacts`): the one
- * named `velocity-v2-<version>-rc.<N>-<short commit>-…`, or null.
+ * named `apollo-download-manager-<version>-rc.<N>-<short commit>-…`, or null.
  */
 export function candidateArtifact(artifacts, candidate, commit) {
   const rc = parseRcTag(candidate);
   if (rc === null) return null;
-  const prefix = `velocity-v2-${rc.version}-rc.${String(rc.rc)}-${commit.slice(0, 7)}-`;
+  const prefix = `apollo-download-manager-${rc.version}-rc.${String(rc.rc)}-${commit.slice(0, 7)}-`;
   return artifacts.find((a) => a.name.startsWith(prefix) && !a.expired) ?? null;
 }
 
 /**
  * The release's name for a candidate's file: the candidate's prefix
- * (`velocity-v2-<version>-rc.<N>-<commit>-<date>-`) becomes `velocity-v2-<version>-`, so
+ * (`apollo-download-manager-<version>-rc.<N>-<commit>-<date>-`) becomes `apollo-download-manager-<version>-`, so
  * `…-windows-x64-setup.exe` stays `…-windows-x64-setup.exe`. The bytes are the candidate's.
  */
 export function releaseFileName(candidateFile, version) {
-  const m = /^velocity-v2-\d+\.\d+\.\d+-rc\.\d+-[0-9a-f]{7}-\d{8}-(.+)$/.exec(candidateFile);
+  const m = /^apollo-download-manager-\d+\.\d+\.\d+-rc\.\d+-[0-9a-f]{7}-\d{8}-(.+)$/.exec(candidateFile);
   if (!m) throw new Error(`${candidateFile} isn't a release candidate's file`);
-  return `velocity-v2-${version}-${m[1]}`;
+  return `apollo-download-manager-${version}-${m[1]}`;
 }
 
 /**

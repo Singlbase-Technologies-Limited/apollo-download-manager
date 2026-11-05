@@ -1,6 +1,6 @@
-# Velocity Download Manager V2
+# Apollo Download Manager
 
-Velocity Download Manager V2 is a desktop download manager under development: a Tauri 2 and React application with its own Rust direct-download engine (HTTP, HTTPS and FTP over libcurl, SFTP over russh, and Metalink files) and libtorrent for BitTorrent. It is a separate application from the original Velocity Download Manager and is designed to be installed side by side with it.
+Apollo Download Manager is a desktop download manager under development: a Tauri 2 and React application with its own Rust direct-download engine (HTTP, HTTPS and FTP over libcurl, SFTP over russh, and Metalink files) and libtorrent for BitTorrent. Until v0.2.0 it was named "Velocity Download Manager V2" ([ADR-0018](docs/decisions/0018-product-name-apollo.md)). It is a separate application from the original Velocity Download Manager (V1) and is designed to be installed side by side with it.
 
 ## Getting started
 
@@ -24,6 +24,6 @@ Work is planned as issues on the [project board](https://github.com/orgs/Singlba
 
 Copyright (C) 2026 Singlbase Technologies Limited.
 
-Velocity Download Manager V2 is free software: you can redistribute it and change it under the terms of the [GNU General Public License, version 3 only](LICENSE) (`GPL-3.0-only`). It is distributed without any warranty; see the licence for details. The decision is [ADR-0017](docs/decisions/0017-gpl-3-licence.md).
+Apollo Download Manager is free software: you can redistribute it and change it under the terms of the [GNU General Public License, version 3 only](LICENSE) (`GPL-3.0-only`). It is distributed without any warranty; see the licence for details. The decision is [ADR-0017](docs/decisions/0017-gpl-3-licence.md).
 
 The third-party components V2 contains, and their licences, are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

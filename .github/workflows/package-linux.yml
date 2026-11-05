@@ -119,3 +119,46 @@ jobs:
       - name: Install, check and remove
         shell: bash
         run: bash scripts/package-install-test.sh packages/*/*.${{ matrix.package }} packages/expected-files.txt
+
+  upgrade:
+    # The upgrade from the last release before the rename (#347): the new package must replace
+    # velocity-download-manager-v2 and keep the data.
+    name: Upgrade from 0.1.1 on ${{ matrix.image }}
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu:22.04
+            package: deb
+            old: velocity-v2-0.1.1-linux-amd64.deb
+          - image: fedora:42
+            package: rpm
+            old: velocity-v2-0.1.1-linux-x86_64.rpm
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: velocity-v2-linux-packages
+          path: packages
+      - name: Download 0.1.1
+        shell: bash
+        env:
+          OLD: ${{ matrix.old }}
+          RELEASE: https://github.com/${{ github.repository }}/releases/download/v0.1.1
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y -q --no-install-recommends curl ca-certificates
+          fi
+          mkdir -p old && cd old
+          curl -sSfLO "$RELEASE/$OLD" && curl -sSfLO "$RELEASE/SHA256SUMS"
+          grep " $OLD\$" SHA256SUMS | sha256sum -c -
+      - name: Upgrade, check
+        shell: bash
+        run: bash scripts/package-upgrade-test.sh "old/${{ matrix.old }}" packages/*/*.${{ matrix.package }}

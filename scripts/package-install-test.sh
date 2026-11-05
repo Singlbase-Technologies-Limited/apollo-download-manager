@@ -11,7 +11,7 @@ set -euo pipefail
 
 package=$1
 expected=$2
-name=velocity-download-manager-v2
+name=apollo-download-manager
 
 fail() {
   echo "FAIL: $*" >&2

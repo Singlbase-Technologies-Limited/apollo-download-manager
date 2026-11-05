@@ -1,6 +1,6 @@
 [package]
 name = "velocity-core"
-description = "Core domain logic for Velocity Download Manager V2"
+description = "Core domain logic for Apollo Download Manager"
 version.workspace = true
 license.workspace = true
 edition.workspace = true

@@ -111,4 +111,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --verify-tag --title "Velocity Download Manager V2 ${TAG#v}" --notes-file release/notes.md release/files/*
+        run: gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --verify-tag --title "Apollo Download Manager ${TAG#v}" --notes-file release/notes.md release/files/*

@@ -1,6 +1,6 @@
 # Privacy
 
-What Velocity Download Manager V2 keeps, and what it sends. AGENTS.md's rule is that V2 makes no network calls beyond the downloads themselves without a PO decision.
+What Apollo Download Manager keeps, and what it sends. AGENTS.md's rule is that V2 makes no network calls beyond the downloads themselves without a PO decision.
 
 ## What V2 sends
 

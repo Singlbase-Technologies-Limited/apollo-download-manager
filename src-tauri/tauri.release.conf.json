@@ -33,7 +33,12 @@
     },
     "linux": {
       "deb": {
-        "section": "net"
+        "section": "net",
+        "conflicts": ["velocity-download-manager-v2"],
+        "replaces": ["velocity-download-manager-v2"]
+      },
+      "rpm": {
+        "obsoletes": ["velocity-download-manager-v2"]
       }
     },
     "windows": {

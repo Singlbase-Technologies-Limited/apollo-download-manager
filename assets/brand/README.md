@@ -9,8 +9,21 @@ The source artwork for Apollo Download Manager's mark, app icon and wordmark (#3
 | `apollo-icon-16.svg` to `apollo-icon-48.svg` | The app icon at exactly 16, 20, 24, 32, 40 and 48 px, each drawn on its own pixel grid so its flat edges are crisp. 16 and 20 px have one tone and no streak, 24 px two tones and no streak, 32 px and up the streak too |
 | `apollo-mark.svg` | The A in one colour (ink), for single-colour uses |
 | `apollo-lockup-light.svg`, `apollo-lockup-dark.svg` | The full logo, where the mark stands in for the A of "Apollo", for light and dark backgrounds. The wordmark is Outfit converted to outlines, so it needs no font |
+| `apollo-social-preview.svg`, `apollo-social-preview.png` | The repository's social preview on GitHub, 1280 × 640: the light full logo centred on the app's light background |
 
 The app draws the logo inline (`src/components/BrandLogo.tsx`, in the sidebar and on the first-run screen) and the small icon when the sidebar is narrow (`src/components/BrandIcon.tsx`). Both use the heavier small A.
+
+## The social preview
+
+GitHub shows it when the repository is linked. Render the PNG from the SVG with Edge, from the repository root (any Chromium browser works the same way):
+
+```sh
+# Wrap the SVG in a page with no margin, then take a 1280 x 640 screenshot of it.
+printf '<!doctype html><body style="margin:0">%s</body>' "$(cat assets/brand/apollo-social-preview.svg)" > <tmp>/social.html
+msedge --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1280,640 --screenshot=assets/brand/apollo-social-preview.png <tmp>/social.html
+```
+
+An admin uploads the PNG in the repository's Settings, General, Social preview; GitHub has no API for it.
 
 ## Regenerating the icons
 

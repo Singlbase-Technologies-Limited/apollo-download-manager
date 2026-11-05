@@ -8,7 +8,7 @@ The GitHub settings for this repository: each one's value, why, whether the curr
 - **Applied by the PO on 2026-10-31,** in the five phases of #90's checklist, and checked from screenshots and the API; earlier checks on 2026-10-30 with the commands below. The agent account has Write access, not Admin, so the commands marked *Admin* only work with the PO's account. They read and change nothing.
 - **State column:** *On* means the setting has the recommended value. *Recommended* means the PO hasn't applied it yet. *Not yet* means it waits for something named in the row.
 
-Set `R=repos/Singlbase-Technologies-Limited/velocity_download_manager_v2` before running the commands.
+Set `R=repos/Singlbase-Technologies-Limited/apollo-download-manager` before running the commands.
 
 ## Merging
 

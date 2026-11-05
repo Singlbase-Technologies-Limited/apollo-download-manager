@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping with Velocity Download Manager V2. It is free software under the GNU General Public License, version 3 only, owned by Singlbase Technologies Limited ([LICENSE](LICENSE)). Please open an issue to discuss a change before you start, read the [Code of Conduct](CODE_OF_CONDUCT.md), and report security problems privately ([SECURITY.md](SECURITY.md)).
+Thanks for helping with Apollo Download Manager. It is free software under the GNU General Public License, version 3 only, owned by Singlbase Technologies Limited ([LICENSE](LICENSE)). Please open an issue to discuss a change before you start, read the [Code of Conduct](CODE_OF_CONDUCT.md), and report security problems privately ([SECURITY.md](SECURITY.md)).
 
 This page is the path from a fresh clone to a merged pull request. The rules behind each step are in [AGENTS.md](AGENTS.md), which applies to people and AI agents alike.
 

@@ -1,6 +1,6 @@
 [package]
 name = "velocity-child"
-description = "The child-process layer of Velocity Download Manager V2: the framed protocol, client, serve loop and supervisor its engines share"
+description = "The child-process layer of Apollo Download Manager: the framed protocol, client, serve loop and supervisor its engines share"
 version.workspace = true
 license.workspace = true
 edition.workspace = true
