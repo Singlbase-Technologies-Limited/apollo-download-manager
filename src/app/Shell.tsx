@@ -14,7 +14,7 @@ import { commitSidebarWidth, LAYOUT, resolveLayout } from '../layout/layoutLogic
 import { ShellLayoutContext, useLayoutPersistence, useViewportWidth, type ShellLayout } from '../layout/useLayout';
 import { api } from '../lib/api';
 import { onQuitRequested } from '../lib/events';
-import { PANEL, PANEL_GAP } from '../layout/panel';
+import { PANEL } from '../layout/panel';
 import { cn } from '../lib/cn';
 import { useUiStore } from '../stores/ui';
 import { quitQuestion } from './quitQuestion';
@@ -83,13 +83,12 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   return (
     // Each area is its own rounded panel on the window's frame, with the splitters in the gaps (PO, #347).
     <div className="flex h-full flex-col bg-frame">
-      <div ref={rootRef} className="flex min-h-0 flex-1 px-2 pb-2 pt-0.5">
+      <div ref={rootRef} className="flex min-h-0 flex-1 px-1 pb-1">
         {sidebar.mode !== 'hidden' ? (
           <>
             <Sidebar app={app} compact={rail} autoCompact={sidebar.autoCompact} />
             <Splitter
               label="Resize navigation"
-              className={PANEL_GAP}
               controls="app-sidebar"
               side="start"
               value={sidebar.width}

@@ -187,18 +187,18 @@ export function Splitter({ label, controls, side, value, min, max, onPreview, on
         onReset?.();
       }}
       className={cn(
-        // A 1px line with a 9px hit area; hover, focus and drag widen it and show a grip, so feedback is not color only.
-        'group/split relative z-20 w-px shrink-0 cursor-col-resize touch-none select-none bg-border outline-none',
+        // The 4px gap between two panels, with a 12px hit area (PO, #347: like VS Code's).
+        'group/split relative z-20 w-1 shrink-0 cursor-col-resize touch-none select-none outline-none',
         'before:absolute before:inset-y-0 before:-left-1 before:-right-1 before:content-[""]',
-        'hover:bg-accent/60 focus-visible:bg-accent data-[dragging]:bg-accent',
         className,
       )}
     >
       <span
         aria-hidden
         className={cn(
-          'pointer-events-none absolute left-1/2 top-1/2 h-8 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border-strong bg-surface opacity-0 shadow-xs transition-opacity',
-          'group-hover/split:opacity-100 group-focus-visible/split:border-accent group-focus-visible/split:opacity-100 group-focus-visible/split:ring-2 group-focus-visible/split:ring-ring/40 group-data-[dragging]/split:border-accent group-data-[dragging]/split:opacity-100',
+          // A thin line appears in the gap: after a short pause on hover, and at once on focus or drag, so feedback is not color only.
+          'pointer-events-none absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-accent opacity-0 transition-opacity duration-150 motion-reduce:transition-none',
+          'group-hover/split:opacity-100 group-hover/split:delay-300 group-focus-visible/split:opacity-100 group-focus-visible/split:delay-0 group-data-[dragging]/split:opacity-100 group-data-[dragging]/split:delay-0',
         )}
       />
     </div>

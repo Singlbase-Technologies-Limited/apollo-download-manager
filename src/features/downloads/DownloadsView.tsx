@@ -12,7 +12,7 @@ import { Splitter } from '../../components/Splitter';
 import { ColumnIdSchema, DEFAULT_COLUMNS, type AppearanceSettings, type ColumnId, type ShellSettings } from '../../contract';
 import { actionsForSelection, visibleDownloads } from '../../downloads/list';
 import type { ListView } from '../../downloads/views';
-import { PANEL, PANEL_GAP } from '../../layout/panel';
+import { PANEL } from '../../layout/panel';
 import { useShellLayout } from '../../layout/useLayout';
 import { cn } from '../../lib/cn';
 import { api } from '../../lib/api';
@@ -79,7 +79,6 @@ function DetailsSplitter() {
   return (
     <Splitter
       label="Resize details panel"
-      className={PANEL_GAP}
       controls="details-panel"
       side="end"
       value={d.width}
