@@ -17,9 +17,10 @@
   --surface-3: #eef2f6;
   --border: #e1e6ed;
   --border-strong: #cbd3de;
-  --fg: #0f172a;
-  --fg-muted: #526077;
-  --fg-subtle: #606b7d;
+  /* Deeper text, easier on the eyes (PO, 2026-11-06); every pair keeps at least AA contrast. */
+  --fg: #0b1220;
+  --fg-muted: #3d495c;
+  --fg-subtle: #4f5a6c;
   --accent: #1b68cb;
   --accent-strong: #1659b3;
   --accent-soft: #e5effc;
@@ -49,9 +50,9 @@
   --surface-3: #1d2532;
   --border: #253041;
   --border-strong: #334155;
-  --fg: #e6ebf2;
-  --fg-muted: #9aa6b8;
-  --fg-subtle: #8993a3;
+  --fg: #eef2f7;
+  --fg-muted: #b0bacb;
+  --fg-subtle: #9ea8b9;
   --accent: #5092f0;
   --accent-strong: #6aa3f5;
   --accent-soft: #172a45;
@@ -112,6 +113,8 @@
   body {
     @apply bg-bg text-fg font-sans antialiased;
     font-size: 13px;
+    /* A touch heavier than regular, so small text doesn't look thin (PO, 2026-11-06). */
+    font-weight: 450;
     font-feature-settings: 'cv11', 'ss01', 'tnum';
     overflow: hidden;
     user-select: none;

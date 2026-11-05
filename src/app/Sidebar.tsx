@@ -1,6 +1,7 @@
 import { AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, FolderCog, History, Layers, PanelLeftClose, PanelLeftOpen, Plus, type LucideIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { CategoryGlyph } from '../components/CategoryGlyph';
+import { navGroupTitle, navItemClass } from '../components/navStyles';
 import { Tooltip } from '../components/Tooltip';
 import type { AppInfo } from '../contract';
 import { countByView, type ListView } from '../downloads/views';
@@ -42,12 +43,7 @@ function NavButton({
       type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={cn(
-        'group flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
-        compact ? 'relative justify-center px-0' : 'px-2.5',
-        // The hover tints the row with the accent, so it shows against the sidebar in both themes (PO, #347).
-        active ? 'bg-surface-3 font-medium text-fg' : 'text-fg-muted hover:bg-accent-soft hover:text-fg',
-      )}
+      className={cn(navItemClass(active), compact && 'relative justify-center px-0')}
     >
       {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-accent')} aria-hidden /> : children}
       <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{label}</span>
@@ -59,7 +55,7 @@ function NavButton({
   return compact ? <Tooltip label={label} side="right">{button}</Tooltip> : button;
 }
 
-const groupLabel = 'px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle';
+const groupLabel = navGroupTitle;
 
 /**
  * The navigation (V1's Sidebar). Its width comes from the shell (`--sidebar-w`); `compact` shows icons

@@ -53,23 +53,28 @@ export function DetailsFooter({ d, actions, busy, onEdit }: { d: DownloadRecord;
   ];
 
   return (
-    <div role="group" aria-label="Actions for this download" className="flex items-center gap-1.5 border-t border-border-strong bg-surface px-3 py-2.5">
+    // In a narrow panel, Open folder and Edit… show their icons only, so every action stays in view (PO, 2026-11-06).
+    <div role="group" aria-label="Actions for this download" className="@container flex items-center gap-1.5 border-t border-border-strong bg-surface px-3 py-2.5">
       {main ? (
-        <Button size="sm" variant="primary" disabled={busy} onClick={main.run}>
-          {main.icon} {main.label}
+        <Button size="sm" variant="primary" className="min-w-0" disabled={busy} onClick={main.run}>
+          {main.icon} <span className="truncate">{main.label}</span>
         </Button>
       ) : null}
-      <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.openFolder(d.id)}>
-        <FolderOpen /> Open folder
-      </Button>
-      <Button size="sm" variant="secondary" onClick={onEdit}>
-        <SlidersHorizontal /> Edit…
-      </Button>
-      <div className="flex-1" />
+      <Tooltip label="Open folder" canBeDisabled>
+        <Button size="sm" variant="secondary" aria-label="Open folder" disabled={busy} onClick={() => void actions.openFolder(d.id)}>
+          <FolderOpen /> <span className="@max-[23rem]:sr-only">Open folder</span>
+        </Button>
+      </Tooltip>
+      <Tooltip label="Edit…">
+        <Button size="sm" variant="secondary" aria-label="Edit…" onClick={onEdit}>
+          <SlidersHorizontal /> <span className="@max-[23rem]:sr-only">Edit…</span>
+        </Button>
+      </Tooltip>
+      <div className="min-w-0 flex-1" />
       <DropdownMenu
         trigger={
           <Tooltip label="More actions">
-            <Button size="icon-sm" variant="ghost" aria-label="More actions for this download">
+            <Button size="icon-sm" variant="ghost" className="shrink-0" aria-label="More actions for this download">
               <MoreHorizontal />
             </Button>
           </Tooltip>

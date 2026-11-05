@@ -9,6 +9,7 @@ import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
 import { confirmAction } from '../../components/confirmStore';
 import { contentClass, overlayClass } from '../../components/dialogStyles';
+import { navItemClass } from '../../components/navStyles';
 import { useReturnFocus } from '../../components/returnFocus';
 import { Spinner } from '../../components/Spinner';
 import type { AppearanceSettings, Browser, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme, TimeFormat } from '../../contract';
@@ -116,14 +117,14 @@ export function SettingsView() {
         <Input type="search" aria-label="Search settings" placeholder="Search settings" value={query} onChange={(e) => { setQuery(e.target.value); }} className="pl-8" />
       </div>
     <div className="flex min-h-0 flex-1">
-      <nav aria-label="Settings sections" className="w-44 lg:w-52 shrink-0 overflow-y-auto border-r border-border bg-surface-2 p-2">
+      <nav aria-label="Settings sections" className="w-44 shrink-0 space-y-0.5 overflow-y-auto border-r border-border bg-sidebar p-2.5 lg:w-52">
         {SECTIONS.map((s) => (
           <button
             key={s.id}
             type="button"
             aria-current={section === s.id ? 'page' : undefined}
             onClick={() => { setSection(s.id); }}
-            className={cn('flex h-8 w-full items-center rounded-md px-2.5 text-left text-[13px]', section === s.id ? 'bg-accent-soft font-medium text-accent' : 'text-fg-muted hover:bg-surface-3 hover:text-fg')}
+            className={navItemClass(section === s.id)}
           >
             {s.label}
           </button>
