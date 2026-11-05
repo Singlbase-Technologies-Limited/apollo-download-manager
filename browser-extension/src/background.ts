@@ -1,7 +1,7 @@
 import { createBackground, isContentMessage, isPageMessage, type ExtApi, type PendingPrompt } from './background-core';
 import { ext } from './shared/ext';
 import { sanitizeSettings } from './shared/settings';
-import { EXTENSION_NAME, SHORT_NAME } from './shared/branding';
+import { EXTENSION_NAME } from './shared/branding';
 
 const MENU_ID = 'velocity-v2-download-link';
 
