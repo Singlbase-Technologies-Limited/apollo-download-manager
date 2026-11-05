@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <title>Apollo Download Manager</title>
+  <!-- Drawn for 16 px on its own pixel grid (#347): every corner on a whole pixel. Render it at exactly 16 px. -->
+  <path fill="#2373D9" fill-rule="evenodd" d="M1 14 L9 2 L12 2 L15 14 L12 14 L11 12 L6 12 L5 14 Z M10 7 L10 10 L8 10 Z"/>
+</svg>

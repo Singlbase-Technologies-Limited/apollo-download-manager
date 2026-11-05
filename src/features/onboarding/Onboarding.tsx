@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, FolderOpen, ShieldCheck, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { BrandIcon } from '../../components/BrandIcon';
+import { BrandLogo } from '../../components/BrandLogo';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { Spinner } from '../../components/Spinner';
@@ -65,8 +65,8 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
   return (
     <div className="flex h-full items-center justify-center overflow-y-auto bg-bg p-8">
       <div className="w-full max-w-xl rounded-2xl border border-border bg-surface p-8 shadow-panel">
-        <div className="flex items-center gap-3">
-          <BrandIcon className="size-10 shrink-0 drop-shadow-sm" />
+        <div className="flex flex-col gap-4">
+          <BrandLogo className="h-16 w-auto self-start" />
           <div>
             <h1 className="text-lg font-semibold">Welcome to {app.name}</h1>
             <p className="text-xs text-fg-muted">Version {app.version}</p>

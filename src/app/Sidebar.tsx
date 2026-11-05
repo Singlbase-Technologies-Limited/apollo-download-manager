@@ -1,6 +1,7 @@
 import { AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, FolderCog, History, Layers, PanelLeftClose, PanelLeftOpen, Plus, Settings, type LucideIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
+import { BrandLogo } from '../components/BrandLogo';
 import { CategoryGlyph } from '../components/CategoryGlyph';
 import type { AppInfo } from '../contract';
 import { countByView, type ListView } from '../downloads/views';
@@ -82,16 +83,20 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
 
   return (
     <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className="flex shrink-0 flex-col overflow-hidden bg-sidebar" style={{ width: 'var(--sidebar-w)' }}>
-      <div className={cn('flex h-12 shrink-0 items-center gap-2.5', compact ? 'justify-center' : 'px-4')}>
-        <span className="flex size-7 shrink-0 drop-shadow-sm" title={compact ? app.name : undefined}>
-          <BrandIcon className="size-7" />
-        </span>
-        <div className={compact ? 'sr-only' : 'min-w-0'}>
-          <p className="truncate text-[13px] font-semibold leading-tight">Velocity</p>
-          <p className="truncate text-[10px] leading-tight text-fg-subtle">Download Manager</p>
+      {compact ? (
+        <div className="flex h-12 shrink-0 items-center justify-center">
+          <span className="flex size-7 shrink-0" title={app.name}>
+            <BrandIcon className="size-7" />
+          </span>
+          <span className="sr-only">Apollo Download Manager</span>
         </div>
-      </div>
-      <div className={cn('flex-1 space-y-5 overflow-y-auto overflow-x-hidden py-2', compact ? 'px-2' : 'px-2.5')}>
+      ) : (
+        <div className="flex shrink-0 items-center px-5 pb-3 pt-4">
+          <BrandLogo className="h-auto w-[136px] max-w-full" />
+        </div>
+      )}
+      {/* The button stays put while the list below it scrolls; a line marks where the scrolling starts. */}
+      <div className={cn('shrink-0 border-b border-border-strong pb-3', compact ? 'px-2 pt-1' : 'px-2.5')}>
         <button
           type="button"
           onClick={() => { openAdd(); }}
@@ -105,6 +110,8 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
           <Plus className="size-4 shrink-0" aria-hidden />
           <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate text-left'}>Add download</span>
         </button>
+      </div>
+      <div className={cn('flex-1 space-y-5 overflow-y-auto overflow-x-hidden py-2', compact ? 'px-2' : 'px-2.5')}>
         <div className="space-y-0.5">
           {LIST_ITEMS.map((it) => (
             <NavButton key={it.view} compact={compact} active={view === it.view && categoryFilter === null} icon={it.icon} label={it.label} count={counts[it.view]} onClick={() => { setView(it.view); }} />
