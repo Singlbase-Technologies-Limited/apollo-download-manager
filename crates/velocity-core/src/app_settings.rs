@@ -245,6 +245,19 @@ impl Section for OnboardingSettings {
     const KEY: &'static str = "onboarding";
 }
 
+/// One-off upkeep this install has done, so it runs once (#345). Not a setting the user edits.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct UpkeepSettings {
+    /// The window's own browsing data was cleared once: the autofill entries versions before
+    /// 0.2.0 kept of typed links, folders and the proxy's user name (#345).
+    pub window_data_cleared: bool,
+}
+
+impl Section for UpkeepSettings {
+    const KEY: &'static str = "upkeep";
+}
+
 /// The settings the window starts with (#29): how it looks, whether the first-run setup is
 /// needed, and the folder downloads go to now.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

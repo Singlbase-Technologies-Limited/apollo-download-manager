@@ -10,6 +10,8 @@ What changed in each version of Apollo Download Manager, named Velocity Download
 
 ### Fixes
 
+- **What you type stays yours:** the window no longer remembers typed links, folders or the proxy's user name in its own autofill store, and the first start of this version clears what earlier versions kept there (#345).
+
 - **Through an HTTP proxy,** a download no longer fails with "The file changed on the server" as soon as it opens a second connection, and a proxy that wants a login none was set for says "The proxy refused the connection" (#344).
 
 ## 0.1.1 - 2026-11-04
