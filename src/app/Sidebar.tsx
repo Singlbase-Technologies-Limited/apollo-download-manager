@@ -81,18 +81,33 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
     return m;
   }, [downloads]);
 
+  // Collapsing sits beside the logo; when the window is too narrow, the shell collapses it instead.
+  const toggle = autoCompact ? null : (
+    <button
+      type="button"
+      onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
+      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+      title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+      className="flex size-7 shrink-0 items-center justify-center rounded-md text-fg-subtle hover:bg-surface-3 hover:text-fg"
+    >
+      {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
+    </button>
+  );
+
   return (
     <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className="flex shrink-0 flex-col overflow-hidden bg-sidebar" style={{ width: 'var(--sidebar-w)' }}>
       {compact ? (
-        <div className="flex h-12 shrink-0 items-center justify-center">
+        <div className="flex shrink-0 flex-col items-center gap-1 pb-1 pt-3">
           <span className="flex size-7 shrink-0" title={app.name}>
             <BrandIcon className="size-7" />
           </span>
           <span className="sr-only">Apollo Download Manager</span>
+          {toggle}
         </div>
       ) : (
-        <div className="flex shrink-0 items-center px-5 pb-3 pt-4">
-          <BrandLogo className="h-auto w-[136px] max-w-full" />
+        <div className="flex shrink-0 items-center justify-between gap-2 pb-3 pl-5 pr-2.5 pt-4">
+          <BrandLogo className="h-auto w-[112px] max-w-full" />
+          {toggle}
         </div>
       )}
       {/* The button stays put while the list below it scrolls; a line marks where the scrolling starts. */}
@@ -136,20 +151,11 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
           <NavButton compact={compact} active={view === 'settings'} icon={Settings} label="Settings" onClick={() => { setView('settings'); }} />
         </div>
       </div>
-      <div className={cn('flex shrink-0 items-center gap-2 border-t border-border py-1.5 text-[10px] text-fg-subtle', compact ? 'justify-center' : 'pl-4 pr-1.5')}>
-        {compact ? null : <span className="min-w-0 flex-1 truncate">v{app.version}</span>}
-        {autoCompact ? null : (
-          <button
-            type="button"
-            onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
-            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-            className="flex size-7 shrink-0 items-center justify-center rounded-md text-fg-subtle hover:bg-surface-3 hover:text-fg"
-          >
-            {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
-          </button>
-        )}
-      </div>
+      {compact ? null : (
+        <div className="flex shrink-0 items-center border-t border-border py-2 pl-4 pr-1.5 text-[10px] text-fg-subtle">
+          <span className="min-w-0 flex-1 truncate">v{app.version}</span>
+        </div>
+      )}
     </nav>
   );
 }
