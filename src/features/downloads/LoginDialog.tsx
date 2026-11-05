@@ -2,6 +2,7 @@ import { KeyRound } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../components/Button';
+import { Checkbox } from '../../components/Checkbox';
 import { Tooltip } from '../../components/Tooltip';
 import { Dialog } from '../../components/Dialog';
 import { Field } from '../../components/Field';
@@ -34,7 +35,11 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
   const [headersText, setHeadersText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [remember, setRemember] = useState(false);
   const sftp = download?.kind === 'sftp';
+  // The server refused the login it had (#249), rather than a restart losing it (#59).
+  const refused = download?.status === 'failed' && download.error?.loginRequired === true;
+  const name = download ? displayName(download) : 'this download';
   const headers = parseHeaders(headersText);
   const verb = request.then === 'resume' ? 'Resume' : 'Retry';
 
@@ -57,6 +62,8 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
         sshKey: sftp && keyPath.trim() ? { path: keyPath.trim(), passphrase: passphrase || null } : null,
         headers: headers.headers,
       });
+      // Into the system's keychain, as the Add dialog does (#70); a refusal is said, and the retry goes on.
+      if (remember) await api.rememberLogin(request.id).catch((e: unknown) => { toast.error(`The login wasn’t remembered: ${toApiError(e).message}`); });
       const result = request.then === 'resume' ? await api.resumeDownloads([request.id]) : await api.retryDownloads([request.id]);
       const failed = result.failed[0];
       if (failed) toast.error(ERROR_MESSAGES[failed.code]);
@@ -72,21 +79,30 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
     <Dialog
       open
       onOpenChange={(open) => { if (!open) onClose(); }}
-      title="Enter the login again"
-      description={`Apollo Download Manager doesn’t keep logins, custom headers or SSH keys after it closes. Enter what “${download ? displayName(download) : 'this download'}” needs to continue.`}
+      title={refused ? 'Log in to download' : 'Enter the login again'}
+      description={
+        refused
+          ? `The server asks for a login to download “${name}”.`
+          : `Apollo Download Manager doesn’t keep logins, custom headers or SSH keys after it closes, unless you ask it to remember them. Enter what “${name}” needs to continue.`
+      }
       footer={
         <>
           <Button onClick={onClose}>Not now</Button>
           <Button variant="primary" busy={sending} disabled={headers.error !== null} onClick={() => void submit()}>
-            {verb}
+            {refused ? 'Log in and retry' : verb}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
+        {refused ? (
+          <p role="status" className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
+            The server refused the login. Check the user name and password, then try again.
+          </p>
+        ) : null}
         <div className="grid grid-cols-2 gap-3">
           <Field label="User name">{(p) => <Input {...p} value={userName} onChange={(e) => { setUserName(e.target.value); }} autoComplete="off" autoFocus />}</Field>
-          <Field label="Password" hint="Kept in memory only, never saved.">
+          <Field label="Password" hint="Kept in memory only, unless remembered below.">
             {(p) => <Input {...p} type="password" value={password} onChange={(e) => { setPassword(e.target.value); }} autoComplete="off" />}
           </Field>
         </div>
@@ -109,10 +125,13 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
             </Field>
           </div>
         ) : (
-          <Field label="Extra headers" error={headers.error} hint="One per line, like “Cookie: session=…”. Kept in memory only, never saved.">
+          <Field label="Extra headers" error={headers.error} hint="One per line, like “Cookie: session=…”. Kept in memory only, unless remembered below.">
             {(p) => <Textarea {...p} value={headersText} onChange={(e) => { setHeadersText(e.target.value); }} rows={2} placeholder="Name: value" />}
           </Field>
         )}
+        <Checkbox checked={remember} onChange={setRemember}>
+          Remember this login, in the system’s password store
+        </Checkbox>
         {error ? (
           <p role="alert" className="text-xs text-danger">
             {error}

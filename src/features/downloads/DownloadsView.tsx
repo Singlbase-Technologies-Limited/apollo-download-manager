@@ -25,6 +25,7 @@ import { ALL_COLUMNS, columnsFor } from './columns';
 import { DetailsPanel } from './DetailsPanel';
 import { DownloadTable } from './DownloadTable';
 import { LoginDialog } from './LoginDialog';
+import { useLoginPrompt } from './useLoginPrompt';
 import { StartAtDialog } from './StartAtDialog';
 import { useDownloadActions } from './useDownloadActions';
 
@@ -113,6 +114,7 @@ export function DownloadsView({ view }: { view: ListView }) {
   const { data: categories } = useCategories();
   const { data: settings } = useShellSettings();
   const { actions, busy } = useDownloadActions();
+  useLoginPrompt();
   const saveColumns = useSaveColumns();
   const searchRef = useRef<HTMLInputElement>(null);
 

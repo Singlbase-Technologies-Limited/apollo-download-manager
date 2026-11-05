@@ -279,7 +279,8 @@ describe('the Add download dialog', () => {
     renderApp();
     const dialog = await openDialog(user);
     await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
-    await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
+    // PO decision on #249: an SFTP link always needs a login, so its fields show without opening Advanced options.
+    expect(within(dialog).getByRole('button', { name: 'Advanced options' }).getAttribute('aria-expanded')).toBe('false');
     await user.type(within(dialog).getByRole('textbox', { name: 'User name' }), 'me');
     await user.click(within(dialog).getByRole('button', { name: 'Choose a key' }));
     await waitFor(() => { expect(within(dialog).getByRole<HTMLInputElement>('textbox', { name: 'SSH private key' }).value).toBe('/home/user/.ssh/id_ed25519'); });
@@ -289,6 +290,17 @@ describe('the Add download dialog', () => {
       credentials: { userName: 'me', password: '' },
       sshKey: { path: '/home/user/.ssh/id_ed25519', passphrase: null },
     });
+  });
+
+  it('keeps the login fields of other links in Advanced options', async () => {
+    const user = userEvent.setup();
+    installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    expect(within(dialog).queryByRole('textbox', { name: 'User name' })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
+    expect(within(dialog).getByRole('textbox', { name: 'User name' })).toBeTruthy();
   });
 
   // PO decision on #70: the keychain only with the user's consent, asked next to the login, unticked.

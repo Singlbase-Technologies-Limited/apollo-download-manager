@@ -258,6 +258,45 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   );
 
   const fromBrowser = prefill?.fromBrowser;
+  // The login: up front for SFTP links, which always need one, else in Advanced options (#249).
+  const loginFields = (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="User name">{(p) => <Input {...p} value={userName} onChange={(e) => { setUserName(e.target.value); }} autoComplete="off" />}</Field>
+        <Field label="Password" hint="Kept in memory only, unless remembered below.">
+          {(p) => <Input {...p} type="password" value={password} onChange={(e) => { setPassword(e.target.value); }} autoComplete="off" />}
+        </Field>
+      </div>
+      {hasSftp ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="SSH private key" hint="For SFTP links, with the user name above.">
+            {(p) => (
+              <div className="flex gap-2">
+                <Input {...p} value={keyPath} onChange={(e) => { setKeyPath(e.target.value); }} placeholder="None: log in with the password" />
+                <Tooltip label="Choose a key">
+                  <Button aria-label="Choose a key" onClick={() => void pickKey()}>
+                    <KeyRound aria-hidden />
+                  </Button>
+                </Tooltip>
+              </div>
+            )}
+          </Field>
+          <Field label="Key passphrase" hint="Only for a key that has one.">
+            {(p) => <Input {...p} type="password" value={passphrase} onChange={(e) => { setPassphrase(e.target.value); }} autoComplete="off" />}
+          </Field>
+        </div>
+      ) : null}
+      {userName.trim() || headers.headers.length > 0 || keyPath.trim() ? (
+        <Checkbox checked={remember} onChange={setRemember}>
+          <span>
+            Remember this login in the system keychain
+            <span className="block text-fg-muted">The login, headers and key passphrase then come back after Apollo Download Manager restarts. Removing the download forgets them.</span>
+          </span>
+        </Checkbox>
+      ) : null}
+    </>
+  );
+
   return (
     <Dialog
       open
@@ -502,6 +541,13 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
             </div>
           ) : null}
 
+          {hasSftp ? (
+            // PO decision on #249: an SFTP link always needs a login, so it is asked for up front.
+            <fieldset className="space-y-3 rounded-lg border border-border bg-surface-2 p-3">
+              <legend className="px-1 text-xs font-medium text-fg">Login</legend>
+              {loginFields}
+            </fieldset>
+          ) : null}
           <button
             type="button"
             className="flex items-center gap-1 text-xs font-medium text-fg-muted hover:text-fg"
@@ -524,39 +570,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
               <Field label="Extra headers" error={headers.error} hint="One per line, like “Cookie: session=…”. Kept in memory only, unless remembered below.">
                 {(p) => <Textarea {...p} value={headersText} onChange={(e) => { setHeadersText(e.target.value); }} rows={2} placeholder="Name: value" />}
               </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="User name">{(p) => <Input {...p} value={userName} onChange={(e) => { setUserName(e.target.value); }} autoComplete="off" />}</Field>
-                <Field label="Password" hint="Kept in memory only, unless remembered below.">
-                  {(p) => <Input {...p} type="password" value={password} onChange={(e) => { setPassword(e.target.value); }} autoComplete="off" />}
-                </Field>
-              </div>
-              {hasSftp ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="SSH private key" hint="For SFTP links, with the user name above.">
-                    {(p) => (
-                      <div className="flex gap-2">
-                        <Input {...p} value={keyPath} onChange={(e) => { setKeyPath(e.target.value); }} placeholder="None: log in with the password" />
-                        <Tooltip label="Choose a key">
-                          <Button aria-label="Choose a key" onClick={() => void pickKey()}>
-                            <KeyRound aria-hidden />
-                          </Button>
-                        </Tooltip>
-                      </div>
-                    )}
-                  </Field>
-                  <Field label="Key passphrase" hint="Only for a key that has one.">
-                    {(p) => <Input {...p} type="password" value={passphrase} onChange={(e) => { setPassphrase(e.target.value); }} autoComplete="off" />}
-                  </Field>
-                </div>
-              ) : null}
-              {userName.trim() || headers.headers.length > 0 || keyPath.trim() ? (
-                <Checkbox checked={remember} onChange={setRemember}>
-                  <span>
-                    Remember this login in the system keychain
-                    <span className="block text-fg-muted">The login, headers and key passphrase then come back after Apollo Download Manager restarts. Removing the download forgets them.</span>
-                  </span>
-                </Checkbox>
-              ) : null}
+              {hasSftp ? null : loginFields}
               <Field label="Checksum" error={checksum.error} hint="Checked when the download finishes, like “sha-256=…”.">
                 {(p) => <Input {...p} value={checksumText} onChange={(e) => { setChecksumText(e.target.value); }} placeholder="sha-256=hexadecimal digest" className="font-mono text-xs" />}
               </Field>
