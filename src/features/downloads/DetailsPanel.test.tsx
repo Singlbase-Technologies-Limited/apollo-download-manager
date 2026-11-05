@@ -256,6 +256,58 @@ describe('the details panel (V1)', () => {
   });
 });
 
+// #349: every action sits in the panel's footer, the one that fits the download's state first.
+describe('the details footer', () => {
+  let state: FakeState;
+  beforeEach(() => {
+    state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken, done, album]) });
+  });
+  const footer = async () => within(await panel()).getByRole('group', { name: 'Actions for this download' });
+  const first = async () => within(await footer()).getAllByRole('button')[0]?.textContent.trim();
+
+  it('offers the action that fits the state first', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('archive.zip'));
+    expect(await first()).toBe('Pause');
+    await user.click(await rowFor('movie.mp4'));
+    expect(await first()).toBe('Resume');
+    await user.click(await rowFor('broken.iso'));
+    expect(await first()).toBe('Retry');
+    await user.click(await rowFor('setup.exe'));
+    expect(await first()).toBe('Open file');
+  });
+
+  it('acts on the download shown', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    await user.click(within(await footer()).getByRole('button', { name: 'Retry' }));
+    await waitFor(() => { expect(callsOf(state, 'retry_downloads')[0]?.args).toEqual({ ids: ['c'] }); });
+  });
+
+  it('keeps no action in the information above it', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(within(alert).queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('has the rest in its menu, removing only after asking', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('movie.mp4'));
+    await user.click(within(await footer()).getByRole('button', { name: 'More actions for this download' }));
+    expect(await screen.findByRole('menuitem', { name: 'Copy link' })).toBeTruthy();
+    await user.click(screen.getByRole('menuitem', { name: 'Remove from list…' }));
+    const confirm = await screen.findByRole('alertdialog');
+    // Answered, so the question doesn't stay open for the next test (the confirm store outlives a render).
+    await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+    expect(callsOf(state, 'remove_downloads')).toHaveLength(0);
+  });
+});
+
 // #349 (PO decision): a plain click on a row opens the details panel, even when the user closed it.
 describe('a single click on a row', () => {
   beforeEach(() => {

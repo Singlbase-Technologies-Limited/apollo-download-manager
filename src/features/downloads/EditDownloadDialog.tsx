@@ -6,13 +6,12 @@ import { Field } from '../../components/Field';
 import { Input } from '../../components/Input';
 import { Select } from '../../components/Select';
 import type { DownloadRecord } from '../../contract';
-import { displayName } from '../../downloads/list';
+import { displayName, FINISHED } from '../../downloads/list';
 import { keys, useCategories, useTorrentDetails } from '../../lib/queries';
 import type { DownloadActions } from './useDownloadActions';
 
 const NO_CATEGORY = '__none';
 const KIB = 1024;
-const FINISHED: DownloadRecord['status'][] = ['completed', 'failed', 'removed', 'unknown'];
 
 /** A whole number at or above `min`, or null. */
 const wholeAtLeast = (text: string, min: number) => {

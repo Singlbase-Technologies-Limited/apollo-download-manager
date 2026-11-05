@@ -1,5 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Radio, UploadCloud } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
@@ -7,6 +6,7 @@ import type { DownloadRecord } from '../../contract';
 import { ApiError, toApiError } from '../../lib/errors';
 import { formatBytes, formatDuration, formatSpeed } from '../../lib/format';
 import { keys, useSwarm, useTorrentDetails } from '../../lib/queries';
+import { FINISHED } from '../../downloads/list';
 import type { DownloadActions } from '../downloads/useDownloadActions';
 import { FileTree } from './FileTree';
 import { sameSelection, seedingSummary, TRACKER_STATE, trackerSummary, VERSION_LABEL } from './torrentLogic';
@@ -15,7 +15,6 @@ const PEERS_SHOWN = 20;
 /** Its files can change while the helper still downloads it (V1's). */
 const FILES_EDITABLE: readonly DownloadRecord['status'][] = ['downloading', 'stalled', 'connecting', 'paused', 'queued'];
 /** The helper has nothing to say about a torrent in these. */
-const FINISHED: readonly DownloadRecord['status'][] = ['completed', 'failed', 'removed', 'unknown'];
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -134,24 +133,6 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
         </div>
       ) : null}
 
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {d.status === 'seeding' ? (
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.stopSeeding([d.id])}>
-            <UploadCloud /> Stop seeding
-          </Button>
-        ) : null}
-        {queued ? (
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.stopSeeding([d.id])}>
-            <UploadCloud /> Leave seeding queue
-          </Button>
-        ) : null}
-        {trackers.isSuccess && d.status !== 'paused' ? (
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.reannounce(d.id)}>
-            <Radio /> Re-announce
-          </Button>
-        ) : null}
-      </div>
 
       {files.length > 0 && d.status !== 'choosingFiles' ? (
         <div className="mt-3">

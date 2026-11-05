@@ -1,4 +1,4 @@
-import { Copy, FileSearch, FolderOpen, ListChecks, RotateCcw, SlidersHorizontal, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
@@ -7,12 +7,12 @@ import { ConnectionLine } from '../../ConnectionLine';
 import { PANEL } from '../../layout/panel';
 import { cn } from '../../lib/cn';
 import type { Verification } from '../../contract';
-import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
+import { averageSpeedOf, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
 import { useDownloadsStore } from '../../stores/downloads';
-import { useUiStore } from '../../stores/ui';
 import { TorrentSection } from '../torrents/TorrentSection';
 import { EditDownloadDialog } from './EditDownloadDialog';
+import { DetailsFooter } from './DetailsFooter';
 import { ErrorNotice } from './ErrorNotice';
 import type { DownloadActions } from './useDownloadActions';
 
@@ -72,7 +72,6 @@ interface Props {
  */
 export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClose }: Props) {
   const d = useDownloadsStore((s) => s.snapshot?.downloads.find((x) => x.id === id));
-  const openChooseFiles = useUiStore((s) => s.openChooseFiles);
   // A download's own settings are changed in a dialog: the panel only shows them (#349).
   const [editing, setEditing] = useState(false);
 
@@ -80,7 +79,6 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
 
   const torrent = d.kind === 'torrent' || d.kind === 'magnet';
   const pct = d.status === 'completed' || d.status === 'seeding' ? 100 : percentOf(d);
-  const can = actionsFor(d);
 
 
   return (
@@ -116,13 +114,6 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
           <span>{formatPercent(pct)}</span>
         </div>
 
-        {d.status === 'choosingFiles' ? (
-          // At the top, where it's seen at once; it was at the end of the Torrent section (#276).
-          <Button size="sm" variant="primary" className="mt-3" onClick={() => { openChooseFiles(d.id); }}>
-            <ListChecks /> Choose files…
-          </Button>
-        ) : null}
-
         {d.startedOver ? (
           // The bytes it had were dropped: never silently, and with why (#257).
           <p role="status" className="mt-3 min-w-0 break-words rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
@@ -131,18 +122,8 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
         ) : null}
 
         {d.error ? (
-          <ErrorNotice error={d.error} className="mt-3">
-            {d.status === 'failed' && d.error.confirm ? (
-              // The user's answer, for this download only (#67): a plain retry would only stop at the same place.
-              <Button size="sm" variant="secondary" className="mt-2" disabled={busy} onClick={() => { if (d.error?.confirm) void actions.allow(d.id, d.error.confirm.kind); }}>
-                <RotateCcw /> {d.error.confirm.kind === 'insecureRedirect' ? 'Continue over http' : 'Download anyway'}
-              </Button>
-            ) : can.retry ? (
-              <Button size="sm" variant="secondary" className="mt-2" disabled={busy} onClick={() => void actions.retry([d.id])}>
-                <RotateCcw /> Retry
-              </Button>
-            ) : null}
-          </ErrorNotice>
+          // Its actions (Retry, Allow) are in the footer, with the rest (#349).
+          <ErrorNotice error={d.error} className="mt-3" />
         ) : null}
 
         <DetailsGroup title="Transfer">
@@ -175,22 +156,7 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
 
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-border px-4 py-3">
-        {canOpenFile(d) ? (
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.openFile(d)}>
-            <FileSearch /> Open file
-          </Button>
-        ) : null}
-        <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.openFolder(d.id)}>
-          <FolderOpen /> Open folder
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => void actions.copyLink(d)}>
-          <Copy /> Copy link
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => { setEditing(true); }}>
-          <SlidersHorizontal /> Edit…
-        </Button>
-      </div>
+      <DetailsFooter d={d} actions={actions} busy={busy} onEdit={() => { setEditing(true); }} />
       {editing ? <EditDownloadDialog key={d.id} download={d} actions={actions} onClose={() => { setEditing(false); }} /> : null}
     </aside>
   );
