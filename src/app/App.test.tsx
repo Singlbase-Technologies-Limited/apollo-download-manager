@@ -11,9 +11,6 @@ import { useUiStore } from '../stores/ui';
 import { callsOf, emptySnapshot, firstRun, fixture, installFakeBackend, setUp } from '../test/fakeBackend';
 import { App } from './App';
 
-/** #363: the icon bar's Downloads button, which shows or hides the lists panel on a download list. */
-const listsToggle = () => within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Downloads' });
-
 function renderApp() {
   return render(<App client={createQueryClient()} />);
 }
@@ -195,42 +192,41 @@ describe('the panels', () => {
     const backend = installFakeBackend();
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
-    fireEvent.click(listsToggle());
+    fireEvent.click(screen.getByRole('button', { name: 'Expand navigation' }));
     await new Promise((r) => setTimeout(r, 400));
     expect(callsOf(backend, 'set_appearance')).toEqual([]);
   });
 
-  it('collapsing the lists panel is saved too', async () => {
+  it('collapsing the navigation to icons is saved too', async () => {
     const user = userEvent.setup();
     const backend = installFakeBackend();
     renderApp();
     await user.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
-    // #363: collapsed, the panel isn't shown; the icon bar stays, and its Downloads button brings it back.
-    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
-    expect(listsToggle().getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByRole('navigation', { name: 'Primary' }).getAttribute('data-mode')).toBe('rail');
     await waitFor(() => { expect(callsOf(backend, 'set_appearance').at(-1)?.args).toMatchObject({ appearance: { layout: { sidebarCollapsed: true } } }); });
   });
 
   // #363 (PO): dragging a collapsed panel's edge opens it fully at once; releasing below its minimum collapses it again.
-  it('opens the collapsed lists panel as soon as its edge is dragged', async () => {
+  it('opens the collapsed navigation fully as soon as its edge is dragged', async () => {
     const user = userEvent.setup();
     installFakeBackend();
     renderApp();
     await user.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
-    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' });
+    expect(nav().getAttribute('data-mode')).toBe('rail');
     const edge = screen.getByRole('separator', { name: 'Resize navigation' });
     fireEvent.pointerDown(edge, { pointerId: 1, button: 0, clientX: 60 });
-    expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeTruthy();
+    await waitFor(() => { expect(nav().getAttribute('data-mode')).toBe('full'); });
     fireEvent.pointerUp(edge, { pointerId: 1, clientX: 60 - 200 });
-    await waitFor(() => { expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull(); });
+    await waitFor(() => { expect(nav().getAttribute('data-mode')).toBe('rail'); });
   });
 
-  it('keeps the list its room in a narrow window by collapsing the lists panel, the icon bar staying', async () => {
-    setViewport(LAYOUT.ACTIVITY_BAR + LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1);
+  it('keeps the list its room in a narrow window by showing the navigation as icons', async () => {
+    setViewport(LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1);
     installFakeBackend();
     renderApp();
-    await screen.findByRole('navigation', { name: 'Sections' });
-    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
+    const nav = await screen.findByRole('navigation', { name: 'Primary' });
+    expect(nav.getAttribute('data-mode')).toBe('rail');
   });
 
   // V1's details-panel layout tests (tests/unit/layout.test.tsx), with the panel (#61).
@@ -293,9 +289,9 @@ describe('the panels', () => {
     withLayout({ detailsVisible: true });
     renderApp();
     await screen.findByRole('complementary', { name: 'Download details' });
-    await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Categories' }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: /Categories/ }));
     await waitFor(() => { expect(screen.queryByRole('complementary', { name: 'Download details' })).toBeNull(); });
-    await user.click(listsToggle());
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: /All Downloads/ }));
     expect(await screen.findByRole('complementary', { name: 'Download details' })).toBeTruthy();
   });
 
@@ -305,10 +301,10 @@ describe('the panels', () => {
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
     await waitFor(() => { expect(callsOf(backend, 'set_appearance')).toHaveLength(1); });
-    // The collapse is being saved; the user opens the lists panel again before it is.
-    fireEvent.click(listsToggle());
+    // The collapse is being saved; the user expands the navigation again before it is.
+    fireEvent.click(screen.getByRole('button', { name: 'Expand navigation' }));
     await act(async () => { release(); await new Promise((r) => setTimeout(r, 50)); });
-    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeTruthy();
+    expect(screen.getByRole('navigation', { name: 'Primary' }).getAttribute('data-mode')).toBe('full');
     await waitFor(() => { expect(callsOf(backend, 'set_appearance').at(-1)?.args).toMatchObject({ appearance: { layout: { sidebarCollapsed: false } } }); });
   });
 
@@ -330,7 +326,7 @@ describe('starting', () => {
     const loader = await screen.findByRole('status', { name: 'Starting Apollo Download Manager' });
     expect(within(loader).getByRole('img', { name: 'Apollo Download Manager' })).toBeTruthy();
     await act(async () => { release(); await Promise.resolve(); });
-    expect(await screen.findByRole('navigation', { name: 'Sections' })).toBeTruthy();
+    expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeTruthy();
     expect(screen.queryByRole('status', { name: 'Starting Apollo Download Manager' })).toBeNull();
   });
 });

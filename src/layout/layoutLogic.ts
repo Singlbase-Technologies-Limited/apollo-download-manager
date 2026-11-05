@@ -10,10 +10,8 @@
 export const LAYOUT = {
   SIDEBAR_MIN: 184,
   SIDEBAR_MAX: 360,
-  /** The lists panel collapsed: hidden beside the icon bar, its edge left to drag it open (#363). */
-  SIDEBAR_RAIL: 0,
-  /** The icon bar on the window's left (#363, option C): always shown, never resized. */
-  ACTIVITY_BAR: 48,
+  /** Width of the icon-only navigation. */
+  SIDEBAR_RAIL: 56,
   DETAILS_MIN: 280,
   DETAILS_MAX: 600,
   /** Space always left for the download table, including the 1 px panel dividers. */
@@ -86,7 +84,7 @@ export function resolveLayout(prefs: LayoutPrefs, viewport: number, detailsOpen:
   let mode: SidebarMode = !prefs.sidebarVisible ? 'hidden' : prefs.sidebarCollapsed ? 'rail' : 'full';
   let sidebar = mode === 'hidden' ? 0 : mode === 'rail' ? LAYOUT.SIDEBAR_RAIL : clamp(prefs.sidebarWidth ?? defaultSidebarWidth(viewport), LAYOUT.SIDEBAR_MIN, LAYOUT.SIDEBAR_MAX);
   let details = detailsOpen ? clamp(prefs.detailsWidth ?? defaultDetailsWidth(viewport), LAYOUT.DETAILS_MIN, LAYOUT.DETAILS_MAX) : 0;
-  const budget = viewport - LAYOUT.ACTIVITY_BAR - LAYOUT.TABLE_MIN;
+  const budget = viewport - LAYOUT.TABLE_MIN;
   let autoCompact = false;
 
   let over = sidebar + details - budget;

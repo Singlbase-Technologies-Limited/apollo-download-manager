@@ -34,7 +34,7 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 
 | Behaviour | Checked by |
 |---|---|
-| Every button, checkbox, field, menu item, separator, progress bar, dialog and landmark has a name, in the list with the details panel, with the lists panel collapsed, in the Add dialog, on the Categories and History screens, and in every Settings section | `Accessibility.test.tsx`, "every control has a name, and icons stay silent" |
+| Every button, checkbox, field, menu item, separator, progress bar, dialog and landmark has a name, in the list with the details panel, with the navigation as icons, in the Add dialog, on the Categories and History screens, and in every Settings section | `Accessibility.test.tsx`, "every control has a name, and icons stay silent" |
 | Icons inside buttons and menu items are hidden from screen readers, as is the brand icon | the same tests; lucide-react hides its icons unless given a label, and `BrandIcon` is `aria-hidden` |
 | Errors are announced (`role="alert"`), and saving and progress messages are read politely (`role="status"`) | `DetailsPanel.test.tsx`, `SettingsView.test.tsx`, `App.test.tsx` |
 | Text has at least 4.5:1 contrast on every background it is shown on, in both themes, and the focus ring at least 3:1 (WCAG 2.2 AA) | `src/a11y.test.ts`, which reads `src/index.css` |
@@ -53,7 +53,7 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 
 Run by the PO during review (PO decision on #66), on Windows, with NVDA or Narrator, in `pnpm dev` with a few downloads in the list. Record each step as PASS or FAIL with what was read, in the PR and here.
 
-1. **Start:** Tab from the window's top. The icon bar is announced as "Sections": each icon by its name (Downloads, History, Categories, What's new, Feedback, Settings), with a tooltip on focus; Downloads says whether the lists panel is expanded. The lists panel is announced as "Primary", and each item by its name and count.
+1. **Start:** Tab from the window's top. The title bar's **Help** menu and **Settings** button come first, each named, with a tooltip on focus (Settings shows Ctrl+,). The navigation is announced as "Primary", and each item by its name and count.
 2. **The list:** Tab to the list. It is announced as the "Downloads" grid. ↑ and ↓ read each row's file name, status and progress; Space pauses or resumes it, and the change is read.
 3. **Details:** Enter on a row opens the details panel; it is announced as "Download details", and its sections (Transfer, Source and destination, Timeline, Options for this download) by name.
 4. **A dialog:** Ctrl+N opens "Add download". Focus is in the Links field; Tab goes through every field, each read with its label, and never leaves the dialog. Escape closes it, and focus is back where it was.

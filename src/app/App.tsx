@@ -42,6 +42,8 @@ function Root() {
   setTimeFormat(settings.data?.appearance.timeFormat ?? 'twentyFourHour');
 
   let content: ReactNode;
+  // The main window is set up: the title bar then offers Help and Settings (#363).
+  let ready = false;
   if (!desktop) {
     content = (
       <Centered>
@@ -63,13 +65,14 @@ function Root() {
   } else if (!settings.data.onboardingCompleted) {
     content = <Onboarding app={info.data} defaultDirectory={settings.data.defaultDirectory ?? ''} />;
   } else {
+    ready = true;
     content = <Shell app={info.data} appearance={settings.data.appearance} />;
   }
   return (
     <>
       {/* The desktop window has no system title bar (tauri.conf.json), so it draws its own. */}
       <div className="flex h-full flex-col bg-frame">
-        {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} /> : null}
+        {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} app={ready ? info.data : undefined} /> : null}
         <div className="min-h-0 flex-1 bg-bg">{content}</div>
       </div>
       {/* Themed with the app's tokens, and above the status bar so it never covers it (#348 D). */}

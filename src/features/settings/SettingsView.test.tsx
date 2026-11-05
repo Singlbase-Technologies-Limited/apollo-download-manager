@@ -151,8 +151,8 @@ describe('the Settings screen (#30)', () => {
     await user.keyboard('{Control>},{/Control}');
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
     act(() => { useUiStore.getState().closeSettings(); });
-    // #363: Settings sits at the bottom of the icon bar, always shown.
-    await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' }));
+    // #363: Settings is the title bar's gear, always shown.
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' }));
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
   });
 
@@ -162,7 +162,7 @@ describe('the Settings screen (#30)', () => {
     const user = userEvent.setup();
     renderApp();
     await screen.findByText('No downloads yet');
-    await user.click(within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' }));
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' }));
     const dialog = await screen.findByRole('dialog', { name: 'Settings' });
     expect(within(dialog).getByRole('navigation', { name: 'Settings sections' })).toBeTruthy();
     expect(useUiStore.getState().view).toBe('all');
@@ -174,7 +174,7 @@ describe('the Settings screen (#30)', () => {
     const user = userEvent.setup();
     renderApp();
     await screen.findByText('No downloads yet');
-    const button = within(screen.getByRole('navigation', { name: 'Sections' })).getByRole('button', { name: 'Settings' });
+    const button = within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' });
     await user.click(button);
     await screen.findByRole('dialog', { name: 'Settings' });
     await user.keyboard('{Escape}');
