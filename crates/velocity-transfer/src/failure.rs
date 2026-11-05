@@ -460,7 +460,7 @@ mod tests {
             });
             assert!(sftp.no_network, "SFTP {kind:?}");
         }
-        for kind in [
+        for (case, kind) in [
             CurlFailure::Interrupted,
             CurlFailure::TlsHandshake,
             CurlFailure::Certificate(CertificateProblem::Other),
@@ -469,15 +469,19 @@ mod tests {
             CurlFailure::ProxyRefused,
             CurlFailure::Local,
             CurlFailure::Other,
-        ] {
-            assert!(!curl(kind).no_network, "{kind:?}");
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            // The case's place in the list, not the kind itself, names it (CodeQL reads a certificate as a secret).
+            assert!(!curl(kind).no_network, "case {case}");
         }
         assert!(!status_failure(404).unwrap().no_network);
     }
 
     #[test]
     fn network_failures_are_transient_and_trust_failures_are_not() {
-        for (kind, class, words) in [
+        for (case, (kind, class, words)) in [
             (
                 CurlFailure::Resolve,
                 FailureClass::Transient,
@@ -542,17 +546,22 @@ mod tests {
                 FailureClass::Permanent,
                 "can't encrypt",
             ),
-        ] {
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            // The case's place in the list, not the kind itself, names it (CodeQL reads a
+            // certificate as a secret).
             let e = curl(kind);
-            assert_eq!(e.class, class, "{kind:?}");
-            assert!(e.message.contains(words), "{kind:?}: {}", e.message);
+            assert_eq!(e.class, class, "case {case}");
+            assert!(e.message.contains(words), "case {case}: {}", e.message);
             // #252: the message is plain words; libcurl's code and words go to the detail, which
             // the window shows behind "Technical details" and the log keeps.
-            assert!(!e.message.contains("libcurl"), "{kind:?}: {}", e.message);
+            assert!(!e.message.contains("libcurl"), "case {case}: {}", e.message);
             assert_eq!(
                 e.detail.as_deref(),
                 Some("libcurl error 99: libcurl's own words"),
-                "{kind:?}"
+                "case {case}"
             );
         }
     }
