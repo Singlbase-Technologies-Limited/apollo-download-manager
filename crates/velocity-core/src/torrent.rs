@@ -818,7 +818,9 @@ pub fn check_resume_data(bytes: &[u8]) -> TorrentResult<CheckedResume> {
     // Modes V2 never sets: trusting files unchecked, sharing only, super-seeding, and I2P.
     for mode in ["seed_mode", "share_mode", "super_seeding", "i2p"] {
         if !matches!(get(top, mode), None | Some(B::Int(0))) {
-            return Err(bad("The torrent's resume data sets a mode V2 never uses."));
+            return Err(bad(
+                "The torrent's resume data sets a mode Apollo Download Manager never uses.",
+            ));
         }
     }
     let (_, (start, end)) =
@@ -1998,7 +2000,7 @@ pub(crate) mod tests {
             cases.push((
                 mode,
                 with(vec![(mode, Value::Int(1))]),
-                "a mode V2 never uses",
+                "a mode Apollo Download Manager never uses",
             ));
         }
         // Each is refused for its own reason, not another rule's.

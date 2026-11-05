@@ -390,7 +390,7 @@ fn after_a_429_on_a_shared_connection_requests_get_connections_of_their_own() {
     let _serial = one_at_a_time();
     // #247: proof.ovh.net refuses a stream that comes while another is being answered on the same
     // HTTP/2 connection, and serves the same requests on connections of their own (curl.exe, V1).
-    // Velocity's retries went on as streams of the shared connection, every one was refused, and
+    // Apollo Download Manager's retries went on as streams of the shared connection, every one was refused, and
     // the server blocked the computer.
     let (s, data) = serve(
         8_000_000,

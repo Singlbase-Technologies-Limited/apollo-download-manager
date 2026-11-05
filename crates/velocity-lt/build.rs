@@ -96,7 +96,18 @@ impl Record {
                 info["libtorrent"]
             ));
         }
-        let prefix = PathBuf::from(
+        // Relative to target/native (the record sits in target/native/<target>), so a moved or
+        // renamed checkout still finds it; an older record's absolute prefix is taken as it is.
+        let native = path
+            .parent()
+            .and_then(|target_dir| target_dir.parent())
+            .unwrap_or_else(|| {
+                fail(&format!(
+                    "{} isn't in target/native. {rebuild}",
+                    path.display()
+                ))
+            });
+        let prefix = native.join(
             info["prefix"]
                 .as_str()
                 .unwrap_or_else(|| fail(&format!("{} has no prefix. {rebuild}", path.display()))),

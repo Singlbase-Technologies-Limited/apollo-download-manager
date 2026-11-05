@@ -1,10 +1,22 @@
 # Changelog
 
-What changed in each version of Velocity Download Manager V2. Versions follow [Semantic Versioning](https://semver.org/); while V2 is below 1.0.0, a minor version may change things that break. How sections are drafted from the merged pull requests, and edited into release notes, is in [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
+What changed in each version of Apollo Download Manager, named Velocity Download Manager V2 until 0.2.0. Versions follow [Semantic Versioning](https://semver.org/); while V2 is below 1.0.0, a minor version may change things that break. How sections are drafted from the merged pull requests, and edited into release notes, is in [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
 
 ## Unreleased
 
-Nothing yet.
+### Changes
+
+- **A schedule that's easier to set and to follow:** choose its start and stop with hour and minute boxes instead of typing them; Settings says when it next runs (**Next: tomorrow 02:00 to 07:00**); and the list says when each scheduled download starts (#350).
+- **A start time for each download:** in the Add window, or later with **Start at…** in a waiting download's menu. It beats the schedule, and a time missed while the app was closed starts it as soon as the app opens (#350).
+- **12-hour times:** Settings, Appearance, Time format switches every time the app shows to 12-hour with AM and PM; 24-hour stays the default (#350).
+- **Downloads wait for the network:** a download that failed because there was no network shows **Waiting for network**, and continues by itself from where it stopped when Windows or Linux says the network is back. On by default; Settings, Queue and performance (#318).
+- **Two downloads at once by default,** instead of 3, so each one gets more of your connection and finishes sooner. If you kept the old default of 3, updating sets it to 2 once; you can set it back in Settings, Queue and performance (#351).
+
+### Fixes
+
+- **What you type stays yours:** the window no longer remembers typed links, folders or the proxy's user name in its own autofill store, and the first start of this version clears what earlier versions kept there (#345).
+
+- **Through an HTTP proxy,** a download no longer fails with "The file changed on the server" as soon as it opens a second connection, and a proxy that wants a login none was set for says "The proxy refused the connection" (#344).
 
 ## 0.1.1 - 2026-11-04
 

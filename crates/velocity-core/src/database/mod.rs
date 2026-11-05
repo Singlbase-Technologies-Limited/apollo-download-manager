@@ -42,6 +42,8 @@ const MIGRATIONS: &[M<'static>] = &[
     M::up(include_str!("../../migrations/0005_torrents.sql")),
     M::up(include_str!("../../migrations/0006_builtin_categories.sql")),
     M::up(include_str!("../../migrations/0007_activity.sql")),
+    M::up(include_str!("../../migrations/0008_two_at_once.sql")),
+    M::up(include_str!("../../migrations/0009_start_at.sql")),
 ];
 
 /// The migrations this build applies.
@@ -376,7 +378,7 @@ mod tests {
     #[test]
     fn the_migrations_are_valid() {
         assert_eq!(migrations().validate(), Ok(()));
-        assert_eq!(latest_schema_version(), 7);
+        assert_eq!(latest_schema_version(), 9);
     }
 
     #[test]
@@ -515,8 +517,8 @@ mod tests {
             db.insert_download(&sample("d-0001")).unwrap();
         }
         let db = Database::open(&dir.db()).expect("upgrades");
-        // To the latest schema, 7 since #59's activity.
-        assert_eq!(db.schema_version(), Ok(7));
+        // To the latest schema.
+        assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         assert_eq!(db.downloads().unwrap()[0].id, "d-0001");
         db.save_checkpoint("d-0001", &checkpoint(), 5).unwrap();
         assert!(dir.names().iter().any(|n| n.contains(".bak-v1-")));
@@ -532,10 +534,11 @@ mod tests {
             db.insert_download(&sample("d-0001")).unwrap();
         }
         let db = Database::open(&dir.db()).expect("upgrades");
-        // To the latest schema, 7 since #59's activity.
-        assert_eq!(db.schema_version(), Ok(7));
+        // To the latest schema.
+        assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         assert_eq!(db.downloads().unwrap()[0].id, "d-0001");
         let entry = QueueEntry {
+            start_at: None,
             id: "d-0001".to_owned(),
             scheduled: true,
         };
@@ -554,8 +557,8 @@ mod tests {
             db.insert_download(&sample("d-0001")).unwrap();
         }
         let db = Database::open(&dir.db()).expect("upgrades");
-        // To the latest schema, 7 since #59's activity.
-        assert_eq!(db.schema_version(), Ok(7));
+        // To the latest schema.
+        assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         let before = db.downloads().unwrap().remove(0);
         assert_eq!(before.id, "d-0001");
         assert_eq!(before.verification, None);
@@ -570,6 +573,106 @@ mod tests {
         assert!(dir.names().iter().any(|n| n.contains(".bak-v3-")));
     }
 
+    /// #351, option B (PO decision): a stored 3 downloads at once, 0.1.x's default, becomes the
+    /// new default of 2, once. Every other value, section and document is kept as it was.
+    #[test]
+    fn schema_7_is_upgraded_and_a_stored_three_at_once_becomes_two() {
+        let queue = |n: u32| {
+            serde_json::json!({
+                "queue": {"maxConcurrentDownloads": n, "startImmediately": true,
+                          "schedule": {"enabled": false, "startTime": "02:00"}},
+                "general": {"closeToTray": true}
+            })
+        };
+        let cases = [
+            ("three", Some(queue(3)), Some(queue(2))),
+            ("five", Some(queue(5)), Some(queue(5))),
+            ("one", Some(queue(1)), Some(queue(1))),
+            (
+                "no-limit-saved",
+                Some(serde_json::json!({"queue": {"startImmediately": false}})),
+                Some(serde_json::json!({"queue": {"startImmediately": false}})),
+            ),
+            (
+                "no-queue",
+                Some(serde_json::json!({"general": {"closeToTray": true}})),
+                Some(serde_json::json!({"general": {"closeToTray": true}})),
+            ),
+            ("never-saved", None, None),
+        ];
+        for (name, saved, expected) in cases {
+            let dir = Dir::new(&format!("v7-to-v8-{name}"));
+            {
+                let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..7])).unwrap();
+                assert_eq!(db.schema_version(), Ok(7));
+                if let Some(saved) = &saved {
+                    db.save_settings(saved, 1).unwrap();
+                }
+            }
+            let db = Database::open(&dir.db()).expect("upgrades");
+            assert!(db.schema_version().unwrap() >= 8, "{name}");
+            assert_eq!(db.settings().unwrap(), expected, "{name}");
+            // Once only: a 3 chosen after the update stays 3.
+            if name == "three" {
+                db.save_settings(&queue(3), 2).unwrap();
+                drop(db);
+                let db = Database::open(&dir.db()).expect("reopens");
+                assert_eq!(db.settings().unwrap(), Some(queue(3)));
+            }
+        }
+    }
+
+    /// #350: migration 0009, from schema 8 with a queued download in it, gains its own start time,
+    /// none at first.
+    #[test]
+    fn schema_8_is_upgraded_with_its_queue_and_gains_a_start_time() {
+        let dir = Dir::new("v8-to-v9");
+        {
+            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..8])).unwrap();
+            assert_eq!(db.schema_version(), Ok(8));
+            db.insert_download(&sample("d-0001")).unwrap();
+            db.conn()
+                .execute(
+                    "UPDATE downloads SET queue_position = 0, scheduled = 1 WHERE id = 'd-0001'",
+                    [],
+                )
+                .unwrap();
+        }
+        let db = Database::open(&dir.db()).expect("upgrades");
+        assert_eq!(db.schema_version(), Ok(9));
+        let queue = db.queue().unwrap();
+        assert_eq!(
+            queue,
+            [QueueEntry {
+                id: "d-0001".to_owned(),
+                scheduled: true,
+                start_at: None,
+            }],
+            "its place and its schedule are kept"
+        );
+        db.save_queue(&[QueueEntry {
+            start_at: Some("2026-10-24T03:00".to_owned()),
+            ..queue[0].clone()
+        }])
+        .unwrap();
+        assert_eq!(
+            db.queue().unwrap()[0].start_at.as_deref(),
+            Some("2026-10-24T03:00")
+        );
+        // Leaving the queue drops the time with the place.
+        db.save_queue(&[]).unwrap();
+        let start_at: Option<String> = db
+            .conn()
+            .query_row(
+                "SELECT start_at FROM downloads WHERE id = 'd-0001'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(start_at, None);
+        assert!(dir.names().iter().any(|n| n.contains(".bak-v8-")));
+    }
+
     #[test]
     fn schema_6_is_upgraded_with_its_downloads_and_gains_their_activity() {
         // Migration 0007 (#59), from the previous schema with a record in it.
@@ -580,7 +683,7 @@ mod tests {
             db.insert_download(&sample("d-0001")).unwrap();
         }
         let db = Database::open(&dir.db()).expect("upgrades");
-        assert_eq!(db.schema_version(), Ok(7));
+        assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         let before = db.downloads().unwrap().remove(0);
         assert_eq!(before.id, "d-0001");
         assert_eq!(before.activity, Activity::default(), "nothing was measured");
@@ -605,7 +708,7 @@ mod tests {
             db.insert_download(&sample("d-0001")).unwrap();
         }
         let db = Database::open(&dir.db()).expect("upgrades");
-        assert_eq!(db.schema_version(), Ok(7));
+        assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         assert_eq!(db.downloads().unwrap()[0].id, "d-0001");
         let built_in: Vec<(String, String, bool)> = db
             .conn()
@@ -653,6 +756,7 @@ mod tests {
     fn the_queue_comes_back_after_a_restart_with_a_paused_download_still_paused() {
         let dir = Dir::new("queue-restart");
         let entry = |id: &str, scheduled| QueueEntry {
+            start_at: None,
             id: id.to_owned(),
             scheduled,
         };
@@ -695,6 +799,7 @@ mod tests {
             db.insert_download(&sample(id)).unwrap();
         }
         let entry = |id: &str| QueueEntry {
+            start_at: None,
             id: id.to_owned(),
             scheduled: false,
         };
@@ -1073,8 +1178,8 @@ mod tests {
                 db.insert_download(&sample("d-0001")).unwrap();
             }
             let db = Database::open(&dir.db()).expect("upgrades");
-            // To the latest schema, 7 since #59's activity.
-            assert_eq!(db.schema_version(), Ok(7));
+            // To the latest schema.
+            assert_eq!(db.schema_version(), Ok(latest_schema_version()));
             assert_eq!(db.downloads().unwrap()[0].id, "d-0001");
             db.insert_torrent(&torrent_row("d-0002"), &options())
                 .unwrap();

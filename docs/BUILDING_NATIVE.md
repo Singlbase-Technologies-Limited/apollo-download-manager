@@ -104,7 +104,7 @@ On Linux, the built curl tool links only the C library dynamically (`ldd`: `linu
 `velocity_curl::Libcurl::start()` is the only way to get a libcurl handle. It initialises libcurl once per process, reads `curl_version_info`, and returns `StartError::Incompatible` unless the linked libcurl passes the same checks as the build: version 8.23.0 or later, the platform's TLS backend (Schannel or OpenSSL), the required protocols and features, and no other protocol. The error lists every problem and names the fix:
 
 ```text
-the transfer engine can't start: libcurl 8.22.0 is linked, but V2 needs 8.23.0 or newer. Rebuild the native libraries with `pnpm native:build` (docs/BUILDING_NATIVE.md)
+the transfer engine can't start: libcurl 8.22.0 is linked, but Apollo Download Manager needs 8.23.0 or newer. Rebuild the native libraries with `pnpm native:build` (docs/BUILDING_NATIVE.md)
 ```
 
 The engine (#37) obtains libcurl only through `start()`, and maps a `StartError` to the `ENGINE_INCOMPATIBLE` error code for the UI. The tests: `crates/velocity-curl/src/capabilities.rs` (the check, against stand-in values), `src/runtime.rs` (`start` refuses a stand-in 8.22.0), and `tests/linked_libcurl.rs` (the real linked libcurl starts and reports exactly `ftp ftps http https`).
@@ -148,7 +148,7 @@ The torrent bridge (`crates/velocity-lt`) links libtorrent-rasterbar 2.0.15, Boo
 - **Release only:** the triplets are `x64-windows-static-md-release` and `x64-linux-release`, so only release libraries are built; cargo links those in every profile. libtorrent is built without iconv (`"default-features": false`).
 - **The record:** the build writes `target/native/<target>/libtorrent-info.json`:
   - libtorrent's version and the vcpkg baseline;
-  - the install prefix (`target/native/vcpkg-installed/<triplet>`);
+  - the install prefix, relative to `target/native` (`vcpkg-installed/<triplet>`), so a moved or renamed checkout still finds it. Records written before the repository's rename hold an absolute path; `native:build` rebuilds them, and `build.rs` still reads one;
   - the compile definitions and link libraries, read from libtorrent's CMake package. The shim must be compiled with the same definitions as libtorrent, such as `TORRENT_USE_OPENSSL` and `TORRENT_SSL_PEERS`;
   - the SHA-256 of each library.
 

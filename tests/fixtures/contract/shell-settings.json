@@ -10,6 +10,7 @@
       "sidebarWidth": 240
     },
     "theme": "dark",
+    "timeFormat": "twentyFourHour",
     "visibleColumns": [
       "name",
       "size",

@@ -13,7 +13,7 @@ Decision recorded in #89 (2026-10-21). Since 2026-10-31 the repository is public
 | Merging | **`vincentarisawork`**, or **`velocity-claude-agent`** for one PR the PO explicitly approved ("I approve the PR") | Squash merge; see [DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md#merging) |
 | Other organisation repositories (`Singlbase-Technologies-Limited/*`, including V1) | **`vincentarisawork`** | The agent is not an organisation member, which would use a paid seat (PO decision). It is an outside collaborator on this repository only, which costs no seat while the repository is public |
 
-- **What the agent can do here:** `velocity-claude-agent` is an outside collaborator with **Write** access to this repository and to the organisation's project 4 (*Velocity Download Manager V2* until the PO renames it, [the board](https://github.com/orgs/Singlbase-Technologies-Limited/projects/4)).
+- **What the agent can do here:** `velocity-claude-agent` is an outside collaborator with **Write** access to this repository and to the organisation's project 4 (*Apollo Download Manager*, [the board](https://github.com/orgs/Singlbase-Technologies-Limited/projects/4)).
 - **What it can't do:** it has no admin rights, so it can't change settings or merge outside the normal PR flow. The rulesets also stop it pushing to `main` or creating a release tag (`v*`): only the PO does that ([REPOSITORY_SETTINGS.md](REPOSITORY_SETTINGS.md)).
 - **Terms:** it is a GitHub machine account operated by `vincentarisawork`, who is responsible for its actions ([GitHub Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service)).
 

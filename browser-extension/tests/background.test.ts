@@ -42,7 +42,7 @@ describe('background interception', () => {
     f = fakeApi(ok);
   });
 
-  it('hands matching downloads to Velocity and removes the browser copy', async () => {
+  it('hands matching downloads to Apollo Download Manager and removes the browser copy', async () => {
     const bg = createBackground(f.api);
     expect(await bg.onDownloadCreated(item())).toBe('handed-off');
     expect(f.log).toEqual(['pause:7', 'badge:', 'cancel:7', 'erase:7']);
@@ -93,7 +93,7 @@ describe('background interception', () => {
     expect(f.session.size).toBe(0);
   });
 
-  it('completes an ask-mode prompt with Velocity', async () => {
+  it('completes an ask-mode prompt with Apollo Download Manager', async () => {
     f = fakeApi(ok, { ...DEFAULT_SETTINGS, mode: 'ask' });
     const bg = createBackground(f.api);
     await bg.onDownloadCreated(item());

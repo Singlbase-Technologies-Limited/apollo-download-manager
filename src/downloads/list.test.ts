@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeRecord } from '../test/records';
-import { STATUS_LABEL, actionsFor, actionsForSelection, averageSpeedOf, displayName, etaSeconds, matchesSearch, nextTry, percentOf, sortDownloads, statusLabel, visibleDownloads } from './list';
+import { STATUS_LABEL, STATUS_TONE, actionsFor, actionsForSelection, averageSpeedOf, displayName, etaSeconds, matchesSearch, nextTry, percentOf, sortDownloads, statusLabel, visibleDownloads } from './list';
 import { countByView, matchesView } from './views';
 
 const progress = makeRecord().progress;
@@ -82,6 +82,31 @@ describe('download list logic', () => {
       expect(STATUS_LABEL.choosingFiles).toBe('Choose files');
       expect(STATUS_LABEL.stalled).toBe('Waiting for peers');
       expect(STATUS_LABEL.seeding).toBe('Seeding');
+    });
+  });
+
+  it('says when a waiting download starts, by its own time or the schedule (#350)', () => {
+    const now = new Date(2026, 9, 19, 15, 0).getTime();
+    const own = makeRecord({ status: 'queued', waitsUntil: { reason: 'chosenTime', at: '2026-10-19T18:30' } });
+    const scheduled = makeRecord({ status: 'queued', waitsUntil: { reason: 'schedule', at: '2026-10-20T02:00' } });
+    expect(statusLabel(own, now)).toBe('Starts today 18:30');
+    expect(statusLabel(scheduled, now)).toBe('Scheduled: tomorrow 02:00');
+    expect(statusLabel(makeRecord({ status: 'queued', waitsUntil: null }), now)).toBe('Queued');
+  });
+
+  describe('waiting for the network (#318)', () => {
+    const waiting = makeRecord({ status: 'waitingForNetwork' });
+
+    it('says so, and is listed with the waiting downloads', () => {
+      expect(statusLabel(waiting, 0)).toBe('Waiting for network');
+      expect(STATUS_TONE.waitingForNetwork).toBe('warning');
+      expect(countByView([waiting])).toMatchObject({ queued: 1, failed: 0, downloading: 0 });
+    });
+
+    it('can still be retried, cancelled, paused or moved by hand', () => {
+      expect(actionsFor(waiting)).toEqual({
+        pause: true, resume: false, cancel: true, retry: true, move: true, remove: true, deleteFiles: true, stopSeeding: false,
+      });
     });
   });
 

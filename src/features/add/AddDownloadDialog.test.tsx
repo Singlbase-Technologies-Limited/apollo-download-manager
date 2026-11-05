@@ -1,5 +1,5 @@
 import { emit } from '@tauri-apps/api/event';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
@@ -180,7 +180,7 @@ describe('the Add download dialog', () => {
         { source: request.links[0] ?? '', outcome: { kind: 'failed', code: 'UNSUPPORTED_SCHEME' } },
         {
           source: request.links[1] ?? '',
-          outcome: { kind: 'notFetched', error: { class: 'permanent', httpStatus: 404, message: 'Not found', retryable: false, hostKey: null, confirm: null } },
+          outcome: { kind: 'notFetched', error: { class: 'permanent', httpStatus: 404, message: 'Not found', retryable: false, hostKey: null, confirm: null, noNetwork: false } },
         },
       ],
     });
@@ -623,6 +623,7 @@ describe('the SFTP host key', () => {
         retryable: false,
         hostKey: { host: 'files.example', port: 2222, fingerprint: 'SHA256:abc123', pinned },
         confirm: null,
+        noNetwork: false,
       },
     });
 
@@ -659,5 +660,24 @@ describe('the SFTP host key', () => {
     expect(within(ask).getByText('SHA256:abc123')).toBeTruthy();
     expect(within(ask).queryByRole('button', { name: 'Trust and continue' })).toBeNull();
     expect(within(ask).getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+});
+
+// #350 (PO decision): a download can be added with its own start time.
+describe('a start time when adding', () => {
+  it('sends the chosen local time, and none unless asked', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    expect(within(dialog).queryByLabelText('Start date')).toBeNull();
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Start at a chosen time' }));
+    fireEvent.change(within(dialog).getByLabelText('Start date'), { target: { value: '2030-01-05' } });
+    fireEvent.change(within(dialog).getByLabelText('Start time, hour'), { target: { value: '22' } });
+    fireEvent.change(within(dialog).getByLabelText('Start time, minute'), { target: { value: '0' } });
+    await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
+    await waitFor(() => { expect(requests(state)).toHaveLength(1); });
+    expect(requests(state)[0]?.startAt).toBe('2030-01-05T22:00');
   });
 });

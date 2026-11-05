@@ -6053,6 +6053,7 @@ dependencies = [
  "getrandom 0.4.3",
  "jiff",
  "keyring",
+ "libc",
  "quick-xml",
  "regex",
  "rusqlite",

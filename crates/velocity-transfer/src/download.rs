@@ -389,7 +389,7 @@ impl Control {
 
     /// Reports Retrying until `at`, the next attempt (#59), after `why` (#245), unless that was
     /// reported last. A short wait a throttling server asked for stays Downloading, with nothing
-    /// to read: Velocity handles it (#247, PO decision).
+    /// to read: Apollo Download Manager handles it (#247, PO decision).
     fn retrying_until(&self, at: Instant, why: Option<&TransferError>) {
         let left = at.saturating_duration_since(Instant::now());
         if why.is_some_and(|w| w.class == FailureClass::Throttled) && left <= QUIET_THROTTLE {
@@ -2899,7 +2899,7 @@ fn refused_failure() -> TransferError {
     TransferError::new(
         FailureClass::Throttled,
         None,
-        "The server is refusing connections from this computer for now, after asking Velocity to \
+        "The server is refusing connections from this computer for now, after asking Apollo Download Manager to \
          slow down.",
     )
 }
@@ -3533,7 +3533,7 @@ mod tests {
 
     #[test]
     fn a_server_that_refuses_after_throttling_is_left_alone_for_minutes() {
-        // #247: proof.ovh.net refused this computer's connections after its 429s, and Velocity
+        // #247: proof.ovh.net refused this computer's connections after its 429s, and Apollo Download Manager
         // tried again every few seconds, which kept the block going. Each refusal in a row waits
         // twice as long, from `throttled_wait` up to `max_retry_after`; a byte starts it again.
         let p = RetryPolicy::DEFAULT;

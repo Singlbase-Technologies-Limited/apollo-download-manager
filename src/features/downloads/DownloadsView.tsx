@@ -24,6 +24,7 @@ import { ALL_COLUMNS, columnsFor } from './columns';
 import { DetailsPanel } from './DetailsPanel';
 import { DownloadTable } from './DownloadTable';
 import { LoginDialog } from './LoginDialog';
+import { StartAtDialog } from './StartAtDialog';
 import { useDownloadActions } from './useDownloadActions';
 
 const TITLES: Record<ListView, string> = {
@@ -327,6 +328,7 @@ export function DownloadsView({ view }: { view: ListView }) {
           </>
         ) : null}
       <LoginDialog />
+      <StartAtDialog />
     </div>
   );
 }

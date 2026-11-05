@@ -61,6 +61,7 @@
         "hostKey": null,
         "httpStatus": 404,
         "message": "Not found",
+        "noNetwork": false,
         "retryable": false
       },
       "kind": "notFetched"

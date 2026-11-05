@@ -106,7 +106,7 @@ impl TestPki {
             std::process::id(),
             NEXT_FRONT.fetch_add(1, Ordering::Relaxed)
         );
-        let ca_name = format!("Velocity V2 test CA {front}");
+        let ca_name = format!("Apollo Download Manager test CA {front}");
         let pki = Pki::new(leaf, &ca_name, &crl_url);
 
         let ca_dir = std::env::temp_dir().join(format!("v2-tls-{front}"));
@@ -282,7 +282,8 @@ impl Pki {
     fn new(leaf: Leaf, ca_name: &str, crl_url: &str) -> Self {
         let (ca, ca_issuer) = new_ca(ca_name);
         // An untrusted leaf is signed by a CA of its own, which the client never sees.
-        let other = (leaf == Leaf::UntrustedIssuer).then(|| new_ca("Velocity V2 untrusted CA"));
+        let other =
+            (leaf == Leaf::UntrustedIssuer).then(|| new_ca("Apollo Download Manager untrusted CA"));
         let signer = other.as_ref().map_or(&ca_issuer, |(_, issuer)| issuer);
 
         let host = if leaf == Leaf::WrongHost {

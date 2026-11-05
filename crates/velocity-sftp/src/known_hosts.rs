@@ -1,4 +1,4 @@
-//! Velocity's own known_hosts file (#53, research report section 8). SSH has no certificate
+//! Apollo Download Manager's own known_hosts file (#53, research report section 8). SSH has no certificate
 //! authority to trust, so a host key is trusted only once the user has confirmed its fingerprint,
 //! and it is pinned from then on.
 //!

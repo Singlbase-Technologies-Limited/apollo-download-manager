@@ -12,5 +12,6 @@
   "fetchingMetadata",
   "choosingFiles",
   "seeding",
-  "unknown"
+  "unknown",
+  "waitingForNetwork"
 ]

@@ -7,7 +7,7 @@ import { DEFAULT_LAYOUT } from '../../layout/layoutLogic';
 import { createQueryClient } from '../../lib/queries';
 import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
-import { callsOf, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 
 // V1's settings tests (tests/unit/app.test.tsx, "settings") and its BitTorrent settings tests
 // (tests/unit/torrentControls.test.tsx, moved here by the PO's decision on #63), ported to V2's screen, and #30's own.
@@ -54,6 +54,40 @@ describe('settings (V1)', () => {
     expect(saved(state)).toHaveLength(0);
     await user.tab();
     await waitFor(() => { expect(state.appSettings.queue.maxConcurrentDownloads).toBe(32); });
+  });
+
+  it('turns off restarting downloads when the network is back (#318)', async () => {
+    const state = installFakeBackend();
+    const user = await openSettings('Queue and performance');
+    const toggle = await screen.findByRole('checkbox', { name: 'Restart downloads when the network is back' });
+    expect((toggle as HTMLInputElement).checked).toBe(true);
+    await user.click(toggle);
+    await waitFor(() => { expect(state.appSettings.queue.restartOnNetwork).toBe(false); });
+  });
+
+  it('switches every time to 12-hour, with AM and PM (#350)', async () => {
+    const state = installFakeBackend();
+    const user = await openSettings('Appearance');
+    const choice = await screen.findByLabelText<HTMLSelectElement>('Time format');
+    expect(choice.value).toBe('twentyFourHour');
+    await user.selectOptions(choice, 'twelveHour');
+    await waitFor(() => { expect(state.settings.appearance.timeFormat).toBe('twelveHour'); });
+  });
+
+  it('chooses the schedule’s times, and says when it next runs (#350)', async () => {
+    const state = installFakeBackend({
+      snapshot: { ...emptySnapshot(), schedule: { opens: '2026-10-20T02:00', closes: '2026-10-20T07:00', open: false } },
+    });
+    const user = await openSettings('Queue and performance');
+    expect(await screen.findByText(/^Off: downloads start as soon as/)).toBeTruthy();
+    await user.click(screen.getByRole('checkbox', { name: 'Use the schedule' }));
+    await waitFor(() => { expect(state.appSettings.queue.schedule.enabled).toBe(true); });
+    expect(await screen.findByText(/^Next: .*02:00 to 07:00$/)).toBeTruthy();
+    await user.selectOptions(screen.getByLabelText('Start, hour'), '3');
+    await waitFor(() => { expect(state.appSettings.queue.schedule.startTime).toBe('03:00'); });
+    await user.selectOptions(screen.getByLabelText('Stop, minute'), '30');
+    await waitFor(() => { expect(state.appSettings.queue.schedule.stopTime).toBe('07:30'); });
+    expect(screen.queryByRole('textbox', { name: /HH:MM/ })).toBeNull();
   });
 
   it('confirms before resetting settings', async () => {

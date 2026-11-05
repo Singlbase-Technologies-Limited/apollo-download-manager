@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use tauri::{AppHandle, Emitter, Manager as _, State};
+use velocity_core::app_settings::UpkeepSettings;
 use velocity_core::database::Database;
 use velocity_core::domain::{
     BatchResult, ConfirmKind, DownloadsSnapshot, EngineHealth, ErrorCode, KeptFile,
@@ -41,6 +42,44 @@ pub fn program_beside(app: &Path, name: &str) -> PathBuf {
     app.with_file_name(format!("{name}{}", std::env::consts::EXE_SUFFIX))
 }
 
+/// Runs `clear`, which clears the window's own browsing data, unless an earlier start did (#345,
+/// PO decision). The window keeps nothing of its own there (no storage, no cookies), so only the
+/// autofill entries versions before 0.2.0 kept, and the page cache, go. A failure is logged and
+/// not recorded, so the next start tries again.
+fn clear_window_data_once(database: &Database, clear: impl FnOnce() -> Result<(), String>) {
+    let upkeep: UpkeepSettings = database.section().unwrap_or_default();
+    if upkeep.window_data_cleared {
+        return;
+    }
+    if let Err(e) = clear() {
+        tracing::warn!("the window's old browsing data couldn't be cleared: {e}");
+        return;
+    }
+    let done = UpkeepSettings {
+        window_data_cleared: true,
+    };
+    match database.save_section(&done, velocity_core::manager::now_ms()) {
+        Ok(_) => tracing::info!("the window's old browsing data was cleared"),
+        Err(e) => {
+            tracing::warn!("clearing the window's old browsing data couldn't be recorded: {e}")
+        }
+    }
+}
+
+/// Starts watching the system's network (#318) for as long as the app runs, and returns the
+/// signal it raises. Without a watcher the downloads waiting for the network start again when
+/// the app starts, or by hand; the failure is logged.
+fn watch_network(app: &AppHandle) -> Arc<std::sync::atomic::AtomicBool> {
+    let signal = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    match velocity_core::network_watch::NetworkWatch::start(Arc::clone(&signal)) {
+        Ok(watch) => {
+            app.manage(watch);
+        }
+        Err(code) => tracing::warn!("the network isn't watched: {code:?}"),
+    }
+    signal
+}
+
 /// Opens the database, starts the transfer engine, the torrent helper and the manager. An engine
 /// that can't start leaves the app running without it, saying why ([`MissingEngine`],
 /// [`MissingTorrentEngine`]); a database that can't open stops it.
@@ -55,6 +94,13 @@ pub fn start(app: &AppHandle, paths: &Paths) -> Result<Downloads, String> {
     if let Ok(mut notifications) = shell.notifications.lock() {
         *notifications = database.section().unwrap_or_default();
     }
+    // The autofill entries earlier versions' window kept are cleared once (#345).
+    clear_window_data_once(&database, || {
+        let window = app
+            .get_webview_window("main")
+            .ok_or_else(|| "no main window".to_owned())?;
+        window.clear_all_browsing_data().map_err(|e| e.to_string())
+    });
     let exe = std::env::current_exe()
         .map_err(|e| format!("{} ({e})", ErrorCode::EngineMissing.user_message()))?;
     let program = program_beside(&exe, ENGINE_PROGRAM);
@@ -89,6 +135,8 @@ pub fn start(app: &AppHandle, paths: &Paths) -> Result<Downloads, String> {
     let mut manager = Manager::open_with_keychain(engine, Arc::new(database), Box::new(keychain))
         .map_err(|e| e.to_string())?
         .with_torrents(torrents)
+        // Downloads waiting for the network start again when it changes (#318).
+        .with_network_signal(watch_network(app))
         // `.torrent` links are fetched into the app's own folder (#60).
         .with_torrent_links(paths.torrent_links_dir())
         .map_err(|code| {
@@ -229,6 +277,20 @@ pub async fn move_download(
     direction: MoveDirection,
 ) -> Result<(), ErrorCode> {
     on_manager(&downloads, move |m| m.move_download(&id, direction)).await?
+}
+
+/// Gives a waiting download its own start time, local `YYYY-MM-DDTHH:MM`, or takes it away with
+/// `null` (#350). The time is parsed here, at the boundary: any other form is refused.
+#[tauri::command]
+pub async fn set_start_at(
+    downloads: State<'_, Downloads>,
+    id: String,
+    start_at: Option<velocity_core::queue::LocalTime>,
+) -> Result<(), ErrorCode> {
+    on_manager(&downloads, move |m| {
+        m.set_start_at(&id, start_at.map(|t| t.0))
+    })
+    .await?
 }
 
 #[tauri::command]
@@ -439,6 +501,31 @@ pub async fn allow_download(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// #345 (PO decision): the window's old autofill entries are cleared on the first start of
+    /// this version, once. A clear that fails is tried again on the next start.
+    #[test]
+    fn the_windows_old_data_is_cleared_once() {
+        let db = Database::open_in_memory().unwrap();
+        let mut clears = 0;
+        clear_window_data_once(&db, || {
+            clears += 1;
+            Err("the window isn't there".to_owned())
+        });
+        assert_eq!(clears, 1);
+        clear_window_data_once(&db, || {
+            clears += 1;
+            Ok(())
+        });
+        assert_eq!(clears, 2, "the failed clear was tried again");
+        clear_window_data_once(&db, || {
+            clears += 1;
+            Ok(())
+        });
+        assert_eq!(clears, 2, "once it worked, never again");
+        let upkeep: UpkeepSettings = db.section().unwrap();
+        assert!(upkeep.window_data_cleared);
+    }
 
     #[test]
     fn the_engines_are_looked_for_beside_the_app() {

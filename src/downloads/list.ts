@@ -1,5 +1,5 @@
 import type { DownloadRecord, DownloadStatus } from '../contract';
-import { formatDuration } from '../lib/format';
+import { formatDuration, formatWhen } from '../lib/format';
 import { fileNameFromUrl } from '../naming';
 import { matchesView, type ListView } from './views';
 
@@ -75,14 +75,15 @@ const STATUS_ORDER: Record<DownloadStatus, number> = {
   stalled: 3,
   verifying: 4,
   retrying: 5,
-  choosingFiles: 6,
-  queued: 7,
-  paused: 8,
-  failed: 9,
-  removed: 10,
-  seeding: 11,
-  completed: 12,
-  unknown: 13,
+  waitingForNetwork: 6,
+  choosingFiles: 7,
+  queued: 8,
+  paused: 9,
+  failed: 10,
+  removed: 11,
+  seeding: 12,
+  completed: 13,
+  unknown: 14,
 };
 
 const TERMINAL: readonly DownloadStatus[] = ['completed', 'failed', 'removed'];
@@ -153,11 +154,12 @@ export function actionsFor(d: DownloadRecord): ActionAvailability {
   const s = d.status;
   const running = RUNNING.includes(s);
   return {
-    pause: running || s === 'queued' || s === 'retrying' || s === 'seeding',
+    pause: running || s === 'queued' || s === 'retrying' || s === 'seeding' || s === 'waitingForNetwork',
     resume: s === 'paused',
-    cancel: running || s === 'queued' || s === 'paused' || s === 'retrying' || s === 'choosingFiles',
-    retry: s === 'failed' || s === 'removed',
-    move: s === 'queued' || s === 'paused',
+    cancel: running || s === 'queued' || s === 'paused' || s === 'retrying' || s === 'choosingFiles' || s === 'waitingForNetwork',
+    // Waiting for the network (#318): Retry starts it again now, without waiting.
+    retry: s === 'failed' || s === 'removed' || s === 'waitingForNetwork',
+    move: s === 'queued' || s === 'paused' || s === 'waitingForNetwork',
     remove: true,
     deleteFiles: s !== 'unknown',
     // Leaving the seeding queue is stopping seeding too (#63).
@@ -202,6 +204,7 @@ export const STATUS_LABEL: Record<DownloadStatus, string> = {
   failed: 'Failed',
   removed: 'Cancelled',
   unknown: 'Unavailable',
+  waitingForNetwork: 'Waiting for network',
 };
 
 /** The status as the list says it, at `now` (ms since the Unix epoch): Retrying counts down to the engine's next attempt. */
@@ -210,6 +213,11 @@ export function statusLabel(d: DownloadRecord, now: number, opts: { needsLogin?:
   if (d.status === 'retrying' && d.retryAtMs !== null) {
     const left = secondsToRetry(d.retryAtMs, now);
     return left > 0 ? `Retrying in ${formatDuration(left)}` : 'Retrying now';
+  }
+  // Waiting for its own start time or for the schedule's window (#350).
+  if (d.status === 'queued' && d.waitsUntil) {
+    const when = formatWhen(d.waitsUntil.at, new Date(now));
+    return d.waitsUntil.reason === 'chosenTime' ? `Starts ${when}` : `Scheduled: ${when}`;
   }
   // Completed, and waiting for a free seeding slot (#63).
   if (d.status === 'completed' && d.torrent?.seedQueued) return 'Waiting to seed';
@@ -235,4 +243,5 @@ export const STATUS_TONE: Record<DownloadStatus, StatusTone> = {
   failed: 'danger',
   removed: 'muted',
   unknown: 'muted',
+  waitingForNetwork: 'warning',
 };

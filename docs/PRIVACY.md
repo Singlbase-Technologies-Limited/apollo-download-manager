@@ -19,6 +19,7 @@ All of it is in V2's own data folder ([COEXISTENCE.md](COEXISTENCE.md)):
 - **Trusted SFTP host keys,** in V2's own `known_hosts` file.
 - **Logins you asked to remember,** in the system keychain (Windows Credential Manager, or your Linux keyring), one per download, deleted with it ([ADR-0015](decisions/0015-keychain-with-consent.md)). Nothing else about a login is kept.
 - **Crash logs:** at most 5, redacted.
+- **The window keeps nothing you type** (#345). The window is a web view (WebView2 on Windows, WebKitGTK on Linux), which can remember what is typed into forms. Every text field in the app asks it not to (`autocomplete="off"`, in the shared `Input` and `Textarea`), and the window uses no browser storage or cookies. Versions before 0.2.0 didn't ask, so Windows' WebView2 kept typed links, folders and the proxy's user name in its own autofill store, in the app's `EBWebView` folder. The first start of 0.2.0 clears the window's browsing data once (`clear_window_data_once` in `src-tauri/src/downloads.rs`, recorded as `upkeep.windowDataCleared`); a clear that fails is tried again at the next start. Linux's WebKitGTK isn't known to keep an autofill store for these fields; that is an assumption, not checked.
 
 **Never kept:** passwords, cookies, custom headers, SSH keys and passphrases. They stay in memory for the session only, and a download that needs one asks again after a restart.
 

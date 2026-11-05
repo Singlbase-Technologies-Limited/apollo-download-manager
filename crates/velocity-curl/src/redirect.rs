@@ -1,4 +1,4 @@
-//! Which redirects a fetch follows, and what it still sends after one (#40, #67). Velocity
+//! Which redirects a fetch follows, and what it still sends after one (#40, #67). Apollo Download Manager
 //! follows redirects itself instead of letting libcurl do it, because libcurl would forward custom
 //! headers to another host. Each hop is checked here, on libcurl's own reading of the URL.
 
@@ -8,7 +8,7 @@ use crate::url::{origin, Origin};
 /// The most redirects one fetch follows.
 pub const MAX_REDIRECTS: u32 = 10;
 
-/// A hop Velocity follows.
+/// A hop Apollo Download Manager follows.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Hop {
     /// The absolute URL to request next, as libcurl resolved the `Location`.

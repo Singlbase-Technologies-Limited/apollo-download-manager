@@ -51,10 +51,10 @@ impl fmt::Display for Problem {
         match self {
             Self::BelowFloor { linked } => write!(
                 f,
-                "libcurl {linked} is linked, but V2 needs {major}.{minor}.{patch} or newer"
+                "libcurl {linked} is linked, but Apollo Download Manager needs {major}.{minor}.{patch} or newer"
             ),
             Self::UnreadableVersion { linked } => {
-                write!(f, "libcurl reports a version V2 can't read ({linked:?})")
+                write!(f, "libcurl reports a version Apollo Download Manager can't read ({linked:?})")
             }
             Self::WrongTls { linked, expected } => write!(
                 f,
@@ -68,7 +68,7 @@ impl fmt::Display for Problem {
             }
             Self::UnexpectedProtocols(p) => write!(
                 f,
-                "libcurl includes protocols V2 doesn't use, which should be compiled out: {}",
+                "libcurl includes protocols Apollo Download Manager doesn't use, which should be compiled out: {}",
                 p.join(", ")
             ),
         }
@@ -302,7 +302,9 @@ mod tests {
         assert_eq!(err.problems.len(), 3);
         let message = err.to_string();
         assert!(
-            message.contains("libcurl 8.22.0 is linked, but V2 needs 8.23.0 or newer"),
+            message.contains(
+                "libcurl 8.22.0 is linked, but Apollo Download Manager needs 8.23.0 or newer"
+            ),
             "{message}"
         );
         assert!(message.contains("ftp, ftps"), "{message}");

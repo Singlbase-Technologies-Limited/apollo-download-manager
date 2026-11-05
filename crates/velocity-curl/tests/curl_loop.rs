@@ -421,7 +421,7 @@ fn reports_an_error_status_to_the_gate() {
 }
 
 /// libcurl's own default would follow a redirect to FTP; V2 allows only HTTP(S) redirects, and
-/// Velocity, which follows redirects itself (#40), refuses it before connecting.
+/// Apollo Download Manager, which follows redirects itself (#40), refuses it before connecting.
 #[test]
 fn a_redirect_to_ftp_is_refused_by_the_redirect_allowlist() {
     let (s, _) = serve(

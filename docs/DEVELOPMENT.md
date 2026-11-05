@@ -1,6 +1,6 @@
 # Development setup
 
-This page takes you from a fresh clone of the V2 repository to a running Velocity Download Manager development window on Windows, Linux or macOS. If something fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+This page takes you from a fresh clone of the V2 repository to a running Apollo Download Manager development window on Windows, Linux or macOS. If something fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Quick start
 
@@ -14,7 +14,7 @@ pnpm dev                      # builds the Rust shell and opens the app with hot
 
 The first `pnpm dev` compiles every Rust dependency and takes several minutes (see [Build times](#build-times)). Later runs reuse the build.
 
-You should see a window titled **Velocity Download Manager (dev)**. The first time, it asks where downloads should go. After that, it opens on the downloads, with the navigation and the status bar ([UI_ARCHITECTURE.md](UI_ARCHITECTURE.md)):
+You should see a window titled **Apollo Download Manager (dev)**. The first time, it asks where downloads should go. After that, it opens on the downloads, with the navigation and the status bar ([UI_ARCHITECTURE.md](UI_ARCHITECTURE.md)):
 
 ![The app on Windows, light theme](images/shell-windows-light.png)
 
@@ -100,11 +100,11 @@ Run `pnpm check:fast` before every pull request. [TESTING.md](TESTING.md) descri
 
 ## Running beside the original Velocity Download Manager
 
-V2 will replace V1 under the same product name, Velocity Download Manager (PO decision, #11). During development, both run side by side:
+V2 is named Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md)), and runs beside V1, during development and after release:
 
 | | V1 | V2 development build |
 |---|---|---|
-| Product name | Velocity Download Manager | Velocity Download Manager (dev) |
+| Product name | Velocity Download Manager | Apollo Download Manager (dev) |
 | Bundle identifier | `com.velocity.downloadmanager` | `dev.velocity.downloadmanager.v2` (release builds will use `com.velocity.downloadmanager.v2`; [ADR-0003](decisions/0003-v2-app-identity.md)) |
 | Dev server port | 1420 | 1430 |
 

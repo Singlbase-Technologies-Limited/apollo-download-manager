@@ -41,7 +41,7 @@ The screen (#30, `src/features/settings/SettingsView.tsx`) edits every section b
 | `advanced` | `globalDownloadLimitKib` | 0: none | 0, or at least 1 KiB/s (#49). Direct downloads only: torrents have their own `downloadLimit` ([TORRENTS.md](TORRENTS.md#settings-and-identity), #312) |
 | | `enableBittorrent` | on (V1's) | Off refuses torrents and magnet links with `PROTOCOL_DISABLED` |
 | | `enableMetalink` | off (V1's) | Offered when the engine reads Metalink, as it does since #54 |
-| | `userAgent` | `null`: `VelocityDownloadManager/<version>` | At most 256 bytes, no control characters; for downloads added after it |
+| | `userAgent` | `null`: `ApolloDownloadManager/<version>` | At most 256 bytes, no control characters; for downloads added after it |
 | `newTorrents` | `chooseFilesForMagnets` | off | The Add dialog's "Choose files before downloading" |
 | | `seeding` | never | As a torrent's seeding policy ([TORRENTS.md](TORRENTS.md)) |
 | | `uploadLimitKib` | 0: none | The Add dialog's upload limit |
@@ -99,13 +99,16 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 
 | Setting | Default | Bounds |
 |---|---|---|
-| `maxConcurrentDownloads` | 3 | 1 to 32 |
+| `maxConcurrentDownloads` | 2 (3 before 0.2.0, #351) | 1 to 32 |
 | `startImmediately` | on | — |
+| `restartOnNetwork` | on | A download that failed because there was no network waits for it, and starts again from its bytes when the system's network changes (#318, [ADR-0019](decisions/0019-waiting-for-network-status.md)) |
 | `schedule.enabled` | off | — |
-| `schedule.startTime`, `schedule.stopTime` | 02:00 to 07:00 | `HH:MM`, 24-hour; no stop time runs to midnight, and a stop before the start crosses midnight |
+| `schedule.startTime`, `schedule.stopTime` | 02:00 to 07:00 | `HH:MM`, 24-hour, whatever the time format shown; chosen on the screen with hour and minute boxes (#350). No stop time, or `00:00`, runs to midnight, and a stop before the start crosses midnight |
 | `schedule.days` | every day | 0 (Monday) to 6 (Sunday); at least one when the schedule is on |
 
 How the queue applies them is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#the-managers-side).
+
+**Updating from 0.1.x** (#351, option B, PO decision): a saved `maxConcurrentDownloads` of 3, the old default, becomes 2 once, through migration 8 ([DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md)). V2 can't tell a chosen 3 from the old default, since the queue section is saved whole. Every other value is kept, and a 3 chosen after the update stays.
 
 ## Folders
 
@@ -148,6 +151,7 @@ V1's `general`, `notifications` and `appearance` settings and its first-run flag
 | | `onEngineFailure` | on | When the transfer engine or the torrent helper becomes unavailable |
 | `appearance` | `theme` | `system` | `system`, `light` or `dark` |
 | | `density` | `compact` | `compact` or `comfortable`, for the download list (#59) |
+| | `timeFormat` | `twentyFourHour` | `twentyFourHour` or `twelveHour`, for every time the app shows (#350; PO decision) |
 | | `layout.sidebarWidth` | `null`: about 17% of the window, 220 to 240 px | 184 to 360 px |
 | | `layout.sidebarCollapsed`, `layout.sidebarVisible` | off, on | — |
 | | `layout.detailsWidth` | `null`: a fifth of the window, 300 to 340 px | 280 to 600 px, for the details panel (#61) |
@@ -155,6 +159,7 @@ V1's `general`, `notifications` and `appearance` settings and its first-run flag
 | | `visibleColumns` | `name`, `size`, `progress`, `speed`, `eta`, `status`, `category`, `added` (V1's) | The download list's columns, in display order (#59). Always with `name`, each column once. The ids are V1's 13: those above and `downloaded`, `avgSpeed`, `destination`, `started` and `completed` (`ColumnId`, fixture `columns.json`) |
 | | `columnWidths` | none: each column's default width | The widths the user set by dragging, in CSS pixels by column id, 48 to 1200 px (#59) |
 | `onboarding` | `completed` | off | Set by finishing the first-run setup, which also saves its folder as `downloads.defaultDirectory` |
+| `upkeep` | `windowDataCleared` | off | Not on any screen: set once the window's old browsing data, with the autofill entries earlier versions kept, was cleared (#345, [PRIVACY.md](PRIVACY.md)) |
 
 - **Saved and read like the folder settings:** a panel or column width outside its bounds, and a column list without `name` or with a column twice, are refused with `INVALID_INPUT`. An unknown column id doesn't parse, so `set_appearance` refuses it before it reaches the core, and a saved section that can't be read is a `DATABASE` error for the window, left as it was.
 - **Read when the app starts:** `general` and `notifications` are read when the app starts. A section that can't be read is left as it was, and its defaults apply until it is fixed, so closing and notifications keep working. The Settings screen (#30) changes them while the app runs, and closing and notifications follow at once.

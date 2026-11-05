@@ -177,8 +177,10 @@ impl Manager {
             download_limit: request.download_limit,
         };
         let category_id = self.known_category(options.category_id.as_deref())?;
-        let paused =
-            options.start_paused || (!self.settings.start_immediately && !options.scheduled);
+        let paused = options.start_paused
+            || (!self.settings.start_immediately
+                && !options.scheduled
+                && options.start_at.is_none());
         self.next_id += 1;
         let id = format!("d-{:04}", self.next_id);
         let mut job = TorrentJob::new(stored.clone(), Some(request.origin));
@@ -212,12 +214,16 @@ impl Manager {
                 requested_connections: None,
                 torrent: None,
                 file_count: None,
+                waits_until: None,
             },
             job: Job::Torrent(Box::new(job)),
             running: false,
             paused,
             // While the schedule is on, every new download waits for it (PO decision on #340).
-            scheduled: options.scheduled || self.settings.schedule.enabled,
+            // Its own start time beats the window (PO decision on #350).
+            scheduled: options.start_at.is_none()
+                && (options.scheduled || self.settings.schedule.enabled),
+            start_at: options.start_at,
             cancelling: false,
             saved_at_ms: None,
             needs_login: false,
@@ -242,7 +248,7 @@ impl Manager {
         self.database
             .insert_torrent(&new, &stored)
             .map_err(|e| e.code)?;
-        let starts_now = download.may_run(self.window_open) && self.free_slots() > 0;
+        let starts_now = download.may_run(self.window_open, self.local) && self.free_slots() > 0;
         self.downloads.insert(id.clone(), download);
         self.order.push(id.clone());
         if starts_now {

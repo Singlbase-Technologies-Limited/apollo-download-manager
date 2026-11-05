@@ -157,6 +157,6 @@ mod tests {
             ),
             other => panic!("expected Incompatible, got {other:?}"),
         }
-        assert!(err.to_string().starts_with("the transfer engine can't start: libcurl 8.22.0 is linked, but V2 needs 8.23.0 or newer"), "{err}");
+        assert!(err.to_string().starts_with("the transfer engine can't start: libcurl 8.22.0 is linked, but Apollo Download Manager needs 8.23.0 or newer"), "{err}");
     }
 }

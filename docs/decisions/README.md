@@ -24,6 +24,7 @@ An architecture decision record (ADR) states one decision, why it was taken and 
 | [0016](0016-release-product-name-v2.md) | The released app is named "Velocity Download Manager V2" | Superseded by ADR-0018 | 2026-10-30 |
 | [0017](0017-gpl-3-licence.md) | V2 is licensed GPL-3.0-only, owned by Singlbase Technologies Limited, with contributions under a CLA | Accepted | 2026-10-31 |
 | [0018](0018-product-name-apollo.md) | The released app is named "Apollo Download Manager" | Accepted | 2026-11-05 |
+| [0019](0019-waiting-for-network-status.md) | A download can wait for the network | Accepted | 2026-11-05 |
 
 Decisions still open are tracked as GitHub issues titled `decision: …`, for example #38 (in-process or child process). [ARCHITECTURE.md](../ARCHITECTURE.md#open-decisions) lists the ones that shape the architecture.
 

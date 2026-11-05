@@ -27,11 +27,18 @@ pub(super) const DELETE_WAIT: Duration = Duration::from_secs(2);
 
 impl Manager {
     /// Retries a failed or removed download: the engine forgets the old transfer, and the download
-    /// waits as Queued at the end of the queue. `InvalidState` for any other status;
+    /// waits as Queued at the end of the queue. One waiting for the network (#318) waits as
+    /// Queued where it was in the queue. `InvalidState` for any other status;
     /// `ConfirmationRequired` for one that came back after a restart without its login, until
     /// [`Manager::set_login`].
     pub fn retry(&mut self, id: &str) -> Result<(), ErrorCode> {
         let d = self.downloads.get(id).ok_or(ErrorCode::NotFound)?;
+        if d.record.status == DownloadStatus::WaitingForNetwork {
+            // It kept its place in the queue, and is ready to resume (#318).
+            self.stop_waiting_for_network(id);
+            self.fill();
+            return Ok(());
+        }
         if !matches!(
             d.record.status,
             DownloadStatus::Failed | DownloadStatus::Removed
@@ -150,7 +157,7 @@ impl Manager {
     }
 
     /// The downloads with `status`, in id order.
-    fn ids_with(&self, status: DownloadStatus) -> Vec<String> {
+    pub(super) fn ids_with(&self, status: DownloadStatus) -> Vec<String> {
         self.downloads
             .iter()
             .filter(|(_, d)| d.record.status == status)
@@ -160,7 +167,7 @@ impl Manager {
 
     /// Has the engine forget the download's transfer: `remove` for a finished one, `cancel` for
     /// one still running. One the engine no longer knows is forgotten already.
-    fn forget_transfer(&mut self, id: &str, finished: bool) -> Result<(), ErrorCode> {
+    pub(super) fn forget_transfer(&mut self, id: &str, finished: bool) -> Result<(), ErrorCode> {
         if self
             .downloads
             .get(id)

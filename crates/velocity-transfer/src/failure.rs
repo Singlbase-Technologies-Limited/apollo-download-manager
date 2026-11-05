@@ -156,10 +156,13 @@ pub(crate) fn fetch_failure(e: FetchError) -> TransferError {
             message,
         } => {
             let (class, words) = curl_failure(kind);
-            TransferError::new(
-                class,
-                None,
-                &format!("{words} (libcurl error {code}: {message})"),
+            no_network(
+                kind,
+                TransferError::new(
+                    class,
+                    None,
+                    &format!("{words} (libcurl error {code}: {message})"),
+                ),
             )
         }
         FetchError::RedirectRefused { kind, message } => {
@@ -168,7 +171,10 @@ pub(crate) fn fetch_failure(e: FetchError) -> TransferError {
         }
         FetchError::Sftp { kind, message } => {
             let (class, words) = curl_failure(kind);
-            TransferError::new(class, None, &format!("{words} (SFTP: {message})"))
+            no_network(
+                kind,
+                TransferError::new(class, None, &format!("{words} (SFTP: {message})")),
+            )
         }
         FetchError::HostKey(problem) => host_key_failure(problem),
         FetchError::InsecureRedirect { host } => TransferError::new(
@@ -221,6 +227,19 @@ fn host_key_failure(problem: HostKeyProblem) -> TransferError {
         fingerprint,
         pinned,
     })
+}
+
+/// `error`, marked as made by having no network when no connection could be made (#318): the
+/// name didn't resolve, or the connection was refused or timed out. A connection cut after it
+/// was made isn't: the engine's own retries ride that out (#317).
+fn no_network(kind: CurlFailure, error: TransferError) -> TransferError {
+    match kind {
+        CurlFailure::Resolve
+        | CurlFailure::Connect
+        | CurlFailure::NoNetwork
+        | CurlFailure::Timeout => error.with_no_network(),
+        _ => error,
+    }
 }
 
 /// A libcurl failure's class and message. Network trouble is worth retrying; a certificate that
@@ -368,6 +387,45 @@ mod tests {
         for words in ["spelling", "proxy", "internet connection", "only over IPv6"] {
             assert!(message.contains(words), "{words:?} in {message:?}");
         }
+    }
+
+    /// #318: a failure because no connection could be made says so, for HTTP, FTP and SFTP alike,
+    /// so the download can wait for the network. Every other failure doesn't.
+    #[test]
+    fn only_a_connection_that_could_not_be_made_is_marked_as_no_network() {
+        let curl = |kind| {
+            fetch_failure(FetchError::Curl {
+                kind,
+                code: 6,
+                message: "x".to_owned(),
+            })
+        };
+        for kind in [
+            CurlFailure::Resolve,
+            CurlFailure::Connect,
+            CurlFailure::NoNetwork,
+            CurlFailure::Timeout,
+        ] {
+            assert!(curl(kind).no_network, "{kind:?}");
+            let sftp = fetch_failure(FetchError::Sftp {
+                kind,
+                message: "x".to_owned(),
+            });
+            assert!(sftp.no_network, "SFTP {kind:?}");
+        }
+        for kind in [
+            CurlFailure::Interrupted,
+            CurlFailure::TlsHandshake,
+            CurlFailure::Certificate,
+            CurlFailure::NotFound,
+            CurlFailure::AccessDenied,
+            CurlFailure::ProxyRefused,
+            CurlFailure::Local,
+            CurlFailure::Other,
+        ] {
+            assert!(!curl(kind).no_network, "{kind:?}");
+        }
+        assert!(!status_failure(404).unwrap().no_network);
     }
 
     #[test]

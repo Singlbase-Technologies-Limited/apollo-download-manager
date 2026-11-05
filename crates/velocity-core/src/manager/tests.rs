@@ -530,6 +530,23 @@ mod queue {
         );
     }
 
+    /// #351: with nothing saved, 2 run at once, and a cancelled one frees its slot.
+    #[test]
+    fn by_default_two_run_at_once_and_a_cancel_frees_a_slot() {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = in_memory(fake);
+        let a = add(&mut m, "a");
+        add(&mut m, "b");
+        let c = add(&mut m, "c");
+        m.pump(T0);
+        assert_eq!(started(&control), ["a", "b"]);
+        assert_eq!(status(&m, &c), DownloadStatus::Queued);
+        m.cancel(&a).unwrap();
+        m.pump(T0);
+        assert_eq!(started(&control), ["a", "b", "c"], "a's slot went to c");
+    }
+
     #[test]
     fn a_retrying_or_stalled_download_keeps_its_slot() {
         let (mut m, control) = queue_of(1);
@@ -611,6 +628,7 @@ mod queue {
                 DownloadKind::Http,
                 named("a"),
                 AddOptions {
+                    start_at: None,
                     start_paused: true,
                     scheduled: false,
                     category_id: None,
@@ -664,6 +682,7 @@ mod queue {
                 enabled: true,
                 ..ScheduleSettings::default()
             },
+            max_concurrent_downloads: 3,
             ..QueueSettings::default()
         })
         .unwrap();
@@ -672,6 +691,7 @@ mod queue {
                 DownloadKind::Http,
                 named("night"),
                 AddOptions {
+                    start_at: None,
                     start_paused: false,
                     scheduled: true,
                     category_id: None,
@@ -795,6 +815,7 @@ mod queue {
                 DownloadKind::Http,
                 named("c"),
                 AddOptions {
+                    start_at: None,
                     start_paused: false,
                     scheduled: true,
                     category_id: None,
@@ -804,6 +825,7 @@ mod queue {
             .unwrap();
         m.move_download(&c, MoveDirection::Top).unwrap();
         let entry = |id: &String, scheduled| QueueEntry {
+            start_at: None,
             id: id.clone(),
             scheduled,
         };
@@ -1556,6 +1578,7 @@ mod persistence {
                     ..spec()
                 },
                 AddOptions {
+                    start_at: None,
                     start_paused: false,
                     scheduled: true,
                     category_id: None,
@@ -1783,6 +1806,7 @@ mod recovery {
     fn the_queue_order_and_schedule_come_back() {
         let db = Arc::new(Database::open_in_memory().unwrap());
         let paused = |scheduled| AddOptions {
+            start_at: None,
             start_paused: true,
             scheduled,
             category_id: None,
@@ -1949,6 +1973,7 @@ mod recovery {
         let new = NewDownload::from_transfer("d-0007", DownloadKind::Http, &spec(), T0);
         db.insert_download(&new).unwrap();
         db.save_queue(&[QueueEntry {
+            start_at: None,
             id: "d-0007".to_owned(),
             scheduled: false,
         }])
@@ -2105,6 +2130,12 @@ mod retry {
         let fake = FakeTransfer::new();
         let control = fake.control();
         let mut m = in_memory(fake);
+        // Three run at once, as before the default became 2 (#351).
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 3,
+            ..QueueSettings::default()
+        })
+        .unwrap();
         let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
         let b = m.add(DownloadKind::Http, named("b.zip"), T0).unwrap();
         let done = m.add(DownloadKind::Http, named("done.zip"), T0).unwrap();
@@ -2364,6 +2395,7 @@ mod removal {
                 DownloadKind::Http,
                 in_folder(&dir, "a.zip"),
                 AddOptions {
+                    start_at: None,
                     start_paused: true,
                     scheduled: false,
                     category_id: None,
@@ -2565,6 +2597,7 @@ mod engine_loss {
                 DownloadKind::Http,
                 spec(),
                 AddOptions {
+                    start_at: None,
                     start_paused: true,
                     scheduled: false,
                     category_id: None,
@@ -2596,6 +2629,7 @@ mod per_download {
             DownloadKind::Http,
             spec(),
             AddOptions {
+                start_at: None,
                 start_paused: true,
                 scheduled: false,
                 category_id: None,
@@ -4624,6 +4658,12 @@ mod categories {
     fn a_name_learned_after_the_start_sets_the_automatic_category_and_keeps_the_folder() {
         // PO decision on #31: the server's name categorises the download; nothing is moved.
         let (mut m, control, db, dir) = in_folder("learned");
+        // Three run at once, as before the default became 2 (#351).
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 3,
+            ..QueueSettings::default()
+        })
+        .unwrap();
         let unnamed = || TransferSpec {
             urls: vec!["https://example.com/download.php?id=3".to_owned()],
             directory: dir.clone(),
@@ -6370,4 +6410,628 @@ fn removing_a_download_writes_its_line_to_the_app_log() {
             format!("download {second} removed from the list, and its files deleted"),
         ]
     );
+}
+
+/// #318: a download that failed because there was no network waits for it, and starts again
+/// from its checkpoint when the system says the network changed (PO decisions, 2026-11-05).
+mod network {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    fn named(name: &str) -> TransferSpec {
+        TransferSpec {
+            file_name: Some(name.to_owned()),
+            ..spec()
+        }
+    }
+
+    fn no_network() -> TransferError {
+        TransferError::new(
+            FailureClass::Transient,
+            None,
+            "The server name could not be resolved.",
+        )
+        .with_no_network()
+    }
+
+    /// 2026-10-19 12:00, a Monday.
+    fn noon() -> DateTime {
+        jiff::civil::date(2026, 10, 19).at(12, 0, 0, 0)
+    }
+
+    /// A manager running one download at a time, and the signal the network watcher raises.
+    fn setup() -> (Manager, FakeControl, Arc<AtomicBool>) {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let signal = Arc::new(AtomicBool::new(false));
+        let mut m = in_memory(fake).with_network_signal(Arc::clone(&signal));
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 1,
+            ..QueueSettings::default()
+        })
+        .unwrap();
+        (m, control, signal)
+    }
+
+    fn adds(control: &FakeControl) -> usize {
+        control.log().iter().filter(|c| *c == "add").count()
+    }
+
+    #[test]
+    fn a_download_without_network_waits_for_it_and_frees_its_slot() {
+        let (mut m, control, _) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        let b = m.add(DownloadKind::Http, named("b.zip"), T0).unwrap();
+        control.progress(TransferId(1), 1024, Some(4096));
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        let record = m.get(&a).unwrap();
+        assert_eq!(record.progress.completed_bytes, 1024, "its bytes are kept");
+        assert!(
+            record.error.as_ref().is_some_and(|e| e.no_network),
+            "the reason shows"
+        );
+        assert_eq!(status(&m, &b), DownloadStatus::Queued);
+        assert_eq!(adds(&control), 2, "b took a's slot");
+        // Nothing starts it again until the network changes, however many ticks pass.
+        control.complete(TransferId(2));
+        m.pump(T0 + 2);
+        m.tick(T0 + 3, noon());
+        assert_eq!(adds(&control), 2);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+    }
+
+    #[test]
+    fn other_failures_stay_failed() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(
+            TransferId(1),
+            TransferError::new(FailureClass::Permanent, Some(404), "Not found"),
+        );
+        m.pump(T0 + 1);
+        assert_eq!(status(&m, &a), DownloadStatus::Failed);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 2, noon());
+        assert_eq!(
+            status(&m, &a),
+            DownloadStatus::Failed,
+            "the network isn't its problem"
+        );
+        assert_eq!(adds(&control), 1);
+    }
+
+    #[test]
+    fn when_the_network_changes_it_starts_again_from_its_checkpoint() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 2, noon());
+        assert!(!signal.load(Ordering::SeqCst), "the signal is taken");
+        assert_eq!(adds(&control), 2, "started again");
+        assert!(
+            control.spec(TransferId(2)).resume.is_some(),
+            "from what it kept"
+        );
+        assert_ne!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        assert_eq!(m.get(&a).unwrap().error, None);
+        // Still no network: it waits again, and the next change starts it again.
+        control.fail(TransferId(2), no_network());
+        m.pump(T0 + 3);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 4, noon());
+        assert_eq!(adds(&control), 3);
+    }
+
+    #[test]
+    fn a_waiting_download_waits_for_a_slot_like_any_other() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        let b = m.add(DownloadKind::Http, named("b.zip"), T0 + 1).unwrap();
+        m.pump(T0 + 1);
+        assert_eq!(adds(&control), 2, "b runs");
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 2, noon());
+        assert_eq!(status(&m, &a), DownloadStatus::Queued, "waits for b's slot");
+        assert_eq!(adds(&control), 2);
+        control.complete(TransferId(2));
+        m.pump(T0 + 3);
+        assert_eq!(status(&m, &b), DownloadStatus::Completed);
+        assert_eq!(adds(&control), 3, "then a starts");
+    }
+
+    #[test]
+    fn a_waiting_download_can_be_cancelled_retried_or_paused() {
+        let (mut m, control, _) = setup();
+        let mut ids = Vec::new();
+        for name in ["a.zip", "b.zip", "c.zip"] {
+            let id = m.add(DownloadKind::Http, named(name), T0).unwrap();
+            let transfer = TransferId(adds(&control) as u64);
+            control.fail(transfer, no_network());
+            m.pump(T0 + 1);
+            assert_eq!(status(&m, &id), DownloadStatus::WaitingForNetwork, "{name}");
+            ids.push(id);
+        }
+        m.cancel(&ids[0]).unwrap();
+        m.pump(T0 + 2);
+        assert_eq!(status(&m, &ids[0]), DownloadStatus::Removed);
+        m.retry(&ids[1]).unwrap();
+        assert_eq!(adds(&control), 4, "retried by hand at once");
+        m.pause(&ids[2]).unwrap();
+        assert_eq!(status(&m, &ids[2]), DownloadStatus::Paused);
+        control.complete(TransferId(4));
+        m.pump(T0 + 3);
+        assert_eq!(adds(&control), 4, "a paused download stays paused");
+    }
+
+    #[test]
+    fn with_the_setting_off_it_fails_as_before_and_turning_it_off_fails_those_waiting() {
+        let (mut m, control, signal) = setup();
+        let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+        control.fail(TransferId(1), no_network());
+        m.pump(T0 + 1);
+        assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+        m.set_queue_settings(QueueSettings {
+            max_concurrent_downloads: 1,
+            restart_on_network: false,
+            ..QueueSettings::default()
+        })
+        .unwrap();
+        assert_eq!(status(&m, &a), DownloadStatus::Failed, "no longer waits");
+        let b = m.add(DownloadKind::Http, named("b.zip"), T0).unwrap();
+        control.fail(TransferId(2), no_network());
+        m.pump(T0 + 2);
+        assert_eq!(status(&m, &b), DownloadStatus::Failed);
+        signal.store(true, Ordering::SeqCst);
+        m.tick(T0 + 3, noon());
+        assert_eq!(adds(&control), 2, "nothing starts by itself");
+    }
+
+    #[test]
+    fn after_a_restart_a_waiting_download_tries_again() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let a = {
+            let fake = FakeTransfer::new();
+            let control = fake.control();
+            let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+            let a = m.add(DownloadKind::Http, named("a.zip"), T0).unwrap();
+            control.fail(TransferId(1), no_network());
+            m.pump(T0 + 1);
+            assert_eq!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+            a
+        };
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), db).unwrap();
+        m.pump(T0 + 2);
+        assert_eq!(adds(&control), 1, "a start of the app is a new try");
+        assert_ne!(status(&m, &a), DownloadStatus::WaitingForNetwork);
+    }
+}
+
+/// #350, part A: the daily window, reproduced case by case. Each test is a regression test for
+/// what users expect of it (docs/ENGINE_CONTRACT.md, "The schedule").
+mod schedule {
+    use super::*;
+    use crate::queue::{QueueSettings, ScheduleSettings};
+    use jiff::civil::{date, DateTime};
+
+    /// 2026-10-19 is a Monday.
+    fn on(day: i8, hour: i8, minute: i8) -> DateTime {
+        date(2026, 10, day).at(hour, minute, 0, 0)
+    }
+
+    fn window(start: &str, stop: Option<&str>, days: Vec<u8>) -> QueueSettings {
+        QueueSettings {
+            max_concurrent_downloads: 3,
+            schedule: ScheduleSettings {
+                enabled: true,
+                start_time: start.to_owned(),
+                stop_time: stop.map(str::to_owned),
+                days,
+            },
+            ..QueueSettings::default()
+        }
+    }
+
+    fn named(name: &str) -> TransferSpec {
+        TransferSpec {
+            file_name: Some(name.to_owned()),
+            ..spec()
+        }
+    }
+
+    fn adds(control: &FakeControl) -> usize {
+        control.log().iter().filter(|c| *c == "add").count()
+    }
+
+    fn manager(settings: QueueSettings) -> (Manager, FakeControl) {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = in_memory(fake);
+        m.set_queue_settings(settings).unwrap();
+        (m, control)
+    }
+
+    #[test]
+    fn it_starts_exactly_at_the_start_and_never_twice() {
+        let (mut m, control) = manager(window("02:00", Some("07:00"), (0..7).collect()));
+        m.tick(T0, on(19, 1, 59));
+        let id = m.add(DownloadKind::Http, named("a"), T0).unwrap();
+        m.tick(T0, on(19, 1, 59));
+        assert_eq!(adds(&control), 0, "01:59 is before the window");
+        m.tick(T0, on(19, 2, 0));
+        assert_eq!(adds(&control), 1, "02:00 opens it");
+        control.status(TransferId(1), DownloadStatus::Downloading);
+        for minute in 1..30 {
+            m.tick(T0, on(19, 2, minute));
+        }
+        assert_eq!(adds(&control), 1, "started once, however many ticks");
+        assert_eq!(status(&m, &id), DownloadStatus::Downloading);
+    }
+
+    #[test]
+    fn a_window_across_midnight_runs_into_the_next_day_and_closes_there() {
+        // Only Monday's window: Monday 23:00 to Tuesday 06:00.
+        let (mut m, control) = manager(window("23:00", Some("06:00"), vec![0]));
+        m.tick(T0, on(19, 22, 0));
+        m.add(DownloadKind::Http, named("a"), T0).unwrap();
+        m.tick(T0, on(19, 22, 59));
+        assert_eq!(adds(&control), 0);
+        m.tick(T0, on(19, 23, 0));
+        assert_eq!(adds(&control), 1);
+        control.status(TransferId(1), DownloadStatus::Downloading);
+        m.tick(T0, on(20, 5, 59));
+        assert!(
+            !control.log().contains(&"pause 1".to_owned()),
+            "still Monday's window"
+        );
+        m.tick(T0, on(20, 6, 0));
+        assert!(
+            control.log().contains(&"pause 1".to_owned()),
+            "06:00 closes it"
+        );
+    }
+
+    #[test]
+    fn only_the_days_chosen_open_the_window() {
+        // Saturday and Sunday only.
+        let (mut m, control) = manager(window("09:00", Some("17:00"), vec![5, 6]));
+        m.tick(T0, on(23, 8, 0));
+        m.add(DownloadKind::Http, named("a"), T0).unwrap();
+        m.tick(T0, on(23, 10, 0));
+        assert_eq!(adds(&control), 0, "Friday isn't chosen");
+        m.tick(T0, on(24, 9, 0));
+        assert_eq!(adds(&control), 1, "Saturday is");
+    }
+
+    #[test]
+    fn a_clock_set_back_out_of_the_window_pauses_and_forward_again_resumes() {
+        let (mut m, control) = manager(window("02:00", Some("07:00"), (0..7).collect()));
+        m.add(DownloadKind::Http, named("a"), T0).unwrap();
+        m.tick(T0, on(19, 3, 0));
+        assert_eq!(adds(&control), 1);
+        control.status(TransferId(1), DownloadStatus::Downloading);
+        m.pump(T0);
+        // The clock is put back to 01:30, outside the window, then forward again.
+        m.tick(T0, on(19, 1, 30));
+        assert!(control.log().contains(&"pause 1".to_owned()));
+        m.tick(T0, on(19, 3, 1));
+        assert!(
+            control.log().contains(&"resume 1".to_owned()),
+            "and nothing else"
+        );
+        assert_eq!(adds(&control), 1, "never a second transfer");
+    }
+
+    #[test]
+    fn the_schedule_leaves_paused_finished_and_failed_downloads_alone() {
+        let (mut m, control) = manager(window("02:00", Some("07:00"), (0..7).collect()));
+        m.tick(T0, on(19, 3, 0));
+        let done = m.add(DownloadKind::Http, named("done"), T0).unwrap();
+        let failed = m.add(DownloadKind::Http, named("failed"), T0).unwrap();
+        let paused = m.add(DownloadKind::Http, named("paused"), T0).unwrap();
+        m.tick(T0, on(19, 3, 0));
+        control.complete(TransferId(1));
+        control.fail(
+            TransferId(2),
+            TransferError::new(FailureClass::Permanent, Some(404), "Not found"),
+        );
+        m.pump(T0);
+        m.pause(&paused).unwrap();
+        m.pump(T0);
+        // The window closes and opens again.
+        m.tick(T0, on(19, 8, 0));
+        m.tick(T0, on(20, 2, 0));
+        assert_eq!(status(&m, &done), DownloadStatus::Completed);
+        assert_eq!(status(&m, &failed), DownloadStatus::Failed);
+        assert_eq!(
+            status(&m, &paused),
+            DownloadStatus::Paused,
+            "a pause outlasts the window"
+        );
+        assert_eq!(adds(&control), 3);
+    }
+
+    #[test]
+    fn after_a_restart_it_waits_outside_the_window_and_starts_inside_it() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        {
+            let fake = FakeTransfer::new();
+            let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+            m.set_queue_settings(window("02:00", Some("07:00"), (0..7).collect()))
+                .unwrap();
+            m.tick(T0, on(19, 12, 0));
+            m.add(DownloadKind::Http, named("a"), T0).unwrap();
+            m.tick(T0, on(19, 12, 0));
+        }
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), db).unwrap();
+        m.set_queue_settings(window("02:00", Some("07:00"), (0..7).collect()))
+            .unwrap();
+        m.tick(T0, on(19, 13, 0));
+        assert_eq!(
+            adds(&control),
+            0,
+            "restarted outside the window: it still waits"
+        );
+        m.tick(T0, on(20, 2, 0));
+        assert_eq!(adds(&control), 1, "and starts when it opens");
+    }
+
+    #[test]
+    fn started_inside_the_window_after_missing_its_start_it_starts_at_once() {
+        // The app was closed at 02:00 and opens at 04:00, still inside the window.
+        let (mut m, control) = manager(window("02:00", Some("07:00"), (0..7).collect()));
+        m.add_with(
+            DownloadKind::Http,
+            named("a"),
+            AddOptions {
+                start_paused: false,
+                scheduled: true,
+                category_id: None,
+                ..AddOptions::default()
+            },
+            T0,
+        )
+        .unwrap();
+        m.tick(T0, on(19, 4, 0));
+        assert_eq!(adds(&control), 1);
+    }
+}
+
+/// #350, part D (PO decisions, 2026-11-05): a download can start at a date and time of its own,
+/// set when it is added or later. Its own time beats the daily window, and a time missed while
+/// the app was closed starts it at once.
+mod start_at {
+    use super::*;
+    use crate::domain::{ScheduleWindow, WaitReason, WaitsUntil};
+    use crate::queue::{QueueSettings, ScheduleSettings};
+    use jiff::civil::{date, DateTime};
+
+    /// 2026-10-19 is a Monday.
+    fn on(day: i8, hour: i8, minute: i8) -> DateTime {
+        date(2026, 10, day).at(hour, minute, 0, 0)
+    }
+
+    fn named(name: &str) -> TransferSpec {
+        TransferSpec {
+            file_name: Some(name.to_owned()),
+            ..spec()
+        }
+    }
+
+    fn adds(control: &FakeControl) -> usize {
+        control.log().iter().filter(|c| *c == "add").count()
+    }
+
+    fn started(control: &FakeControl) -> Vec<String> {
+        let adds = control.log().iter().filter(|c| *c == "add").count() as u64;
+        (1..=adds)
+            .map(|n| control.spec(TransferId(n)).file_name.unwrap())
+            .collect()
+    }
+
+    fn at(when: DateTime) -> AddOptions {
+        AddOptions {
+            start_at: Some(when),
+            ..AddOptions::default()
+        }
+    }
+
+    /// The daily window 02:00 to 07:00, on.
+    fn night() -> QueueSettings {
+        QueueSettings {
+            schedule: ScheduleSettings {
+                enabled: true,
+                ..ScheduleSettings::default()
+            },
+            ..QueueSettings::default()
+        }
+    }
+
+    fn manager(settings: QueueSettings) -> (Manager, FakeControl) {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = in_memory(fake);
+        m.set_queue_settings(settings).unwrap();
+        (m, control)
+    }
+
+    fn waits(m: &Manager, id: &str) -> Option<WaitsUntil> {
+        m.snapshot()
+            .downloads
+            .into_iter()
+            .find(|d| d.id == id)
+            .unwrap()
+            .waits_until
+    }
+
+    #[test]
+    fn it_starts_at_its_own_time_once() {
+        let (mut m, control) = manager(QueueSettings::default());
+        m.tick(T0, on(19, 12, 0));
+        let id = m
+            .add_with(DownloadKind::Http, named("a"), at(on(24, 3, 0)), T0)
+            .unwrap();
+        m.tick(T0, on(24, 2, 59));
+        assert_eq!(adds(&control), 0);
+        assert_eq!(
+            waits(&m, &id),
+            Some(WaitsUntil {
+                reason: WaitReason::ChosenTime,
+                at: "2026-10-24T03:00".to_owned()
+            })
+        );
+        m.tick(T0, on(24, 3, 0));
+        assert_eq!(adds(&control), 1, "Saturday 03:00");
+        assert_eq!(waits(&m, &id), None);
+        control.status(TransferId(1), DownloadStatus::Downloading);
+        m.tick(T0, on(24, 3, 1));
+        assert_eq!(adds(&control), 1, "never twice");
+    }
+
+    #[test]
+    fn its_own_time_beats_the_daily_window() {
+        let (mut m, control) = manager(night());
+        m.tick(T0, on(19, 12, 0));
+        let scheduled = m.add(DownloadKind::Http, named("night"), T0).unwrap();
+        m.add_with(
+            DownloadKind::Http,
+            named("afternoon"),
+            at(on(19, 15, 0)),
+            T0,
+        )
+        .unwrap();
+        assert_eq!(
+            waits(&m, &scheduled),
+            Some(WaitsUntil {
+                reason: WaitReason::Schedule,
+                at: "2026-10-20T02:00".to_owned()
+            }),
+            "a scheduled download says when the window opens"
+        );
+        m.tick(T0, on(19, 15, 0));
+        assert_eq!(
+            started(&control),
+            ["afternoon"],
+            "outside the window, at its time"
+        );
+        control.status(TransferId(1), DownloadStatus::Downloading);
+        m.tick(T0, on(19, 18, 0));
+        assert!(
+            !control.log().contains(&"pause 1".to_owned()),
+            "the window doesn't hold it back once it started"
+        );
+    }
+
+    #[test]
+    fn a_time_missed_while_the_app_was_closed_starts_at_once() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        {
+            let mut m = Manager::open(Box::new(FakeTransfer::new()), Arc::clone(&db)).unwrap();
+            m.tick(T0, on(19, 1, 0));
+            m.add_with(DownloadKind::Http, named("a"), at(on(19, 2, 0)), T0)
+                .unwrap();
+            m.tick(T0, on(19, 1, 30));
+        }
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), db).unwrap();
+        m.tick(T0, on(19, 1, 45));
+        assert_eq!(adds(&control), 0, "its time was kept, and isn't here yet");
+        m.tick(T0, on(19, 9, 0));
+        assert_eq!(adds(&control), 1, "09:00, after 02:00 was missed");
+    }
+
+    #[test]
+    fn a_waiting_or_paused_download_can_be_given_a_time_and_a_running_one_cannot() {
+        let (mut m, control) = manager(QueueSettings {
+            max_concurrent_downloads: 1,
+            ..QueueSettings::default()
+        });
+        m.tick(T0, on(19, 12, 0));
+        let running = m.add(DownloadKind::Http, named("running"), T0).unwrap();
+        let waiting = m.add(DownloadKind::Http, named("waiting"), T0).unwrap();
+        let paused = m.add(DownloadKind::Http, named("paused"), T0).unwrap();
+        m.pause(&paused).unwrap();
+        m.tick(T0, on(19, 12, 0));
+        assert_eq!(
+            m.set_start_at(&running, Some(on(19, 20, 0))),
+            Err(ErrorCode::InvalidState)
+        );
+        m.set_start_at(&waiting, Some(on(19, 20, 0))).unwrap();
+        m.set_start_at(&paused, Some(on(19, 21, 0))).unwrap();
+        assert_eq!(
+            status(&m, &paused),
+            DownloadStatus::Queued,
+            "a time un-pauses it"
+        );
+        control.complete(TransferId(1));
+        m.tick(T0, on(19, 19, 0));
+        assert_eq!(adds(&control), 1, "both wait for their times, slot or not");
+        m.tick(T0, on(19, 20, 0));
+        assert_eq!(started(&control), ["running", "waiting"]);
+        // Taking the time away lets it start as any waiting download.
+        m.set_start_at(&paused, None).unwrap();
+        control.complete(TransferId(2));
+        m.tick(T0, on(19, 20, 1));
+        assert_eq!(started(&control), ["running", "waiting", "paused"]);
+        assert_eq!(m.set_start_at("d-9999", None), Err(ErrorCode::NotFound));
+    }
+
+    /// #350, part C: the snapshot says when the schedule's window next opens and closes, for the
+    /// Settings screen's "Next:" line.
+    #[test]
+    fn the_snapshot_says_when_the_window_next_opens() {
+        let (mut m, _) = manager(night());
+        assert_eq!(m.snapshot().schedule, None, "no clock read yet");
+        m.tick(T0, on(19, 12, 0));
+        assert_eq!(
+            m.snapshot().schedule,
+            Some(ScheduleWindow {
+                opens: "2026-10-20T02:00".to_owned(),
+                closes: "2026-10-20T07:00".to_owned(),
+                open: false,
+            })
+        );
+        m.tick(T0, on(20, 3, 0));
+        assert!(m.snapshot().schedule.is_some_and(|w| w.open));
+        m.set_queue_settings(QueueSettings::default()).unwrap();
+        assert_eq!(m.snapshot().schedule, None, "the schedule is off");
+    }
+
+    #[test]
+    fn its_time_is_saved_with_the_queue() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let id = {
+            let mut m = Manager::open(Box::new(FakeTransfer::new()), Arc::clone(&db)).unwrap();
+            m.tick(T0, on(19, 12, 0));
+            let id = m
+                .add_with(DownloadKind::Http, named("a"), at(on(24, 3, 0)), T0)
+                .unwrap();
+            m.tick(T0, on(19, 12, 0));
+            id
+        };
+        let entry = db
+            .queue()
+            .unwrap()
+            .into_iter()
+            .find(|e| e.id == id)
+            .unwrap();
+        assert_eq!(entry.start_at.as_deref(), Some("2026-10-24T03:00"));
+        let mut m = Manager::open(Box::new(FakeTransfer::new()), db).unwrap();
+        m.tick(T0, on(19, 12, 1));
+        assert_eq!(
+            waits(&m, &id).map(|w| w.at),
+            Some("2026-10-24T03:00".to_owned())
+        );
+    }
 }

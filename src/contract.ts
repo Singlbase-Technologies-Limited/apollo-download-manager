@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 27;
+export const COMMAND_API_VERSION = 29;
 
 const bytes = z.number().int().nonnegative();
 
@@ -24,6 +24,7 @@ export const DownloadStatusSchema = z.enum([
   'choosingFiles',
   'seeding',
   'unknown',
+  'waitingForNetwork',
 ]);
 export type DownloadStatus = z.infer<typeof DownloadStatusSchema>;
 
@@ -57,6 +58,8 @@ export const TransferErrorSchema = z.strictObject({
   retryable: z.boolean(),
   hostKey: HostKeyCheckSchema.nullable(),
   confirm: ConfirmSchema.nullable(),
+  // No connection could be made: the download waits for the network (#318).
+  noNetwork: z.boolean(),
 });
 export type TransferError = z.infer<typeof TransferErrorSchema>;
 
@@ -133,6 +136,8 @@ export const DownloadRecordSchema = z.strictObject({
   torrent: TorrentActivitySchema.nullable(),
   /** How many files a torrent has, once its metadata is known; `null` for a direct download, and before (#313). */
   fileCount: z.number().int().nonnegative().nullable(),
+  /** Why a queued download waits, and until when (#350); `null` for any other. */
+  waitsUntil: z.strictObject({ reason: z.enum(['schedule', 'chosenTime']), at: z.string() }).nullable(),
 });
 export type DownloadRecord = z.infer<typeof DownloadRecordSchema>;
 
@@ -221,6 +226,8 @@ export const DownloadsSnapshotSchema = z.strictObject({
   /** The torrent helper's health (#58). */
   torrentEngine: EngineHealthSchema,
   storageError: ErrorCodeSchema.nullable(),
+  /** The schedule's window open now, or the next one, local `YYYY-MM-DDTHH:MM` (#350); `null` while it is off. */
+  schedule: z.strictObject({ opens: z.string(), closes: z.string(), open: z.boolean() }).nullable(),
 });
 export type DownloadsSnapshot = z.infer<typeof DownloadsSnapshotSchema>;
 
@@ -376,6 +383,8 @@ export const AddRequestSchema = z.strictObject({
   uploadLimitKib: z.number().int().nonnegative(),
   /** The browser extension sent the links (#65): a link that reaches this computer or a private network waits for the user (#67). */
   fromBrowser: z.boolean(),
+  /** Its own start time, local `YYYY-MM-DDTHH:MM` (#350); `null` to start as usual. */
+  startAt: z.string().nullable(),
 });
 export type AddRequest = z.infer<typeof AddRequestSchema>;
 
@@ -421,6 +430,9 @@ export type Theme = z.infer<typeof ThemeSchema>;
 
 /** How tightly lists are laid out (#29). */
 export const DensitySchema = z.enum(['compact', 'comfortable']);
+/** 24-hour or 12-hour times, everywhere in the app (#350). */
+export const TimeFormatSchema = z.enum(['twentyFourHour', 'twelveHour']);
+export type TimeFormat = z.infer<typeof TimeFormatSchema>;
 export type Density = z.infer<typeof DensitySchema>;
 
 /** Panel width bounds in CSS pixels, as Rust checks them (`app_settings.rs`, src/layout/layoutLogic.ts). */
@@ -470,6 +482,7 @@ export const AppearanceSettingsSchema = z.strictObject({
   visibleColumns: z.array(ColumnIdSchema).min(1),
   /** Only the columns the user resized; the rest have their default width. */
   columnWidths: z.partialRecord(ColumnIdSchema, z.number().int().min(COLUMN_MIN_WIDTH).max(COLUMN_MAX_WIDTH)),
+  timeFormat: TimeFormatSchema,
 });
 export type AppearanceSettings = z.infer<typeof AppearanceSettingsSchema>;
 
@@ -658,6 +671,7 @@ export const FolderSettingsSchema = z.strictObject({ defaultDirectory: z.string(
 export const QueueSettingsSchema = z.strictObject({
   maxConcurrentDownloads: z.number().int().min(1).max(32),
   startImmediately: z.boolean(),
+  restartOnNetwork: z.boolean(),
   schedule: z.strictObject({
     enabled: z.boolean(),
     /** `HH:MM`, 24-hour, local time. */

@@ -203,6 +203,9 @@ fn status_line(before: DownloadStatus, record: &DownloadRecord, at: &str) -> Opt
         DownloadStatus::Removed => Line::info(format!("download {id} removed")),
         DownloadStatus::Stalled => Line::warn(format!("download {id} stalled at {at}{why}")),
         DownloadStatus::Failed => Line::warn(format!("download {id} failed at {at}{why}")),
+        DownloadStatus::WaitingForNetwork => {
+            Line::warn(format!("download {id} waits for the network at {at}{why}"))
+        }
         // Told by [`Logged::lines`], which counts it.
         DownloadStatus::Retrying => return None,
         DownloadStatus::Unknown => Line::warn(format!(
@@ -402,7 +405,7 @@ mod tests {
         r.error = Some(TransferError::new(
             FailureClass::Transient,
             None,
-            "Velocity couldn't connect to the server (libcurl error 28: Failed to connect to \
+            "Apollo Download Manager couldn't connect to the server (libcurl error 28: Failed to connect to \
              example.com port 443 after 21073 ms)",
         ));
         r
@@ -489,7 +492,7 @@ mod tests {
         assert!(lines.iter().all(|l| l.warn));
         assert_eq!(
             lines[0].text,
-            "download d-0001 retry 1 in 11 s at 1048576 of 4194304 bytes: Velocity couldn't \
+            "download d-0001 retry 1 in 11 s at 1048576 of 4194304 bytes: Apollo Download Manager couldn't \
              connect to the server (libcurl error 28: Failed to connect to example.com port 443 \
              after 21073 ms) [transient]"
         );

@@ -1,6 +1,7 @@
 // Pure helpers for the libtorrent build (#62, docs/BUILDING_NATIVE.md): reading what vcpkg's
 // libtorrent package says about itself, and checking the record crates/velocity-lt/build.rs reads.
 // No I/O here, so every rule has a unit test (libtorrent-lib.test.mjs).
+import { isAbsolute, join, relative, sep } from 'node:path';
 
 /** The libtorrent version V2 builds and tests against (PO decision on #62); build.rs states it too. */
 export const LIBTORRENT_VERSION = '2.0.15';
@@ -105,6 +106,19 @@ export function librariesForLibtorrent(target, links) {
     }
   }
   return { staticLibs, systemLibs };
+}
+
+/**
+ * The prefix as the record keeps it: relative to `nativeDir` (target/native), with forward slashes, so a moved or
+ * renamed checkout still finds it. The repository's rename broke records that held the absolute path.
+ */
+export function recordedPrefix(nativeDir, prefix) {
+  return relative(nativeDir, prefix).split(sep).join('/');
+}
+
+/** The prefix a record names, as a path: from `nativeDir` when it is relative; an older record's absolute one as it is. */
+export function prefixFor(nativeDir, prefix) {
+  return isAbsolute(prefix) ? prefix : join(nativeDir, ...prefix.split('/'));
 }
 
 /** Problems with a libtorrent-info.json record; empty when it is complete and matches V2's pins. */

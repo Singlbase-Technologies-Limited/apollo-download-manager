@@ -147,7 +147,7 @@ struct Job {
     request: RequestOptions,
 }
 
-/// What every request of `spec` carries (#40): its user agent, or Velocity's own; its referrer;
+/// What every request of `spec` carries (#40): its user agent, or Apollo Download Manager's own; its referrer;
 /// and its custom headers and login, which the libcurl layer sends only to the first URL's origin.
 /// The libcurl and SFTP layers take them as plain strings, held in memory for the transfer's life
 /// only: this is where a [`velocity_core::secret::Secret`] is copied out (#70).

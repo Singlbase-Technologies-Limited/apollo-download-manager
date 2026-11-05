@@ -1,5 +1,5 @@
 //! URLs as libcurl reads them (#40): the same parser that sends a request decides which origin it
-//! goes to, so a URL can't mean one host to Velocity's rules and another to libcurl. libcurl's URL
+//! goes to, so a URL can't mean one host to Apollo Download Manager's rules and another to libcurl. libcurl's URL
 //! API (`curl_url`, curl 7.62+) isn't declared by curl-sys 0.4.91, so its few functions are
 //! declared here, from `curl/urlapi.h` of curl 8.23.0.
 
@@ -58,7 +58,7 @@ const CURLUPART_PORT: c_int = 6;
 /// Gives the scheme's default port when the URL has none.
 const CURLU_DEFAULT_PORT: c_uint = 1 << 0;
 /// Reads schemes libcurl wasn't built for too, such as `file`, so that their origin is refused by
-/// Velocity's rules rather than lost as a parse error.
+/// Apollo Download Manager's rules rather than lost as a parse error.
 const CURLU_NON_SUPPORT_SCHEME: c_uint = 1 << 3;
 
 /// A URL parsed by libcurl, freed when dropped.

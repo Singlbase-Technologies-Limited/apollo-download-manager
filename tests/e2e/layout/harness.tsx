@@ -30,6 +30,7 @@ const settings: ShellSettings = saved
         layout: { sidebarWidth: null, sidebarCollapsed: false, sidebarVisible: true, detailsWidth: null, detailsVisible: false },
         visibleColumns: [...DEFAULT_COLUMNS],
         columnWidths: {},
+        timeFormat: 'twentyFourHour',
       },
       onboardingCompleted: true,
       defaultDirectory: '/home/user/Downloads',
@@ -65,13 +66,13 @@ const downloads: DownloadRecord[] = [
     fileName: 'broken-download-with-a-long-name.tar.gz',
     status: 'failed',
     createdAtMs: at(2),
-    error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null },
+    error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false },
   }),
 ];
 for (let i = 0; i < 30; i += 1) {
   downloads.push(make({ id: `bulk${String(i)}`, fileName: `dataset-part-${String(i).padStart(3, '0')}.bin`, status: i % 3 === 0 ? 'queued' : 'paused', createdAtMs: Date.UTC(2026, 8, (i % 28) + 1, 10) }));
 }
-const snapshot: DownloadsSnapshot = { downloads, unavailable: [], needsLogin: [], engine: { state: 'running' }, torrentEngine: { state: 'running' }, storageError: null };
+const snapshot: DownloadsSnapshot = { downloads, unavailable: [], needsLogin: [], engine: { state: 'running' }, torrentEngine: { state: 'running' }, storageError: null, schedule: null };
 
 /** Each `set_appearance`, counted, so a check can see a drag saves once. */
 const win = window as unknown as { appearanceSaves: number };
@@ -82,7 +83,7 @@ mockIPC(
     const args = (payload ?? {}) as Record<string, unknown>;
     switch (cmd) {
       case 'app_info':
-        return { name: 'Velocity Download Manager (layout harness)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
+        return { name: 'Apollo Download Manager (layout harness)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
       case 'get_shell_settings':
         return settings;
       case 'set_appearance':

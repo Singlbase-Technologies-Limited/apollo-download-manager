@@ -129,6 +129,8 @@ export const api = {
   /** How many completed downloads left the list. */
   clearCompleted: () => call('clear_completed', undefined, z.number().int().nonnegative()),
   moveDownload: (id: string, direction: MoveDirection) => call('move_download', { id, direction }, nothing),
+  /** A waiting download's own start time, local `YYYY-MM-DDTHH:MM`, or `null` to take it away (#350). */
+  setStartAt: (id: string, startAt: string | null) => call('set_start_at', { id, startAt }, nothing),
   /** Stops a torrent seeding: its seeding policy becomes "never". */
   stopSeeding: (id: string) => call('set_torrent_seeding', { id, seeding: { mode: 'never' } }, nothing),
   // Diagnostics (#28).

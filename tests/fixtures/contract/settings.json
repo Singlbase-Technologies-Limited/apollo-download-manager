@@ -58,7 +58,8 @@
     "userName": ""
   },
   "queue": {
-    "maxConcurrentDownloads": 3,
+    "maxConcurrentDownloads": 2,
+    "restartOnNetwork": true,
     "schedule": {
       "days": [
         0,

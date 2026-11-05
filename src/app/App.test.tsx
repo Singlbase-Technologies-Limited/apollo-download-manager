@@ -76,16 +76,16 @@ describe('starting', () => {
 describe('the first-run setup', () => {
   it('offers the default folder, and finishing it saves the chosen one and opens the window', async () => {
     const user = userEvent.setup();
-    const backend = installFakeBackend({ settings: firstRun(), chosenDirectory: '/data/Velocity' });
+    const backend = installFakeBackend({ settings: firstRun(), chosenDirectory: '/data/Apollo Download Manager' });
     renderApp();
     const folder = await screen.findByRole('textbox', { name: 'Download folder' });
     expect((folder as HTMLInputElement).value).toBe('/home/user/Downloads');
     await user.click(screen.getByRole('button', { name: 'Browse' }));
-    await waitFor(() => { expect((folder as HTMLInputElement).value).toBe('/data/Velocity'); });
+    await waitFor(() => { expect((folder as HTMLInputElement).value).toBe('/data/Apollo Download Manager'); });
     expect(callsOf(backend, 'choose_directory')[0]?.args).toEqual({ initial: '/home/user/Downloads' });
     await user.click(screen.getByRole('button', { name: 'Get started' }));
     expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeTruthy();
-    expect(callsOf(backend, 'complete_onboarding').map((c) => c.args)).toEqual([{ directory: '/data/Velocity' }]);
+    expect(callsOf(backend, 'complete_onboarding').map((c) => c.args)).toEqual([{ directory: '/data/Apollo Download Manager' }]);
   });
 
   it('points to the Browser settings for the extension, as an optional step (#65)', async () => {

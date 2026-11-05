@@ -2,7 +2,7 @@
 
 **Draft, version 1.0 (2026-10-31).** This agreement hasn't been reviewed by a lawyer yet. Singlbase Technologies Limited will have it reviewed before it accepts the first contribution from outside the company (ADR-0017).
 
-This agreement is between you and **Singlbase Technologies Limited** ("Singlbase"), which owns Velocity Download Manager V2 ("the Project") and publishes it under the GNU General Public License, version 3 only. It covers everything you contribute to the Project. You keep the copyright in your contributions; this agreement gives Singlbase the rights below to use them.
+This agreement is between you and **Singlbase Technologies Limited** ("Singlbase"), which owns Apollo Download Manager, named Velocity Download Manager V2 until version 0.2.0 ("the Project") and publishes it under the GNU General Public License, version 3 only. It covers everything you contribute to the Project. You keep the copyright in your contributions; this agreement gives Singlbase the rights below to use them.
 
 ## 1. Definitions
 

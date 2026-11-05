@@ -23,7 +23,7 @@ Built-in categories can be edited but not deleted.
 
 ## Where a download goes
 
-When you add a download, Velocity chooses:
+When you add a download, Apollo Download Manager chooses:
 
 1. **The category:** the one you choose. Otherwise, with **automatic categories** on, the one for the file's extension; a torrent takes the category of its largest file.
 2. **The folder:** the one you choose. Otherwise the category's own folder. Otherwise the default download folder, in a subfolder named after the category when **category subfolders** are on.

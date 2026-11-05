@@ -48,6 +48,7 @@
     "passphrase": "phrase",
     "path": "/home/user/.ssh/id_ed25519"
   },
+  "startAt": null,
   "startPaused": true,
   "torrentFiles": [
     "/home/user/album.torrent"

@@ -33,7 +33,7 @@ const [command, ...args] = process.argv.slice(2);
 const { named, rest } = parseArgs(args);
 const port = Number(named.port ?? 9333);
 const out = named.out ?? join(tmpdir(), 'velocity-field', new Date().toISOString().slice(0, 10));
-const exe = named.exe ?? join(process.env.LOCALAPPDATA ?? '', 'Velocity Download Manager V2', `${PROCESSES.app}.exe`);
+const exe = named.exe ?? join(process.env.LOCALAPPDATA ?? '', 'Apollo Download Manager', `${PROCESSES.app}.exe`);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const mib = (bytes) => (bytes == null ? '?' : `${(bytes / 1048576).toFixed(1)} MiB`);

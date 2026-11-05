@@ -2,6 +2,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { Input } from '../../components/Input';
 import { Select } from '../../components/Select';
+import { TimeField } from '../../components/TimeField';
 
 /** A titled group of rows. */
 export function Group({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
@@ -84,6 +85,16 @@ export function Text({ title, description, value, placeholder, onChange }: { tit
   return (
     <Row id={id} title={title} description={description}>
       <Input id={id} className="h-8 w-72" placeholder={placeholder} value={typed ?? value ?? ''} onChange={(e) => { setTyped(e.target.value); }} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
+    </Row>
+  );
+}
+
+/** A time of day, chosen with [`TimeField`] in the app's time format; `HH:MM` 24-hour (#350). */
+export function TimeSetting({ title, description, value, onChange }: { title: string; description?: ReactNode; value: string; onChange: (hhmm: string) => void }) {
+  const id = useId();
+  return (
+    <Row id={id} title={title} description={description}>
+      <TimeField id={id} label={title} value={value} onChange={onChange} />
     </Row>
   );
 }

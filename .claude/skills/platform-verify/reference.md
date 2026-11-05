@@ -27,12 +27,12 @@ The clean clone lives at `~/v2-linux-check`. Fetch the branch straight from the 
 
 ```sh
 cd ~/v2-linux-check
-git fetch -q /mnt/c/projects/velocity_download_manager_v2 <branch>
+git fetch -q /mnt/c/projects/apollo-download-manager <branch>
 git switch -q -C <branch> FETCH_HEAD
 git status --short   # must be empty: the clone is only for checks
 ```
 
-If the clone is missing, clone it again from GitHub through the agent's SSH alias, or from `/mnt/c/projects/velocity_download_manager_v2`. Never edit files in it.
+If the clone is missing, clone it again from GitHub through the agent's SSH alias, or from `/mnt/c/projects/apollo-download-manager`. Never edit files in it.
 
 ## Local SFTP password-login server
 

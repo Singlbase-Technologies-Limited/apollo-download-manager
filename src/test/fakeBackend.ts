@@ -85,6 +85,7 @@ export function firstRun(): ShellSettings {
       layout: { sidebarWidth: null, sidebarCollapsed: false, sidebarVisible: true, detailsWidth: null, detailsVisible: false },
       visibleColumns: [...DEFAULT_COLUMNS],
       columnWidths: {},
+      timeFormat: 'twentyFourHour',
     },
     onboardingCompleted: false,
     defaultDirectory: '/home/user/Downloads',
@@ -97,7 +98,7 @@ export function setUp(): ShellSettings {
 }
 
 export function emptySnapshot(): DownloadsSnapshot {
-  return { downloads: [], unavailable: [], needsLogin: [], engine: { state: 'running' }, torrentEngine: { state: 'running' }, storageError: null };
+  return { downloads: [], unavailable: [], needsLogin: [], engine: { state: 'running' }, torrentEngine: { state: 'running' }, storageError: null, schedule: null };
 }
 
 export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
@@ -227,6 +228,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'retry_failed':
         case 'pause_all':
         case 'resume_all':
+        case 'set_start_at':
         case 'move_download':
         case 'set_torrent_seeding':
         case 'set_download_login':

@@ -21,7 +21,7 @@ body:
       label: Steps to reproduce
       description: The smallest sequence that reproduces it. Use a public test file or a local server, not a private link.
       placeholder: |
-        1. Start Velocity Download Manager (dev)
+        1. Start Apollo Download Manager (dev)
         2. Add a download from …
         3. See the error
     validations:

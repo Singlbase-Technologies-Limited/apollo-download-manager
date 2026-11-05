@@ -7,7 +7,7 @@ import { CapabilityOption } from '../../CapabilityOption';
 import { Button } from '../../components/Button';
 import { confirmAction } from '../../components/confirmStore';
 import { Spinner } from '../../components/Spinner';
-import type { AppearanceSettings, Browser, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme } from '../../contract';
+import type { AppearanceSettings, Browser, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme, TimeFormat } from '../../contract';
 import { api } from '../../lib/api';
 import { toApiError } from '../../lib/errors';
 import { cn } from '../../lib/cn';
@@ -17,7 +17,9 @@ import { DiagnosticsPanel } from '../diagnostics/DiagnosticsPanel';
 import { SeedingFields } from '../torrents/SeedingFields';
 import { portMapText } from '../torrents/torrentLogic';
 import { Input } from '../../components/Input';
-import { Choice, Group, Num, Text, Toggle } from './fields';
+import { Choice, Group, Num, Text, TimeSetting, Toggle } from './fields';
+import { useDownloadsStore } from '../../stores/downloads';
+import { formatWhen, formatWindow } from '../../lib/format';
 
 const SECTIONS: { id: SettingsSection; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -299,7 +301,7 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
       </Group>
       <Group
         title="Browsers"
-        description="Registering lets a browser start Apollo Download Manager’s connection, for your user only. It never changes the registration of V1 (Velocity Download Manager)."
+        description="Registering lets a browser start Apollo Download Manager’s connection, for your user only."
       >
         {integration.isPending ? (
           <div className="flex items-center gap-2 py-2.5 text-xs text-fg-muted">
@@ -368,6 +370,23 @@ function DownloadsSection({ s, patch }: { s: Settings; patch: Patch }) {
   );
 }
 
+/** When the schedule next runs, from the manager's snapshot, so it says what the saved settings do (#350). */
+function ScheduleNext({ enabled }: { enabled: boolean }) {
+  const next = useDownloadsStore((s) => s.snapshot?.schedule ?? null);
+  const text = !enabled
+    ? 'Off: downloads start as soon as a place among those running at once is free.'
+    : next === null
+      ? 'It never opens: choose at least one day, and a stop time other than the start.'
+      : next.open
+        ? `Open now, until ${formatWhen(next.closes)}.`
+        : `Next: ${formatWindow(next.opens, next.closes)}`;
+  return (
+    <p role="status" className="py-1.5 text-xs text-fg-muted">
+      {text}
+    </p>
+  );
+}
+
 function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
   const q = s.queue;
   const setDay = (day: number, on: boolean) => {
@@ -383,12 +402,14 @@ function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
       <Group title="Queue">
         <Num title="Simultaneous downloads" value={q.maxConcurrentDownloads} min={1} max={32} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, maxConcurrentDownloads: v } })); }} />
         <Toggle title="Start new downloads at once" checked={q.startImmediately} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, startImmediately: v } })); }} />
+        <Toggle title="Restart downloads when the network is back" description="A download that failed because there was no network waits for it, and continues from where it stopped once the network returns." checked={q.restartOnNetwork} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, restartOnNetwork: v } })); }} />
         <Num title="Speed limit for direct downloads (KiB/s, 0 for none)" description="Torrents have their own limit, under BitTorrent." value={s.advanced.globalDownloadLimitKib} min={0} max={2_000_000} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, globalDownloadLimitKib: v } })); }} />
       </Group>
-      <Group title="Schedule" description="Scheduled downloads run only in this window, in local time.">
+      <Group title="Schedule" description="While it is on, new downloads wait for this window, in local time. A download with its own start time starts then instead.">
         <Toggle title="Use the schedule" checked={q.schedule.enabled} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, enabled: v } } })); }} />
-        <Text title="Start (HH:MM)" value={q.schedule.startTime} onChange={(v) => { if (v) patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, startTime: v } } })); }} />
-        <Text title="Stop (HH:MM, empty for midnight)" value={q.schedule.stopTime} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, stopTime: v } } })); }} />
+        <ScheduleNext enabled={q.schedule.enabled} />
+        <TimeSetting title="Start" value={q.schedule.startTime} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, startTime: v } } })); }} />
+        <TimeSetting title="Stop" description="Before the start, it stops the next day; 00:00 is midnight." value={q.schedule.stopTime ?? '00:00'} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, stopTime: v } } })); }} />
         <div className="flex flex-wrap gap-3 py-2.5 text-xs">
           {DAYS.map((d, i) => (
             <label key={d} className="flex items-center gap-1.5">
@@ -508,7 +529,7 @@ function AdvancedSection({ s, patch }: { s: Settings; patch: Patch }) {
   );
 }
 
-/** Theme and density, saved with the window's look (`set_appearance`), never over a panel width (#29). */
+/** Theme, density and the time format, saved with the window's look (`set_appearance`), never over a panel width (#29). */
 function AppearanceSection() {
   const qc = useQueryClient();
   const { data } = useShellSettings();
@@ -541,6 +562,16 @@ function AppearanceSection() {
           { value: 'comfortable', label: 'Comfortable' },
         ]}
         onChange={(density) => { set({ density }); }}
+      />
+      <Choice<TimeFormat>
+        title="Time format"
+        description="For every time the app shows, the schedule included."
+        value={data.appearance.timeFormat}
+        options={[
+          { value: 'twentyFourHour', label: '24-hour (14:30)' },
+          { value: 'twelveHour', label: '12-hour (2:30 PM)' },
+        ]}
+        onChange={(timeFormat) => { set({ timeFormat }); }}
       />
     </Group>
   );

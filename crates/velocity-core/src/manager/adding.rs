@@ -88,6 +88,10 @@ pub struct AddRequest {
     /// or a private network waits for the user's confirmation (#67, ADR-0006). Typed and pasted
     /// links don't.
     pub from_browser: bool,
+    /// Its own start time, local (#350): each download waits until then, whatever the
+    /// schedule's window. `None` to start as usual.
+    #[serde(default)]
+    pub start_at: Option<crate::queue::LocalTime>,
 }
 
 /// The files chosen for one `.torrent` file of an [`AddRequest`] (#63).
@@ -153,6 +157,7 @@ impl AddRequest {
     /// A fixed example for the contract fixtures: every field set.
     pub fn sample() -> Self {
         AddRequest {
+            start_at: None,
             links: vec!["https://example.com/files/archive.zip".to_owned()],
             torrent_files: vec!["/home/user/album.torrent".to_owned()],
             metalink_files: vec!["/home/user/release.meta4".to_owned()],
@@ -483,6 +488,7 @@ impl Manager {
             start_paused: request.start_paused,
             scheduled: false,
             category_id,
+            start_at: request.start_at.map(|t| t.0),
         }
     }
 

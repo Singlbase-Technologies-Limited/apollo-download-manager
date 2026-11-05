@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { formatBytes, formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred, formatTransferredBytes, relativeFromNow } from './format';
+import { afterEach, describe, expect, it } from 'vitest';
+import { formatBytes, formatClock, formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred, formatTransferredBytes, formatWhen, formatWindow, parseLocal, relativeFromNow, setTimeFormat } from './format';
 
 describe('formatBytes', () => {
   it('says bytes in binary units, as the tray does', () => {
@@ -73,5 +73,41 @@ describe('transferred sizes (V1)', () => {
     expect(formatTransferred(512 * 1024 ** 2, 3.8 * GiB)).toBe('0.50 GiB of 3.80 GiB');
     expect(formatTransferred(3.8 * GiB, 3.8 * GiB)).toBe('3.80 GiB of 3.80 GiB');
     expect(formatTransferred(2048, null)).toBe('2.0 KiB of unknown size');
+  });
+});
+
+// #350 (PO decision): 24-hour by default; the 12-hour setting applies to every time the app shows.
+describe('the time format', () => {
+  afterEach(() => { setTimeFormat('twentyFourHour'); });
+  const now = new Date(2026, 9, 19, 15, 0); // Monday 19 October 2026, 15:00
+
+  it('shows 24-hour times by default, and 12-hour ones with AM and PM when set', () => {
+    expect(formatClock('14:30')).toBe('14:30');
+    expect(formatClock('02:05')).toBe('02:05');
+    expect(formatShortDate(new Date(2026, 9, 19, 14, 30).getTime(), now)).toMatch(/14:30/);
+    setTimeFormat('twelveHour');
+    expect(formatClock('14:30')).toMatch(/^2:30\sPM$/);
+    expect(formatClock('00:15')).toMatch(/^12:15\sAM$/);
+    expect(formatShortDate(new Date(2026, 9, 19, 14, 30).getTime(), now)).toMatch(/2:30\sPM/);
+  });
+
+  it('reads only local YYYY-MM-DDTHH:MM', () => {
+    expect(parseLocal('2026-10-24T03:00')?.getTime()).toBe(new Date(2026, 9, 24, 3, 0).getTime());
+    expect(parseLocal('2026-10-24 03:00')).toBeNull();
+    expect(parseLocal('2026-13-01T03:00')).toBeNull();
+  });
+
+  it('says when, from today to next week', () => {
+    expect(formatWhen('2026-10-19T18:00', now)).toBe('today 18:00');
+    expect(formatWhen('2026-10-20T02:00', now)).toBe('tomorrow 02:00');
+    expect(formatWhen('2026-10-24T03:00', now)).toMatch(/^Sat(urday)? 03:00$/);
+    expect(formatWhen('2026-11-30T03:00', now)).toMatch(/30/);
+    setTimeFormat('twelveHour');
+    expect(formatWhen('2026-10-20T02:00', now)).toMatch(/^tomorrow 2:00\sAM$/);
+  });
+
+  it('says a window with its stop as a time of day when it ends the next morning', () => {
+    expect(formatWindow('2026-10-20T02:00', '2026-10-20T07:00', now)).toBe('tomorrow 02:00 to 07:00');
+    expect(formatWindow('2026-10-19T23:00', '2026-10-20T06:00', now)).toBe('today 23:00 to 06:00');
   });
 });

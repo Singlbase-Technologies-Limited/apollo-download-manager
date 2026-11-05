@@ -13,6 +13,7 @@ import { Shell } from './Shell';
 import { TitleBar } from './TitleBar';
 import { useSnapshotFeed } from './useSnapshotFeed';
 import { useTheme } from './useTheme';
+import { setTimeFormat } from '../lib/format';
 
 export function App({ client = createQueryClient() }: { client?: QueryClient }) {
   return (
@@ -34,6 +35,8 @@ function Root() {
   useSnapshotFeed(desktop && info.isSuccess);
   const theme = settings.data?.appearance.theme ?? 'system';
   useTheme(theme);
+  // Before anything below renders a time (#350).
+  setTimeFormat(settings.data?.appearance.timeFormat ?? 'twentyFourHour');
 
   let content: ReactNode;
   if (!desktop) {

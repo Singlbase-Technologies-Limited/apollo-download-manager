@@ -60,7 +60,7 @@ How the window (`src/`) is built: where its state lives, how it talks to the nat
   - History (#32) and Settings (#30) are in the navigation's Library. Ctrl+, (⌘, on macOS) opens Settings, as in V1.
 - **Quitting:**
   - When quitting would stop active downloads and the setting asks for it, Rust shows the window and sends `quit-requested`.
-  - The window asks "Quit Velocity?". Only "Quit" calls `quit_app`, and "Keep downloading" changes nothing.
+  - The window asks "Quit Apollo Download Manager?". Only "Quit" calls `quit_app`, and "Keep downloading" changes nothing.
 
 ## Adding downloads
 
@@ -81,7 +81,7 @@ The list (#59, V1's) is in `src/features/downloads/`. It shows the snapshot as i
 - **Column widths:** dragging a column's edge previews the width and saves it once, when the drag ends; arrow keys change it by 16 px, and Home or a double-click restores it. The list's columns save through `set_appearance` over the latest saved appearance, so they never overwrite the layout ([SETTINGS.md](SETTINGS.md#the-window)).
 - **Selection** (the `downloads` store, V1's rules): a click selects one, Ctrl or ⌘ toggles, Shift selects a range, and the checkboxes and select-all cover the rows shown. Arrow keys, Home, End, Ctrl+A and Escape move and select; Space pauses or resumes; Delete removes and Shift+Delete deletes the files. A download that leaves the snapshot leaves the selection.
 - **Actions** (`useDownloadActions`): the toolbar and the right-click menu (`menus.tsx`) offer what `actionsFor` allows for the selection, as the manager allows it. Removing a running download and deleting files ask first. A command over several downloads reports what it couldn't do, from its `BatchResult`, and the buttons are disabled while a command is being sent. That a late status from the engine can't undo a pause or a cancel is the manager's rule ([ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#the-managers-side)).
-- **Statuses** (`statusLabel`): Retrying counts down to the engine's `retryAtMs`, and says "Waiting to retry" without one; a stalled direct download says "No data received"; one that came back without its login says "Needs its login". Speed and time left show only while bytes come, and the time left is the engine's speed over the bytes left. A notice says when the transfer engine isn't running, and when saved downloads are from a newer Velocity.
+- **Statuses** (`statusLabel`): Retrying counts down to the engine's `retryAtMs`, and says "Waiting to retry" without one; a stalled direct download says "No data received"; one that came back without its login says "Needs its login". Speed and time left show only while bytes come, and the time left is the engine's speed over the bytes left. A notice says when the transfer engine isn't running, and when saved downloads are from a newer Apollo Download Manager.
 - **Entering a login again** (`LoginDialog`): resuming or retrying a download in the snapshot's `needsLogin` asks for its login, custom headers or SSH key, sends them with `set_download_login`, then resumes or retries it.
 - **Show download:** the Add dialog's "Show download", for a duplicate already in the list, shows the whole list with that download selected (`showDownload`).
 - **Opening:** a double-click on a finished download opens its file, and on any other shows its details. "Open file" and "Open folder" are in the right-click menu and the details panel. Opening a program asks first: the native side answers `CONFIRMATION_REQUIRED` until the user confirms (PO decision on #61).
@@ -133,7 +133,7 @@ The Settings screen (#30) is `src/features/settings/`: what each section holds a
 These are in [`src-tauri/src/shell.rs`](../src-tauri/src/shell.rs) and [`tray.rs`](../src-tauri/src/tray.rs):
 
 - **The tray:**
-  - "Show Velocity", "Pause all", "Resume all" and "Quit". A left click shows the window.
+  - "Show Apollo Download Manager", "Pause all", "Resume all" and "Quit". A left click shows the window.
   - Its tooltip says how many downloads are active, and their total speed.
   - On Linux the tray needs an AppIndicator library at runtime. Without a tray, closing the window quits and the app never starts hidden.
 - **Closing and starting:**
