@@ -8,6 +8,7 @@ import { createQueryClient } from '../../lib/queries';
 import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { chooseOption } from '../../test/select';
 
 // The history view (#32), as V1's HistoryView: search, a status filter, pages, removing entries and clearing it, never
 // touching a file. V1 had no tests of its own for it.
@@ -64,7 +65,7 @@ describe('the history (#32)', () => {
     await screen.findByRole('table', { name: 'History' });
     await user.type(screen.getByRole('searchbox', { name: 'Search history' }), 'album');
     await waitFor(() => { expect(queries(state).at(-1)).toMatchObject({ search: 'album', offset: 0 }); });
-    await user.selectOptions(screen.getByLabelText('Filter by status'), 'Cancelled');
+    await chooseOption(user, screen.getByLabelText('Filter by status'), 'Cancelled');
     await waitFor(() => { expect(queries(state).at(-1)).toMatchObject({ search: 'album', status: 'cancelled', offset: 0 }); });
   });
 

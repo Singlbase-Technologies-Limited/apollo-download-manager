@@ -8,6 +8,7 @@ import { createQueryClient } from '../../lib/queries';
 import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { chooseOption } from '../../test/select';
 
 // V1's settings tests (tests/unit/app.test.tsx, "settings") and its BitTorrent settings tests
 // (tests/unit/torrentControls.test.tsx, moved here by the PO's decision on #63), ported to V2's screen, and #30's own.
@@ -68,9 +69,9 @@ describe('settings (V1)', () => {
   it('switches every time to 12-hour, with AM and PM (#350)', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Appearance');
-    const choice = await screen.findByLabelText<HTMLSelectElement>('Time format');
-    expect(choice.value).toBe('twentyFourHour');
-    await user.selectOptions(choice, 'twelveHour');
+    const choice = await screen.findByLabelText('Time format');
+    expect(choice.textContent).toContain('24-hour (14:30)');
+    await chooseOption(user, choice, '12-hour (2:30 PM)');
     await waitFor(() => { expect(state.settings.appearance.timeFormat).toBe('twelveHour'); });
   });
 
@@ -83,9 +84,9 @@ describe('settings (V1)', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Use the schedule' }));
     await waitFor(() => { expect(state.appSettings.queue.schedule.enabled).toBe(true); });
     expect(await screen.findByText(/^Next: .*02:00 to 07:00$/)).toBeTruthy();
-    await user.selectOptions(screen.getByLabelText('Start, hour'), '3');
+    await chooseOption(user, screen.getByLabelText('Start, hour'), '03');
     await waitFor(() => { expect(state.appSettings.queue.schedule.startTime).toBe('03:00'); });
-    await user.selectOptions(screen.getByLabelText('Stop, minute'), '30');
+    await chooseOption(user, screen.getByLabelText('Stop, minute'), '30');
     await waitFor(() => { expect(state.appSettings.queue.schedule.stopTime).toBe('07:30'); });
     expect(screen.queryByRole('textbox', { name: /HH:MM/ })).toBeNull();
   });
@@ -175,7 +176,7 @@ describe('the Settings screen (#30)', () => {
   it('saves the engine’s retries, timeouts and preallocation', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Advanced');
-    await user.selectOptions(await screen.findByLabelText('Preallocation'), 'full');
+    await chooseOption(user, await screen.findByLabelText('Preallocation'), 'Full');
     await waitFor(() => { expect(state.appSettings.engine.preallocation).toBe('full'); });
     const failures = screen.getByLabelText<HTMLInputElement>('Failures in a row before giving up');
     await user.clear(failures);
@@ -226,7 +227,7 @@ describe('the Settings screen (#30)', () => {
     renderApp();
     await screen.findByText('No downloads yet');
     act(() => { useUiStore.getState().openAdd({ links: 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567' }); });
-    expect((await screen.findByLabelText<HTMLSelectElement>('Seeding after download')).value).toBe('unlimited');
+    expect((await screen.findByLabelText('Seeding after download')).textContent).toContain('Until I stop it');
     expect(screen.getByLabelText<HTMLInputElement>('Upload limit (KiB/s)').value).toBe('64');
     expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Choose files before downloading' }).checked).toBe(true);
   });
@@ -274,7 +275,7 @@ describe('the Proxy section (#192)', () => {
     await user.type(host, 'proxy.example.com');
     await user.tab();
     await waitFor(() => { expect(state.appSettings.proxy.host).toBe('proxy.example.com'); });
-    await user.selectOptions(screen.getByLabelText('Type'), 'socks5');
+    await chooseOption(user, screen.getByLabelText('Type'), 'SOCKS5');
     await waitFor(() => { expect(state.appSettings.proxy.kind).toBe('socks5'); });
     expect(JSON.stringify(saved(state))).not.toContain('password"');
   });

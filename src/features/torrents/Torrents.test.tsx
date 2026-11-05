@@ -9,6 +9,7 @@ import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { makeRecord } from '../../test/records';
+import { chooseOption } from '../../test/select';
 
 // V1's torrent tests (tests/unit/torrent.test.tsx and torrentControls.test.tsx), ported to V2 (#63). Those for aria2
 // builds have no V2 counterpart: V2 always runs libtorrent (ADR-0014). The BitTorrent settings' are #30's (PO
@@ -113,7 +114,7 @@ describe('adding torrents (V1)', () => {
     act(() => { useUiStore.getState().openAdd(); });
     await user.click(await screen.findByRole('button', { name: /Choose .torrent files/ }));
     expect(await screen.findByText('3 of 3 files · 3.1 MiB')).toBeTruthy();
-    await user.selectOptions(screen.getByLabelText('Seeding after download'), 'Until a share ratio');
+    await chooseOption(user, screen.getByLabelText('Seeding after download'), 'Until a share ratio');
     const ratio = screen.getByLabelText<HTMLInputElement>('Share ratio');
     await user.clear(ratio);
     await user.type(ratio, '2');

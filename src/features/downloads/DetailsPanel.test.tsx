@@ -10,6 +10,7 @@ import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { makeRecord } from '../../test/records';
+import { chooseOption } from '../../test/select';
 
 // V1's details-panel tests (tests/unit/app.test.tsx, "download list"), ported to V2's panel, and the panel's own (#61).
 
@@ -266,7 +267,7 @@ describe('the details panel (#61)', () => {
     await user.type(limit, '256');
     await user.tab();
     await waitFor(() => { expect(callsOf(state, 'set_download_speed_limit').at(-1)?.args).toEqual({ id: 'b', kib: 256 }); });
-    await user.selectOptions(within(p).getByLabelText('Category'), 'None');
+    await chooseOption(user, within(p).getByLabelText('Category'), 'None');
     await waitFor(() => { expect(callsOf(state, 'set_download_category')[0]?.args).toEqual({ id: 'b', categoryId: null }); });
   });
 

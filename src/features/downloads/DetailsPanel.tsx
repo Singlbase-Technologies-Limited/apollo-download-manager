@@ -209,14 +209,13 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
             <label htmlFor="details-category" className="text-fg-subtle">
               Category
             </label>
-            <Select id="details-category" value={d.categoryId ?? NO_CATEGORY} className="w-40" onChange={(e) => void actions.setCategory(d.id, e.target.value === NO_CATEGORY ? null : e.target.value)}>
-              <option value={NO_CATEGORY}>None</option>
-              {(categories ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
+            <Select
+              id="details-category"
+              value={d.categoryId ?? NO_CATEGORY}
+              className="w-40"
+              onValueChange={(v) => void actions.setCategory(d.id, v === NO_CATEGORY ? null : v)}
+              options={[{ value: NO_CATEGORY, label: 'None' }, ...(categories ?? []).map((c) => ({ value: c.id, label: c.name }))]}
+            />
           </div>
           {finished || d.status === 'seeding' ? null : (
             <div className="flex items-center justify-between gap-2 text-xs">

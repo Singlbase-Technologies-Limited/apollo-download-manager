@@ -104,13 +104,7 @@ export function Choice<T extends string>({ title, description, value, options, o
   const id = useId();
   return (
     <Row id={id} title={title} description={description}>
-      <Select id={id} className="w-56" value={value} onChange={(e) => { onChange(e.target.value as T); }}>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </Select>
+      <Select id={id} className="w-56" value={value} options={options} onValueChange={(v) => { onChange(v as T); }} />
     </Row>
   );
 }

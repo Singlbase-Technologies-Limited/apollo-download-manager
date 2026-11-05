@@ -27,7 +27,9 @@ import { linkKind, linkProblem, MAX_ADD, parseChecksum, parseHeaders, splitLinks
 import { StartAtFields } from '../../components/StartAtFields';
 import { nextFullHour } from '../../lib/format';
 
-const AUTOMATIC = '';
+/** The category list's "Automatic" entry; never a category id, which is a UUID. Sent to the native side as null. */
+const AUTOMATIC = '__automatic';
+const categoryOrNull = (id: string) => (id === AUTOMATIC ? null : id);
 
 const baseName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
@@ -116,7 +118,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     queryKey: ['destination', asked] as const,
     queryFn: () => {
       const [url, dir, name, category] = JSON.parse(asked) as [string, string, string, string];
-      return api.checkDestination(url, dir || null, url === '' ? null : name || null, category || null);
+      return api.checkDestination(url, dir || null, url === '' ? null : name || null, categoryOrNull(category));
     },
     retry: false,
   });
@@ -179,7 +181,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     metalinkFiles,
     directory: directory.trim() || null,
     fileName: singleDirect !== undefined && fileName.trim() !== '' ? fileName.trim() : null,
-    categoryId: categoryId || null,
+    categoryId: categoryOrNull(categoryId),
     createDirectory: missingChosen && createDirectory,
     onConflict: 'ask',
     allowDuplicate: false,
@@ -414,14 +416,15 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
             </Field>
             <Field label="Category">
               {(p) => (
-                <Select {...p} value={categoryId} onChange={(e) => { setCategoryId(e.target.value); }}>
-                  <option value={AUTOMATIC}>{autoCategory ? `Automatic: ${autoCategory.name}` : 'Automatic (by file type)'}</option>
-                  {(categories ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
+                <Select
+                  {...p}
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  options={[
+                    { value: AUTOMATIC, label: autoCategory ? `Automatic: ${autoCategory.name}` : 'Automatic (by file type)' },
+                    ...(categories ?? []).map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                />
               )}
             </Field>
           </div>

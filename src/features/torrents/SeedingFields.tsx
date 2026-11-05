@@ -37,13 +37,13 @@ export function SeedingFields({ value, onChange }: { value: SeedPolicy; onChange
     <div className="flex flex-wrap items-start gap-3">
       <Field label="Seeding after download" hint={seedingSummary(value)}>
         {(p) => (
-          <Select {...p} value={value.mode} className="w-60" onChange={(e) => { onChange(policy(e.target.value as SeedPolicy['mode'], minutes, ratio)); }}>
-            {MODES.map((m) => (
-              <option key={m} value={m}>
-                {SEED_MODE_LABEL[m]}
-              </option>
-            ))}
-          </Select>
+          <Select
+            {...p}
+            value={value.mode}
+            className="w-60"
+            options={MODES.map((m) => ({ value: m, label: SEED_MODE_LABEL[m] }))}
+            onValueChange={(v) => { onChange(policy(v as SeedPolicy['mode'], minutes, ratio)); }}
+          />
         )}
       </Field>
       {usesTime ? (

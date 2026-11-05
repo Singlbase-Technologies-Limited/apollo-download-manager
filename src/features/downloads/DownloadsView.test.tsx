@@ -10,6 +10,7 @@ import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { makeRecord } from '../../test/records';
+import { chooseOption } from '../../test/select';
 
 // V1's download-list tests (tests/unit/app.test.tsx, "download list"), ported to V2's list, and the list's own (#59).
 
@@ -318,6 +319,7 @@ describe('a download’s own start time', () => {
   const waiting = makeRecord({ id: 'w', fileName: 'night.iso', status: 'queued', createdAtMs: 4 });
 
   it('is chosen from the menu of a waiting download, and sent as local time', async () => {
+    const user = userEvent.setup();
     const state = installFakeBackend({ snapshot: withDownloads([waiting, archive]) });
     renderApp();
     fireEvent.contextMenu(await rowFor('archive.zip'));
@@ -327,8 +329,8 @@ describe('a download’s own start time', () => {
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Start at…' }));
     const dialog = await screen.findByRole('dialog', { name: 'Start at' });
     fireEvent.change(within(dialog).getByLabelText('Start date'), { target: { value: '2030-01-05' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, hour'), { target: { value: '3' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, minute'), { target: { value: '15' } });
+    await chooseOption(user, within(dialog).getByLabelText('Start time, hour'), '03');
+    await chooseOption(user, within(dialog).getByLabelText('Start time, minute'), '15');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Start at this time' }));
     await waitFor(() => { expect(callsOf(state, 'set_start_at').map((c) => c.args)).toEqual([{ id: 'w', startAt: '2030-01-05T03:15' }]); });
     await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'Start at' })).toBeNull(); });

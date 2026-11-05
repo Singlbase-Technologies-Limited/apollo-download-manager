@@ -10,6 +10,7 @@ import { createQueryClient } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { chooseOption } from '../../test/select';
 
 // V1's add-dialog tests (tests/unit/app.test.tsx and torrent.test.tsx), ported to V2's dialog, with
 // the SFTP host-key prompt, protocols this build lacks, and taken destinations (#60).
@@ -216,7 +217,7 @@ describe('the Add download dialog', () => {
     renderApp();
     const dialog = await openDialog(user);
     await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/lesson.mp4');
-    expect(await within(dialog).findByRole('option', { name: `Automatic: ${category.name}` })).toBeTruthy();
+    await waitFor(() => { expect(within(dialog).getByRole('combobox', { name: 'Category' }).textContent).toBe(`Automatic: ${category.name}`); });
     expect(await within(dialog).findByText('Saves to /home/user/Courses')).toBeTruthy();
     // An automatic folder is the settings' or the category's: not an error here.
     expect(within(dialog).queryByText(/This folder doesn’t exist/)).toBeNull();
@@ -674,8 +675,8 @@ describe('a start time when adding', () => {
     expect(within(dialog).queryByLabelText('Start date')).toBeNull();
     await user.click(within(dialog).getByRole('checkbox', { name: 'Start at a chosen time' }));
     fireEvent.change(within(dialog).getByLabelText('Start date'), { target: { value: '2030-01-05' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, hour'), { target: { value: '22' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, minute'), { target: { value: '0' } });
+    await chooseOption(user, within(dialog).getByLabelText('Start time, hour'), '22');
+    await chooseOption(user, within(dialog).getByLabelText('Start time, minute'), '00');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     await waitFor(() => { expect(requests(state)).toHaveLength(1); });
     expect(requests(state)[0]?.startAt).toBe('2030-01-05T22:00');
