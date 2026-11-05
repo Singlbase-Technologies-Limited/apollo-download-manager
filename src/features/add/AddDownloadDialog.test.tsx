@@ -591,6 +591,22 @@ describe('torrents', () => {
     expect(requests(state)[0]).toMatchObject({ links: ['https://example.com/files/archive.zip'], referrer: 'https://example.com/page', fromBrowser: true });
   });
 
+  // #365 (regression): a link sent while the window holds others from the browser joins them; none is lost.
+  it('keeps every link the browser sends while the window is open, each once', async () => {
+    const state = installFakeBackend();
+    renderApp();
+    await screen.findByRole('button', { name: 'Add download' });
+    const send = (url: string) => act(() => emit('browser-request', { ...(fixture('browser-request.json') as object), url, fileName: null }));
+    await send('https://example.com/files/one.zip');
+    await send('https://example.com/files/two.zip');
+    await send('https://example.com/files/one.zip');
+    const dialog = await screen.findByRole('dialog', { name: 'Add download' });
+    expect(within(dialog).getByRole<HTMLTextAreaElement>('textbox', { name: 'Links' }).value).toBe('https://example.com/files/one.zip\nhttps://example.com/files/two.zip');
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: /Start download/ }));
+    await waitFor(() => { expect(requests(state)).toHaveLength(1); });
+    expect(requests(state)[0]).toMatchObject({ links: ['https://example.com/files/one.zip', 'https://example.com/files/two.zip'], fromBrowser: true });
+  });
+
   it('a link typed in place of the browser’s isn’t from the browser (#67)', async () => {
     const state = installFakeBackend();
     const user = userEvent.setup();

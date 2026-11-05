@@ -46,7 +46,22 @@ export function useAddEntryPoints() {
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void onBrowserRequest((r) => {
-      useUiStore.getState().openAdd({
+      const { addDialog, openAdd } = useUiStore.getState();
+      const waiting = addDialog.open ? addDialog.prefill : null;
+      // #365: a link sent while the window holds others from the browser joins them, once each, instead of replacing
+      // them. A file name, size or type fits one link only; a referrer stays while every link shares it.
+      if (waiting?.fromBrowser && waiting.links) {
+        const links = waiting.links.split('\n');
+        if (links.includes(r.url)) return;
+        const referrer = waiting.referrer && waiting.referrer === r.referrer ? waiting.referrer : undefined;
+        openAdd({
+          links: [...links, r.url].join('\n'),
+          ...(referrer ? { referrer } : {}),
+          fromBrowser: { referrer: referrer ?? null, fileSize: null, mime: null },
+        });
+        return;
+      }
+      openAdd({
         links: r.url,
         ...(r.fileName ? { fileName: r.fileName } : {}),
         ...(r.referrer ? { referrer: r.referrer } : {}),
