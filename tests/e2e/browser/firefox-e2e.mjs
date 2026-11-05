@@ -110,7 +110,7 @@ try {
     const t = await cmd('GET', s(`/element/${Object.values(el)[0]}/text`));
     return t && !t.startsWith('Checking') ? t : null;
   }, 15000, 'the popup status');
-  check("V2's popup reaches V2 through V2's native host", status.startsWith('Connected to Velocity V2'), status);
+  check("V2's popup reaches V2 through V2's native host", status.startsWith('Connected to Apollo DM'), status);
 
   const tab = await cmd('POST', s('/window/new'), { type: 'tab' });
   await cmd('POST', s('/window'), { handle: tab.handle });

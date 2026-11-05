@@ -43,7 +43,7 @@ struct RawRequest {
 pub enum RequestSource {
     /// A download the extension intercepted.
     Intercept,
-    /// "Download with Velocity V2" in the context menu.
+    /// "Download with Apollo Download Manager" in the context menu.
     ContextMenu,
     /// A link typed in the extension's popup.
     Popup,
@@ -160,7 +160,7 @@ pub fn parse_message(bytes: &[u8]) -> Result<BrowserMessage, BrowserResponse> {
         return Err(BrowserResponse::err(
             &id,
             "UNSUPPORTED_VERSION",
-            "Update the browser extension and Velocity V2 to matching versions.",
+            "Update the browser extension and Apollo Download Manager to matching versions.",
         ));
     }
     let empty_payload =
@@ -199,7 +199,7 @@ fn check_add(a: &AddFromBrowser) -> Result<(), &'static str> {
         .iter()
         .any(|p| start.starts_with(p))
     {
-        return Err("Only http, https and magnet links can be sent to Velocity V2.");
+        return Err("Only http, https and magnet links can be sent to Apollo Download Manager.");
     }
     if a.url.len() > MAX_URL_BYTES || a.url.chars().any(|c| c.is_whitespace() || c.is_control()) {
         return Err("The link is too long, or has spaces or control characters.");

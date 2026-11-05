@@ -157,6 +157,6 @@ fn a_refused_write_fails_keeps_the_part_and_resumes_once_allowed() {
         "refused.bin",
         IN_THE_SEGMENTS,
         io::ErrorKind::PermissionDenied,
-        "Velocity isn't allowed to write to that location.",
+        "Apollo Download Manager isn't allowed to write to that location.",
     );
 }

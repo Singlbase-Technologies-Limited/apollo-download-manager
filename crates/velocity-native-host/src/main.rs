@@ -21,7 +21,7 @@ use velocity_core::paths::Paths;
 const MAX_OUTGOING: usize = 1024 * 1024;
 
 /// What the browser sends while the app isn't running.
-const NOT_RUNNING: &str = "Velocity V2 is not running. Start it and try again.";
+const NOT_RUNNING: &str = "Apollo Download Manager is not running. Start it and try again.";
 
 /// The next message, or `None` once the browser closed stdin. A length over the limit is refused
 /// before anything is allocated for it.
@@ -121,7 +121,7 @@ fn main() {
             &BrowserResponse::err(
                 "",
                 "FORBIDDEN_CALLER",
-                "This extension is not allowed to use Velocity V2's native host.",
+                "This extension is not allowed to use Apollo Download Manager's native host.",
             ),
         );
         std::process::exit(1);
@@ -132,7 +132,7 @@ fn main() {
             &BrowserResponse::err(
                 "",
                 "DESKTOP_ERROR",
-                "Velocity V2's data folder can't be found.",
+                "Apollo Download Manager's data folder can't be found.",
             ),
         );
         std::process::exit(1);

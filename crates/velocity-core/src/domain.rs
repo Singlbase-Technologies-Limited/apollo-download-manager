@@ -587,19 +587,19 @@ impl ErrorCode {
             Self::InvalidPath => "The folder path isn't valid.",
             Self::InvalidFilename => "The file name isn't allowed on this system.",
             Self::DestinationMissing => "The download folder doesn't exist.",
-            Self::PermissionDenied => "Velocity isn't allowed to write to that location.",
+            Self::PermissionDenied => "Apollo Download Manager isn't allowed to write to that location.",
             Self::FileExists => "A file with that name already exists.",
             Self::NotFound => "That download or file no longer exists.",
             Self::NameTaken => "That name is already taken.",
             Self::InvalidState => "That action isn't possible in the download's current state.",
             Self::EngineMissing => "The transfer engine is missing from this installation.",
             Self::EngineIncompatible => {
-                "The transfer engine doesn't match this version of Velocity."
+                "The transfer engine doesn't match this version of Apollo Download Manager."
             }
             Self::EngineStartFailed => "The transfer engine couldn't be started.",
             Self::EngineUnavailable => "The transfer engine isn't responding.",
-            Self::Database => "Velocity couldn't read or save its data.",
-            Self::DatabaseMigration => "Velocity couldn't upgrade its data to this version.",
+            Self::Database => "Apollo Download Manager couldn't read or save its data.",
+            Self::DatabaseMigration => "Apollo Download Manager couldn't upgrade its data to this version.",
             Self::Io => "A file couldn't be read or written.",
             Self::InsufficientDiskSpace => "There isn't enough free disk space.",
             Self::ProtocolDisabled => "This kind of download is turned off in Settings.",
@@ -611,7 +611,7 @@ impl ErrorCode {
                 "Torrents can't go through an HTTPS proxy. Choose an HTTP or SOCKS5 proxy in Settings, Proxy."
             }
             Self::Unsupported => "This isn't supported on this system yet.",
-            Self::Internal => "Something went wrong inside Velocity.",
+            Self::Internal => "Something went wrong inside Apollo Download Manager.",
         }
     }
 }

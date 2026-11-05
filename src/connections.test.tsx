@@ -29,7 +29,7 @@ describe('connectionSummary', () => {
     );
     // #221: the ramp starts with all of them and tries fewer, so it no longer says "adding".
     expect(connectionSummary(7, { requested: 8, allowed: 7, limitedBy: 'rampingUp' })).toBe(
-      'Using 7 connections, up to 7 of the 8 asked for: Velocity is still finding how many connections help.',
+      'Using 7 connections, up to 7 of the 8 asked for: Apollo Download Manager is still finding how many connections help.',
     );
     // #274: a server without byte ranges said "perHostCap".
     expect(connectionSummary(1, { requested: 8, allowed: 1, limitedBy: 'noRanges' })).toBe(
@@ -53,6 +53,6 @@ describe('ConnectionLine', () => {
     const html = renderToStaticMarkup(
       <ConnectionLine active={2} detail={{ requested: 8, allowed: 2, limitedBy: 'serverThrottling' }} />,
     );
-    expect(html).toContain('Using 2 connections, up to 2 of the 8 asked for: the server asked Velocity to slow down.');
+    expect(html).toContain('Using 2 connections, up to 2 of the 8 asked for: the server asked Apollo Download Manager to slow down.');
   });
 });

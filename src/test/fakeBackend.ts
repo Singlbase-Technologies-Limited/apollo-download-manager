@@ -102,7 +102,7 @@ export function emptySnapshot(): DownloadsSnapshot {
 
 export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
   const state: FakeState = {
-    appInfo: { name: 'Velocity Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION },
+    appInfo: { name: 'Apollo Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION },
     settings: setUp(),
     snapshot: emptySnapshot(),
     categories: [fixture('category.json') as Category],

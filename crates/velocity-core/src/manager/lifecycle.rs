@@ -164,8 +164,8 @@ fn reason(limit: ConnectionLimit) -> &'static str {
     match limit {
         ConnectionLimit::PerHostCap => "the performance profile allows no more to one server",
         ConnectionLimit::SharedBudget => "other downloads are sharing the connections",
-        ConnectionLimit::ServerThrottling => "the server asked Velocity to slow down",
-        ConnectionLimit::RampingUp => "Velocity is still finding how many connections help",
+        ConnectionLimit::ServerThrottling => "the server asked Apollo Download Manager to slow down",
+        ConnectionLimit::RampingUp => "Apollo Download Manager is still finding how many connections help",
         ConnectionLimit::NoGain => "more connections stopped making it faster",
         ConnectionLimit::FileSize => "the rest of the file is too small to split further",
         ConnectionLimit::NoRanges => "the server sends the file in one piece, without byte ranges",
@@ -202,7 +202,7 @@ fn status_line(before: DownloadStatus, record: &DownloadRecord, at: &str) -> Opt
         // Told by [`Logged::lines`], which counts it.
         DownloadStatus::Retrying => return None,
         DownloadStatus::Unknown => Line::warn(format!(
-            "download {id} is in a status Velocity doesn't know"
+            "download {id} is in a status Apollo Download Manager doesn't know"
         )),
     })
 }
@@ -565,8 +565,8 @@ mod tests {
         assert_eq!(
             texts(logged.lines(&r, T0)),
             [
-                "download d-0001 uses 2 connections (allowed 2 of 8: the server asked Velocity to \
-                 slow down)"
+                "download d-0001 uses 2 connections (allowed 2 of 8: the server asked Apollo \
+                 Download Manager to slow down)"
             ]
         );
         assert!(logged.lines(&r, T0 + 60_000).is_empty());

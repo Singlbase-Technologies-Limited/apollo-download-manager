@@ -17,7 +17,7 @@ const TRAY_ID: &str = "velocity-tray";
 
 /// Creates the tray icon; an error means this desktop has no tray.
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "Show Velocity", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", "Show Apollo Download Manager", true, None::<&str>)?;
     let pause = MenuItem::with_id(app, "pause_all", "Pause all", true, None::<&str>)?;
     let resume = MenuItem::with_id(app, "resume_all", "Resume all", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;

@@ -111,7 +111,7 @@ impl fmt::Display for MetalinkError {
             MetalinkError::UnsafeName(name) => {
                 write!(
                     f,
-                    "The Metalink file names a file Velocity won't create: {name:?}."
+                    "The Metalink file names a file Apollo Download Manager won't create: {name:?}."
                 )
             }
             MetalinkError::DuplicateName(name) => write!(

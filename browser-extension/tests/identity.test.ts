@@ -22,7 +22,9 @@ describe('V2 identity (#64)', () => {
   it('names itself V2 everywhere a user sees it next to V1', () => {
     expect(EXTENSION_NAME).toBe(branding.extensionName);
     expect(EXTENSION_NAME).not.toBe(V1_EXTENSION_NAME);
-    expect(SHORT_NAME).toBe('Velocity V2');
+    // PO rule on #347: "Apollo Download Manager", or "Apollo DM" for short, never "Apollo" alone.
+    expect(EXTENSION_NAME).toBe('Apollo Download Manager (dev)');
+    expect(SHORT_NAME).toBe('Apollo DM');
   });
 
   it('says which app failed in the badge title', async () => {
@@ -36,15 +38,17 @@ describe('V2 identity (#64)', () => {
     } as unknown as ExtApi;
     const r = await createBackground(api).onContextMenu({ linkUrl: 'https://cdn.test/a.zip' });
     expect(r).toMatchObject({ ok: false, error: { code: 'HOST_NOT_INSTALLED' } });
-    expect(badges).toEqual([expect.stringMatching(/^Velocity V2: The connection to Velocity V2 is not set up/) as string]);
+    expect(badges).toEqual([expect.stringMatching(/^Apollo DM: The connection to Apollo DM is not set up/) as string]);
   });
 
-  it("keeps the extension pages' text on V2's name", () => {
+  it("keeps the extension pages' text on the product's name", () => {
     for (const page of ['popup.html', 'options.html', 'prompt.html']) {
       const html = readFileSync(new URL(`../static/${page}`, import.meta.url), 'utf8');
       const text = html.replace(/<[^>]*>/g, ' ');
-      // Every visible "Velocity" is followed by "V2" or is part of the full product name with V2.
-      expect(text.match(/Velocity(?! V2| Download Manager V2)/g), page).toBeNull();
+      expect(text.match(/Velocity/g), page).toBeNull();
+      // Every visible "Apollo" is the full name or the short form "Apollo DM", never "Apollo" alone.
+      expect(text.match(/Apollo(?! Download Manager| DM)/g), page).toBeNull();
+      expect(text, page).toMatch(/Apollo (Download Manager|DM)/);
     }
   });
 });

@@ -16,7 +16,7 @@ const SCHEMES: Record<string, DownloadKind> = { 'http:': 'http', 'https:': 'http
 const isMagnet = (link: string) => link.slice(0, 7).toLowerCase() === 'magnet:';
 
 /**
- * Whether `link` is to a `.torrent` file, which Velocity fetches and adds as a torrent: an http or
+ * Whether `link` is to a `.torrent` file, which Apollo Download Manager fetches and adds as a torrent: an http or
  * https link whose path ends in `.torrent`. Mirrors `is_torrent_link` in Rust.
  */
 export function isTorrentLink(link: string): boolean {

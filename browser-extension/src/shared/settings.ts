@@ -3,7 +3,7 @@
 export type InterceptMode = 'auto' | 'ask' | 'off';
 
 export interface ExtensionSettings {
-  /** auto: hand matching downloads to Velocity; ask: ask in the browser first; off: never intercept. */
+  /** auto: hand matching downloads to Apollo Download Manager; ask: ask in the browser first; off: never intercept. */
   mode: InterceptMode;
   /** File extensions (without dot) that are always handed off. */
   fileTypes: string[];
@@ -15,10 +15,10 @@ export interface ExtensionSettings {
   denyDomains: string[];
   /** Intercept downloads started in private/incognito windows. Off by default. */
   includePrivate: boolean;
-  /** Show the "Download with Velocity V2" context menu item. */
+  /** Show the "Download with Apollo Download Manager" context menu item. */
   contextMenu: boolean;
   /**
-   * Send magnet link clicks and `.torrent` downloads to Velocity. Off by default;
+   * Send magnet link clicks and `.torrent` downloads to Apollo Download Manager. Off by default;
    * magnet capture also needs the optional permission to read pages.
    */
   captureTorrents: boolean;

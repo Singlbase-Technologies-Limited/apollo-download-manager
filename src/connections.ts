@@ -10,9 +10,9 @@ export function limitReason(limit: ConnectionLimit): string {
     case 'sharedBudget':
       return 'other downloads are sharing the connections';
     case 'serverThrottling':
-      return 'the server asked Velocity to slow down';
+      return 'the server asked Apollo Download Manager to slow down';
     case 'rampingUp':
-      return 'Velocity is still finding how many connections help';
+      return 'Apollo Download Manager is still finding how many connections help';
     case 'noGain':
       return 'more connections stopped making it faster';
     case 'fileSize':

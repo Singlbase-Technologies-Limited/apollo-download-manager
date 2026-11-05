@@ -312,9 +312,9 @@ pub enum IpcClientError {
 impl fmt::Display for IpcClientError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::NotRunning => f.write_str("Velocity V2 is not running"),
-            Self::Io(e) => write!(f, "Velocity V2 did not answer: {e}"),
-            Self::InvalidResponse => f.write_str("Velocity V2 sent an invalid answer"),
+            Self::NotRunning => f.write_str("Apollo Download Manager is not running"),
+            Self::Io(e) => write!(f, "Apollo Download Manager did not answer: {e}"),
+            Self::InvalidResponse => f.write_str("Apollo Download Manager sent an invalid answer"),
         }
     }
 }

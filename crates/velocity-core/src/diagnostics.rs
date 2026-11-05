@@ -44,7 +44,7 @@ impl DiagnosticReport {
         Self {
             generated_at_ms: 1_792_600_000_000,
             app: AppInfo {
-                name: "Velocity Download Manager (dev)",
+                name: "Apollo Download Manager (dev)",
                 version: "0.1.0",
                 command_api_version: crate::COMMAND_API_VERSION,
             },

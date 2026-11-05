@@ -279,7 +279,7 @@ export function DownloadsView({ view }: { view: ListView }) {
       ) : null}
       {snapshot && snapshot.unavailable.length > 0 ? (
         <p className="shrink-0 border-b border-border px-4 py-2 text-xs text-fg-muted">
-          {snapshot.unavailable.length === 1 ? 'One saved download is' : `${String(snapshot.unavailable.length)} saved downloads are`} from a newer version of Velocity, so this one can’t show or use {snapshot.unavailable.length === 1 ? 'it' : 'them'}. Nothing was changed.
+          {snapshot.unavailable.length === 1 ? 'One saved download is' : `${String(snapshot.unavailable.length)} saved downloads are`} from a newer version of Apollo Download Manager, so this one can’t show or use {snapshot.unavailable.length === 1 ? 'it' : 'them'}. Nothing was changed.
         </p>
       ) : null}
 

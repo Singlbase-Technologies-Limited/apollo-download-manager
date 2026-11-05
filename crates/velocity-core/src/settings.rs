@@ -33,7 +33,7 @@ pub struct AdvancedSettings {
     pub enable_bittorrent: bool,
     /// Metalink files can be added, and links to them followed (#54; V1's `enable_metalink`).
     pub enable_metalink: bool,
-    /// The `User-Agent` new downloads send; `None` for V2's own (`VelocityDownloadManager/<version>`,
+    /// The `User-Agent` new downloads send; `None` for the product's own (`ApolloDownloadManager/<version>`,
     /// PO decision on #40).
     pub user_agent: Option<String>,
 }

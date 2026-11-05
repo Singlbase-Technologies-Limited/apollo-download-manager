@@ -31,7 +31,7 @@ const VERIFICATION: Record<Verification, string> = {
 /** The hint under an error, by its class: what a retry may do, never a promise (#250). */
 const RETRY_HINT: Record<FailureClass, string> = {
   transient: 'Retrying may help once the cause is fixed.',
-  throttled: 'The server asked Velocity to slow down. Retrying later may help.',
+  throttled: 'The server asked Apollo Download Manager to slow down. Retrying later may help.',
   permanent: 'Retrying is unlikely to help without changing the request.',
 };
 

@@ -62,7 +62,7 @@ export function canSend(url: string): boolean {
   return url.length <= MAX_URL && (isHttpUrl(url) || isMagnet(url));
 }
 
-/** Links the browser itself can download when Velocity cannot take them. */
+/** Links the browser itself can download when Apollo Download Manager cannot take them. */
 export function browserCanDownload(url: string): boolean {
   return url.length <= MAX_URL && isHttpUrl(url);
 }

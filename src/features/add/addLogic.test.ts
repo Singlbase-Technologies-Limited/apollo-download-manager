@@ -31,7 +31,7 @@ describe('add download input parsing', () => {
 
   it('says when this build can’t download a protocol, before anything is sent', () => {
     // The sample engine lists no SFTP.
-    expect(linkProblem('sftp://example.com/f.zip', capabilities)).toBe('This version of Velocity can’t download over SFTP yet.');
+    expect(linkProblem('sftp://example.com/f.zip', capabilities)).toBe('This version of Apollo Download Manager can’t download over SFTP yet.');
     // Until the capabilities arrive, only the native side can say.
     expect(linkProblem('sftp://example.com/f.zip', undefined)).toBeNull();
   });

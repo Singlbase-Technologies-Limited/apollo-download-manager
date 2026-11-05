@@ -361,7 +361,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                 }
                 hint={
                   kinds.includes('torrentLink')
-                    ? 'Velocity fetches the .torrent file first, then adds the torrent.'
+                    ? 'Apollo Download Manager fetches the .torrent file first, then adds the torrent.'
                     : links.length > 1
                       ? `${String(links.length)} links`
                       : 'HTTP, HTTPS, FTP, FTPS and SFTP links, magnet links and links to .torrent files.'
@@ -526,7 +526,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                 <Checkbox checked={remember} onChange={setRemember}>
                   <span>
                     Remember this login in the system keychain
-                    <span className="block text-fg-muted">The login, headers and key passphrase then come back after Velocity restarts. Removing the download forgets them.</span>
+                    <span className="block text-fg-muted">The login, headers and key passphrase then come back after Apollo Download Manager restarts. Removing the download forgets them.</span>
                   </span>
                 </Checkbox>
               ) : null}

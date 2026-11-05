@@ -24,7 +24,7 @@ pub fn run() {
     // The app's log, kept in memory and redacted (#28).
     let log = velocity_core::logs::AppLog::new();
     diagnostics::install_log(&log);
-    tracing::info!("Velocity {} starting", velocity_core::app_info().version);
+    tracing::info!("Apollo Download Manager {} starting", velocity_core::app_info().version);
     tauri::Builder::default()
         // Registered first, as the plugin requires. It is keyed on the app identifier, so a
         // second launch of V2 focuses this window, and never interferes with V1 (ADR-0003).
@@ -138,7 +138,7 @@ pub fn run() {
             shell::quit_app,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running the Velocity Download Manager desktop shell");
+        .expect("error while running the Apollo Download Manager desktop shell");
 }
 
 #[cfg(test)]

@@ -98,7 +98,7 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
             <Row label="Time seeding">{formatDuration(d.torrent.seedingSecs)}</Row>
           </>
         ) : (
-          <Row label="Peers">Not reported yet: the torrent helper hasn’t sent them since Velocity started.</Row>
+          <Row label="Peers">Not reported yet: the torrent helper hasn’t sent them since Apollo Download Manager started.</Row>
         )}
         {t ? <Row label="Seeding">{seedingSummary(t.seeding)}</Row> : null}
         {queued ? <Row label="Seeding queue">Waiting for a free seeding slot: only so many torrents seed at once.</Row> : null}

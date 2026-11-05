@@ -50,7 +50,7 @@ async function syncContextMenu() {
   const s = sanitizeSettings((await ext.storage.local.get('settings')).settings);
   await ext.contextMenus.removeAll();
   if (s.contextMenu) {
-    ext.contextMenus.create({ id: MENU_ID, title: `Download with ${SHORT_NAME}`, contexts: ['link', 'image', 'video', 'audio'] });
+    ext.contextMenus.create({ id: MENU_ID, title: `Download with ${EXTENSION_NAME}`, contexts: ['link', 'image', 'video', 'audio'] });
   }
 }
 

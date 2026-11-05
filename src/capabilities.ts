@@ -17,12 +17,12 @@ const AVAILABLE: Availability = { available: true, reason: null };
 
 /** What the build can't do when it doesn't list a protocol at all. */
 const MISSING: Record<DownloadKind, string> = {
-  http: 'This version of Velocity can’t download over HTTP yet.',
-  ftp: 'This version of Velocity can’t download over FTP yet.',
-  sftp: 'This version of Velocity can’t download over SFTP yet.',
-  metalink: 'This version of Velocity can’t open Metalink files yet.',
-  torrent: 'This version of Velocity can’t download torrents yet.',
-  magnet: 'This version of Velocity can’t open magnet links yet.',
+  http: 'This version of Apollo Download Manager can’t download over HTTP yet.',
+  ftp: 'This version of Apollo Download Manager can’t download over FTP yet.',
+  sftp: 'This version of Apollo Download Manager can’t download over SFTP yet.',
+  metalink: 'This version of Apollo Download Manager can’t open Metalink files yet.',
+  torrent: 'This version of Apollo Download Manager can’t download torrents yet.',
+  magnet: 'This version of Apollo Download Manager can’t open magnet links yet.',
 };
 
 /** A protocol's name in a sentence. */
@@ -40,15 +40,15 @@ function lacking(kind: DownloadKind, feature: ProtocolFeature): string {
   const name = NAME[kind];
   switch (feature) {
     case 'segmented':
-      return `Downloads over ${name} use one connection in this version of Velocity.`;
+      return `Downloads over ${name} use one connection in this version of Apollo Download Manager.`;
     case 'resume':
-      return `Downloads over ${name} start over after a pause in this version of Velocity.`;
+      return `Downloads over ${name} start over after a pause in this version of Apollo Download Manager.`;
     case 'validatorResume':
       return `A resumed download over ${name} isn’t checked against the server’s version of the file.`;
     case 'http2':
-      return kind === 'http' ? 'This version of Velocity doesn’t use HTTP/2.' : 'HTTP/2 is only for HTTP and HTTPS.';
+      return kind === 'http' ? 'This version of Apollo Download Manager doesn’t use HTTP/2.' : 'HTTP/2 is only for HTTP and HTTPS.';
     case 'encryption':
-      return `Downloads over ${name} can’t be encrypted in this version of Velocity.`;
+      return `Downloads over ${name} can’t be encrypted in this version of Apollo Download Manager.`;
   }
 }
 

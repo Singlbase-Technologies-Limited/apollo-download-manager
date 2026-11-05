@@ -36,7 +36,7 @@ function report(r: BatchResult, verb: string) {
 /** Why a file or folder couldn't be opened, in the words for opening (#61); other codes keep their usual sentence. */
 const OPEN_FAILED: Partial<Record<ErrorCode, string>> = {
   NOT_FOUND: 'The file is no longer there. It may have been moved or deleted.',
-  INVALID_PATH: 'Velocity doesn’t open a file reached through a link.',
+  INVALID_PATH: 'Apollo Download Manager doesn’t open a file reached through a link.',
   INVALID_STATE: 'The download hasn’t finished, so there is no file to open yet.',
   DESTINATION_MISSING: 'The download’s folder is no longer there.',
   IO: 'The system couldn’t start the program that opens it.',

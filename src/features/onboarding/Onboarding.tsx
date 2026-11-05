@@ -91,7 +91,7 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
           <li>
             <h2 className="text-[13px] font-semibold">3. Optional: the browser extension</h2>
             <p className="mt-1 text-xs text-fg-muted">
-              After setup, register Chrome, Edge, Brave or Firefox in Settings, Browser, then install the Velocity Download Manager V2 extension.
+              After setup, register Chrome, Edge, Brave or Firefox in Settings, Browser, then install the Apollo Download Manager extension.
             </p>
           </li>
         </ol>

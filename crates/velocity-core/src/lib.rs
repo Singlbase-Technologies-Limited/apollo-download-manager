@@ -1,4 +1,4 @@
-//! Core domain logic for Velocity Download Manager V2.
+//! Core domain logic for Apollo Download Manager.
 //!
 //! The application identity and the engine-neutral domain types shared with the UI
 //! (`domain`, docs/CONTRACTS.md).
@@ -79,8 +79,7 @@ pub struct AppInfo {
 /// Returns the application's identity.
 pub fn app_info() -> AppInfo {
     AppInfo {
-        // V2 replaces V1 under the name "Velocity Download Manager" (#11); development builds
-        // add "(dev)" (branding.json, ADR-0003).
+        // "Apollo Download Manager" (ADR-0018); development builds add "(dev)" (branding.json).
         name: branding::branding().app_product_name(),
         version: env!("CARGO_PKG_VERSION"),
         command_api_version: COMMAND_API_VERSION,
@@ -102,11 +101,11 @@ mod tests {
         assert_eq!(app_info().version, env!("CARGO_PKG_VERSION"));
     }
 
-    /// PO decision on #11: V2 replaces V1 under the name "Velocity Download Manager".
-    /// Development builds carry a "(dev)" suffix so they can be told apart from an
-    /// installed V1. Separation from V1 comes from distinct identifiers, not the name.
+    /// The product name is "Apollo Download Manager" (ADR-0018). Development builds carry a
+    /// "(dev)" suffix so they can be told apart from an installed release. Separation from V1
+    /// comes from distinct identifiers, not the name.
     #[test]
     fn development_builds_use_the_product_name_with_a_dev_suffix() {
-        assert_eq!(app_info().name, "Velocity Download Manager (dev)");
+        assert_eq!(app_info().name, "Apollo Download Manager (dev)");
     }
 }

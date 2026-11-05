@@ -21,7 +21,7 @@ pub const MAX_LOGIN_PART_BYTES: usize = 1024;
 
 /// The user agent sent when the user hasn't set one (PO decision on #40).
 pub fn default_user_agent() -> String {
-    format!("VelocityDownloadManager/{}", env!("CARGO_PKG_VERSION"))
+    format!("ApolloDownloadManager/{}", env!("CARGO_PKG_VERSION"))
 }
 
 /// Headers the engine sets itself, or that have a field of their own (`Referer`, `User-Agent`):
@@ -326,11 +326,12 @@ mod tests {
     }
 
     #[test]
-    fn the_default_user_agent_names_velocity_and_its_version() {
+    fn the_default_user_agent_names_the_product_and_its_version() {
         let agent = default_user_agent();
+        // The full name, never "Apollo" alone (PO rule on #347).
         assert_eq!(
             agent,
-            format!("VelocityDownloadManager/{}", env!("CARGO_PKG_VERSION"))
+            format!("ApolloDownloadManager/{}", env!("CARGO_PKG_VERSION"))
         );
         assert_eq!(check_user_agent(&agent), Ok(()));
     }
