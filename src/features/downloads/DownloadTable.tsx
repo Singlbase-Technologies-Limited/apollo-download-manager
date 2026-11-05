@@ -273,7 +273,13 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
                   aria-selected={selected}
                   aria-rowindex={vi.index + 1}
                   data-status={d.status}
-                  onClick={(e) => { select(d.id, e.shiftKey ? 'range' : e.ctrlKey || e.metaKey ? 'toggle' : 'single', ids); }}
+                  onClick={(e) => {
+                    const mode = e.shiftKey ? 'range' : e.ctrlKey || e.metaKey ? 'toggle' : 'single';
+                    select(d.id, mode, ids);
+                    // A plain click opens the details panel, even one the user closed (PO decision on #349); once open,
+                    // it follows the focused row.
+                    if (mode === 'single' && !useUiStore.getState().layout.detailsVisible) showDetails(d.id);
+                  }}
                   // V1's: a finished download opens its file, a torrent in Choose files chooses them, any other shows its details.
                   onDoubleClick={() => {
                     if (canOpenFile(d)) void actions.openFile(d);

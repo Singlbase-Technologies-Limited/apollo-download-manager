@@ -236,6 +236,34 @@ describe('the details panel (V1)', () => {
   });
 });
 
+// #349 (PO decision): a plain click on a row opens the details panel, even when the user closed it.
+describe('a single click on a row', () => {
+  beforeEach(() => {
+    installFakeBackend({ snapshot: withDownloads([archive, movie, broken, done, album]) });
+  });
+
+  it('opens the details panel for that download', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await rowFor('movie.mp4');
+    expect(screen.queryByRole('complementary', { name: 'Download details' })).toBeNull();
+    await user.click(await rowFor('movie.mp4'));
+    expect(heading(await panel())).toBe('movie.mp4');
+  });
+
+  it('only selects with Ctrl or Shift, or on the row’s checkbox', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.keyboard('{Control>}');
+    await user.click(await rowFor('movie.mp4'));
+    await user.keyboard('{/Control}{Shift>}');
+    await user.click(await rowFor('archive.zip'));
+    await user.keyboard('{/Shift}');
+    await user.click(screen.getByRole('checkbox', { name: 'Select setup.exe' }));
+    expect(screen.queryByRole('complementary', { name: 'Download details' })).toBeNull();
+  });
+});
+
 describe('the details panel (#61)', () => {
   let state: FakeState;
   beforeEach(() => {
