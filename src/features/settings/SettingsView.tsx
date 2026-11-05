@@ -565,9 +565,7 @@ function AdvancedSection({ s, patch }: { s: Settings; patch: Patch }) {
     <>
       <Group title="Protocols">
         {capabilities ? (
-          <div className="py-2.5 text-[13px]">
-            <CapabilityOption label="Metalink" availability={availability(capabilities, 'metalink')} checked={s.advanced.enableMetalink} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, enableMetalink: v } })); }} />
-          </div>
+          <CapabilityOption label="Metalink" availability={availability(capabilities, 'metalink')} checked={s.advanced.enableMetalink} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, enableMetalink: v } })); }} />
         ) : null}
         <Text title="User agent" description="What new downloads tell servers they are; empty for Apollo Download Manager’s own." value={s.advanced.userAgent} placeholder="ApolloDownloadManager/…" onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, userAgent: v } })); }} />
       </Group>
