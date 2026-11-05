@@ -600,7 +600,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | zvariant_derive | 5.15.1 | MIT | MIT | https://github.com/z-galaxy/zbus/ |
 | zvariant_utils | 4.2.0 | MIT | MIT | https://github.com/z-galaxy/zbus/ |
 
-## JavaScript packages (58)
+## JavaScript packages (62)
 
 In the app's user interface.
 
@@ -611,6 +611,7 @@ In the app's user interface.
 | @floating-ui/react-dom | 2.1.9 | MIT | MIT | https://floating-ui.com/docs/react-dom |
 | @floating-ui/utils | 0.2.12 | MIT | MIT | https://floating-ui.com |
 | @fontsource-variable/inter | 5.3.0 | OFL-1.1 | OFL-1.1 | https://fontsource.org/fonts/inter |
+| @radix-ui/number | 1.1.3 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/primitive | 1.2.0 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-alert-dialog | 1.2.1 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-arrow | 1.1.17 | MIT | MIT | https://radix-ui.com/primitives |
@@ -631,7 +632,9 @@ In the app's user interface.
 | @radix-ui/react-presence | 1.1.11 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-primitive | 2.2.0 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-roving-focus | 1.2.1 | MIT | MIT | https://radix-ui.com/primitives |
+| @radix-ui/react-select | 2.4.1 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-slot | 1.5.0 | MIT | MIT | https://radix-ui.com/primitives |
+| @radix-ui/react-tooltip | 1.4.1 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-use-callback-ref | 1.1.5 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-use-controllable-state | 1.3.0 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-use-effect-event | 0.0.5 | MIT | MIT | https://radix-ui.com/primitives |
@@ -639,6 +642,7 @@ In the app's user interface.
 | @radix-ui/react-use-layout-effect | 1.1.4 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-use-rect | 1.1.4 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/react-use-size | 1.1.5 | MIT | MIT | https://radix-ui.com/primitives |
+| @radix-ui/react-visually-hidden | 1.2.13 | MIT | MIT | https://radix-ui.com/primitives |
 | @radix-ui/rect | 1.1.3 | MIT | MIT | https://radix-ui.com/primitives |
 | @tanstack/query-core | 5.104.2 | MIT | MIT | https://tanstack.com/query |
 | @tanstack/react-query | 5.104.2 | MIT | MIT | https://tanstack.com/query |
@@ -796,7 +800,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 ### 3. MIT
 
-Used by: @radix-ui/primitive 1.2.0, @radix-ui/react-alert-dialog 1.2.1, @radix-ui/react-arrow 1.1.17, @radix-ui/react-collection 1.2.0, @radix-ui/react-compose-refs 1.1.5, @radix-ui/react-context 1.3.0, @radix-ui/react-context-menu 2.4.1, @radix-ui/react-dialog 1.3.1, @radix-ui/react-direction 1.2.0, @radix-ui/react-dismissable-layer 1.2.1, @radix-ui/react-dropdown-menu 2.2.1, @radix-ui/react-focus-guards 1.2.0, @radix-ui/react-focus-scope 1.3.1, @radix-ui/react-id 1.1.4, @radix-ui/react-menu 2.2.1, @radix-ui/react-popper 1.4.0, @radix-ui/react-portal 1.2.0, @radix-ui/react-presence 1.1.11, @radix-ui/react-primitive 2.2.0, @radix-ui/react-roving-focus 1.2.1, @radix-ui/react-slot 1.5.0, @radix-ui/react-use-callback-ref 1.1.5, @radix-ui/react-use-controllable-state 1.3.0, @radix-ui/react-use-effect-event 0.0.5, @radix-ui/react-use-is-hydrated 0.1.3, @radix-ui/react-use-layout-effect 1.1.4, @radix-ui/react-use-rect 1.1.4, @radix-ui/react-use-size 1.1.5, @radix-ui/rect 1.1.3.
+Used by: @radix-ui/number 1.1.3, @radix-ui/primitive 1.2.0, @radix-ui/react-alert-dialog 1.2.1, @radix-ui/react-arrow 1.1.17, @radix-ui/react-collection 1.2.0, @radix-ui/react-compose-refs 1.1.5, @radix-ui/react-context 1.3.0, @radix-ui/react-context-menu 2.4.1, @radix-ui/react-dialog 1.3.1, @radix-ui/react-direction 1.2.0, @radix-ui/react-dismissable-layer 1.2.1, @radix-ui/react-dropdown-menu 2.2.1, @radix-ui/react-focus-guards 1.2.0, @radix-ui/react-focus-scope 1.3.1, @radix-ui/react-id 1.1.4, @radix-ui/react-menu 2.2.1, @radix-ui/react-popper 1.4.0, @radix-ui/react-portal 1.2.0, @radix-ui/react-presence 1.1.11, @radix-ui/react-primitive 2.2.0, @radix-ui/react-roving-focus 1.2.1, @radix-ui/react-select 2.4.1, @radix-ui/react-slot 1.5.0, @radix-ui/react-tooltip 1.4.1, @radix-ui/react-use-callback-ref 1.1.5, @radix-ui/react-use-controllable-state 1.3.0, @radix-ui/react-use-effect-event 0.0.5, @radix-ui/react-use-is-hydrated 0.1.3, @radix-ui/react-use-layout-effect 1.1.4, @radix-ui/react-use-rect 1.1.4, @radix-ui/react-use-size 1.1.5, @radix-ui/react-visually-hidden 1.2.13, @radix-ui/rect 1.1.3.
 
 ````text
 MIT License
