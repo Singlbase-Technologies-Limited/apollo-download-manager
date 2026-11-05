@@ -164,8 +164,12 @@ fn reason(limit: ConnectionLimit) -> &'static str {
     match limit {
         ConnectionLimit::PerHostCap => "the performance profile allows no more to one server",
         ConnectionLimit::SharedBudget => "other downloads are sharing the connections",
-        ConnectionLimit::ServerThrottling => "the server asked Apollo Download Manager to slow down",
-        ConnectionLimit::RampingUp => "Apollo Download Manager is still finding how many connections help",
+        ConnectionLimit::ServerThrottling => {
+            "the server asked Apollo Download Manager to slow down"
+        }
+        ConnectionLimit::RampingUp => {
+            "Apollo Download Manager is still finding how many connections help"
+        }
         ConnectionLimit::NoGain => "more connections stopped making it faster",
         ConnectionLimit::FileSize => "the rest of the file is too small to split further",
         ConnectionLimit::NoRanges => "the server sends the file in one piece, without byte ranges",

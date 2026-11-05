@@ -287,6 +287,28 @@ impl Locations {
         (value["name"].as_str() == Some(branding().app_native_host_name())).then_some(value)
     }
 
+    /// Points V2's registrations whose host no longer exists at `host`, and returns the browsers
+    /// it re-registered. An install that moved, such as the upgrade from 0.1.x to a new install
+    /// folder (#347), would otherwise leave the browsers starting a program that's gone. A
+    /// registration that starts another copy still there is the user's choice and stays.
+    pub fn repair_moved_host(&self, host: &Path) -> Result<Vec<Browser>, ErrorCode> {
+        let mut repaired = Vec::new();
+        for registration in self.status(Some(host)) {
+            if !registration.registered || registration.host_matches {
+                continue;
+            }
+            let gone = self
+                .manifest(registration.browser)
+                .and_then(|m| m["path"].as_str().map(PathBuf::from))
+                .is_some_and(|old| !old.is_file());
+            if gone {
+                self.register(registration.browser, host)?;
+                repaired.push(registration.browser);
+            }
+        }
+        Ok(repaired)
+    }
+
     /// Whether the host is registered with each browser, and whether as `host`.
     pub fn status(&self, host: Option<&Path>) -> Vec<Registration> {
         Browser::ALL
@@ -641,6 +663,45 @@ mod tests {
         f.locations.unregister(Browser::Firefox).unwrap();
         assert_eq!(std::fs::read(&path).unwrap(), br#"{"name":"someone.else"}"#);
         assert!(!f.locations.status(None)[4].registered);
+    }
+
+    /// Upgrading from 0.1.x moves the install folder (#347): a registration whose host no longer
+    /// exists is pointed at this host, and one that starts another copy still there is left alone.
+    #[test]
+    fn a_registration_whose_host_is_gone_is_pointed_at_this_host() {
+        let f = Fixture::new("repair");
+        let old_dir = f.dir.join("old-install");
+        std::fs::create_dir_all(&old_dir).unwrap();
+        let old = old_dir.join("velocity-native-host-v2");
+        std::fs::write(&old, b"old host").unwrap();
+        f.locations.register(Browser::Chrome, &old).unwrap();
+        f.locations.register(Browser::Firefox, &old).unwrap();
+        std::fs::remove_dir_all(&old_dir).unwrap();
+        let other = f.dir.join("other-host");
+        std::fs::write(&other, b"another copy").unwrap();
+        f.locations.register(Browser::Edge, &other).unwrap();
+
+        assert_eq!(
+            f.locations.repair_moved_host(&f.host),
+            Ok(vec![Browser::Chrome, Browser::Firefox])
+        );
+        let status = f.locations.status(Some(&f.host));
+        let of = |b: Browser| status.iter().find(|r| r.browser == b).unwrap().clone();
+        assert!(of(Browser::Chrome).host_matches && of(Browser::Firefox).host_matches);
+        assert!(of(Browser::Edge).registered && !of(Browser::Edge).host_matches);
+        // Nothing is registered that wasn't before.
+        assert!(!of(Browser::Chromium).registered && !of(Browser::Brave).registered);
+        assert_eq!(f.locations.repair_moved_host(&f.host), Ok(vec![]));
+    }
+
+    #[test]
+    fn repairing_never_touches_v1s_registration() {
+        let f = Fixture::new("repair-v1");
+        let v1: Vec<_> = Browser::ALL.iter().map(|&b| (b, f.install_v1(b))).collect();
+        assert_eq!(f.locations.repair_moved_host(&f.host), Ok(vec![]));
+        for (browser, (path, body)) in v1 {
+            assert_eq!(std::fs::read(&path).unwrap(), body, "{browser:?}");
+        }
     }
 
     #[cfg(not(windows))]

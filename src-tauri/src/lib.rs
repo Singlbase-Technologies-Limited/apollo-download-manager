@@ -24,7 +24,10 @@ pub fn run() {
     // The app's log, kept in memory and redacted (#28).
     let log = velocity_core::logs::AppLog::new();
     diagnostics::install_log(&log);
-    tracing::info!("Apollo Download Manager {} starting", velocity_core::app_info().version);
+    tracing::info!(
+        "Apollo Download Manager {} starting",
+        velocity_core::app_info().version
+    );
     tauri::Builder::default()
         // Registered first, as the plugin requires. It is keyed on the app identifier, so a
         // second launch of V2 focuses this window, and never interferes with V1 (ADR-0003).
@@ -300,9 +303,41 @@ mod tests {
             );
             assert!(hooks.contains(&key), "{key}");
         }
-        assert_eq!(hooks.matches("DeleteRegKey").count(), 5);
+        let uninstall = hooks
+            .split("!macro NSIS_HOOK_POSTUNINSTALL")
+            .nth(1)
+            .expect("the uninstall hook");
+        assert_eq!(uninstall.matches("DeleteRegKey").count(), 5);
         assert!(!hooks.contains(&format!(r#"\{V1_NATIVE_HOST}""#)));
         // Not on an upgrade, which runs the old uninstaller with /UPDATE.
         assert!(hooks.contains("${If} $UpdateMode <> 1"));
+    }
+
+    /// Installing over 0.1.x, named "Velocity Download Manager V2" (ADR-0016), runs that install's
+    /// uninstaller as an update, so one install and one Apps & features entry remain and the data
+    /// and browser keys stay (ADR-0018, #347). V1's install, "Velocity Download Manager", is never
+    /// its target.
+    #[test]
+    fn the_installer_replaces_the_0_1_install_and_never_v1s() {
+        let hooks = include_str!("../windows/installer-hooks.nsh");
+        let old = "Velocity Download Manager V2";
+        assert_ne!(branding().release_product_name, old);
+        assert!(hooks.contains(&format!(r#"!define OLD_PRODUCTNAME "{old}""#)));
+        assert!(hooks.contains(
+            r#"!define OLD_UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${OLD_PRODUCTNAME}""#
+        ));
+        let preinstall = hooks
+            .split("!macro NSIS_HOOK_PREINSTALL")
+            .nth(1)
+            .and_then(|rest| rest.split("!macroend").next())
+            .expect("the install hook");
+        // As an update, silently and waiting for it; only when it succeeded is anything else removed.
+        assert!(preinstall.contains(r#"ExecWait '"$R0\uninstall.exe" /S /UPDATE _?=$R0' $R2"#));
+        assert!(preinstall.contains("${If} $R2 = 0"));
+        // The old shortcuts go only when they point into the old install.
+        assert!(preinstall.contains(r#""$R0\${MAINBINARYNAME}.exe""#));
+        // It deletes no browser key: the app re-points them on its next start.
+        assert!(!preinstall.contains("NativeMessagingHosts"));
+        assert!(!hooks.contains(r#"Uninstall\Velocity Download Manager""#));
     }
 }
