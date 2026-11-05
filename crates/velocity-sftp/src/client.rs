@@ -326,7 +326,7 @@ async fn log_in(
 ) -> Result<(), FetchError> {
     let Some((user, password)) = &options.login else {
         return Err(failure(
-            CurlFailure::AccessDenied,
+            CurlFailure::LoginDenied,
             "an SFTP login needs a user name",
         ));
     };
@@ -334,8 +334,9 @@ async fn log_in(
         Some(key_file) => {
             let key =
                 load_secret_key(&key_file.path, key_file.passphrase.as_deref()).map_err(|e| {
+                    // A wrong passphrase, or another key: the login window asks again (#249).
                     failure(
-                        CurlFailure::AccessDenied,
+                        CurlFailure::LoginDenied,
                         format!("the private key couldn't be opened: {e}"),
                     )
                 })?;
@@ -353,7 +354,7 @@ async fn log_in(
     match result.map_err(|e| russh_failure(&e))? {
         AuthResult::Success => Ok(()),
         AuthResult::Failure { .. } => Err(failure(
-            CurlFailure::AccessDenied,
+            CurlFailure::LoginDenied,
             "the server refused the login",
         )),
     }

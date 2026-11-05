@@ -360,7 +360,11 @@ pub enum CurlFailure {
     Protocol,
     /// The server has no such file (FTP's `550`, #51).
     NotFound,
-    /// The server refused the login, or access to the file (FTP, #51).
+    /// The server refused the login: FTP's `530` (#51), or SFTP's authentication (#53). A new
+    /// user name, password or key may help, so the app asks for one (#249).
+    LoginDenied,
+    /// The login worked, or none was needed, but this user may not read the file: FTP's refused
+    /// access, SFTP's permission denied. A new password won't help.
     AccessDenied,
     /// Encryption was required, and the server can't encrypt the connection (FTP's `AUTH TLS`,
     /// #51). Nothing was sent in clear after the greeting.
@@ -492,7 +496,9 @@ impl CurlFailure {
             CurlFailure::Refused
         } else if e.code() == curl_sys::CURLE_REMOTE_FILE_NOT_FOUND {
             CurlFailure::NotFound
-        } else if e.is_login_denied() || e.is_remote_access_denied() {
+        } else if e.is_login_denied() {
+            CurlFailure::LoginDenied
+        } else if e.is_remote_access_denied() {
             CurlFailure::AccessDenied
         } else if e.is_use_ssl_failed() {
             CurlFailure::EncryptionRefused
@@ -1754,7 +1760,8 @@ mod tests {
             ),
             (curl_sys::CURLE_BAD_CONTENT_ENCODING, CurlFailure::Protocol),
             (curl_sys::CURLE_REMOTE_FILE_NOT_FOUND, CurlFailure::NotFound),
-            (curl_sys::CURLE_LOGIN_DENIED, CurlFailure::AccessDenied),
+            // #249: a refused login opens the login window; a refused file doesn't.
+            (curl_sys::CURLE_LOGIN_DENIED, CurlFailure::LoginDenied),
             (
                 curl_sys::CURLE_REMOTE_ACCESS_DENIED,
                 CurlFailure::AccessDenied,

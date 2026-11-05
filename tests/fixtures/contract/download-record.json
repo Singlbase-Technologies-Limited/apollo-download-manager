@@ -10,6 +10,7 @@
     "detail": null,
     "hostKey": null,
     "httpStatus": 503,
+    "loginRequired": false,
     "message": "Service unavailable",
     "noNetwork": false,
     "retryable": true

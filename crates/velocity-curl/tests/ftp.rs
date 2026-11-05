@@ -313,7 +313,7 @@ fn a_refused_login_fails_as_access_denied() {
             login("alice", "wrong"),
         ),
     );
-    assert_eq!(failure(&o.done), CurlFailure::AccessDenied, "{:?}", o.done);
+    assert_eq!(failure(&o.done), CurlFailure::LoginDenied, "{:?}", o.done);
 }
 
 #[test]

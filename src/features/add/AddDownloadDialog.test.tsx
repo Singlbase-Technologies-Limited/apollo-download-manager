@@ -181,7 +181,7 @@ describe('the Add download dialog', () => {
         { source: request.links[0] ?? '', outcome: { kind: 'failed', code: 'UNSUPPORTED_SCHEME' } },
         {
           source: request.links[1] ?? '',
-          outcome: { kind: 'notFetched', error: { class: 'permanent', httpStatus: 404, message: 'Not found', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null } },
+          outcome: { kind: 'notFetched', error: { class: 'permanent', httpStatus: 404, message: 'Not found', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false } },
         },
       ],
     });
@@ -626,7 +626,7 @@ describe('the SFTP host key', () => {
         retryable: false,
         hostKey: { host: 'files.example', port: 2222, fingerprint: 'SHA256:abc123', pinned },
         confirm: null,
-        noNetwork: false, detail: null,
+        noNetwork: false, detail: null, loginRequired: false,
       },
     });
 

@@ -2057,6 +2057,48 @@ mod retry {
     }
 
     #[test]
+    fn after_a_refused_login_the_download_takes_a_new_one_and_retries_with_it() {
+        // #249: the window asks for a login when the server refused one, and retries with it.
+        let (mut m, control, id) = setup();
+        control.fail(
+            TransferId(1),
+            TransferError::new(FailureClass::Permanent, Some(401), "Login refused.")
+                .with_login_required(),
+        );
+        m.pump(T0 + 1);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Failed);
+        let login = Credentials {
+            user_name: "user".to_owned(),
+            password: "new-secret".into(),
+        };
+        m.set_login(
+            &id,
+            SensitiveOptions {
+                credentials: Some(login.clone()),
+                ..SensitiveOptions::default()
+            },
+        )
+        .unwrap();
+        m.retry(&id).unwrap();
+        assert_eq!(control.spec(TransferId(2)).credentials, Some(login));
+    }
+
+    #[test]
+    fn a_failure_that_is_not_a_refused_login_takes_no_new_login() {
+        let (mut m, control, id) = setup();
+        control.fail(TransferId(1), not_found());
+        m.pump(T0 + 1);
+        let given = SensitiveOptions {
+            credentials: Some(Credentials {
+                user_name: "user".to_owned(),
+                password: "secret".into(),
+            }),
+            ..SensitiveOptions::default()
+        };
+        assert_eq!(m.set_login(&id, given), Err(ErrorCode::InvalidState));
+    }
+
+    #[test]
     fn a_cancelled_download_starts_over() {
         let (mut m, control, id) = setup();
         control.progress(TransferId(1), 2048, Some(4096));

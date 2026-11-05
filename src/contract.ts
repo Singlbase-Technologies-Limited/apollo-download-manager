@@ -62,6 +62,8 @@ export const TransferErrorSchema = z.strictObject({
   noNetwork: z.boolean(),
   /** The technical text behind `message`, shown only behind "Technical details" (#252). */
   detail: z.string().nullable(),
+  /** The server refused the login: the window asks for another (#249). */
+  loginRequired: z.boolean(),
 });
 export type TransferError = z.infer<typeof TransferErrorSchema>;
 

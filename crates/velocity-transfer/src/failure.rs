@@ -64,7 +64,13 @@ pub(crate) fn status_failure(status: u16) -> Option<TransferError> {
         ),
         _ => return None,
     };
-    Some(TransferError::new(class, Some(status), &message))
+    let error = TransferError::new(class, Some(status), &message);
+    // #249: the app asks for a login and retries with it. A proxy's 407 is in Settings, Proxy.
+    Some(if status == 401 {
+        error.with_login_required()
+    } else {
+        error
+    })
 }
 
 /// [`status_failure`] for an answer after a download's first: a `403` there means a signed link
@@ -161,7 +167,7 @@ pub(crate) fn fetch_failure(e: FetchError) -> TransferError {
         } => {
             // #252: plain words for the user; libcurl's code and words behind them.
             let (class, words) = curl_failure(kind);
-            no_network(
+            marked(
                 kind,
                 TransferError::new(class, None, words)
                     .with_detail(format!("libcurl error {code}: {message}")),
@@ -173,7 +179,7 @@ pub(crate) fn fetch_failure(e: FetchError) -> TransferError {
         }
         FetchError::Sftp { kind, message } => {
             let (class, words) = curl_failure(kind);
-            no_network(
+            marked(
                 kind,
                 TransferError::new(class, None, words).with_detail(format!("SFTP: {message}")),
             )
@@ -231,15 +237,18 @@ fn host_key_failure(problem: HostKeyProblem) -> TransferError {
     })
 }
 
-/// `error`, marked as made by having no network when no connection could be made (#318): the
-/// name didn't resolve, or the connection was refused or timed out. A connection cut after it
-/// was made isn't: the engine's own retries ride that out (#317).
-fn no_network(kind: CurlFailure, error: TransferError) -> TransferError {
+/// `error`, marked by what its kind means for the app. Made by having no network when no
+/// connection could be made (#318): the name didn't resolve, or the connection was refused or
+/// timed out; a connection cut after it was made isn't, as the engine's own retries ride that out
+/// (#317). A refused login, when the server refused it (#249).
+fn marked(kind: CurlFailure, error: TransferError) -> TransferError {
     match kind {
         CurlFailure::Resolve
         | CurlFailure::Connect
         | CurlFailure::NoNetwork
         | CurlFailure::Timeout => error.with_no_network(),
+        // The server refused the login: the app asks for another (#249).
+        CurlFailure::LoginDenied => error.with_login_required(),
         _ => error,
     }
 }
@@ -297,9 +306,13 @@ fn curl_failure(kind: CurlFailure) -> (FailureClass, &'static str) {
         ),
         CurlFailure::Protocol => (Permanent, "The server sent an unexpected response."),
         CurlFailure::NotFound => (Permanent, "The file wasn't found on the server."),
+        CurlFailure::LoginDenied => (
+            Permanent,
+            "The server refused the login. Check the user name and password.",
+        ),
         CurlFailure::AccessDenied => (
             Permanent,
-            "The server refused the login, or access to the file.",
+            "The server doesn't let this user read the file.",
         ),
         CurlFailure::EncryptionRefused => (
             Permanent,
@@ -515,9 +528,14 @@ mod tests {
                 "wasn't found",
             ),
             (
-                CurlFailure::AccessDenied,
+                CurlFailure::LoginDenied,
                 FailureClass::Permanent,
                 "refused the login",
+            ),
+            (
+                CurlFailure::AccessDenied,
+                FailureClass::Permanent,
+                "read the file",
             ),
             (
                 CurlFailure::EncryptionRefused,
@@ -537,6 +555,37 @@ mod tests {
                 "{kind:?}"
             );
         }
+    }
+
+    #[test]
+    fn only_a_refused_login_asks_for_another() {
+        // #249: HTTP's 401, FTP's and SFTP's refused login ask for a new login. A file this user
+        // may not read doesn't, and the proxy's login is in Settings.
+        assert!(status_failure(401).unwrap().login_required);
+        assert!(curl(CurlFailure::LoginDenied).login_required);
+        let sftp = fetch_failure(FetchError::Sftp {
+            kind: CurlFailure::LoginDenied,
+            message: "the server refused the login".to_owned(),
+        });
+        assert!(sftp.login_required);
+        assert!(
+            sftp.message.contains("refused the login"),
+            "{}",
+            sftp.message
+        );
+        for e in [
+            status_failure(403).unwrap(),
+            status_failure(404).unwrap(),
+            status_failure(407).unwrap(),
+            curl(CurlFailure::AccessDenied),
+            curl(CurlFailure::ProxyRefused),
+        ] {
+            assert!(!e.login_required, "{}", e.message);
+        }
+        assert!(
+            !curl(CurlFailure::AccessDenied).message.contains("login"),
+            "a file refused to a working login is about the file"
+        );
     }
 
     #[test]

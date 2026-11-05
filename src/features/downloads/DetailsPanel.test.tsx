@@ -45,7 +45,7 @@ const broken = makeRecord({
   fileName: 'broken.iso',
   status: 'failed',
   createdAtMs: 3,
-  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null },
+  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
 });
 const done = makeRecord({ id: 'd', fileName: 'setup.exe', status: 'completed', createdAtMs: 4, completedAtMs: 5, verification: 'notVerified' });
 const album = makeRecord({
@@ -105,7 +105,7 @@ describe('the details panel (V1)', () => {
       fileName: 'test-50mb.bin',
       status: 'failed',
       createdAtMs: 7,
-      error: { class: 'permanent', httpStatus: null, message: `The server's identity isn't confirmed yet. Check that its host key fingerprint is ${fingerprint}, then trust it to continue.`, retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null },
+      error: { class: 'permanent', httpStatus: null, message: `The server's identity isn't confirmed yet. Check that its host key fingerprint is ${fingerprint}, then trust it to continue.`, retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
     });
     installFakeBackend({ snapshot: withDownloads([host]) });
     const user = userEvent.setup();
@@ -141,7 +141,7 @@ describe('the details panel (V1)', () => {
       fileName: 'test-50mb.bin',
       status: 'failed',
       createdAtMs: 7,
-      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null, noNetwork: false, detail: null },
+      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
     });
     installFakeBackend({ snapshot: withDownloads([failed]) });
     const user = userEvent.setup();
@@ -167,6 +167,7 @@ describe('the details panel (V1)', () => {
       confirm: null,
       noNetwork: false,
       detail: 'libcurl error 60: SSL certificate problem: certificate has expired',
+      loginRequired: false,
     },
   });
 

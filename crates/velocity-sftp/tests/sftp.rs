@@ -248,27 +248,28 @@ fn an_encrypted_key_logs_in_with_its_passphrase_and_not_without() {
     );
     assert_eq!(
         kind(&wrong.done),
-        CurlFailure::AccessDenied,
+        CurlFailure::LoginDenied,
         "{:?}",
         wrong.done
     );
 }
 
 #[test]
-fn a_refused_login_fails_as_access_denied() {
+fn a_refused_login_fails_as_login_denied() {
     let server = server_or_skip!(vec![("f.bin".into(), vec![1])], HostKey::Ed25519);
     let hosts = Hosts::new("refused");
     let sftp = trusting(&server, &hosts);
     let mut options = with_key(&server);
     options.login = Some(("velocity-no-such-user".to_owned(), String::new()));
     let o = fetch(&sftp, FetchRequest::get(server.url("f.bin")), options);
-    assert_eq!(kind(&o.done), CurlFailure::AccessDenied, "{:?}", o.done);
+    // #249: a refused login asks for another; a refused file (permission denied) doesn't.
+    assert_eq!(kind(&o.done), CurlFailure::LoginDenied, "{:?}", o.done);
     let no_user = fetch(
         &sftp,
         FetchRequest::get(server.url("f.bin")),
         RequestOptions::default(),
     );
-    assert_eq!(kind(&no_user.done), CurlFailure::AccessDenied);
+    assert_eq!(kind(&no_user.done), CurlFailure::LoginDenied);
 }
 
 #[test]
@@ -355,7 +356,7 @@ fn a_password_login_works_where_ci_provides_a_server() {
         ..options
     };
     let refused = fetch(&sftp, FetchRequest::get(server.url()), wrong);
-    assert_eq!(kind(&refused.done), CurlFailure::AccessDenied);
+    assert_eq!(kind(&refused.done), CurlFailure::LoginDenied);
 }
 
 mod sha2_check {

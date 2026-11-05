@@ -117,6 +117,12 @@ pub struct TransferError {
     /// errors stored before it existed.
     #[serde(default)]
     pub detail: Option<String>,
+    /// The server refused the login (#249): HTTP's `401`, FTP's or SFTP's refused login. The app
+    /// then asks the user for another user name, password or key, and retries with it. A file the
+    /// user may not read isn't one, nor is a proxy's login (Settings, Proxy). False otherwise;
+    /// absent in errors stored before it existed.
+    #[serde(default)]
+    pub login_required: bool,
 }
 
 /// What a download stopped at, for the user to confirm (#67).
@@ -174,7 +180,14 @@ impl TransferError {
             confirm: None,
             no_network: false,
             detail: None,
+            login_required: false,
         }
+    }
+
+    /// The same error, marked as a refused login (#249).
+    pub fn with_login_required(mut self) -> Self {
+        self.login_required = true;
+        self
     }
 
     /// The same error, with the technical text behind its plain message (#252).
@@ -970,7 +983,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             json,
-            r#"{"class":"throttled","httpStatus":503,"message":"Service unavailable","retryable":true,"hostKey":null,"confirm":null,"noNetwork":false,"detail":null}"#
+            r#"{"class":"throttled","httpStatus":503,"message":"Service unavailable","retryable":true,"hostKey":null,"confirm":null,"noNetwork":false,"detail":null,"loginRequired":false}"#
         );
     }
 
@@ -1017,6 +1030,15 @@ mod tests {
         let e: TransferError = serde_json::from_str(old).unwrap();
         assert_eq!(e.message, "Not found");
         assert_eq!(e.detail, None);
+        assert!(!e.login_required);
+    }
+
+    #[test]
+    fn a_refused_login_is_marked_so_the_app_can_ask_for_another() {
+        // #249: only the engine knows the server refused the login; the window then asks again.
+        let e = TransferError::new(FailureClass::Permanent, Some(401), "Login refused.");
+        assert!(!e.login_required);
+        assert!(e.with_login_required().login_required);
     }
 
     #[test]

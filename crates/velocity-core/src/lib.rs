@@ -70,7 +70,8 @@ use serde::Serialize;
 /// [`domain::TransferError::no_network`] and [`queue::QueueSettings::restart_on_network`].
 /// Version 29 (#350) added [`domain::DownloadRecord::waits_until`],
 /// [`domain::DownloadsSnapshot::schedule`], [`manager::AddRequest::start_at`] and `set_start_at`.
-/// Version 30 (#252) added [`domain::TransferError::detail`].
+/// Version 30 (#252, #249) added [`domain::TransferError::detail`] and
+/// [`domain::TransferError::login_required`].
 pub const COMMAND_API_VERSION: u32 = 30;
 
 /// Name, version and contract version of the running application.

@@ -328,7 +328,10 @@ impl Manager {
     /// checked as when the download was added (#59), and refused whole if one isn't valid.
     pub fn set_login(&mut self, id: &str, options: SensitiveOptions) -> Result<(), ErrorCode> {
         let d = self.downloads.get_mut(id).ok_or(ErrorCode::NotFound)?;
-        if !d.needs_login {
+        // Asked for after a restart lost the login, or because the server refused it (#249).
+        let refused = d.record.status == DownloadStatus::Failed
+            && d.record.error.as_ref().is_some_and(|e| e.login_required);
+        if !d.needs_login && !refused {
             return Err(ErrorCode::InvalidState);
         }
         let job = d.direct_mut().ok_or(ErrorCode::InvalidState)?;
