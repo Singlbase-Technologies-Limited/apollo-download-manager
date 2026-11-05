@@ -1,6 +1,7 @@
 // A control for something this build may lack (#57): disabled, with the reason, when it does.
 import { useId } from 'react';
 import type { Availability } from './capabilities';
+import { CheckInput } from './components/CheckInput';
 
 /** A checkbox for something the build may lack: disabled, with the reason, when it does. */
 export function CapabilityOption(props: {
@@ -14,9 +15,8 @@ export function CapabilityOption(props: {
   const { available, reason } = props.availability;
   return (
     <div className="capability-option">
-      <input
+      <CheckInput
         id={id}
-        type="checkbox"
         checked={available && props.checked}
         disabled={!available}
         aria-describedby={reason ? reasonId : undefined}

@@ -1,5 +1,6 @@
 // The Settings screen's rows (V1's SettingRow, Switch and NumberInput), on V2's own components.
 import { useId, useState, type ReactNode } from 'react';
+import { CheckInput } from '../../components/CheckInput';
 import { Input } from '../../components/Input';
 import { Select } from '../../components/Select';
 import { TimeField } from '../../components/TimeField';
@@ -34,7 +35,7 @@ export function Toggle({ title, description, checked, disabled, onChange }: { ti
   const id = useId();
   return (
     <Row id={id} title={title} description={description}>
-      <input id={id} type="checkbox" className="size-4 accent-[var(--accent)]" checked={checked} disabled={disabled} onChange={(e) => { onChange(e.target.checked); }} />
+      <CheckInput id={id} checked={checked} disabled={disabled} onChange={(e) => { onChange(e.target.checked); }} />
     </Row>
   );
 }

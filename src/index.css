@@ -36,6 +36,9 @@
   --row-hover: #f1f5fb;
   --row-selected: #e2ecfb;
   --shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px rgb(15 23 42 / 0.05);
+  /* The checkbox's tick and dash (#348), in --accent-fg, so they keep their contrast on --accent. */
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --check-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8h7' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   color-scheme: light;
 }
 
@@ -65,6 +68,8 @@
   --row-hover: #18202c;
   --row-selected: #1b2b44;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%2306101f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --check-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8h7' stroke='%2306101f' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -171,4 +176,40 @@
   );
   background-size: 16px 16px;
   animation: velocity-stripes 1s linear infinite;
+}
+
+/* The window's one checkbox (#348 G, components/CheckInput.tsx): a native input with the app's look in both themes. */
+.check-input {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1.5px solid var(--fg-subtle);
+  border-radius: 4px;
+  background: var(--surface) center / 100% no-repeat;
+  cursor: pointer;
+  transition: background-color 0.1s, border-color 0.1s;
+}
+.check-input:checked,
+.check-input:indeterminate {
+  border-color: var(--accent);
+  background-color: var(--accent);
+}
+.check-input:checked {
+  background-image: var(--check-mark);
+}
+.check-input:indeterminate {
+  background-image: var(--check-dash);
+}
+.check-input:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.check-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { availability } from '../../capabilities';
 import { CapabilityOption } from '../../CapabilityOption';
 import { Button } from '../../components/Button';
+import { Checkbox } from '../../components/Checkbox';
 import { confirmAction } from '../../components/confirmStore';
 import { contentClass, overlayClass } from '../../components/dialogStyles';
 import { useReturnFocus } from '../../components/returnFocus';
@@ -478,10 +479,9 @@ function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
         <TimeSetting title="Stop" description="Before the start, it stops the next day; 00:00 is midnight." value={q.schedule.stopTime ?? '00:00'} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, stopTime: v } } })); }} />
         <div className="flex flex-wrap gap-3 py-2.5 text-xs">
           {DAYS.map((d, i) => (
-            <label key={d} className="flex items-center gap-1.5">
-              <input type="checkbox" checked={q.schedule.days.includes(i)} onChange={(e) => { setDay(i, e.target.checked); }} />
+            <Checkbox key={d} checked={q.schedule.days.includes(i)} onChange={(on) => { setDay(i, on); }}>
               {d}
-            </label>
+            </Checkbox>
           ))}
         </div>
       </Group>
