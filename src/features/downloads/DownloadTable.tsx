@@ -287,7 +287,7 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
                     else showDetails(d.id);
                   }}
                   className={cn(
-                    'absolute left-0 top-0 grid w-full cursor-default items-center gap-3 border-b border-border/60 px-4 text-[12.5px] text-fg-muted',
+                    'absolute left-0 top-0 grid w-full cursor-pointer items-center gap-3 border-b border-border/60 px-4 text-[12.5px] text-fg-muted',
                     selected ? 'bg-row-selected' : 'hover:bg-row-hover',
                     focus === d.id && 'shadow-[inset_2px_0_0_var(--accent)]',
                   )}
