@@ -27,6 +27,11 @@ const rowFor = async (name: string) => {
 };
 const panel = () => screen.findByRole('complementary', { name: 'Download details' });
 const heading = (p: HTMLElement) => within(p).getByRole('heading', { level: 2 }).textContent;
+/** #349: a download's own settings are changed in a dialog, from the panel's footer. */
+const openEdit = async (user: ReturnType<typeof userEvent.setup>, p: HTMLElement) => {
+  await user.click(within(p).getByRole('button', { name: 'Edit…' }));
+  return screen.findByRole('dialog', { name: 'Edit download' });
+};
 
 const progress = makeRecord().progress;
 const archive = makeRecord({
@@ -81,9 +86,12 @@ describe('the details panel (V1)', () => {
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
     const p = await panel();
-    for (const name of ['Transfer', 'Source and destination', 'Timeline', 'Options for this download']) {
+    for (const name of ['Transfer', 'Source and destination', 'Timeline']) {
       expect(within(p).getByRole('region', { name })).toBeTruthy();
     }
+    // #349: its own settings moved from an Options section to the Edit dialog.
+    expect(within(p).queryByRole('region', { name: 'Options for this download' })).toBeNull();
+    expect(within(p).getByRole('button', { name: 'Edit…' })).toBeTruthy();
     const source = within(p).getByRole('region', { name: 'Source and destination' });
     expect(within(source).getByText('Folder')).toBeTruthy();
     expect(within(source).getByText('https://example.com/a.zip')).toBeTruthy();
@@ -222,17 +230,29 @@ describe('the details panel (V1)', () => {
     expect(heading(p)).toBe('movie.mp4');
   });
 
-  it('does not carry a typed speed limit over to another download', async () => {
+  it('sends nothing on Cancel, and the next edit starts from the saved values', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken, done, album]) });
+    renderApp();
+    await user.dblClick(await rowFor('movie.mp4'));
+    let dialog = await openEdit(user, await panel());
+    const limit = within(dialog).getByLabelText<HTMLInputElement>(/Speed limit/);
+    await user.clear(limit);
+    await user.type(limit, '500');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(callsOf(state, 'set_download_speed_limit')).toHaveLength(0);
+    dialog = await openEdit(user, await panel());
+    expect(within(dialog).getByLabelText<HTMLInputElement>(/Speed limit/).value).toBe('512');
+  });
+
+  it('shows information only: no field or list to change in its sections', async () => {
     const user = userEvent.setup();
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
     const p = await panel();
-    const limit = within(p).getByLabelText<HTMLInputElement>(/Speed limit/);
-    await user.clear(limit);
-    await user.type(limit, '500');
-    await user.click(await rowFor('movie.mp4'));
-    expect(heading(p)).toBe('movie.mp4');
-    expect(within(p).getByLabelText<HTMLInputElement>(/Speed limit/).value).toBe('512');
+    for (const role of ['textbox', 'spinbutton', 'combobox'] as const) {
+      expect(within(p).queryAllByRole(role)).toEqual([]);
+    }
   });
 });
 
@@ -328,12 +348,12 @@ describe('the details panel (#61)', () => {
     const user = userEvent.setup();
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
-    const p = await panel();
-    const input = within(p).getByLabelText<HTMLInputElement>('Connections');
+    const dialog = await openEdit(user, await panel());
+    const input = within(dialog).getByLabelText<HTMLInputElement>('Connections');
     expect(input.value).toBe('8');
     await user.clear(input);
     await user.type(input, '12');
-    await user.click(within(p).getByRole('button', { name: 'Apply' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_download_connections')[0]?.args).toEqual({ id: 'a', connections: 12 }); });
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(await screen.findByText('Connections set to 12')).toBeTruthy();
@@ -343,14 +363,15 @@ describe('the details panel (#61)', () => {
     const user = userEvent.setup();
     renderApp();
     await user.dblClick(await rowFor('movie.mp4'));
-    const p = await panel();
-    const limit = within(p).getByLabelText<HTMLInputElement>(/Speed limit/);
+    const dialog = await openEdit(user, await panel());
+    const limit = within(dialog).getByLabelText<HTMLInputElement>(/Speed limit/);
     await user.clear(limit);
     await user.type(limit, '256');
-    await user.tab();
+    await chooseOption(user, within(dialog).getByLabelText('Category'), 'None');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_download_speed_limit').at(-1)?.args).toEqual({ id: 'b', kib: 256 }); });
-    await chooseOption(user, within(p).getByLabelText('Category'), 'None');
     await waitFor(() => { expect(callsOf(state, 'set_download_category')[0]?.args).toEqual({ id: 'b', categoryId: null }); });
+    expect(screen.queryByRole('dialog', { name: 'Edit download' })).toBeNull();
   });
 
   it('shows the verification state of a completed download', async () => {

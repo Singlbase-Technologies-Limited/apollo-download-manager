@@ -1,9 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUpFromLine, Radio, UploadCloud } from 'lucide-react';
+import { Radio, UploadCloud } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Button } from '../../components/Button';
 import { Checkbox } from '../../components/Checkbox';
-import { Input } from '../../components/Input';
 import type { DownloadRecord } from '../../contract';
 import { ApiError, toApiError } from '../../lib/errors';
 import { formatBytes, formatDuration, formatSpeed } from '../../lib/format';
@@ -13,7 +12,6 @@ import { FileTree } from './FileTree';
 import { sameSelection, seedingSummary, TRACKER_STATE, trackerSummary, VERSION_LABEL } from './torrentLogic';
 
 const PEERS_SHOWN = 20;
-const KIB = 1024;
 /** Its files can change while the helper still downloads it (V1's). */
 const FILES_EDITABLE: readonly DownloadRecord['status'][] = ['downloading', 'stalled', 'connecting', 'paused', 'queued'];
 /** The helper has nothing to say about a torrent in these. */
@@ -38,8 +36,7 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
   const details = useTorrentDetails(d.id);
   const live = !FINISHED.includes(d.status);
   const { trackers, peers } = useSwarm(d.id, live);
-  // Typed values belong to the torrent they were typed for, never to the next one shown.
-  const [upload, setUpload] = useState<{ id: string; kib: string } | null>(null);
+  // The file choice being changed belongs to the torrent it was made for, never to the next one shown.
   const [draft, setDraft] = useState<{ id: string; files: Set<number> } | null>(null);
   const [deleteDropped, setDeleteDropped] = useState(false);
 
@@ -50,19 +47,9 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
   const editable = FILES_EDITABLE.includes(d.status) && contents !== null;
   const shown = editable && draft?.id === d.id ? draft.files : chosen;
   const changed = draft?.id === d.id && !sameSelection(draft.files, chosen);
-  const savedKib = t ? Math.round(t.uploadLimitBps / KIB) : 0;
-  const typedKib = upload?.id === d.id ? upload.kib : String(savedKib);
   const queued = d.torrent?.seedQueued === true;
   const notRunning = trackers.error instanceof ApiError && trackers.error.code === 'INVALID_STATE';
 
-  const commitUpload = () => {
-    if (upload?.id !== d.id) return;
-    const kib = Number(upload.kib);
-    setUpload(null);
-    if (Number.isInteger(kib) && kib >= 0 && kib !== savedKib) {
-      void actions.setUploadLimit(d.id, kib).then(() => qc.invalidateQueries({ queryKey: keys.torrent(d.id) }));
-    }
-  };
   const applyFiles = async () => {
     if (draft?.id !== d.id) return;
     const ok = await actions.changeFiles(d.id, [...draft.files].sort((a, b) => a - b), deleteDropped);
@@ -101,6 +88,8 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
           <Row label="Peers">Not reported yet: the torrent helper hasn’t sent them since Apollo Download Manager started.</Row>
         )}
         {t ? <Row label="Seeding">{seedingSummary(t.seeding)}</Row> : null}
+        {/* Changed in the Edit dialog (#349). */}
+        {t ? <Row label="Upload limit">{t.uploadLimitBps > 0 ? formatSpeed(t.uploadLimitBps) : 'None'}</Row> : null}
         {queued ? <Row label="Seeding queue">Waiting for a free seeding slot: only so many torrents seed at once.</Row> : null}
       </dl>
 
@@ -145,24 +134,6 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
         </div>
       ) : null}
 
-      {live && d.status !== 'fetchingMetadata' ? (
-        <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-          <label htmlFor="details-upload-limit" className="flex items-center gap-1.5 text-fg-subtle">
-            <ArrowUpFromLine className="size-3.5" aria-hidden /> Upload limit (KiB/s, 0 for none)
-          </label>
-          <Input
-            id="details-upload-limit"
-            type="number"
-            min={0}
-            inputMode="numeric"
-            className="h-8 w-24"
-            value={typedKib}
-            onChange={(e) => { setUpload({ id: d.id, kib: e.target.value }); }}
-            onBlur={commitUpload}
-            onKeyDown={(e) => { if (e.key === 'Enter') commitUpload(); }}
-          />
-        </div>
-      ) : null}
 
       <div className="mt-3 flex flex-wrap gap-2">
         {d.status === 'seeding' ? (

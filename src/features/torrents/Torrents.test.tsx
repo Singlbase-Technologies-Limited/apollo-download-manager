@@ -260,10 +260,13 @@ describe('trackers, peers and limits in the details (V1)', () => {
     const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [torrent({ id: 'u', status: 'downloading' })] }, torrentDetails: () => details() });
     const user = userEvent.setup();
     const p = await openDetails('u');
-    const limit = await within(p).findByLabelText<HTMLInputElement>(/Upload limit/);
+    // #349: from the Edit dialog, opened from the panel's footer.
+    await user.click(within(p).getByRole('button', { name: 'Edit…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit download' });
+    const limit = await within(dialog).findByLabelText<HTMLInputElement>(/Upload limit/);
     await user.clear(limit);
     await user.type(limit, '128');
-    await user.tab();
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_torrent_upload_limit').at(-1)?.args).toEqual({ id: 'u', kib: 128 }); });
   });
 

@@ -1,27 +1,23 @@
-import { Copy, FileSearch, FolderOpen, Gauge, ListChecks, RotateCcw, X } from 'lucide-react';
+import { Copy, FileSearch, FolderOpen, ListChecks, RotateCcw, SlidersHorizontal, X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
 import { ProgressBar } from '../../components/ProgressBar';
-import { Select } from '../../components/Select';
 import { ConnectionLine } from '../../ConnectionLine';
 import { PANEL } from '../../layout/panel';
 import { cn } from '../../lib/cn';
 import type { Verification } from '../../contract';
 import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
-import { useCategories } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { TorrentSection } from '../torrents/TorrentSection';
+import { EditDownloadDialog } from './EditDownloadDialog';
 import { ErrorNotice } from './ErrorNotice';
 import type { DownloadActions } from './useDownloadActions';
 
-const NO_CATEGORY = '__none';
 /** Set by the shell from the saved width, fitted to the window. */
 const PANEL_WIDTH = { width: 'var(--details-w, 20rem)' };
-const KIB = 1024;
 
 const VERIFICATION: Record<Verification, string> = {
   verified: 'Verified: its checksum matched',
@@ -29,7 +25,6 @@ const VERIFICATION: Record<Verification, string> = {
   notVerified: 'Not verified: it resumed without a way to tell the server’s file hadn’t changed',
 };
 
-/** The hint under an error, by its class: what a retry may do, never a promise (#250). */
 /** A titled group of rows, so the panel reads as sections (V1 #45). */
 function DetailsGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -78,29 +73,15 @@ interface Props {
 export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClose }: Props) {
   const d = useDownloadsStore((s) => s.snapshot?.downloads.find((x) => x.id === id));
   const openChooseFiles = useUiStore((s) => s.openChooseFiles);
-  const { data: categories } = useCategories();
-  // A typed value belongs to the download it was typed for, never to the next one shown.
-  const [limit, setLimit] = useState<{ id: string; kib: string } | null>(null);
-  const [connections, setConnections] = useState<{ id: string; n: string } | null>(null);
+  // A download's own settings are changed in a dialog: the panel only shows them (#349).
+  const [editing, setEditing] = useState(false);
 
   if (!d) return <Shell onClose={onClose}>This download is no longer in the list.</Shell>;
 
   const torrent = d.kind === 'torrent' || d.kind === 'magnet';
-  const finished = ['completed', 'failed', 'removed', 'unknown'].includes(d.status);
   const pct = d.status === 'completed' || d.status === 'seeding' ? 100 : percentOf(d);
-  const savedKib = d.speedLimitBps === null ? 0 : Math.round(d.speedLimitBps / KIB);
-  const typedKib = limit?.id === d.id ? limit.kib : String(savedKib);
-  const typedConnections = connections?.id === d.id ? connections.n : String(d.requestedConnections ?? '');
   const can = actionsFor(d);
 
-  const commitLimit = () => {
-    if (limit?.id !== d.id) return;
-    const kib = Number(limit.kib);
-    setLimit(null);
-    if (Number.isInteger(kib) && kib >= 0 && kib !== savedKib) void actions.setSpeedLimit(d.id, kib);
-  };
-  const wanted = Number(typedConnections);
-  const connectionsChanged = Number.isInteger(wanted) && wanted >= 1 && wanted !== d.requestedConnections;
 
   return (
     <aside id="details-panel" aria-label="Download details" className={cn(PANEL, 'flex min-w-0 shrink-0 flex-col bg-surface')} style={PANEL_WIDTH}>
@@ -192,60 +173,6 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
           <Row label="Completed">{formatShortDate(d.completedAtMs)}</Row>
         </DetailsGroup>
 
-        <section className="mt-4 space-y-3 border-t border-border pt-3" aria-label="Options for this download">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">Options</h3>
-          <div className="flex items-center justify-between gap-2 text-xs">
-            <label htmlFor="details-category" className="text-fg-subtle">
-              Category
-            </label>
-            <Select
-              id="details-category"
-              value={d.categoryId ?? NO_CATEGORY}
-              className="w-40"
-              onValueChange={(v) => void actions.setCategory(d.id, v === NO_CATEGORY ? null : v)}
-              options={[{ value: NO_CATEGORY, label: 'None' }, ...(categories ?? []).map((c) => ({ value: c.id, label: c.name }))]}
-            />
-          </div>
-          {finished || d.status === 'seeding' ? null : (
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <label htmlFor="details-limit" className="flex items-center gap-1.5 text-fg-subtle">
-                <Gauge className="size-3.5" aria-hidden /> Speed limit (KiB/s, 0 for none)
-              </label>
-              <Input
-                id="details-limit"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                className="h-8 w-24"
-                value={typedKib}
-                onChange={(e) => { setLimit({ id: d.id, kib: e.target.value }); }}
-                onBlur={commitLimit}
-                onKeyDown={(e) => { if (e.key === 'Enter') commitLimit(); }}
-              />
-            </div>
-          )}
-          {torrent || finished ? null : (
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <label htmlFor="details-connections" className="text-fg-subtle">
-                Connections
-              </label>
-              <div className="flex items-center gap-1.5">
-                <Input id="details-connections" type="number" min={1} inputMode="numeric" className="h-8 w-16" value={typedConnections} onChange={(e) => { setConnections({ id: d.id, n: e.target.value }); }} />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busy || !connectionsChanged}
-                  onClick={() => {
-                    setConnections(null);
-                    void actions.setConnections(d.id, wanted);
-                  }}
-                >
-                  Apply
-                </Button>
-              </div>
-            </div>
-          )}
-        </section>
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-border px-4 py-3">
@@ -260,7 +187,11 @@ export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClo
         <Button size="sm" variant="ghost" onClick={() => void actions.copyLink(d)}>
           <Copy /> Copy link
         </Button>
+        <Button size="sm" variant="secondary" onClick={() => { setEditing(true); }}>
+          <SlidersHorizontal /> Edit…
+        </Button>
       </div>
+      {editing ? <EditDownloadDialog key={d.id} download={d} actions={actions} onClose={() => { setEditing(false); }} /> : null}
     </aside>
   );
 }
