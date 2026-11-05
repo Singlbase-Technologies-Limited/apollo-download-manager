@@ -1,6 +1,6 @@
 # Settings
 
-Open **Settings** at the bottom of the icon bar on the window's left, or press **Ctrl+,** (**⌘,** on macOS). It opens in a window over the app, so your downloads stay in view behind it; **Escape** or the close button closes it.
+Open **Settings** at the bottom of the icon bar on the window's left, or press **Ctrl+,** (**⌘,** on macOS). It opens in a window over the app, so your downloads stay in view behind it; **Escape** or the close button closes it. **Search settings** at the top finds a setting by its name and opens the section it's in.
 
 - **Every change is saved and applies at once;** no setting needs a restart. The screen says "Saving…", then "Saved", or why a value was refused, and shows what is saved.
 - **Numbers** are saved when you leave the field or press Enter, and brought within their limits.

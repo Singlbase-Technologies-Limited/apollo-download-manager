@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { RotateCcw, X } from 'lucide-react';
+import { RotateCcw, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { availability } from '../../capabilities';
@@ -21,6 +21,7 @@ import { SeedingFields } from '../torrents/SeedingFields';
 import { portMapText } from '../torrents/torrentLogic';
 import { Input } from '../../components/Input';
 import { Choice, Group, Num, Text, TimeSetting, Toggle } from './fields';
+import { searchSettings } from './settingsIndex';
 import { useDownloadsStore } from '../../stores/downloads';
 import { formatWhen, formatWindow } from '../../lib/format';
 
@@ -61,6 +62,8 @@ export function SettingsView() {
   const qc = useQueryClient();
   const settings = useSettings();
   const [state, setState] = useState<{ kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; message: string }>({ kind: 'idle' });
+  const [query, setQuery] = useState('');
+  const found = searchSettings(query);
 
   const save = async (send: () => Promise<Settings>) => {
     setState({ kind: 'saving' });
@@ -107,6 +110,10 @@ export function SettingsView() {
           </Button>
         </DialogPrimitive.Close>
       </div>
+      <div className="relative shrink-0 border-b border-border px-5 py-2.5">
+        <Search className="pointer-events-none absolute left-7.5 top-1/2 size-3.5 -translate-y-1/2 text-fg-subtle" aria-hidden />
+        <Input type="search" aria-label="Search settings" placeholder="Search settings" value={query} onChange={(e) => { setQuery(e.target.value); }} className="pl-8" />
+      </div>
     <div className="flex min-h-0 flex-1">
       <nav aria-label="Settings sections" className="w-52 shrink-0 overflow-y-auto border-r border-border bg-surface-2 p-2">
         {SECTIONS.map((s) => (
@@ -131,7 +138,30 @@ export function SettingsView() {
           {state.kind === 'error' ? (
             <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{`Not saved: ${state.message}`}</p>
           ) : null}
-          {section === 'about' ? (
+          {query.trim() !== '' ? (
+            // #364: the settings whose name matches, by section; choosing one opens its section.
+            found.length === 0 ? (
+              <p className="text-[13px] text-fg-muted">{`No setting matches “${query.trim()}”.`}</p>
+            ) : (
+              <ul aria-label="Settings found" className="space-y-1">
+                {found.map((r) => (
+                  <li key={`${r.section}/${r.title}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSection(r.section);
+                        setQuery('');
+                      }}
+                      className="flex w-full cursor-pointer flex-col items-start rounded-md px-3 py-2 text-left hover:bg-accent-soft"
+                    >
+                      <span className="text-[13px] font-medium text-fg">{r.title}</span>
+                      <span className="text-xs text-fg-subtle">{SECTIONS.find((x) => x.id === r.section)?.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : section === 'about' ? (
             <DiagnosticsPanel />
           ) : settings.isPending ? (
             <div className="flex items-center gap-2 text-fg-muted">

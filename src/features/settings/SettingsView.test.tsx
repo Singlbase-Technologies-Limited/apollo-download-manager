@@ -6,7 +6,8 @@ import type { Capabilities, Settings } from '../../contract';
 import { DEFAULT_LAYOUT } from '../../layout/layoutLogic';
 import { createQueryClient } from '../../lib/queries';
 import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
-import { useUiStore } from '../../stores/ui';
+import { useUiStore, type SettingsSection } from '../../stores/ui';
+import { SETTINGS_INDEX } from './settingsIndex';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { chooseOption } from '../../test/select';
 
@@ -348,5 +349,37 @@ describe('the Proxy section (#192)', () => {
     expect((remember as HTMLInputElement).checked).toBe(false);
     await user.click(remember);
     await waitFor(() => { expect(state.appSettings.proxy.rememberPassword).toBe(true); });
+  });
+});
+
+// #364: the search in Settings finds a setting by its name and opens its section.
+describe('searching Settings', () => {
+  it('finds a setting by its name and opens the section it is in', async () => {
+    installFakeBackend();
+    const user = await openSettings();
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'Search settings' }), 'listening port');
+    await user.click(await within(dialog).findByRole('button', { name: /Listening port \(0 for any\)/ }));
+    expect(within(dialog).getByRole('button', { name: 'BitTorrent' }).getAttribute('aria-current')).toBe('page');
+    expect(within(dialog).getByRole<HTMLInputElement>('searchbox', { name: 'Search settings' }).value).toBe('');
+    expect(await within(dialog).findByText('Listening port (0 for any)')).toBeTruthy();
+  });
+
+  it('says so when no setting matches', async () => {
+    installFakeBackend();
+    const user = await openSettings();
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'Search settings' }), 'zzz');
+    expect(await within(dialog).findByText('No setting matches “zzz”.')).toBeTruthy();
+  });
+
+  it.each(Object.entries(SETTINGS_INDEX))('finds only settings that the %s section really shows', async (section, titles) => {
+    installFakeBackend();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    act(() => { useUiStore.getState().openSettings(section as SettingsSection); });
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await waitFor(() => { expect(within(dialog).queryByText('Loading settings…')).toBeNull(); });
+    for (const title of titles) expect(await within(dialog).findAllByText(title)).not.toHaveLength(0);
   });
 });
