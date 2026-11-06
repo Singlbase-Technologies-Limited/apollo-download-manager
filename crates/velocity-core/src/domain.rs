@@ -470,6 +470,19 @@ pub struct BatchFailure {
     pub code: ErrorCode,
 }
 
+/// What changing a download's category did with its file (#366). The category changes whatever
+/// happens to the file.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase", deny_unknown_fields)]
+pub enum CategoryMove {
+    /// The file is in the new category's folder now, at `path`.
+    Moved { path: String },
+    /// Nothing to move: the file is already in that folder, or the download has none yet.
+    Unchanged,
+    /// The file couldn't be moved and is still at `path`; `code` says why.
+    Stayed { path: String, code: ErrorCode },
+}
+
 /// A file a removal with files left in place, and why (PO decision on #58).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

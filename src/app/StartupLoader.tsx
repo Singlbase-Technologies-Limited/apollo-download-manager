@@ -7,9 +7,9 @@ import { BrandLogo } from '../components/BrandLogo';
  */
 export function StartupLoader() {
   return (
-    <div role="status" aria-label="Starting Apollo Download Manager" className="flex h-full flex-col items-center justify-center gap-7">
-      <BrandLogo className="h-auto w-72 max-w-[70%]" />
-      <div className="h-[3px] w-44 overflow-hidden rounded-full bg-surface-3" aria-hidden>
+    <div role="status" aria-label="Starting Apollo Download Manager" className="flex h-full flex-col items-center justify-center gap-5">
+      <BrandLogo className="h-auto w-40 max-w-[50%]" />
+      <div className="h-[3px] w-32 overflow-hidden rounded-full bg-surface-3" aria-hidden>
         <div className="loader-bar h-full w-2/5 rounded-full bg-accent" />
       </div>
       <span className="text-xs text-fg-muted">Starting…</span>

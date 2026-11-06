@@ -66,7 +66,7 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
     <div className="flex h-full items-center justify-center overflow-y-auto bg-bg p-8">
       <div className="w-full max-w-xl rounded-2xl border border-border bg-surface p-8 shadow-panel">
         <div className="flex flex-col gap-4">
-          <BrandLogo className="h-16 w-auto self-start" />
+          <BrandLogo className="h-10 w-auto self-start" />
           <div>
             <h1 className="text-lg font-semibold">Welcome to {app.name}</h1>
             <p className="text-xs text-fg-muted">Version {app.version}</p>

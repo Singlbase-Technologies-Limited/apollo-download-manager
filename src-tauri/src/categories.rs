@@ -4,7 +4,7 @@
 use tauri::State;
 use velocity_core::category::{Category, CategoryInput};
 use velocity_core::destination::Choice;
-use velocity_core::domain::{DestinationCheck, ErrorCode};
+use velocity_core::domain::{CategoryMove, DestinationCheck, ErrorCode};
 
 use crate::downloads::{on_manager, Downloads};
 
@@ -36,13 +36,14 @@ pub async fn delete_category(downloads: State<'_, Downloads>, id: String) -> Res
     on_manager(&downloads, move |m| m.delete_category(&id)).await?
 }
 
-/// Sets or clears (`null`) a download's category. Nothing is moved.
+/// Sets or clears (`null`) a download's category, and moves its file to that category's folder
+/// (#366); the result says what happened to the file.
 #[tauri::command]
 pub async fn set_download_category(
     downloads: State<'_, Downloads>,
     id: String,
     category_id: Option<String>,
-) -> Result<(), ErrorCode> {
+) -> Result<CategoryMove, ErrorCode> {
     on_manager(&downloads, move |m| {
         m.set_download_category(&id, category_id.as_deref())
     })

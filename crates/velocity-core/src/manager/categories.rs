@@ -10,7 +10,10 @@ use crate::database::Database;
 use crate::destination::{
     existing, resolve, system_downloads, Choice, FolderSettings, OnConflict, Place, Placement,
 };
-use crate::domain::{DestinationCheck, ErrorCode};
+use crate::domain::{
+    CategoryMove, DestinationCheck, DownloadKind, DownloadRecord, DownloadStatus, ErrorCode,
+};
+use crate::file_move::{move_error, move_into};
 use crate::metalink::create_folders;
 use crate::naming::name_for_download;
 use crate::request::MAX_URL_BYTES;
@@ -48,21 +51,91 @@ impl Manager {
         Ok(())
     }
 
-    /// Sets or clears a download's category (V1's `set_download_category`). Nothing is moved.
+    /// Sets or clears a download's category (V1's `set_download_category`), and moves its file to
+    /// the folder a new download of that category would get (#366).
     pub fn set_download_category(
         &mut self,
         id: &str,
         category_id: Option<&str>,
-    ) -> Result<(), ErrorCode> {
+    ) -> Result<CategoryMove, ErrorCode> {
         let category_id = self.known_category(category_id)?;
-        let download = self.downloads.get_mut(id).ok_or(ErrorCode::NotFound)?;
-        let mut record = download.record.clone();
+        let mut record = self
+            .downloads
+            .get(id)
+            .ok_or(ErrorCode::NotFound)?
+            .record
+            .clone();
         record.category_id = category_id;
+        let moved = if record.status == DownloadStatus::Completed && single_file(record.kind) {
+            self.move_finished(&mut record)
+        } else {
+            CategoryMove::Unchanged
+        };
+        let download = self.downloads.get_mut(id).ok_or(ErrorCode::NotFound)?;
         self.database
             .update_download(&record, &download.activity.totals)
             .map_err(|e| e.code)?;
         download.record = record;
-        Ok(())
+        Ok(moved)
+    }
+
+    /// The folder a new download of `record`'s category and name would get: the category's own,
+    /// or the default folder (in the category's subfolder when that setting is on). With no
+    /// category, the default folder itself, whatever automatic categories would pick.
+    fn category_folder(&self, record: &DownloadRecord) -> Result<PathBuf, ErrorCode> {
+        let categories = self.categories()?;
+        let settings = FolderSettings {
+            auto_categorize: false,
+            ..self
+                .database
+                .section::<FolderSettings>()
+                .map_err(|e| e.code)?
+        };
+        let choice = Choice {
+            category_id: record.category_id.clone(),
+            file_name: record.file_name.clone(),
+            ..Choice::default()
+        };
+        let resolved = resolve(&choice, &settings, &categories, system_downloads())?;
+        let exists = resolved.directory.is_dir();
+        ready_folder(&resolved.directory, resolved.subfolder, exists)?;
+        Ok(resolved.directory)
+    }
+
+    /// Moves a finished download's file to its category's folder (#366), and points `record` at
+    /// it. A name taken there, by a file or another download, gives the next free one.
+    fn move_finished(&self, record: &mut DownloadRecord) -> CategoryMove {
+        let Some(name) = record.file_name.clone() else {
+            return CategoryMove::Unchanged;
+        };
+        let source = Path::new(&record.directory).join(&name);
+        let stayed = |code| CategoryMove::Stayed {
+            path: source.to_string_lossy().into_owned(),
+            code,
+        };
+        let folder = match self.category_folder(record) {
+            Ok(folder) => folder,
+            Err(code) => return stayed(code),
+        };
+        if Path::new(&record.directory) == folder {
+            return CategoryMove::Unchanged;
+        }
+        let taken = |n: &str| {
+            let found = existing(&folder, Some(n), |n| self.waiting_at(&folder, n));
+            found.file_exists || found.partial_download_exists
+        };
+        match move_into(&source, &folder, taken) {
+            Ok(moved) => {
+                record.directory = folder.to_string_lossy().into_owned();
+                record.file_name = moved
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned());
+                CategoryMove::Moved {
+                    path: moved.to_string_lossy().into_owned(),
+                }
+            }
+            Err(e) => stayed(move_error(&e)),
+        }
     }
 
     /// What adding `url` with `choice` would do, before it is added: the folder, the category,
@@ -212,6 +285,12 @@ impl Manager {
                 && Path::new(&d.record.directory) == directory
         })
     }
+}
+
+/// A download that saves one file under its own name: a torrent's or a Metalink's files are moved
+/// as a whole by their own engine.
+fn single_file(kind: DownloadKind) -> bool {
+    matches!(kind, DownloadKind::Http | DownloadKind::Ftp | DownloadKind::Sftp)
 }
 
 /// `name` in `directory` as the UI shows it, in the platform's separator (#277).

@@ -12,6 +12,7 @@ pub mod database;
 pub mod destination;
 pub mod diagnostics;
 pub mod domain;
+pub mod file_move;
 pub mod fs_safety;
 pub mod history;
 pub mod keychain;

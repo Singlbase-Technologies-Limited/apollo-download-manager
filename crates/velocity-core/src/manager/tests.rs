@@ -4574,7 +4574,8 @@ mod categories {
     use super::*;
     use crate::category::CategoryInput;
     use crate::destination::{Choice, FolderSettings, OnConflict, Placement};
-    use crate::domain::DestinationCheck;
+    use crate::domain::{CategoryMove, DestinationCheck};
+    use std::path::Path;
     use std::fs;
 
     /// A manager whose default folder is a fresh `dir`, with its database.
@@ -4640,19 +4641,103 @@ mod categories {
         fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// A finished `a.zip` of 4096 bytes in `dir`, with no category.
+    fn finished_in(m: &mut Manager, control: &FakeControl, dir: &std::path::Path) -> String {
+        let spec = TransferSpec {
+            directory: dir.to_path_buf(),
+            ..spec()
+        };
+        let id = m.add(DownloadKind::Http, spec, T0).unwrap();
+        control.progress(TransferId(1), 4096, Some(4096));
+        control.complete(TransferId(1));
+        m.pump(T0 + 1);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Completed);
+        fs::write(dir.join("a.zip"), vec![7u8; 4096]).unwrap();
+        id
+    }
+
+    fn stored_directory(db: &Database, id: &str) -> String {
+        db.downloads()
+            .unwrap()
+            .into_iter()
+            .find(|d| d.id == id)
+            .expect("stored")
+            .directory
+    }
+
     #[test]
-    fn changing_a_downloads_category_moves_nothing() {
-        // V1's `set_download_category`; moving files is a non-goal of #31.
-        let (mut m, _control, db, dir) = in_folder("set");
-        let id = m.add(DownloadKind::Http, spec(), T0).unwrap();
-        m.set_download_category(&id, Some("documents")).unwrap();
+    fn a_finished_download_moves_to_its_new_categorys_folder() {
+        let (mut m, control, db, dir) = in_folder("move");
+        let id = finished_in(&mut m, &control, &dir);
+        let documents = dir.join("Documents");
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        let path = documents.join("a.zip");
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: path.to_string_lossy().into_owned()
+            }
+        );
+        assert_eq!(fs::read(&path).unwrap(), vec![7u8; 4096]);
+        assert!(!dir.join("a.zip").exists());
         let r = m.get(&id).unwrap();
         assert_eq!(r.category_id.as_deref(), Some("documents"));
-        assert_eq!(r.directory, "downloads", "the folder is unchanged");
-        assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
+        assert_eq!(Path::new(&r.directory), documents);
+        assert_eq!(Path::new(&stored_directory(&db, &id)), documents);
+        // Clearing the category brings it back to the default folder.
         m.set_download_category(&id, None).unwrap();
-        assert_eq!(m.get(&id).unwrap().category_id, None);
+        assert!(dir.join("a.zip").is_file());
+        assert_eq!(Path::new(&m.get(&id).unwrap().directory), dir);
         assert_eq!(stored_category(&db, &id), None);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_moved_download_takes_the_next_free_name_and_replaces_nothing() {
+        let (mut m, control, db, dir) = in_folder("move-taken");
+        let id = finished_in(&mut m, &control, &dir);
+        let documents = dir.join("Documents");
+        fs::create_dir_all(&documents).unwrap();
+        fs::write(documents.join("a.zip"), b"keep me").unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        let path = documents.join("a (1).zip");
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: path.to_string_lossy().into_owned()
+            }
+        );
+        assert_eq!(fs::read(documents.join("a.zip")).unwrap(), b"keep me");
+        assert_eq!(fs::read(&path).unwrap(), vec![7u8; 4096]);
+        let r = m.get(&id).unwrap();
+        assert_eq!(r.file_name.as_deref(), Some("a (1).zip"));
+        let stored = db.downloads().unwrap().into_iter().find(|d| d.id == id).unwrap();
+        assert_eq!(stored.file_name.as_deref(), Some("a (1).zip"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_finished_file_that_is_gone_stays_and_the_category_still_changes() {
+        let (mut m, control, db, dir) = in_folder("move-gone");
+        let id = finished_in(&mut m, &control, &dir);
+        fs::remove_file(dir.join("a.zip")).unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert_eq!(
+            moved,
+            CategoryMove::Stayed {
+                path: dir.join("a.zip").to_string_lossy().into_owned(),
+                code: ErrorCode::NotFound,
+            }
+        );
+        assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
+        assert_eq!(Path::new(&m.get(&id).unwrap().directory), dir);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_category_change_checks_the_category_and_the_download() {
+        let (mut m, control, _db, dir) = in_folder("set");
+        let id = finished_in(&mut m, &control, &dir);
         assert_eq!(
             m.set_download_category(&id, Some("c-404")),
             Err(ErrorCode::NotFound)
@@ -4661,6 +4746,7 @@ mod categories {
             m.set_download_category("d-404", Some("video")),
             Err(ErrorCode::NotFound)
         );
+        assert!(dir.join("a.zip").is_file(), "nothing moved");
         fs::remove_dir_all(&dir).unwrap();
     }
 
