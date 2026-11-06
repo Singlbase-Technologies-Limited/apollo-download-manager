@@ -5,6 +5,7 @@
 //! (ADR-0003, docs/BROWSER_EXTENSION.md).
 
 pub mod bridge;
+pub mod detect;
 pub mod ipc;
 pub mod launch;
 pub mod protocol;

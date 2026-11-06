@@ -347,8 +347,8 @@ pub(crate) mod registry {
     use windows_sys::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_SUCCESS};
     use windows_sys::Win32::System::Registry::{
         RegCloseKey, RegCreateKeyExW, RegDeleteKeyValueW, RegDeleteKeyW, RegGetValueW,
-        RegSetValueExW, HKEY, HKEY_CURRENT_USER, KEY_WRITE, REG_OPTION_NON_VOLATILE, REG_SZ,
-        RRF_RT_REG_SZ,
+        RegSetValueExW, HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_WRITE,
+        REG_OPTION_NON_VOLATILE, REG_SZ, RRF_RT_REG_SZ,
     };
 
     use crate::domain::ErrorCode;
@@ -423,13 +423,23 @@ pub(crate) mod registry {
 
     /// The value `name` of `key` (`None`: its default value), if it exists and is a string.
     pub(crate) fn get_value(key: &str, name: Option<&str>) -> Option<String> {
+        get_value_in(HKEY_CURRENT_USER, key, name)
+    }
+
+    /// The default value of `key` under `HKEY_LOCAL_MACHINE`, read only: where browsers installed
+    /// for every user record their program (#241).
+    pub(crate) fn get_machine_default(key: &str) -> Option<String> {
+        get_value_in(HKEY_LOCAL_MACHINE, key, None)
+    }
+
+    fn get_value_in(root: HKEY, key: &str, name: Option<&str>) -> Option<String> {
         let (key, name) = (wide(key), wide_name(name));
         let mut size = 0u32;
         // SAFETY: `key` is NUL-terminated, the name NUL-terminated or null; a null buffer asks
         // for the size only.
         let sized = unsafe {
             RegGetValueW(
-                HKEY_CURRENT_USER,
+                root,
                 key.as_ptr(),
                 name_ptr(&name),
                 RRF_RT_REG_SZ,
@@ -445,7 +455,7 @@ pub(crate) mod registry {
         // SAFETY: `buffer` holds `size` bytes, and RegGetValueW writes at most that many.
         let read = unsafe {
             RegGetValueW(
-                HKEY_CURRENT_USER,
+                root,
                 key.as_ptr(),
                 name_ptr(&name),
                 RRF_RT_REG_SZ,
