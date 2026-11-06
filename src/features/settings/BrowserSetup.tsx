@@ -7,14 +7,8 @@ import type { Browser, Registration } from '../../contract';
 import { api } from '../../lib/api';
 import { copyText } from '../../lib/clipboard';
 import { toApiError } from '../../lib/errors';
+import { BROWSER_NAMES } from './browserNames';
 
-const BROWSER_NAMES: Record<Browser, string> = {
-  chrome: 'Google Chrome',
-  chromium: 'Chromium',
-  edge: 'Microsoft Edge',
-  brave: 'Brave',
-  firefox: 'Mozilla Firefox',
-};
 
 function statusText(r: Registration): string {
   if (!r.registered) return 'Not registered';
