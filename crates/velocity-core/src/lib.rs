@@ -76,7 +76,8 @@ use serde::Serialize;
 /// [`domain::TransferError::login_required`].
 /// Version 31 (#366): `set_download_category` answers a [`domain::CategoryMove`], since changing
 /// a download's category moves its file; and (#321) [`app_settings::GeneralSettings::start_at_login`].
-pub const COMMAND_API_VERSION: u32 = 31;
+/// Version 32 (#325) added `forget_learned_servers`.
+pub const COMMAND_API_VERSION: u32 = 32;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

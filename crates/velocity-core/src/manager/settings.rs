@@ -122,6 +122,29 @@ impl Manager {
     }
 }
 
+/// What the transfer engine learned about servers (#325).
+impl Manager {
+    /// Forgets everything learned about servers: the Settings button (PO decision on #325). The
+    /// engine forgets it too, or is told when it next starts.
+    pub fn forget_learned_servers(&mut self) -> Result<(), ErrorCode> {
+        self.database.forget_hosts().map_err(|e| e.code)?;
+        match self.engine.set_host_memory(Vec::new()) {
+            Ok(()) | Err(ErrorCode::EngineUnavailable) => Ok(()),
+            Err(code) => Err(code),
+        }
+    }
+
+    /// Gives the engine the servers remembered at `now_ms`, and drops the ones no longer kept.
+    fn give_host_memory(&mut self, now_ms: u64) -> Result<(), ErrorCode> {
+        self.database.forget_old_hosts(now_ms).map_err(|e| e.code)?;
+        let hosts = self.database.hosts(now_ms).map_err(|e| e.code)?;
+        match self.engine.set_host_memory(hosts) {
+            Ok(()) | Err(ErrorCode::EngineUnavailable) => Ok(()),
+            Err(code) => Err(code),
+        }
+    }
+}
+
 /// The Settings screen's settings (#30): read, saved whole and applied at once.
 impl Manager {
     /// Every setting the Settings screen edits, as saved, or the defaults of those never saved.
@@ -178,6 +201,13 @@ impl Manager {
         if let Err(code) = self.sync_startup(settings.general.start_at_login) {
             tracing::warn!(?code, "the start-up list couldn't be updated");
         }
+        // What was learned about servers (#325): downloads start faster without it, never fail.
+        if let Err(code) = self.give_host_memory(now_ms) {
+            tracing::warn!(
+                ?code,
+                "what was learned about servers couldn't be given to the engine"
+            );
+        }
         self.apply_settings(&settings, now_ms)
     }
 
@@ -221,6 +251,57 @@ mod tests {
     use crate::transfer::fake::FakeTransfer;
 
     const T0: u64 = 1_792_600_000_000;
+
+    fn remembered(host: &str, connections: u32) -> crate::transfer::HostMemory {
+        crate::transfer::HostMemory {
+            host: host.to_owned(),
+            connections: Some(connections),
+            throttled_to: None,
+        }
+    }
+
+    /// #325: what the engine learns about a server is kept, and given back to the engine when
+    /// the app starts again; a server not seen for 7 days isn't.
+    #[test]
+    fn what_the_engine_learned_about_servers_outlives_a_restart() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        {
+            let fake = FakeTransfer::new();
+            let control = fake.control();
+            let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+            control.emit(crate::transfer::TransferEvent::HostLearned {
+                memory: remembered("example.com:443", 3),
+            });
+            m.pump(T0);
+        }
+        db.save_host(
+            &remembered("old.example:443", 2),
+            T0 - 8 * 24 * 60 * 60 * 1000,
+        )
+        .unwrap();
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+        m.apply_saved_settings(T0 + 1).unwrap();
+        assert_eq!(control.host_memory(), [remembered("example.com:443", 3)]);
+    }
+
+    #[test]
+    fn forgetting_learned_servers_clears_them_and_tells_the_engine() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        db.save_host(&remembered("example.com:443", 3), T0).unwrap();
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+        m.apply_saved_settings(T0).unwrap();
+        m.forget_learned_servers().unwrap();
+        assert_eq!(db.hosts(T0).unwrap(), []);
+        assert_eq!(control.host_memory(), []);
+        assert_eq!(
+            control.log().last().map(String::as_str),
+            Some("set_host_memory 0")
+        );
+    }
 
     fn startup_entry() -> crate::autostart::Entry {
         crate::autostart::Entry {

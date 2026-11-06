@@ -22,7 +22,7 @@ import { DiagnosticsPanel } from '../diagnostics/DiagnosticsPanel';
 import { SeedingFields } from '../torrents/SeedingFields';
 import { portMapText } from '../torrents/torrentLogic';
 import { Input } from '../../components/Input';
-import { Choice, Group, Num, Text, TimeSetting, Toggle } from './fields';
+import { Action, Choice, Group, Num, Text, TimeSetting, Toggle } from './fields';
 import { searchSettings } from './settingsIndex';
 import { useDownloadsStore } from '../../stores/downloads';
 import { formatWhen, formatWindow } from '../../lib/format';
@@ -560,6 +560,18 @@ function TorrentSection({ s, patch }: { s: Settings; patch: Patch }) {
 
 function AdvancedSection({ s, patch }: { s: Settings; patch: Patch }) {
   const { data: capabilities } = useCapabilities();
+  const [forgetting, setForgetting] = useState(false);
+  const forgetServers = async () => {
+    setForgetting(true);
+    try {
+      await api.forgetLearnedServers();
+      toast.success('Forgot what was learned about servers');
+    } catch (e) {
+      toast.error(toApiError(e).message);
+    } finally {
+      setForgetting(false);
+    }
+  };
   const e = s.engine;
   const engine = (change: Partial<Settings['engine']>) => { patch((x) => ({ ...x, engine: { ...x.engine, ...change } })); };
   return (
@@ -591,6 +603,15 @@ function AdvancedSection({ s, patch }: { s: Settings; patch: Patch }) {
           onChange={(v) => { engine({ preallocation: v }); }}
         />
         <Num title="Write buffer per connection (MiB)" value={e.writeBufferMib} min={1} max={64} onChange={(v) => { engine({ writeBufferMib: v }); }} />
+      </Group>
+      <Group title="Servers">
+        <Action
+          title="What Apollo Download Manager learned about servers"
+          description="How many connections each server allowed, so later downloads from it start at the right pace. Kept on this computer for 7 days, and never exported."
+          label="Forget servers"
+          busy={forgetting}
+          onClick={() => void forgetServers()}
+        />
       </Group>
     </>
   );

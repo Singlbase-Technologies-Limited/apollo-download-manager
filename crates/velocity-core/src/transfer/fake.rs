@@ -28,6 +28,8 @@ struct State {
     engine_settings: EngineSettings,
     /// The proxy from the last `set_proxy`.
     proxy: Option<crate::proxy::Proxy>,
+    /// What the last `set_host_memory` gave (#325).
+    host_memory: Vec<super::HostMemory>,
     /// Makes every command fail with this code, like an engine that stopped responding.
     unavailable: Option<ErrorCode>,
     /// Makes `add` refuse a transfer with this file name, as an engine refuses a name taken.
@@ -139,6 +141,11 @@ impl FakeControl {
     /// The commands the engine received, such as `"pause 1"`.
     pub fn log(&self) -> Vec<String> {
         lock(&self.state).log.clone()
+    }
+
+    /// What the engine was last told about servers (#325).
+    pub fn host_memory(&self) -> Vec<super::HostMemory> {
+        lock(&self.state).host_memory.clone()
     }
 
     pub fn spec(&self, id: TransferId) -> TransferSpec {
@@ -333,6 +340,16 @@ impl DirectTransfer for FakeTransfer {
         }
         s.transfers.remove(&id);
         s.emit(TransferEvent::Removed { id });
+        Ok(())
+    }
+
+    fn set_host_memory(&mut self, memory: Vec<super::HostMemory>) -> Result<(), ErrorCode> {
+        let mut s = lock(&self.state);
+        s.command(format!("set_host_memory {}", memory.len()))?;
+        for m in &memory {
+            m.check()?;
+        }
+        s.host_memory = memory;
         Ok(())
     }
 

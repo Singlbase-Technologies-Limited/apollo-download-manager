@@ -22,8 +22,8 @@ pub use velocity_child::client::SpawnOptions;
 use velocity_child::serve::Server;
 use velocity_core::domain::{Capabilities, ErrorCode};
 use velocity_core::transfer::{
-    dispatch, DirectTransfer, EngineLimits, EngineSettings, Limits, TransferCommand, TransferEvent,
-    TransferId, TransferReply, TransferSnapshot, TransferSpec,
+    dispatch, DirectTransfer, EngineLimits, EngineSettings, HostMemory, Limits, TransferCommand,
+    TransferEvent, TransferId, TransferReply, TransferSnapshot, TransferSpec,
 };
 
 use velocity_core::proxy::Proxy;
@@ -162,6 +162,10 @@ impl ChildProcessEngine {
         self.done(TransferCommand::Release { id })
     }
 
+    pub fn set_host_memory(&self, memory: Vec<HostMemory>) -> Result<(), ErrorCode> {
+        self.done(TransferCommand::SetHostMemory { memory })
+    }
+
     pub fn set_limits(&self, id: TransferId, limits: Limits) -> Result<(), ErrorCode> {
         self.done(TransferCommand::SetLimits { id, limits })
     }
@@ -283,6 +287,10 @@ impl DirectTransfer for ChildProcessEngine {
 
     fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
         ChildProcessEngine::release(self, id)
+    }
+
+    fn set_host_memory(&mut self, memory: Vec<HostMemory>) -> Result<(), ErrorCode> {
+        ChildProcessEngine::set_host_memory(self, memory)
     }
 
     fn set_limits(&mut self, id: TransferId, limits: Limits) -> Result<(), ErrorCode> {

@@ -29,8 +29,8 @@ use velocity_core::paths::Paths;
 use velocity_core::proxy::{Proxy, ProxyKind};
 use velocity_core::request::default_user_agent;
 use velocity_core::transfer::{
-    Checkpoint, Checksum, DirectTransfer, EngineLimits, EngineSettings, Limits, PieceHashes,
-    Resume, TransferEvent, TransferId, TransferSnapshot, TransferSpec,
+    Checkpoint, Checksum, DirectTransfer, EngineLimits, EngineSettings, HostMemory, Limits,
+    PieceHashes, Resume, TransferEvent, TransferId, TransferSnapshot, TransferSpec,
 };
 use velocity_curl::ProxyConfig;
 use velocity_curl::{
@@ -115,6 +115,10 @@ struct State {
     /// long as the engine runs: a later transfer from it starts there, so a server that blocks
     /// clients after a few refusals isn't asked again (PO decision on #247).
     throttled: HashMap<String, u32>,
+    /// The count a download from each host settled at (#325), by [`host_of`]: a later transfer
+    /// from it starts there. Given by the app ([`DirectTransfer::set_host_memory`]), and kept up
+    /// to date as downloads settle.
+    learned: HashMap<String, u32>,
 }
 
 struct Entry {
@@ -306,6 +310,34 @@ fn host_of(url: &str) -> String {
         _ => 80,
     };
     format!("{host}:{port}")
+}
+
+/// Keeps what a download attempt learned about its server, and tells the app (#325): the most
+/// connections it served before it throttled (#247), and the count the adaptive ramp settled at
+/// when more stopped helping. A count a speed limit chose says nothing about the server.
+fn learn(shared: &Shared, url: &str, control: &Control) {
+    let now = control.connections_now();
+    let settled = match now.tuned {
+        Some((count, Tuning::NoGain)) => Some(count),
+        _ => None,
+    };
+    if now.throttled_to.is_none() && settled.is_none() {
+        return;
+    }
+    let host = host_of(url);
+    let mut state = lock(&shared.state);
+    if let Some(connections) = now.throttled_to {
+        state.throttled.insert(host.clone(), connections);
+    }
+    if let Some(count) = settled {
+        state.learned.insert(host.clone(), count);
+    }
+    let memory = HostMemory {
+        connections: state.learned.get(&host).copied(),
+        throttled_to: state.throttled.get(&host).copied(),
+        host,
+    };
+    state.emit(TransferEvent::HostLearned { memory });
 }
 
 fn finished(status: DownloadStatus) -> bool {
@@ -727,6 +759,22 @@ impl DirectTransfer for InProcessEngine {
         Ok(())
     }
 
+    fn set_host_memory(&mut self, memory: Vec<HostMemory>) -> Result<(), ErrorCode> {
+        for m in &memory {
+            m.check()?;
+        }
+        let mut state = lock(&self.shared.state);
+        state.throttled = memory
+            .iter()
+            .filter_map(|m| Some((m.host.clone(), m.throttled_to?)))
+            .collect();
+        state.learned = memory
+            .iter()
+            .filter_map(|m| Some((m.host.clone(), m.connections?)))
+            .collect();
+        Ok(())
+    }
+
     fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
         let mut state = self.known(id)?;
         let entry = &state.transfers[&id];
@@ -853,10 +901,9 @@ impl DirectTransfer for InProcessEngine {
 fn start_worker(shared: &Arc<Shared>, id: TransferId, resume: Option<Resume>) {
     let job = {
         let mut state = lock(&shared.state);
-        let throttled_to = state
-            .transfers
-            .get(&id)
-            .and_then(|e| state.throttled.get(&host_of(&e.job.url)).copied());
+        let host = state.transfers.get(&id).map(|e| host_of(&e.job.url));
+        let throttled_to = host.as_ref().and_then(|h| state.throttled.get(h).copied());
+        let start_connections = host.as_ref().and_then(|h| state.learned.get(h).copied());
         let Some(entry) = state.transfers.get_mut(&id) else {
             return;
         };
@@ -870,6 +917,7 @@ fn start_worker(shared: &Arc<Shared>, id: TransferId, resume: Option<Resume>) {
             .with_status(status_reporter(shared, id))
             .with_limits(vec![entry.limit.clone(), shared.global.clone()])
             .with_throttled_to(throttled_to)
+            .with_start_connections(start_connections)
             .with_request(RequestOptions {
                 proxy: lock_value(&shared.proxy).as_ref().map(proxy_config),
                 ..entry.job.request.clone()
@@ -981,11 +1029,7 @@ fn run(shared: &Shared, id: TransferId, job: &Job, resume: Option<&Resume>, cont
             &job.expected,
             control,
         );
-        if let Some(connections) = control.connections_now().throttled_to {
-            lock(&shared.state)
-                .throttled
-                .insert(host_of(&job.url), connections);
-        }
+        learn(shared, &job.url, control);
         let Err(DownloadError::Transfer(e)) = &result else {
             break result;
         };

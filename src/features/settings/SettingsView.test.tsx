@@ -57,6 +57,14 @@ describe('settings (V1)', () => {
     expect(state.appSettings.general.startAtLogin).toBe(true);
   });
 
+  it('forgets what was learned about servers (#325)', async () => {
+    const state = installFakeBackend();
+    const user = await openSettings('Advanced');
+    await user.click(await screen.findByRole('button', { name: 'Forget servers' }));
+    await waitFor(() => { expect(callsOf(state, 'forget_learned_servers')).toHaveLength(1); });
+    expect(await screen.findByText('Forgot what was learned about servers')).toBeTruthy();
+  });
+
   it('commits numeric settings on blur with clamping', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Queue and performance');
