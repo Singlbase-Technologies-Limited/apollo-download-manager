@@ -57,7 +57,7 @@ describe('the website (#353)', () => {
       expect(body, path).toMatch(/<meta property="og:title" content="[^"]+">/);
       if (path !== '404.html') expect(body, path).toContain(`<link rel="canonical" href="${SITE_URL}`);
       // The canonical address is the page's own; nothing else is loaded from anywhere.
-      expect(body, path).not.toMatch(/<script|<iframe|fonts\.googleapis|<link(?![^>]*rel="canonical")[^>]+href="https?:|<img[^>]+src="https?:/);
+      expect(body, path).not.toMatch(/<script|<iframe|fonts\.googleapis|<link(?![^>]*rel="canonical")[^>]+href="https?:|<img[^>]+src="https?:/i);
       expect(body, path).toMatch(/<a class="skip" href="#main">/);
     }
   });
