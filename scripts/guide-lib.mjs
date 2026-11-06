@@ -185,6 +185,77 @@ function* inlines(blocks) {
 }
 
 /**
+ * One Markdown file as a page: its title (the `#` heading), headings with GitHub's anchors, typed blocks and each
+ * section's plain text. Links keep their `href` until {@link resolveLinks}. Raw HTML and images fail.
+ * @param {string} file the file's name, for errors
+ * @param {string} text its Markdown
+ */
+export function parsePage(file, text) {
+  current = file;
+  const [blocks] = until(md.parse(text, {}), 0, '__end__');
+  const seen = new Map();
+  const headings = [];
+  for (const b of blocks) {
+    if (b.type !== 'heading') continue;
+    const heading = plain(b.content);
+    const slug = githubSlug(heading);
+    const n = seen.get(slug) ?? 0;
+    seen.set(slug, n + 1);
+    b.id = n ? `${slug}-${String(n)}` : slug;
+    headings.push({ id: b.id, level: b.level, text: heading });
+  }
+  const title = headings.find((h) => h.level === 1)?.text ?? fail('no title (a # heading)');
+  const sections = [];
+  for (const b of blocks) {
+    if (b.type === 'heading') sections.push({ anchor: b.id, heading: plain(b.content), text: [] });
+    else if (sections.length > 0) sections[sections.length - 1].text.push(blockText(b));
+  }
+  return { file, title, headings, blocks, sections: sections.map((x) => ({ ...x, text: x.text.join(' ').replace(/\s+/g, ' ').trim() })) };
+}
+
+/**
+ * Gives each link of `page` the target `resolve` returns for its `href` (an object stored as `to`), or makes it
+ * plain text when that is `null`; an error `resolve` throws fails the build, naming the page.
+ * @param {{ file: string, blocks: object[] }} page
+ * @param {(href: string) => object | null} resolve
+ */
+export function resolveLinks(page, resolve) {
+  current = page.file;
+  for (const n of inlines(page.blocks)) {
+    if (n.type !== 'link') continue;
+    const href = n.href;
+    delete n.href;
+    let to;
+    try {
+      to = resolve(href);
+    } catch (e) {
+      fail(e instanceof Error ? e.message : String(e));
+    }
+    if (to === null) {
+      n.type = 'text';
+      n.text = plain(n.content);
+      delete n.content;
+    } else {
+      n.to = to;
+    }
+  }
+  page.blocks = page.blocks.map(function merge(b) {
+    const fix = (content) =>
+      content.reduce((out, x) => {
+        const last = out[out.length - 1];
+        if (x.type === 'text' && last?.type === 'text') last.text += x.text;
+        else out.push(x.content ? { ...x, content: fix(x.content) } : x);
+        return out;
+      }, []);
+    if (b.type === 'paragraph' || b.type === 'heading') return { ...b, content: fix(b.content) };
+    if (b.type === 'list') return { ...b, items: b.items.map((item) => item.map(merge)) };
+    if (b.type === 'quote') return { ...b, content: b.content.map(merge) };
+    if (b.type === 'table') return { ...b, head: b.head.map(fix), rows: b.rows.map((r) => r.map(fix)) };
+    return b;
+  });
+}
+
+/**
  * @param {Record<string, string>} files the guide's files by name (`README.md`, `downloads.md`, …)
  * @returns {{ pages: { id: string, file: string, title: string, headings: { id: string, level: number, text: string }[], blocks: object[], sections: { anchor: string, heading: string, text: string }[] }[] }}
  */
@@ -199,65 +270,23 @@ export function buildGuide(files) {
     if (!order.includes(f)) throw new Error(`${f} is not listed in the guide's README.md`);
   }
   const pages = order.map((file) => {
-    current = file;
-    if (!(file in files)) fail('listed in README.md, but missing');
-    const [blocks] = until(md.parse(files[file], {}), 0, '__end__');
-    const seen = new Map();
-    const headings = [];
-    for (const b of blocks) {
-      if (b.type !== 'heading') continue;
-      const text = plain(b.content);
-      const slug = githubSlug(text);
-      const n = seen.get(slug) ?? 0;
-      seen.set(slug, n + 1);
-      b.id = n ? `${slug}-${String(n)}` : slug;
-      headings.push({ id: b.id, level: b.level, text });
+    if (!(file in files)) {
+      current = file;
+      fail('listed in README.md, but missing');
     }
-    const title = headings.find((h) => h.level === 1)?.text ?? fail('no title (a # heading)');
-    const sections = [];
-    for (const b of blocks) {
-      if (b.type === 'heading') sections.push({ anchor: b.id, heading: plain(b.content), text: [] });
-      else if (sections.length > 0) sections[sections.length - 1].text.push(blockText(b));
-    }
-    return { id: pageId(file), file, title, headings, blocks, sections: sections.map((s) => ({ ...s, text: s.text.join(' ').replace(/\s+/g, ' ').trim() })) };
+    return { id: pageId(file), ...parsePage(file, files[file]) };
   });
   const byFile = new Map(pages.map((p) => [p.file, p]));
   for (const page of pages) {
-    current = page.file;
-    for (const n of inlines(page.blocks)) {
-      if (n.type !== 'link') continue;
-      const href = n.href;
-      delete n.href;
-      if (/^https:\/\//i.test(href)) {
-        n.to = { url: href };
-        continue;
-      }
+    resolveLinks(page, (href) => {
+      if (/^https:\/\//i.test(href)) return { url: href };
       const m = /^([a-z0-9-]+\.md)?(?:#(.+))?$/.exec(href);
       const target = m ? byFile.get(m[1] ?? page.file) : undefined;
-      if (m && (m[1] || m[2]) && !target) fail(`a link to ${href}, which is not a guide page`);
-      if (!target) {
-        // Not a guide page (a developer document, another scheme): plain text, kept in place.
-        n.type = 'text';
-        n.text = plain(n.content);
-        delete n.content;
-        continue;
-      }
-      if (m[2] && !target.headings.some((h) => h.id === m[2])) fail(`a link to ${href}, whose heading does not exist`);
-      n.to = m[2] ? { page: target.id, anchor: m[2] } : { page: target.id };
-    }
-    page.blocks = page.blocks.map(function merge(b) {
-      const fix = (content) =>
-        content.reduce((out, x) => {
-          const last = out[out.length - 1];
-          if (x.type === 'text' && last?.type === 'text') last.text += x.text;
-          else out.push(x.content ? { ...x, content: fix(x.content) } : x);
-          return out;
-        }, []);
-      if (b.type === 'paragraph' || b.type === 'heading') return { ...b, content: fix(b.content) };
-      if (b.type === 'list') return { ...b, items: b.items.map((item) => item.map(merge)) };
-      if (b.type === 'quote') return { ...b, content: b.content.map(merge) };
-      if (b.type === 'table') return { ...b, head: b.head.map(fix), rows: b.rows.map((r) => r.map(fix)) };
-      return b;
+      if (m && (m[1] || m[2]) && !target) throw new Error(`a link to ${href}, which is not a guide page`);
+      // Not a guide page (a developer document, another scheme): plain text, kept in place.
+      if (!target) return null;
+      if (m[2] && !target.headings.some((h) => h.id === m[2])) throw new Error(`a link to ${href}, whose heading does not exist`);
+      return m[2] ? { page: target.id, anchor: m[2] } : { page: target.id };
     });
   }
   return { pages: pages.map(({ file, ...p }) => ({ ...p, file })) };

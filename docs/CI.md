@@ -18,6 +18,8 @@ To save Actions minutes while the repository was private, CI was paused (2026-10
 | 4 | `v*` tag (not `-rc`) | The release gate: it rechecks that the tag's commit passed tier 3, then builds artefacts with provenance into a **draft** release | Linux, Windows | Prepare a release the PO publishes by hand | #18 |
 | 5 | `schedule` (weekly) and `workflow_dispatch` | L4: everything on Linux and Windows. Later also fuzzing, stress and extended benchmarks. macOS on demand only | Linux, Windows; macOS manual | Catch slow drift and run what's too expensive per change | #19 |
 
+**The website** has a workflow of its own, [`site.yml`](../.github/workflows/site.yml): it builds the site on pull requests that change its sources, and builds and deploys it on `main` and when a release is published ([WEBSITE.md](WEBSITE.md#publishing)).
+
 **No `develop` or `staging` tiers.** All work merges into `main`, and releases are tags on verified `main` commits ([DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md)).
 
 **Required checks.** The *Main* ruleset requires a pull request and linear history, and blocks deleting `main` and force-pushing to it ([REPOSITORY_SETTINGS.md](REPOSITORY_SETTINGS.md#rules-for-the-main-branch)). `ci-required` becomes a required status check once PR checks have run on a pull request since they came back (#236): GitHub only offers a check it has seen. Until then:

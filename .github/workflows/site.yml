@@ -1,0 +1,94 @@
+# The product website (#353, docs/WEBSITE.md): builds site-out/ from docs/user/, docs/PRIVACY.md and site/, with
+# the download page made from the published releases, and deploys it to GitHub Pages from main.
+#
+# - Pull requests: build only, with a read-only token, so a broken page or link fails the PR.
+# - main: build, then deploy. Only the deploy job may write to Pages.
+# - A published release: rebuild from main, so the download page names the new files.
+name: Website
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - docs/user/**
+      - docs/PRIVACY.md
+      - site/**
+      - scripts/build-site.mjs
+      - scripts/site-lib.mjs
+      - scripts/guide-lib.mjs
+      - scripts/links-lib.mjs
+      - src-tauri/icons/128x128.png
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/site.yml
+  push:
+    branches: [main]
+    paths:
+      - docs/user/**
+      - docs/PRIVACY.md
+      - site/**
+      - scripts/build-site.mjs
+      - scripts/site-lib.mjs
+      - scripts/guide-lib.mjs
+      - scripts/links-lib.mjs
+      - src-tauri/icons/128x128.png
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/site.yml
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build the website
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # A release rebuilds main's site, not the tag's.
+          ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || '' }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.12.0
+      - name: Install JavaScript dependencies
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+      - name: Fetch the published releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh api "repos/$REPO/releases?per_page=30" > "$RUNNER_TEMP/releases.json"
+      - name: Build the site
+        run: node scripts/build-site.mjs --releases "$RUNNER_TEMP/releases.json"
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site-out
+
+  deploy:
+    name: Deploy to GitHub Pages
+    # From main, or for a release (built from main above); never from another branch run by hand.
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
