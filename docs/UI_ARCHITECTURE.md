@@ -119,6 +119,15 @@ The history (#32, V1's `HistoryView`) is `src/features/history/HistoryView.tsx`.
 - **Removing:** "Remove selected" and "Clear history" (which asks first) take entries out of the history. Files are never touched, and a download still in the list stays there.
 - **Again:** opens the Add dialog with the entry's link, so adding it goes through the usual questions (#60).
 
+## The user guide
+
+The user guide (#354) is `src/features/help/`. It opens from Help, User guide, from each Settings section's "… in the user guide", and with `openGuide(page, anchor)` from anywhere, in a window over the app like Settings (the `ui` store's `guide`).
+
+- **Its pages are the user guides** in [docs/user/](user/README.md), which `pnpm guide` builds into `guide.generated.json` with markdown-it (`scripts/guide-lib.mjs`). A Vitest test fails when that file is older than the guides, so edit the guides and run `pnpm guide`; never edit the JSON.
+- **No HTML from the guides reaches the window:** the data is typed blocks and inlines, drawn as React elements. Raw HTML and images in a guide fail the build. A link to another guide page opens it in the guide; a web address is shown as text, since the window opens no web page.
+- **Search** runs over every section's text in memory, with no network call: a section matches when it holds every word typed, with heading matches first.
+- **Layout A** (PO decision on #354): search and the contents on the left, the page on the right, previous and next at the bottom; on a narrow window the contents go above the page.
+
 ## Settings
 
 The Settings screen (#30) is `src/features/settings/`: what each section holds and when it applies is in [SETTINGS.md](SETTINGS.md#the-settings-screen).

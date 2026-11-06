@@ -45,6 +45,8 @@ interface UiState {
   settingsSection: SettingsSection;
   /** Settings is open, in a window over the app (#364). */
   settingsOpen: boolean;
+  /** The user guide's page and heading, while it is open over the app (#354). */
+  guide: { page: string; anchor: string | null } | null;
   setView: (view: View) => void;
   setCategoryFilter: (id: string | null) => void;
   setLayout: (patch: Partial<LayoutPrefs>) => void;
@@ -62,6 +64,9 @@ interface UiState {
   /** Opens Settings over the app, at `section` when given, else where it was left. */
   openSettings: (section?: SettingsSection) => void;
   closeSettings: () => void;
+  /** Opens the user guide at `page` (its first page when not given), scrolled to `anchor`. */
+  openGuide: (page?: string, anchor?: string) => void;
+  closeGuide: () => void;
   closeChooseFiles: () => void;
 }
 
@@ -76,6 +81,7 @@ export const useUiStore = create<UiState>((set) => ({
   startAtId: null,
   settingsSection: 'general',
   settingsOpen: false,
+  guide: null,
   setView: (view) => { set({ view, categoryFilter: null }); },
   setCategoryFilter: (categoryFilter) => { set({ categoryFilter, view: 'all' }); },
   setLayout: (patch) => { set((s) => ({ layout: { ...s.layout, ...patch } })); },
@@ -92,5 +98,7 @@ export const useUiStore = create<UiState>((set) => ({
   setSettingsSection: (settingsSection) => { set({ settingsSection }); },
   openSettings: (section) => { set((s) => ({ settingsOpen: true, settingsSection: section ?? s.settingsSection })); },
   closeSettings: () => { set({ settingsOpen: false }); },
+  openGuide: (page, anchor) => { set({ guide: { page: page ?? 'index', anchor: anchor ?? null } }); },
+  closeGuide: () => { set({ guide: null }); },
   closeChooseFiles: () => { set({ chooseFilesId: null }); },
 }));

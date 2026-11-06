@@ -27,7 +27,46 @@
      "content": [
       {
        "type": "text",
-       "text": "These guides are for people who use Apollo Download Manager. How V2 is built and tested is in the developer documents."
+       "text": "These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Help"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " (the "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "?"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " in the title bar), then "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "User guide"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ". How V2 is built and tested is in the developer documents."
       }
      ]
     },
@@ -300,7 +339,7 @@
     {
      "anchor": "apollo-download-manager-user-guide",
      "heading": "Apollo Download Manager: user guide",
-     "text": "These guides are for people who use Apollo Download Manager. How V2 is built and tested is in the developer documents. V2 is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other (V1 and V2). Guide What it covers Installing The Windows installer and the Linux packages, upgrading and removing V2 Downloads Adding downloads, the download list, the details panel, the history, files and folders, logins Protocols and limits What V2 downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do Torrents Adding torrents and magnet links, choosing files, seeding, trackers Categories Sorting downloads by file type into folders Settings Every section of the Settings screen, including the proxy Browser integration Sending downloads from Chrome, Edge, Brave and Firefox to V2 Troubleshooting Common problems, the diagnostics report, and what error messages mean V1 and V2 Using both side by side, and how V2 differs from V1 V2 is still in development. The guides describe what this version does. Where something isn't there yet, the guide says so."
+     "text": "These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open Help (the ? in the title bar), then User guide. How V2 is built and tested is in the developer documents. V2 is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other (V1 and V2). Guide What it covers Installing The Windows installer and the Linux packages, upgrading and removing V2 Downloads Adding downloads, the download list, the details panel, the history, files and folders, logins Protocols and limits What V2 downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do Torrents Adding torrents and magnet links, choosing files, seeding, trackers Categories Sorting downloads by file type into folders Settings Every section of the Settings screen, including the proxy Browser integration Sending downloads from Chrome, Edge, Brave and Firefox to V2 Troubleshooting Common problems, the diagnostics report, and what error messages mean V1 and V2 Using both side by side, and how V2 differs from V1 V2 is still in development. The guides describe what this version does. Where something isn't there yet, the guide says so."
     }
    ],
    "file": "README.md"

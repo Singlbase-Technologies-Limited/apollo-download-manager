@@ -42,6 +42,23 @@ const SECTIONS: { id: SettingsSection; label: string }[] = [
   { id: 'about', label: 'About and diagnostics' },
 ];
 
+/**
+ * This section's part of the user guide (#354). The guide's Settings page has one heading per section, named as
+ * the section is, so its anchor is the label's, made the way GitHub and `pnpm guide` make anchors.
+ */
+function GuideLink({ section }: { section: SettingsSection }) {
+  const openGuide = useUiStore((s) => s.openGuide);
+  const label = SECTIONS.find((x) => x.id === section)?.label ?? '';
+  const anchor = label.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-');
+  return (
+    <p className="text-right text-xs">
+      <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={() => { openGuide('settings', anchor); }}>
+        {`${label} in the user guide`}
+      </button>
+    </p>
+  );
+}
+
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const PROFILE_TEXT: Record<PerformanceProfile, string> = {
@@ -141,6 +158,7 @@ export function SettingsView() {
           {state.kind === 'error' ? (
             <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{`Not saved: ${state.message}`}</p>
           ) : null}
+          {query.trim() === '' ? <GuideLink section={section} /> : null}
           {query.trim() !== '' ? (
             // #364: the settings whose name matches, by section; choosing one opens its section.
             found.length === 0 ? (
