@@ -483,6 +483,13 @@ A download doesn't ask for all its connections at once (PO decision on #247):
 - **Why:** proof.ovh.net serves one request per client at a time, answers the rest `429` within about 200 ms, and blocks a client for about 10 minutes after roughly 6 to 9 refusals in a few seconds. The old opening, all 8 at once after the probe, got the field-test PC blocked on its own (#247, 2026-11-02). Doubling costs a server like that one refusal.
 - **The cost on other servers:** about three round trips to reach 8 connections. Not yet measured against the earlier timings (#221); it is to be measured on the Ubuntu ISO.
 
+### TLS sessions (#327)
+
+A download's extra connections, and later downloads from the same server, resume the first connection's TLS session instead of doing a full handshake. libcurl does this by itself: the engine runs every transfer on one `Multi` ([`fetch.rs`](../crates/velocity-curl/src/fetch.rs)), and libcurl 8.23.0 shares its TLS session cache among the easy handles of one `Multi`. No share handle is needed (PO decision on #327).
+
+- **Verified (2026-11-06):** `later_connections_to_a_server_resume_its_tls_session` in `crates/velocity-curl/tests/tls.rs` makes 4 requests, each on a new connection of its own, to the TLS test front. The first is a full handshake and the other 3 resume, with TLS 1.3, on Windows (Schannel) and on Linux (OpenSSL 3.5, WSL2). The test guards it across libcurl updates.
+- **Not tested here (libcurl's documented behaviour):** a session is offered only to the host, port and TLS settings it was made with, so a session from one server is never offered to another. Sessions live in memory only; nothing about them is written to disk.
+
 ### HTTP/2
 
 - **Multiplexing first:** requests to one host wait for the connection being set up (`CURLOPT_PIPEWAIT`), and share it as streams if it speaks HTTP/2.
