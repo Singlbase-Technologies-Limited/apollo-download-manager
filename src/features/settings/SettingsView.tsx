@@ -212,7 +212,8 @@ function SectionContent({ section, s, patch }: { section: Exclude<SettingsSectio
       return (
         <Group title="General">
           <Toggle title="Close to tray" description="Closing the window keeps downloads running in the tray, when there is one." checked={s.general.closeToTray} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, closeToTray: v } })); }} />
-          <Toggle title="Start minimized" description="Start hidden in the tray." checked={s.general.startMinimized} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, startMinimized: v } })); }} />
+          <Toggle title="Start Apollo Download Manager when I sign in" description="Opens with your computer, so queued downloads and seeding carry on after a restart." checked={s.general.startAtLogin} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, startAtLogin: v } })); }} />
+          <Toggle title="Start minimized" description="Start hidden in the tray, also when it opens at sign-in." checked={s.general.startMinimized} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, startMinimized: v } })); }} />
           <Toggle title="Confirm before quitting with active downloads" checked={s.general.confirmExitWithActive} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, confirmExitWithActive: v } })); }} />
         </Group>
       );

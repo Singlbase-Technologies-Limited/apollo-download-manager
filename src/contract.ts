@@ -681,7 +681,7 @@ export type PeerStatus = z.infer<typeof PeerStatusSchema>;
 // The Settings screen's settings (#30): every section, checked again in Rust whatever the window sends
 // (crates/velocity-core/src/settings.rs). The bounds below mirror Rust's, for the screen to say.
 
-export const GeneralSettingsSchema = z.strictObject({ closeToTray: z.boolean(), startMinimized: z.boolean(), confirmExitWithActive: z.boolean() });
+export const GeneralSettingsSchema = z.strictObject({ closeToTray: z.boolean(), startMinimized: z.boolean(), confirmExitWithActive: z.boolean(), /** Start the app at sign-in (#321). */ startAtLogin: z.boolean() });
 export const NotificationSettingsSchema = z.strictObject({ onComplete: z.boolean(), onFailure: z.boolean(), onStart: z.boolean(), onEngineFailure: z.boolean() });
 export const FolderSettingsSchema = z.strictObject({ defaultDirectory: z.string(), autoCategorize: z.boolean(), categorySubfolders: z.boolean() });
 

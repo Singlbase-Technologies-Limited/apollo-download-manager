@@ -143,7 +143,8 @@ V1's `general`, `notifications` and `appearance` settings and its first-run flag
 | Section | Setting | Default | Bounds |
 |---|---|---|---|
 | `general` | `closeToTray` | on | Closing hides the window in the tray, when there is one |
-| | `startMinimized` | off | Starts hidden in the tray, when there is one |
+| | `startMinimized` | off | Starts hidden in the tray, when there is one, also when it starts at sign-in |
+| | `startAtLogin` | off; finishing the first-run setup turns it on in a released build | Starts the app when the user signs in (#321, PO decisions). On Windows, a value named after the app's identifier under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`; on Linux, `<identifier>.desktop` in the XDG autostart folder (`velocity_core::autostart`). Saving changes the entry first, and a refusal saves nothing. At each start the entry is put right when the app has moved. A development build never adds itself unless switched on, and V1's entry is never touched |
 | | `confirmExitWithActive` | on | Asks before quitting while downloads are active |
 | `notifications` | `onComplete` | on | Also when a torrent starts seeding, or waits for its files to be chosen |
 | | `onFailure` | on | — |

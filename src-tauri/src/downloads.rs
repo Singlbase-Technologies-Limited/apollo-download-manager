@@ -146,6 +146,21 @@ pub fn start(app: &AppHandle, paths: &Paths) -> Result<Downloads, String> {
                 paths.torrent_links_dir().display()
             )
         })?;
+    // Starting at sign-in (#321): this build's own entry in the user's start-up list.
+    if let (Some(list), Ok(program)) = (
+        velocity_core::autostart::StartupList::user(),
+        std::env::current_exe(),
+    ) {
+        let branding = velocity_core::branding::branding();
+        manager = manager.with_startup(
+            list,
+            velocity_core::autostart::Entry {
+                identifier: branding.app_identifier().to_owned(),
+                name: branding.app_product_name().to_owned(),
+                program,
+            },
+        );
+    }
     // The history's retention (#32, V1's), when the app starts. A failure is the snapshot's
     // storage error, which the window shows; the app runs on.
     let _ = manager.apply_retention(velocity_core::manager::now_ms());

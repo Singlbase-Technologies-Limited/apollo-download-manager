@@ -65,10 +65,60 @@ impl Manager {
         self.database
             .save_section(&folders, now_ms)
             .map_err(|e| e.code)?;
+        if first_run_starts_at_login(crate::branding::Branding::RELEASE) {
+            // The setup finishes even when the start-up list refuses; the setting then stays off,
+            // as the list is, and Settings can try again.
+            let on = match self.sync_startup(true) {
+                Ok(()) => true,
+                Err(code) => {
+                    tracing::warn!(?code, "the app couldn't add itself to the start-up list");
+                    false
+                }
+            };
+            let general = crate::app_settings::GeneralSettings {
+                start_at_login: on,
+                ..self.settings_section()?
+            };
+            self.database
+                .save_section(&general, now_ms)
+                .map_err(|e| e.code)?;
+        }
         self.database
             .save_section(&OnboardingSettings { completed: true }, now_ms)
             .map_err(|e| e.code)?;
         self.shell_settings()
+    }
+}
+
+/// Whether finishing the first-run setup turns on starting at sign-in (#321, PO decision): in a
+/// released build only, so a development build never adds itself to the user's start-up list.
+fn first_run_starts_at_login(release: bool) -> bool {
+    release
+}
+
+/// Starting the app when the user signs in (#321).
+impl Manager {
+    /// Gives the manager the user's start-up list and this app's entry, so the
+    /// `general.start_at_login` setting is kept in step with it.
+    pub fn with_startup(
+        mut self,
+        list: crate::autostart::StartupList,
+        entry: crate::autostart::Entry,
+    ) -> Self {
+        self.startup = Some((list, entry));
+        self
+    }
+
+    /// Puts this app's entry in the start-up list with `on`, or takes it out. An entry for a
+    /// program that moved is replaced. Without a list, there is nothing to do.
+    fn sync_startup(&self, on: bool) -> Result<(), ErrorCode> {
+        let Some((list, entry)) = &self.startup else {
+            return Ok(());
+        };
+        if on && list.has(entry) {
+            return Ok(());
+        }
+        list.set(entry, on)
     }
 }
 
@@ -101,6 +151,8 @@ impl Manager {
         now_ms: u64,
     ) -> Result<crate::settings::Settings, ErrorCode> {
         let settings = settings.checked()?;
+        // First, so a start-up list that refuses leaves the setting as the list is (#321).
+        self.sync_startup(settings.general.start_at_login)?;
         let proxy_before = self.settings_section::<crate::proxy::ProxySettings>()?;
         self.database
             .save_sections(settings.sections()?, now_ms)
@@ -122,6 +174,10 @@ impl Manager {
     pub fn apply_saved_settings(&mut self, now_ms: u64) -> Result<(), ErrorCode> {
         let settings = self.settings()?;
         self.load_proxy_password(&settings.proxy);
+        // An entry taken out, or left behind by a moved app, is put right; a refusal only warns.
+        if let Err(code) = self.sync_startup(settings.general.start_at_login) {
+            tracing::warn!(?code, "the start-up list couldn't be updated");
+        }
         self.apply_settings(&settings, now_ms)
     }
 
@@ -165,6 +221,64 @@ mod tests {
     use crate::transfer::fake::FakeTransfer;
 
     const T0: u64 = 1_792_600_000_000;
+
+    fn startup_entry() -> crate::autostart::Entry {
+        crate::autostart::Entry {
+            identifier: "dev.velocity.downloadmanager.v2".to_owned(),
+            name: "Apollo Download Manager".to_owned(),
+            program: std::env::temp_dir()
+                .join("Apollo Download Manager")
+                .join("apollo"),
+        }
+    }
+
+    #[test]
+    fn starting_at_sign_in_follows_the_setting() {
+        let list = crate::autostart::test_list::Fixture::new("manager-setting");
+        let (m, _db) = manager();
+        let mut m = m.with_startup(list.list.clone(), startup_entry());
+        let mut settings = m.settings().unwrap();
+        assert!(!settings.general.start_at_login, "off until set");
+        settings.general.start_at_login = true;
+        m.set_settings(&settings, T0).unwrap();
+        assert!(list.list.has(&startup_entry()));
+        assert!(m.settings().unwrap().general.start_at_login);
+        settings.general.start_at_login = false;
+        m.set_settings(&settings, T0).unwrap();
+        assert!(!list.list.has(&startup_entry()));
+    }
+
+    #[test]
+    fn a_missing_entry_comes_back_when_the_app_starts_with_the_setting_on() {
+        let list = crate::autostart::test_list::Fixture::new("manager-restart");
+        let (m, db) = manager();
+        let mut m = m.with_startup(list.list.clone(), startup_entry());
+        let mut settings = m.settings().unwrap();
+        settings.general.start_at_login = true;
+        m.set_settings(&settings, T0).unwrap();
+        // Taken out behind the app's back, or the app moved.
+        list.list.set(&startup_entry(), false).unwrap();
+        drop(m);
+        let mut m = Manager::open(Box::new(FakeTransfer::new()), db)
+            .unwrap()
+            .with_startup(list.list.clone(), startup_entry());
+        m.apply_saved_settings(T0).unwrap();
+        assert!(list.list.has(&startup_entry()));
+    }
+
+    #[test]
+    fn the_first_run_turns_it_on_only_in_a_released_build() {
+        assert!(super::first_run_starts_at_login(true));
+        assert!(!super::first_run_starts_at_login(false));
+        let list = crate::autostart::test_list::Fixture::new("manager-first-run");
+        let (m, _db) = manager();
+        let mut m = m.with_startup(list.list.clone(), startup_entry());
+        let dir = std::env::temp_dir();
+        m.complete_onboarding(&dir.to_string_lossy(), T0).unwrap();
+        // Tests run as a development build.
+        assert!(!m.settings().unwrap().general.start_at_login);
+        assert!(!list.list.has(&startup_entry()));
+    }
 
     fn manager() -> (Manager, Arc<Database>) {
         let db = Arc::new(Database::open_in_memory().unwrap());

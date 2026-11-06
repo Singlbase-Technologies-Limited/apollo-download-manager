@@ -146,6 +146,9 @@ pub enum MoveDirection {
 /// Owns the download records, the queue, and one direct-download engine.
 pub struct Manager {
     engine: Box<dyn DirectTransfer>,
+    /// The user's start-up list and this app's entry in it (#321); `None` until the shell gives
+    /// them ([`Manager::with_startup`]).
+    startup: Option<(crate::autostart::StartupList, crate::autostart::Entry)>,
     /// Where the records are kept, so a restart brings them back (#58).
     database: Arc<Database>,
     /// Records changed since they were last saved ([`Manager::flush`]).
@@ -307,6 +310,7 @@ impl Manager {
             torrent_events,
             by_torrent: HashMap::new(),
             engine,
+            startup: None,
             database,
             unsaved: BTreeSet::new(),
             storage_error: None,
