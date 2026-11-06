@@ -1,16 +1,17 @@
-# Apollo Download Manager
+# A free download manager for Windows and Linux
 
-A free download manager for Windows and Linux. It downloads over several connections at once, picks up where it left off after a break, sorts files into folders by type, and takes downloads from your browser.
+Resumes after a break, sorts files into folders, and takes downloads from your browser. Torrents, FTP and SFTP too.
 
-## What it does
+## What it downloads
 
-- **Web and file servers:** HTTP, HTTPS, FTP, FTPS and SFTP, with logins, custom headers and SSH keys kept out of its database and logs.
-- **Resume after a break:** a paused, failed or interrupted download carries on from where it stopped, and checks that the file on the server hasn't changed.
-- **Torrents and magnet links:** choose the files you want, and decide how long to seed.
-- **Metalink:** one file that lists a download's mirrors and checksums.
-- **Categories:** documents, music, video, programs and archives each go to their own folder, and you can add your own.
-- **A queue and a schedule:** how many downloads run at once, speed limits, and hours when downloads may run.
-- **Browser integration:** an extension for Chrome, Edge, Brave and Firefox sends downloads to the app.
+| Links | Connections per file | Resumes | Logins |
+|---|---|---|---|
+| `http://`, `https://` | Up to 8 by default, kept only while they make it faster | Yes, after checking the file hasn't changed | Password, custom headers |
+| `ftp://`, `ftps://` | One | Yes, after checking the file hasn't changed | Password |
+| `sftp://` | One | Yes, after checking the file hasn't changed | Password, SSH key |
+| Magnet links, `.torrent` | As many peers as it finds | Yes | None needed |
+
+Metalink files, which list a download's mirrors and checksums, work too, once they're turned on in Settings. Logins, custom headers and SSH keys stay out of its database and logs.
 
 ## Private by design
 

@@ -1,9 +1,11 @@
 // The product website (#353): static pages for GitHub Pages, built from the same sources as the in-app guide.
 // The user guides (docs/user/) and the privacy document (docs/PRIVACY.md) are rendered, never copied; the home,
-// FAQ, support and licence pages are in site/content/. Every page is plain HTML and one stylesheet: no scripts, no
-// fonts or anything else from another site, so a visit asks nothing of anyone but GitHub Pages. The download page
-// is made at build time from the GitHub releases the workflow passes in.
+// FAQ, support and licence pages are in site/content/. Every page is plain HTML, one stylesheet, and the site's own
+// font and screenshots: no scripts, and nothing from another site, so a visit asks nothing of anyone but GitHub
+// Pages. The screens are real ones of the app, in site/screens/ (`pnpm site:screens`), and what each one shows is in
+// site/content/screens.json. The download page is made at build time from the GitHub releases the workflow passes in.
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { buildGuide, parsePage, resolveLinks } from './guide-lib.mjs';
 
 /** The site's address: the default GitHub Pages one (PO decision on #353). */
@@ -13,6 +15,21 @@ const NAME = 'Apollo Download Manager';
 
 const root = new URL('../', import.meta.url);
 const read = (rel) => readFileSync(new URL(rel, root), 'utf8').replace(/\r\n/g, '\n');
+
+const content = JSON.parse(read('site/content/screens.json'));
+const SCREEN_CAPTION = 'The real app, with example downloads.';
+
+/** The files the pages use besides what `buildSite` makes: where each is, and its path in the site. */
+export function siteFiles() {
+  const at = (rel) => fileURLToPath(new URL(rel, root));
+  const font = 'node_modules/@fontsource-variable/inter/';
+  return [
+    { from: at('src-tauri/icons/128x128.png'), to: 'icon.png' },
+    { from: at(`${font}files/inter-latin-wght-normal.woff2`), to: 'fonts/inter-latin-wght-normal.woff2' },
+    { from: at(`${font}LICENSE`), to: 'fonts/LICENSE.txt' },
+    ...content.screens.map((s) => ({ from: at(`site/screens/${s.id}.png`), to: `screens/${s.id}.png` })),
+  ];
+}
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -46,14 +63,15 @@ function inlineHtml(content, hrefOf) {
  * Typed blocks (scripts/guide-lib.mjs) as HTML; every text escaped.
  * @param {object[]} blocks
  * @param {(to: { page?: string, path?: string }) => string} hrefOf the address of a link between the site's pages
+ * @param {(id: string) => string} [afterHeading] what follows a heading, by its id
  */
-export function renderBlocks(blocks, hrefOf) {
+export function renderBlocks(blocks, hrefOf, afterHeading = () => '') {
   return blocks
     .map((b) => {
       switch (b.type) {
         case 'heading': {
           const h = Math.min(b.level, 4);
-          return `<h${String(h)} id="${esc(b.id)}">${inlineHtml(b.content, hrefOf)}</h${String(h)}>`;
+          return `<h${String(h)} id="${esc(b.id)}">${inlineHtml(b.content, hrefOf)}</h${String(h)}>${afterHeading(b.id)}`;
         }
         case 'paragraph':
           return `<p>${inlineHtml(b.content, hrefOf)}</p>`;
@@ -130,13 +148,64 @@ ${items}
 
 const NAV = [
   ['', 'Home'],
+  ['features/', 'Features'],
   ['download/', 'Download'],
   ['guide/', 'User guide'],
   ['faq/', 'FAQ'],
   ['support/', 'Support'],
 ];
 
-function layout({ path, title, description, body, aside = '' }) {
+/** One screen of the app, at its real size; the browser fetches it when it comes into view, unless `eager`. */
+function screenImage(id, up, eager = false) {
+  const s = content.screens.find((x) => x.id === id);
+  if (!s) throw new Error(`site/content/screens.json has no screen ${id}`);
+  return `<img src="${up}screens/${s.id}.png" alt="${esc(s.alt)}" width="1440" height="780"${eager ? '' : ' loading="lazy"'}>`;
+}
+
+const screenFigure = (id, up, eager) => `<figure class="shot">${screenImage(id, up, eager)}<figcaption>${SCREEN_CAPTION}</figcaption></figure>`;
+
+/** The screens to choose from: radio buttons and CSS, since the site has no scripts. It opens on another screen than the one above it. */
+function screenSwitcher(up) {
+  const inputs = content.screens.map((s) => `<input type="radio" name="screen" id="screen-${s.id}"${s.id === 'details' ? ' checked' : ''}>`).join('\n');
+  const labels = content.screens.map((s) => `<label for="screen-${s.id}">${esc(s.label)}</label>`).join('\n');
+  const shots = content.screens.map((s) => `<div class="screen screen-${s.id}">${screenImage(s.id, up)}</div>`).join('\n');
+  return `<section class="wrap switcher" aria-labelledby="see-every-screen">
+<h2 id="see-every-screen">See every screen before you install</h2>
+${inputs}
+<div class="tabs">${labels}</div>
+<div class="screens">${shots}</div>
+<p class="muted">${SCREEN_CAPTION}</p>
+</section>`;
+}
+
+function featureSections(list, up) {
+  return list
+    .map(
+      (f) => `<section class="feature">
+<div><h2>${esc(f.title)}</h2><p>${esc(f.text)}</p><p><a href="${up}${esc(f.guide)}">In the user guide</a></p></div>
+<figure class="shot">${screenImage(f.screen, up)}</figure>
+</section>`,
+    )
+    .join('\n');
+}
+
+function homeBody(page, d, hrefOf) {
+  const [title, lead, ...rest] = page.blocks;
+  if (title?.type !== 'heading' || lead?.type !== 'paragraph') throw new Error('site/content/home.md starts with its title and a paragraph');
+  const version = d ? `Version ${esc(d.version)}${d.prerelease ? ', a test release' : ''}. ` : '';
+  return `<div class="hero"><div class="wrap">
+<h1>${inlineHtml(title.content, hrefOf)}</h1>
+<p class="lead">${inlineHtml(lead.content, hrefOf)}</p>
+<p class="actions"><a class="button" href="download/">Download for Windows or Linux</a> <a href="features/">See the features</a></p>
+<p class="small">${version}No account, no telemetry.</p>
+</div></div>
+<div class="wrap hero-shot">${screenFigure('downloads', './', true)}</div>
+${screenSwitcher('./')}
+<div class="wrap features">${featureSections(content.features.filter((f) => f.home), './')}</div>
+<div class="wrap prose">${renderBlocks(rest, hrefOf)}</div>`;
+}
+
+function layout({ path, title, description, body, aside = '', wide = false }) {
   const depth = path.split('/').length - 1;
   const up = depth === 0 ? './' : '../'.repeat(depth);
   const here = path.replace(/index\.html$/, '');
@@ -164,11 +233,7 @@ ${canonical}<meta property="og:title" content="${esc(full)}">
 <a class="brand" href="${up}"><img src="${up}icon.png" alt="" width="28" height="28"> ${NAME}</a>
 <nav aria-label="Site"><ul>${NAV.map(([p, label]) => `<li><a href="${up}${p}"${here === p ? ' aria-current="page"' : ''}>${label}</a></li>`).join('')}</ul></nav>
 </div></header>
-<div class="wrap page${aside ? ' with-aside' : ''}">
-${aside}<main id="main">
-${body}
-</main>
-</div>
+${wide ? `<main id="main" class="full">\n${body}\n</main>` : `<div class="wrap page${aside ? ' with-aside' : ''}">\n${aside}<main id="main">\n${body}\n</main>\n</div>`}
 <footer><div class="wrap">
 <p>${NAME} is free software under the GNU GPL, version 3. <a href="${up}privacy/">Privacy</a> · <a href="${up}licence/">Licence and source</a> · <a href="${REPO}" rel="noopener">GitHub</a></p>
 </div></footer>
@@ -213,14 +278,22 @@ export function buildSite({ releases }) {
     return `${up}${to.path ?? ''}`;
   };
   const emit = (path, page, extra = {}) => {
-    out[path] = layout({ path, title: extra.title ?? page.title, description: extra.description ?? firstText(page.blocks), body: renderBlocks(page.blocks, pageHref(path)), aside: extra.aside });
+    out[path] = layout({ path, title: extra.title ?? page.title, description: extra.description ?? firstText(page.blocks), body: renderBlocks(page.blocks, pageHref(path), extra.afterHeading), aside: extra.aside });
   };
 
-  emit('index.html', contentPage('site/content/home.md', read('site/content/home.md')), { title: NAME });
+  const d = pickDownloads(releases);
+  const home = contentPage('site/content/home.md', read('site/content/home.md'));
+  out['index.html'] = layout({ path: 'index.html', title: NAME, description: firstText(home.blocks), body: homeBody(home, d, pageHref('index.html')), wide: true });
+  out['features/index.html'] = layout({
+    path: 'features/index.html',
+    title: 'Features',
+    description: `What ${NAME} does, shown in the real app: adding downloads, following them, categories, the browser and the schedule.`,
+    body: `<div class="wrap intro"><h1>Features, shown in the real app</h1><p class="lead">Every picture on this page is a screen from ${NAME}, with example downloads.</p></div>\n<div class="wrap features">${featureSections(content.features, '../')}</div>`,
+    wide: true,
+  });
   for (const name of ['faq', 'support', 'licence']) emit(`${name}/index.html`, contentPage(`site/content/${name}.md`, read(`site/content/${name}.md`)));
   emit('privacy/index.html', contentPage('docs/PRIVACY.md', read('docs/PRIVACY.md')), { title: 'Privacy' });
 
-  const d = pickDownloads(releases);
   out['download/index.html'] = layout({
     path: 'download/index.html',
     title: 'Download',
@@ -234,7 +307,12 @@ export function buildSite({ releases }) {
     const aside = `<nav class="aside" aria-label="User guide"><ul>${guide
       .map((g) => `<li><a href="${esc(href({ page: g.id }))}"${g.id === p.id ? ' aria-current="page"' : ''}>${esc(g.id === 'index' ? 'Introduction' : g.title)}</a></li>`)
       .join('')}</ul></nav>\n`;
-    emit(path, p, { aside, title: p.id === 'index' ? 'User guide' : p.title });
+    const shown = content.guide[p.id] ?? {};
+    const afterHeading = (id) => (shown[id] ? screenFigure(shown[id], '../'.repeat(path.split('/').length - 1)) : '');
+    for (const id of Object.keys(shown)) {
+      if (!p.blocks.some((b) => b.type === 'heading' && b.id === id)) throw new Error(`site/content/screens.json: guide ${p.id} has no heading ${id}`);
+    }
+    emit(path, p, { aside, afterHeading, title: p.id === 'index' ? 'User guide' : p.title });
   }
 
   out['404.html'] = layout({ path: '404.html', title: 'Page not found', description: `This page of the ${NAME} website doesn't exist.`, body: `<h1>Page not found</h1>\n<p>This page doesn't exist. Try the <a href="${SITE_URL}">home page</a> or the <a href="${SITE_URL}guide/">user guide</a>.</p>` });

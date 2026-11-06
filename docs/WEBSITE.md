@@ -7,16 +7,24 @@ The product website (#353) is a static site on GitHub Pages, at <https://singlba
 | Page | Source |
 |---|---|
 | Home, FAQ, Support, Licence | `site/content/*.md` |
+| Features, and the screens on every page | `site/content/screens.json`: each screen's label and description, the features, and which guide heading shows which screen |
+| Screenshots | `site/screens/`, real screens of the app (below) |
 | User guide (`/guide/…`) | [docs/user/](user/README.md), the same pages the app's user guide shows (#354) |
 | Privacy | [PRIVACY.md](PRIVACY.md) |
 | Download | GitHub's releases, read when the site is built |
-| Look | `site/style.css`: the app's colours, light and dark |
+| Look | `site/style.css`: the app's colours, light and dark, and its font, Inter |
 
-The pages are never copied: `scripts/site-lib.mjs` renders them at build time through the same parser as the in-app guide (`scripts/guide-lib.mjs`, markdown-it). In `site/content/`, a link to `/x/` goes to the site's page `x`, an `https://` link goes out, and anything else becomes plain text. Raw HTML and images in a page fail the build.
+The pages are never copied: `scripts/site-lib.mjs` renders them at build time through the same parser as the in-app guide (`scripts/guide-lib.mjs`, markdown-it). In `site/content/`, a link to `/x/` goes to the site's page `x`, an `https://` link goes out, and anything else becomes plain text. Raw HTML and images in a page fail the build: a screen on a guide page comes from `screens.json`, so the in-app guide stays text. A heading that file names and a guide doesn't have fails the build too.
+
+## The screens
+
+Every picture is the real window, not a drawing, with example downloads, and says so. `pnpm site:screens` retakes them all, in Microsoft Edge with Playwright: start the web server with `pnpm exec vite`, and the script answers the app's commands itself, with made-up downloads of free software, so it touches no real data. It stops if the list doesn't load. Retake the screens when a screen they show changes, and at each version, since the window shows its version number.
+
+The numbers in a picture are examples, never a speed claim.
 
 ## Private by design
 
-Every page is plain HTML and one stylesheet, with system fonts: **no scripts, no fonts, analytics or anything else from another site**, so a visit asks nothing of anyone but GitHub Pages. A test (`scripts/site-lib.test.mjs`) fails if a page loads a script or anything from another address. Each page has a title, a description, its canonical address and sharing (Open Graph) tags; `sitemap.xml` lists every page and `robots.txt` points to it.
+Every page is plain HTML and one stylesheet, with the site's own copy of the Inter font and its own screenshots: **no scripts, no analytics and nothing from another site**, so a visit asks nothing of anyone but GitHub Pages. The screen switcher on the home page is radio buttons and CSS. A test (`scripts/site-lib.test.mjs`) fails if a page loads a script or anything from another address. Each page has a title, a description, its canonical address and sharing (Open Graph) tags; `sitemap.xml` lists every page and `robots.txt` points to it.
 
 ## Building it
 

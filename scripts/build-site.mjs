@@ -5,7 +5,7 @@
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildSite } from './site-lib.mjs';
+import { buildSite, siteFiles } from './site-lib.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'site-out');
@@ -18,7 +18,11 @@ for (const [path, body] of Object.entries(site)) {
   mkdirSync(dirname(join(out, path)), { recursive: true });
   writeFileSync(join(out, path), body);
 }
-copyFileSync(join(root, 'src-tauri', 'icons', '128x128.png'), join(out, 'icon.png'));
+const files = siteFiles();
+for (const { from, to } of files) {
+  mkdirSync(dirname(join(out, to)), { recursive: true });
+  copyFileSync(from, join(out, to));
+}
 // GitHub Pages serves the files as they are, without Jekyll.
 writeFileSync(join(out, '.nojekyll'), '');
-console.log(`built ${String(Object.keys(site).length + 2)} files into site-out/${releases ? '' : ' (no releases given: the download page links to GitHub)'}`);
+console.log(`built ${String(Object.keys(site).length + files.length + 1)} files into site-out/${releases ? '' : ' (no releases given: the download page links to GitHub)'}`);

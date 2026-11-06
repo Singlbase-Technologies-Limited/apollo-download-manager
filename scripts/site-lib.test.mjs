@@ -1,6 +1,7 @@
+import { existsSync } from 'node:fs';
 import { posix } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildSite, pickDownloads, renderBlocks, SITE_URL } from './site-lib.mjs';
+import { buildSite, pickDownloads, renderBlocks, siteFiles, SITE_URL } from './site-lib.mjs';
 
 const release = (over = {}) => ({
   tag_name: 'v0.2.0',
@@ -96,5 +97,70 @@ describe('the website (#353)', () => {
       }
     }
     expect(broken).toEqual([]);
+  });
+});
+
+describe('the website shows the real app (#353)', () => {
+  const site = buildSite({ releases: [release()] });
+  const images = (html) => [...html.matchAll(/<img\b[^>]*>/g)].map(([tag]) => tag);
+
+  it('opens the home page with what it is, the download and the app', () => {
+    const home = site['index.html'];
+    expect(home).toMatch(/<h1[^>]*>A free download manager for Windows and Linux<\/h1>/);
+    expect(home.indexOf('class="button"')).toBeLessThan(home.indexOf('screens/downloads.png'));
+    expect(home).toContain('The real app, with example downloads.');
+  });
+
+  it('lets a visitor switch between the screens with no script, each one labelled', () => {
+    const home = site['index.html'];
+    const choices = [...home.matchAll(/<input type="radio" name="screen" id="screen-([a-z-]+)"/g)].map((m) => m[1]);
+    expect(choices.length).toBeGreaterThanOrEqual(8);
+    for (const id of choices) {
+      expect(home).toContain(`<label for="screen-${id}">`);
+      expect(home).toContain(`class="screen screen-${id}"`);
+      expect(site['style.css']).toContain(`#screen-${id}:checked`);
+    }
+    expect(home.match(/<input type="radio"[^>]* checked>/g)).toHaveLength(1);
+    expect(home).toContain('id="screen-details" checked');
+  });
+
+  it('has a Features page in the navigation, with a screen for every feature', () => {
+    const page = site['features/index.html'];
+    expect(site['index.html']).toMatch(/<a href="[^"]*features\/">Features<\/a>/);
+    const features = page.match(/<section class="feature"/g) ?? [];
+    expect(features.length).toBeGreaterThanOrEqual(5);
+    expect(images(page.slice(page.indexOf('<main'))).length).toBeGreaterThanOrEqual(features.length);
+    expect(page).toContain('screens/schedule.png');
+  });
+
+  it('shows the screen a guide section describes, right under its heading', () => {
+    expect(site['guide/downloads/index.html']).toMatch(/id="adding-downloads">[^<]*<\/h2>\s*<figure[^>]*><img[^>]+screens\/add\.png/);
+    expect(site['guide/categories/index.html']).toContain('screens/categories.png');
+  });
+
+  it('describes every screen, gives it a size, and has its file', () => {
+    const files = siteFiles().map((f) => f.to);
+    for (const [path, body] of Object.entries(site)) {
+      if (!path.endsWith('.html')) continue;
+      for (const tag of images(body)) {
+        if (!tag.includes('screens/')) continue;
+        expect(tag, path).toMatch(/ alt="[^"]{15,}"/);
+        expect(tag, path).toMatch(/ width="\d+" height="\d+"/);
+        expect(files, path).toContain(/screens\/[a-z-]+\.png/.exec(tag)[0]);
+      }
+    }
+  });
+
+  it('serves its font itself, with the font’s licence', () => {
+    expect(site['style.css']).toMatch(/@font-face\s*{[^}]*url\("fonts\/inter-latin-wght-normal\.woff2"\)/);
+    expect(site['style.css']).not.toMatch(/url\(["']?https?:/);
+    const files = siteFiles();
+    expect(files.map((f) => f.to)).toEqual(expect.arrayContaining(['fonts/inter-latin-wght-normal.woff2', 'fonts/LICENSE.txt']));
+    for (const f of files) expect(existsSync(f.from), f.from).toBe(true);
+  });
+
+  it('says several connections only of HTTP and HTTPS', () => {
+    const text = site['index.html'].replace(/<[^>]+>/g, ' ');
+    for (const [, sentence] of text.matchAll(/([^.]*several connections[^.]*\.)/gi)) expect(sentence).toMatch(/HTTP and HTTPS/);
   });
 });
