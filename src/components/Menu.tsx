@@ -7,7 +7,7 @@ import { cn } from '../lib/cn';
 
 export const menuContent = 'z-50 min-w-48 rounded-lg border border-border bg-surface p-1 text-[13px] shadow-panel';
 export const menuItem =
-  'flex cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-surface-3 [&_svg]:size-4 [&_svg]:text-fg-muted';
+  'flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[highlighted]:bg-surface-3 [&_svg]:size-4 [&_svg]:text-fg-muted';
 
 export interface MenuEntry {
   label: string;
