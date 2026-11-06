@@ -479,8 +479,9 @@ pub enum CategoryMove {
     Moved { path: String },
     /// Nothing to move: the file is already in that folder, or the download has none yet.
     Unchanged,
-    /// The download is running: it pauses, moves once the engine has stopped it, and carries
-    /// on. The app's log says if the move then fails; the download carries on where it was.
+    /// It moves in the background: a running download pauses, moves once the engine has stopped
+    /// it, and carries on; a torrent's engine moves its files while it seeds or downloads. The
+    /// app's log says if the move then fails; the download carries on where it was.
     Moving,
     /// The file couldn't be moved and is still at `path`; `code` says why.
     Stayed { path: String, code: ErrorCode },

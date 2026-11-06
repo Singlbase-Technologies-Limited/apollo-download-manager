@@ -534,6 +534,23 @@ impl Manager {
                 self.resume_chunk(&id, &chunk, now_ms);
                 true
             }
+            TorrentEvent::Moved {
+                id: torrent,
+                directory,
+            } => {
+                let Some(id) = self.by_torrent.get(&torrent).cloned() else {
+                    return false;
+                };
+                self.torrent_moved(&id, &directory);
+                true
+            }
+            // The files stay where they were, and so does its folder (#366).
+            TorrentEvent::MoveFailed { id: torrent, .. } => {
+                if let Some(id) = self.by_torrent.get(&torrent) {
+                    tracing::warn!(download = %id, "the torrent couldn't move to its category's folder");
+                }
+                false
+            }
         }
     }
 

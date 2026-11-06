@@ -163,6 +163,13 @@ impl Book<ChildTorrentEngine> for TorrentBook {
                     self.resume.insert(*id, Saved { count, bytes });
                 }
             }
+            // A torrent added back after a crash comes from its new folder (#366).
+            TorrentEvent::Moved { id, directory } => {
+                if let Some(spec) = self.specs.get_mut(id) {
+                    spec.directory = directory.clone();
+                }
+            }
+            TorrentEvent::MoveFailed { .. } => {}
         }
         vec![event]
     }
@@ -437,6 +444,11 @@ impl TorrentEngine for SupervisedTorrentEngine {
             return Ok(());
         }
         self.helper()?.remove(id)
+    }
+
+    fn move_storage(&mut self, id: TorrentId, directory: PathBuf) -> Result<(), ErrorCode> {
+        // The folder it is added back with follows once the move is done (`Moved`).
+        self.running(id)?.move_storage(id, directory)
     }
 
     fn set_files(&mut self, id: TorrentId, files: Vec<u32>) -> Result<(), ErrorCode> {

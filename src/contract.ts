@@ -241,7 +241,7 @@ export const CategoryMoveSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('moved'), path: z.string() }),
   /** Nothing to move: already in that folder, or no file yet. */
   z.strictObject({ kind: z.literal('unchanged') }),
-  /** Running: it pauses, moves, and carries on. */
+  /** Running, or a torrent: it moves in the background and carries on. */
   z.strictObject({ kind: z.literal('moving') }),
   /** The file couldn't move and is still at `path`. */
   z.strictObject({ kind: z.literal('stayed'), path: z.string(), code: ErrorCodeSchema }),

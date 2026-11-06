@@ -56,9 +56,15 @@ Torrent metadata and magnet links are untrusted input. `velocity_core::torrent` 
   - **Hashes:** only the hashes the helper reports are compared. A hybrid torrent's magnet gives one hash first.
   - **Retries:** just after the metadata arrives the helper can't always give it, so the manager asks again on each snapshot, up to 10 times, then warns in the app's log (#268). The resume data holds the metadata too ([Resume data](#resume-data-and-recovery)).
 
+## Moving a torrent
+
+- **When:** changing a torrent's category moves its files to that category's folder (#366, [FILE_NAMING.md](FILE_NAMING.md#categories)).
+- **How:** `moveStorage` has libtorrent move them (`move_storage`, never over a taken name). The torrent keeps seeding or downloading meanwhile. `moved` follows, with the new folder, or `moveFailed`, with the files where they were. The helper then saves the torrent's resume data, which holds the folder, and the supervisor adds it back from the new folder after a crash.
+- **A taken name:** when the torrent's file or folder name is taken in the new folder, the manager doesn't ask for the move. The torrent stays, and the category still changes (PO decision on #366). It is never renamed: deleting a torrent's files, adding it again and restoring it all work its paths out from its original name.
+
 ## The torrent contract
 
-`TORRENT_CONTRACT_VERSION` is 5: version 1 had no file choice, version 2 no seeding or resume data, version 3 no trackers, peers, limits or port settings, and version 4 no proxy. Every wire form refuses unknown fields.
+`TORRENT_CONTRACT_VERSION` is 6: version 1 had no file choice, version 2 no seeding or resume data, version 3 no trackers, peers, limits or port settings, version 4 no proxy, and version 5 no `moveStorage` (#366). Every wire form refuses unknown fields.
 
 | Command | Reply | What it does |
 |---|---|---|

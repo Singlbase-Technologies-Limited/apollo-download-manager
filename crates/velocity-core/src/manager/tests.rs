@@ -5196,6 +5196,7 @@ mod adding {
     //! folder, and the options that reach the engines.
     use super::*;
     use crate::destination::{FolderSettings, OnConflict};
+    use crate::domain::CategoryMove;
     use crate::manager::adding::{AddOutcome, AddRequest, Duplicate, FileChoice, MAX_ADD};
     use crate::seeding::SeedPolicy;
     use crate::torrent::bencode::{encode, Value};
@@ -5504,6 +5505,93 @@ mod adding {
             matches!(&again[0].outcome, AddOutcome::Duplicate { duplicate } if duplicate.existing_id == id),
             "{:?}",
             again[0].outcome
+        );
+    }
+
+    /// The album torrent added to `s.dir`, its name known, with category subfolders turned on
+    /// afterwards, so another category's folder is a subfolder.
+    fn album_known(s: &mut Setup) -> String {
+        let source = s.dir.join("from");
+        fs::create_dir_all(&source).unwrap();
+        let (path, hash) = album_file(&source);
+        let request = AddRequest {
+            torrent_files: vec![path.to_string_lossy().into_owned()],
+            ..AddRequest::default()
+        };
+        let id = added(&s.m.add_request(&request, T0).unwrap()[0].outcome);
+        s.torrents.hash_known(TorrentId(1), "album", &hash, 32_000);
+        s.m.pump(T0 + 1);
+        s.db.save_section(
+            &FolderSettings {
+                default_directory: s.dir.to_string_lossy().into_owned(),
+                ..FolderSettings::default()
+            },
+            T0,
+        )
+        .unwrap();
+        id
+    }
+
+    /// #366: a torrent's category change has the torrent engine move its files; its folder
+    /// follows once they are there.
+    #[test]
+    fn a_torrent_moves_through_its_engine_and_its_folder_follows() {
+        let mut s = setup("torrent-move");
+        let id = album_known(&mut s);
+        let documents = s.dir.join("Documents");
+        assert_eq!(
+            s.m.set_download_category(&id, Some("documents")),
+            Ok(CategoryMove::Moving)
+        );
+        assert!(s
+            .torrents
+            .log()
+            .contains(&format!("move_storage 1 {}", documents.display())));
+        assert_eq!(Path::new(&s.m.get(&id).unwrap().directory), s.dir);
+        s.torrents.moved(TorrentId(1), &documents);
+        s.m.pump(T0 + 2);
+        assert_eq!(Path::new(&s.m.get(&id).unwrap().directory), documents);
+        let stored = s.db.downloads().unwrap();
+        let stored = stored.iter().find(|d| d.id == id).unwrap();
+        assert_eq!(Path::new(&stored.directory), documents);
+        assert_eq!(stored.category_id.as_deref(), Some("documents"));
+    }
+
+    #[test]
+    fn a_torrent_whose_name_is_taken_there_stays_and_says_so() {
+        let mut s = setup("torrent-move-taken");
+        let id = album_known(&mut s);
+        let documents = s.dir.join("Documents");
+        fs::create_dir_all(documents.join("album")).unwrap();
+        assert_eq!(
+            s.m.set_download_category(&id, Some("documents")),
+            Ok(CategoryMove::Stayed {
+                path: s.dir.join("album").to_string_lossy().into_owned(),
+                code: ErrorCode::FileExists,
+            })
+        );
+        assert!(!s
+            .torrents
+            .log()
+            .iter()
+            .any(|c| c.starts_with("move_storage")));
+        assert_eq!(
+            s.m.get(&id).unwrap().category_id.as_deref(),
+            Some("documents")
+        );
+    }
+
+    #[test]
+    fn a_torrent_whose_move_fails_keeps_its_folder() {
+        let mut s = setup("torrent-move-fails");
+        let id = album_known(&mut s);
+        s.m.set_download_category(&id, Some("documents")).unwrap();
+        s.torrents.move_failed(TorrentId(1), "the disk is full");
+        s.m.pump(T0 + 2);
+        assert_eq!(Path::new(&s.m.get(&id).unwrap().directory), s.dir);
+        assert_eq!(
+            s.m.get(&id).unwrap().category_id.as_deref(),
+            Some("documents")
         );
     }
 

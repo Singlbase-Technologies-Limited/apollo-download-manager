@@ -325,9 +325,11 @@ fn unknown_ids_and_bad_input_are_errors_not_crashes() {
 fn moved(s: &Session, id: u64) -> velocity_lt::AlertEntry {
     let t = Instant::now();
     loop {
-        if let Some(a) = s.pop_alerts().into_iter().find(|a| {
-            a.id == id && (a.kind == "storage_moved" || a.kind == "storage_moved_failed")
-        }) {
+        if let Some(a) = s
+            .pop_alerts()
+            .into_iter()
+            .find(|a| a.id == id && (a.kind == "storage_moved" || a.kind == "storage_moved_failed"))
+        {
             return a;
         }
         assert!(t.elapsed() < Duration::from_secs(30), "no move alert");
@@ -356,7 +358,9 @@ fn a_torrent_moves_and_never_replaces_anything() {
             ..Default::default()
         })
         .unwrap();
-    wait("it checks its files", 30, || s.status(id).unwrap().is_seeding);
+    wait("it checks its files", 30, || {
+        s.status(id).unwrap().is_seeding
+    });
 
     s.move_storage(id, &to.path().to_string_lossy()).unwrap();
     let alert = moved(&s, id);
@@ -366,7 +370,11 @@ fn a_torrent_moves_and_never_replaces_anything() {
     for c in entry["content"].as_array().unwrap() {
         let rel = c["path"].as_str().unwrap();
         let got = std::fs::read(to.path().join(name).join(rel)).unwrap();
-        assert_eq!(hex(&Sha256::digest(&got)), c["sha256"].as_str().unwrap(), "{rel}");
+        assert_eq!(
+            hex(&Sha256::digest(&got)),
+            c["sha256"].as_str().unwrap(),
+            "{rel}"
+        );
     }
     assert!(!from.path().join(name).join("a.bin").exists());
     assert!(s.status(id).unwrap().is_seeding, "it still seeds");
@@ -374,7 +382,10 @@ fn a_torrent_moves_and_never_replaces_anything() {
     s.move_storage(id, &taken.path().to_string_lossy()).unwrap();
     let alert = moved(&s, id);
     assert_eq!(alert.kind, "storage_moved_failed");
-    assert_eq!(std::fs::read(taken.path().join(name).join("a.bin")).unwrap(), b"theirs");
+    assert_eq!(
+        std::fs::read(taken.path().join(name).join("a.bin")).unwrap(),
+        b"theirs"
+    );
     assert_eq!(Path::new(&s.status(id).unwrap().save_path), to.path());
     assert!(to.path().join(name).join("a.bin").is_file());
     assert!(s.remove(id));

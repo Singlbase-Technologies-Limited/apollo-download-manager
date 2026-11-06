@@ -37,4 +37,5 @@ You can change a download's category later, with **Edit…** in its details pane
 - **A running one** is paused, moved, and carries on by itself.
 - **A name already taken** in the new folder is never replaced: the moved file gets the next free name, such as `report (1).pdf`.
 - **Moving to another drive** copies the file first, and removes the original only once the copy is complete.
+- **A torrent** moves too, and keeps seeding from its new folder. If a file or folder with its name is already there, the torrent stays where it is, and the message says so.
 - **A file that can't move**, because it was deleted or its drive is gone, stays where it is. The category still changes, and the message says why.

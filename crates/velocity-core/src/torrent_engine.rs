@@ -31,7 +31,9 @@ use crate::seeding::{SeedPolicy, MAX_ACTIVE_SEEDS};
 /// [`TorrentSpec`] and [`TorrentCommand::SetLimits`]; [`TorrentCommand::Trackers`],
 /// [`TorrentCommand::Reannounce`], [`TorrentCommand::Peers`] and [`TorrentCommand::Network`].
 /// Version 5 (#192): [`TorrentCommand::SetProxy`]; peers and trackers go through the user's proxy.
-pub const TORRENT_CONTRACT_VERSION: u32 = 5;
+/// Version 6 (#366): [`TorrentCommand::MoveStorage`], [`TorrentEvent::Moved`] and
+/// [`TorrentEvent::MoveFailed`]; a torrent's files move to another folder.
+pub const TORRENT_CONTRACT_VERSION: u32 = 6;
 
 /// The port the torrent helper listens on unless the user sets another (PO decision on #62):
 /// not V1's 6881 or 6882.
@@ -405,6 +407,16 @@ pub enum TorrentEvent {
         id: TorrentId,
         chunk: Chunk,
     },
+    /// The torrent's files are in `directory` now, after [`TorrentEngine::move_storage`] (#366).
+    Moved {
+        id: TorrentId,
+        directory: PathBuf,
+    },
+    /// [`TorrentEngine::move_storage`] failed, and the files are where they were.
+    MoveFailed {
+        id: TorrentId,
+        message: String,
+    },
 }
 
 /// Commands fail with an [`ErrorCode`]: `NotFound` for an unknown id, `InvalidInput` for metadata,
@@ -437,6 +449,12 @@ pub trait TorrentEngine: Send {
     /// disk are never deleted. `InvalidInput` for an empty list, a duplicate, a padding file or an
     /// index the torrent hasn't; `InvalidState` before the metadata is known.
     fn set_files(&mut self, id: TorrentId, files: Vec<u32>) -> Result<(), ErrorCode>;
+    /// Moves the torrent's files into `directory`, an absolute folder (#366). It goes on in the
+    /// background and ends with [`TorrentEvent::Moved`], or [`TorrentEvent::MoveFailed`] with the
+    /// files where they were: nothing in `directory` is ever replaced. The torrent keeps seeding
+    /// or downloading. `InvalidInput` for a folder that isn't absolute; `InvalidState` before the
+    /// metadata is known.
+    fn move_storage(&mut self, id: TorrentId, directory: PathBuf) -> Result<(), ErrorCode>;
     /// Part of the torrent's metadata, from `offset`. `InvalidState` before it is known.
     fn metadata(&self, id: TorrentId, offset: u64) -> Result<Chunk, ErrorCode>;
     /// Sets when the torrent stops seeding. A completed torrent whose new policy isn't met yet
@@ -528,6 +546,9 @@ impl TorrentEngine for MissingTorrentEngine {
     fn set_files(&mut self, _id: TorrentId, _files: Vec<u32>) -> Result<(), ErrorCode> {
         Err(ErrorCode::EngineUnavailable)
     }
+    fn move_storage(&mut self, _id: TorrentId, _directory: PathBuf) -> Result<(), ErrorCode> {
+        Err(ErrorCode::EngineUnavailable)
+    }
     fn metadata(&self, _id: TorrentId, _offset: u64) -> Result<Chunk, ErrorCode> {
         Err(ErrorCode::EngineUnavailable)
     }
@@ -608,6 +629,10 @@ pub enum TorrentCommand {
     SetFiles {
         id: TorrentId,
         files: Vec<u32>,
+    },
+    MoveStorage {
+        id: TorrentId,
+        directory: PathBuf,
     },
     Metadata {
         id: TorrentId,
@@ -693,6 +718,10 @@ pub fn dispatch(
         }
         TorrentCommand::SetFiles { id, files } => {
             engine.set_files(id, files)?;
+            TorrentReply::Done {}
+        }
+        TorrentCommand::MoveStorage { id, directory } => {
+            engine.move_storage(id, directory)?;
             TorrentReply::Done {}
         }
         TorrentCommand::Metadata { id, offset } => TorrentReply::Metadata {

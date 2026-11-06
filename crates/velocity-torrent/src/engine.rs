@@ -33,7 +33,7 @@
 
 use std::collections::BTreeMap;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -578,6 +578,7 @@ impl Shared {
             })
             .collect();
         self.send_resume_data(&alerts);
+        self.send_moves(&alerts);
         for seen in torrents {
             if let Some(params) = &seen.readd {
                 self.add_again(seen.id, params);
@@ -638,6 +639,48 @@ impl Shared {
                 let chunk = Chunk::of(&alert.data, offset as u64, CHUNK_BYTES);
                 offset += CHUNK_BYTES;
                 state.emit(TorrentEvent::ResumeData { id, chunk });
+            }
+        }
+    }
+
+    /// Reports how the moves libtorrent finished went (#366). A moved torrent is added again,
+    /// if ever, from its new folder, and its resume data, which holds the folder, is saved now.
+    fn send_moves(&self, alerts: &[velocity_lt::AlertEntry]) {
+        for alert in alerts {
+            let moved = match alert.kind.as_str() {
+                "storage_moved" => true,
+                "storage_moved_failed" => false,
+                _ => continue,
+            };
+            let found = {
+                let mut state = self.state();
+                let found = state
+                    .torrents
+                    .iter_mut()
+                    .find(|(_, t)| t.lt == Some(alert.id))
+                    .map(|(id, t)| {
+                        if moved {
+                            t.base.save_path = alert.message.clone();
+                        }
+                        *id
+                    });
+                if let Some(id) = found {
+                    state.emit(if moved {
+                        TorrentEvent::Moved {
+                            id,
+                            directory: PathBuf::from(&alert.message),
+                        }
+                    } else {
+                        TorrentEvent::MoveFailed {
+                            id,
+                            message: clean_text(&alert.message, 300),
+                        }
+                    });
+                }
+                found
+            };
+            if let (true, Some(id)) = (moved, found) {
+                self.ask_resume(id, alert.id);
             }
         }
     }
@@ -1242,6 +1285,25 @@ impl TorrentEngine for LtEngine {
             self.shared.session.remove(lt);
         }
         Ok(())
+    }
+
+    fn move_storage(&mut self, id: TorrentId, directory: PathBuf) -> Result<(), ErrorCode> {
+        // The same checks as a new torrent's folder: absolute, there, and a folder.
+        let save_path = check_directory(&directory)?;
+        let lt = {
+            let state = self.shared.state();
+            let torrent = state.torrents.get(&id).ok_or(ErrorCode::NotFound)?;
+            match (torrent.lt, &torrent.files, &torrent.readd) {
+                (Some(lt), Some(_), None) => lt,
+                _ => return Err(ErrorCode::InvalidState),
+            }
+        };
+        // libtorrent moves it in the background, never over a taken name; `storage_moved` or
+        // `storage_moved_failed` follows ([`Shared::send_moves`]).
+        self.shared
+            .session
+            .move_storage(lt, &save_path)
+            .map_err(|_| ErrorCode::InvalidState)
     }
 
     fn set_files(&mut self, id: TorrentId, wanted: Vec<u32>) -> Result<(), ErrorCode> {

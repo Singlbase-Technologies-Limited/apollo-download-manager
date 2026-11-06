@@ -32,7 +32,7 @@ function reportMove(m: CategoryMove) {
       toast.success(`Moved to ${m.path}`);
       break;
     case 'moving':
-      toast.success('Pausing it to move it to the new folder; it carries on there');
+      toast.success('Moving it to the new folder; it carries on from there');
       break;
     case 'stayed':
       toast.warning(`The category changed, but the file stayed at ${m.path}: ${ERROR_MESSAGES[m.code]}`);

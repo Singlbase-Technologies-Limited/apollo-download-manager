@@ -80,6 +80,7 @@ impl Manager {
             return Ok(CategoryMove::Moving);
         }
         let moved = match record.status {
+            _ if d.torrent().is_some() => self.move_torrent(id, &record),
             DownloadStatus::Completed if at_rest => self.move_finished(&mut record),
             DownloadStatus::Paused
             | DownloadStatus::Queued
@@ -384,6 +385,50 @@ impl Manager {
             if let Err(code) = self.resume(&id) {
                 tracing::warn!(download = %id, ?code, "the moved download couldn't carry on");
             }
+        }
+    }
+
+    /// Has the torrent engine move a torrent's files to its category's folder (#366); its folder
+    /// follows once they are there ([`Manager::torrent_moved`]). A name taken there leaves it
+    /// where it is (PO decision on #366): renaming it would leave other paths to its files wrong.
+    fn move_torrent(&mut self, id: &str, record: &DownloadRecord) -> CategoryMove {
+        let directory = PathBuf::from(&record.directory);
+        let stayed = |code| CategoryMove::Stayed {
+            path: match &record.file_name {
+                Some(name) => directory.join(name),
+                None => directory.clone(),
+            }
+            .to_string_lossy()
+            .into_owned(),
+            code,
+        };
+        let folder = match self.category_folder(record) {
+            Ok(folder) if folder == directory => return CategoryMove::Unchanged,
+            Ok(folder) => folder,
+            Err(code) => return stayed(code),
+        };
+        // Its name is known with its metadata; before that there is nothing to move.
+        let Some(name) = record.file_name.as_deref() else {
+            return stayed(ErrorCode::InvalidState);
+        };
+        if self.name_taken(&folder, name) {
+            return stayed(ErrorCode::FileExists);
+        }
+        let Some(torrent) = self.downloads.get(id).and_then(|d| d.torrent()) else {
+            return stayed(ErrorCode::InvalidState);
+        };
+        match self.torrents.move_storage(torrent, folder) {
+            Ok(()) => CategoryMove::Moving,
+            Err(code) => stayed(code),
+        }
+    }
+
+    /// A torrent's files are in `directory` now (#366): it is added again from there.
+    pub(super) fn torrent_moved(&mut self, id: &str, directory: &Path) {
+        if let Some(d) = self.downloads.get_mut(id) {
+            d.record.directory = directory.to_string_lossy().into_owned();
+            self.mark(id);
+            self.flush();
         }
     }
 

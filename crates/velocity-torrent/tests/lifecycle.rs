@@ -530,3 +530,67 @@ fn resume_data_is_checked_before_libtorrent_reads_it() {
     assert_eq!(engine.snapshot().unwrap(), [], "nothing was added");
     restore(&mut engine, &data, resumed(&dir.0)).unwrap();
 }
+
+/// The `Moved` or `MoveFailed` event for torrent `id`.
+fn move_result(events: &Receiver<TorrentEvent>, id: TorrentId) -> TorrentEvent {
+    let deadline = Instant::now() + Duration::from_secs(30);
+    loop {
+        let left = deadline.saturating_duration_since(Instant::now());
+        match events.recv_timeout(left).expect("a move result in time") {
+            e @ (TorrentEvent::Moved { id: of, .. } | TorrentEvent::MoveFailed { id: of, .. })
+                if of == id =>
+            {
+                return e
+            }
+            _ => {}
+        }
+    }
+}
+
+/// #366: a completed torrent moves to another folder through the helper, and its resume data
+/// then continues it from there; a move onto a name taken there fails, and nothing is replaced.
+#[test]
+fn a_torrent_moves_to_another_folder_and_continues_from_there() {
+    let name = "v1-multi";
+    let dir = Dir::new("move");
+    let to = Dir::new("move-to");
+    let taken = Dir::new("move-taken");
+    std::fs::create_dir_all(taken.0.join(name)).unwrap();
+    std::fs::write(taken.0.join(name).join("a.bin"), b"theirs").unwrap();
+    place_files(name, &dir.0);
+    let data = {
+        let (mut engine, events) = helper_with(0);
+        let id = engine.add(spec(file(name), &dir.0, vec![])).unwrap();
+        wait_snapshot(&events, id, "completed", 60, completed);
+        engine.move_storage(id, to.0.clone()).unwrap();
+        assert_eq!(
+            move_result(&events, id),
+            TorrentEvent::Moved {
+                id,
+                directory: to.0.clone()
+            }
+        );
+        assert!(to.0.join(name).join("a.bin").is_file());
+        assert!(!dir.0.join(name).join("a.bin").exists());
+
+        engine.move_storage(id, taken.0.clone()).unwrap();
+        assert!(matches!(
+            move_result(&events, id),
+            TorrentEvent::MoveFailed { .. }
+        ));
+        assert_eq!(
+            std::fs::read(taken.0.join(name).join("a.bin")).unwrap(),
+            b"theirs"
+        );
+        assert!(to.0.join(name).join("a.bin").is_file());
+        assert_eq!(
+            engine.move_storage(TorrentId(999), to.0.clone()),
+            Err(ErrorCode::NotFound)
+        );
+        saved(&engine, id)
+    };
+    // No peer: only the files in the new folder can complete it.
+    let (mut engine, events) = helper_with(0);
+    let id = restore(&mut engine, &data, resumed(&to.0)).unwrap();
+    wait_snapshot(&events, id, "completed from the new folder", 60, completed);
+}
