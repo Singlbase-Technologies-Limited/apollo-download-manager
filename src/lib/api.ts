@@ -82,6 +82,8 @@ export const api = {
   /** Checks, saves and applies every section; the settings as saved. */
   setSettings: (settings: Settings) => call('set_settings', { settings }, SettingsSchema),
   resetSettings: () => call('reset_settings', undefined, SettingsSchema),
+  /** Forgets what the engine learned about servers (#325). */
+  forgetLearnedServers: () => call('forget_learned_servers', undefined, nothing),
   /** Whether the proxy has a password (#192); the password itself never comes back. */
   proxyPasswordSet: () => call('get_proxy_password_set', undefined, z.boolean()),
   /** Sets the proxy's password, or clears it with `null` (#192). */

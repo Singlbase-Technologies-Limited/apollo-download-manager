@@ -143,6 +143,7 @@ pub fn run() {
             shell::get_settings,
             shell::set_settings,
             shell::reset_settings,
+            shell::forget_learned_servers,
             shell::get_proxy_password_set,
             shell::set_proxy_password,
             shell::get_torrent_network,

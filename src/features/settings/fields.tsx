@@ -4,6 +4,7 @@ import { CheckInput } from '../../components/CheckInput';
 import { Input } from '../../components/Input';
 import { Select } from '../../components/Select';
 import { TimeField } from '../../components/TimeField';
+import { Button } from '../../components/Button';
 
 /** A titled group of rows. */
 export function Group({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
@@ -28,6 +29,18 @@ function Row({ id, title, description, children }: { id: string; title: string; 
       </div>
       <div className="max-w-full shrink-0">{children}</div>
     </div>
+  );
+}
+
+/** Something done at once, such as forgetting what was learned (#325), with its button. */
+export function Action({ title, description, label, busy, onClick }: { title: string; description?: ReactNode; label: string; busy?: boolean; onClick: () => void }) {
+  const id = useId();
+  return (
+    <Row id={id} title={title} description={description}>
+      <Button size="sm" variant="secondary" busy={busy} onClick={onClick}>
+        {label}
+      </Button>
+    </Row>
   );
 }
 

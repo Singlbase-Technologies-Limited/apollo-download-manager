@@ -127,6 +127,7 @@ The commands of [`src-tauri/src/shell.rs`](../src-tauri/src/shell.rs) (#29). A c
 | `get_settings` | — | `Settings`: every section the Settings screen edits ([SETTINGS.md](SETTINGS.md#the-settings-screen)). The fixture `settings.json` has the defaults. Since contract version 17 (#30); the `browser` section since version 19 (#65), the `proxy` section since version 21 (#192) |
 | `set_settings` | `settings` | the `Settings` saved; `INVALID_INPUT`, with nothing saved or applied, when a section is out of bounds |
 | `reset_settings` | — | the defaults saved, keeping the download folder |
+| `forget_learned_servers` | — | nothing; forgets what downloads learned about servers, in the database and in the engine (#325). Since contract version 32 |
 | `get_proxy_password_set` | — | whether the proxy has a password, typed this session or remembered; the password never comes to the window. Since contract version 21 (#192) |
 | `set_proxy_password` | `password` (`null` clears it) | nothing. Gives both engines the proxy with it, and keeps it in the system keychain when `proxy.rememberPassword` is on; `INVALID_INPUT` for one a login can't have, `KEYCHAIN_UNAVAILABLE` when the keychain refused (it is still used). Since contract version 21 (#192) |
 | `get_torrent_network` | — | the torrent helper's `NetworkStatus`: `listenPort`, `listenError` and `portMapping` |

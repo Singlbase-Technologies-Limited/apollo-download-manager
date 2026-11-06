@@ -1178,6 +1178,13 @@ impl Manager {
                 }
                 true
             }
+            // Kept for later downloads from the server, after a restart too (#325); nothing shown.
+            TransferEvent::HostLearned { memory } => {
+                if let Err(e) = self.database.save_host(&memory, now_ms) {
+                    tracing::warn!(code = ?e.code, "what was learned about a server couldn't be kept");
+                }
+                false
+            }
             TransferEvent::Removed { id } => {
                 let Some(app_id) = self.by_transfer.remove(&id) else {
                     return false;

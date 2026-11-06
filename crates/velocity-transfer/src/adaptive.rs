@@ -94,6 +94,13 @@ pub struct Ramp {
     window: Option<(Instant, u64)>,
     /// The fastest window measured, in bytes per second.
     best: Option<f64>,
+    /// The count it starts at, remembered from an earlier download from the server (#325); taken
+    /// once its first step has used it.
+    start: Option<u32>,
+    /// It started from a remembered count and hasn't yet tried one more than it settles at.
+    remembered: bool,
+    /// One more than the remembered count is being measured, against the speed without it.
+    probing: Option<f64>,
 }
 
 impl Ramp {
@@ -115,6 +122,9 @@ impl Ramp {
             ceiling: 0,
             window: None,
             best: None,
+            start: None,
+            remembered: false,
+            probing: None,
         }
     }
 
@@ -126,6 +136,17 @@ impl Ramp {
             target: target.clamp(1, ceiling),
             holding: true,
             ceiling,
+            ..Ramp::new(policy)
+        }
+    }
+
+    /// A ramp that starts at `start` connections, the count an earlier download from the same
+    /// server settled at (#325), instead of the whole ceiling. It judges from there as any ramp
+    /// does, and before it settles at `start` it tries one more: if that helps, the server may
+    /// give more now, and it takes the whole ceiling and judges again from the top.
+    pub fn starting_at(policy: AdaptivePolicy, start: u32) -> Self {
+        Ramp {
+            start: Some(start.max(1)),
             ..Ramp::new(policy)
         }
     }
@@ -193,11 +214,18 @@ impl Ramp {
         rtt: Option<Duration>,
     ) {
         let ceiling = ceiling.max(1);
-        if ceiling > self.ceiling {
+        if let Some(start) = self.start.take().filter(|&s| s < ceiling) {
+            // A new download from a server whose count is remembered (#325).
+            self.target = start;
+            self.remembered = true;
+            self.restart();
+        } else if ceiling > self.ceiling {
             // A new download, or more may be used now: take them all at once and judge again
             // (PO decision on #221).
             self.target = ceiling;
             self.holding = false;
+            self.remembered = false;
+            self.probing = None;
             self.restart();
         } else if self.target > ceiling {
             // A lower ceiling applies at once; what was measured above it no longer counts.
@@ -259,6 +287,23 @@ impl Ramp {
         let mean = self.sum / f64::from(self.measured);
         self.measured = 0;
         self.sum = 0.0;
+        if let Some(without) = self.probing.take() {
+            let gain = if without > 0.0 {
+                (mean - without) / without * 100.0
+            } else {
+                0.0
+            };
+            if gain >= f64::from(self.policy.help_percent) {
+                // The server gives more now than when the count was remembered: the whole
+                // ceiling, judged from the top.
+                self.target = self.ceiling;
+                self.restart();
+            } else {
+                self.target = self.dropped_from;
+                self.holding = true;
+            }
+            return;
+        }
         match self.base {
             Some(base) if self.judging => {
                 let loss = if base > 0.0 {
@@ -273,7 +318,7 @@ impl Ramp {
                     self.lost = true;
                     if self.doubted {
                         // It helped twice: it stays, and the ramp stops.
-                        self.holding = true;
+                        self.settle(base);
                     } else {
                         // Once may be a slow stretch, and would hold the count for the whole
                         // download (#281): the speed with it is measured afresh, then it is judged
@@ -304,8 +349,24 @@ impl Ramp {
             self.judging = true;
         } else {
             self.judging = false;
-            self.holding = true;
+            let base = self.base.unwrap_or(0.0);
+            self.settle(base);
         }
+    }
+
+    /// Stops at the target, whose speed is `rate`; a ramp from a remembered count first tries one
+    /// more, once (#325).
+    fn settle(&mut self, rate: f64) {
+        if self.remembered && self.target < self.ceiling {
+            self.remembered = false;
+            self.dropped_from = self.target;
+            self.target += 1;
+            self.probing = Some(rate);
+            self.restart();
+            return;
+        }
+        self.remembered = false;
+        self.holding = true;
     }
 }
 
@@ -606,6 +667,44 @@ mod tests {
         // The same ceiling is not a raised one: it keeps holding.
         ramp.step(Instant::now(), 0, 8, 3, None);
         assert_eq!(ramp.target(), 3);
+    }
+
+    /// A ramp started at `start` (#325), after its first step with 8 allowed.
+    fn start_at(start: u32) -> (Ramp, (Instant, u64)) {
+        let mut ramp = Ramp::starting_at(AdaptivePolicy::DEFAULT, start);
+        let clock = (Instant::now(), 0);
+        ramp.step(clock.0, clock.1, 8, start.min(8), None);
+        (ramp, clock)
+    }
+
+    #[test]
+    fn a_ramp_from_a_remembered_count_starts_there_and_keeps_it_when_one_more_doesnt_help() {
+        let (mut ramp, mut clock) = start_at(3);
+        assert_eq!(ramp.target(), 3, "starts at the remembered count, not 8");
+        let targets = run(&mut ramp, &mut clock, 20, 8, capped);
+        assert!(
+            targets.iter().all(|&t| t <= 4),
+            "never more than one extra: {targets:?}"
+        );
+        assert!(targets.contains(&4), "one more was tried: {targets:?}");
+        assert_eq!(targets.last(), Some(&3), "{targets:?}");
+        assert!(ramp.settled());
+        assert_eq!(ramp.why(8), Some(Tuning::NoGain));
+    }
+
+    #[test]
+    fn a_ramp_from_a_remembered_count_takes_the_whole_ceiling_when_one_more_helps() {
+        // The server gives more now than when the count was remembered.
+        let (mut ramp, mut clock) = start_at(3);
+        let targets = run(&mut ramp, &mut clock, 30, 8, linear);
+        assert!(targets.contains(&8), "it went back to the top: {targets:?}");
+        assert_eq!(targets.last(), Some(&8), "{targets:?}");
+    }
+
+    #[test]
+    fn a_remembered_count_at_or_above_the_ceiling_is_a_new_ramp() {
+        let (ramp, _) = start_at(12);
+        assert_eq!(ramp.target(), 8);
     }
 
     #[test]

@@ -14,6 +14,7 @@ mod categories;
 mod checkpoints;
 mod downloads;
 mod history;
+pub mod hosts;
 mod queue;
 pub mod settings;
 mod torrents;
@@ -44,6 +45,7 @@ const MIGRATIONS: &[M<'static>] = &[
     M::up(include_str!("../../migrations/0007_activity.sql")),
     M::up(include_str!("../../migrations/0008_two_at_once.sql")),
     M::up(include_str!("../../migrations/0009_start_at.sql")),
+    M::up(include_str!("../../migrations/0010_host_memory.sql")),
 ];
 
 /// The migrations this build applies.
@@ -378,7 +380,7 @@ mod tests {
     #[test]
     fn the_migrations_are_valid() {
         assert_eq!(migrations().validate(), Ok(()));
-        assert_eq!(latest_schema_version(), 9);
+        assert_eq!(latest_schema_version(), 10);
     }
 
     #[test]
@@ -639,7 +641,7 @@ mod tests {
                 .unwrap();
         }
         let db = Database::open(&dir.db()).expect("upgrades");
-        assert_eq!(db.schema_version(), Ok(9));
+        assert_eq!(db.schema_version(), Ok(latest_schema_version()));
         let queue = db.queue().unwrap();
         assert_eq!(
             queue,
@@ -671,6 +673,23 @@ mod tests {
             .unwrap();
         assert_eq!(start_at, None);
         assert!(dir.names().iter().any(|n| n.contains(".bak-v8-")));
+    }
+
+    /// #325: migration 0010, from schema 9 with a download in it, keeps the download and gains an
+    /// empty memory of servers.
+    #[test]
+    fn schema_9_is_upgraded_with_its_downloads_and_gains_a_memory_of_servers() {
+        let dir = Dir::new("v9-to-v10");
+        {
+            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..9])).unwrap();
+            assert_eq!(db.schema_version(), Ok(9));
+            db.insert_download(&sample("d-0001")).unwrap();
+        }
+        let db = Database::open(&dir.db()).expect("upgrades");
+        assert_eq!(db.schema_version(), Ok(10));
+        assert_eq!(db.downloads().unwrap().len(), 1, "the download is kept");
+        assert_eq!(db.hosts(0).unwrap(), []);
+        assert!(dir.names().iter().any(|n| n.contains(".bak-v9-")));
     }
 
     #[test]

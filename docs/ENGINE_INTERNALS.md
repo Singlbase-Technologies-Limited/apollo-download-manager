@@ -470,6 +470,15 @@ The asked-for count is the most a download may use, not a must (PO decision on #
 
 `DownloadOptions::adaptive` is `None` for a fixed count, which the CLI uses to compare fixed plans.
 
+### What a server allowed (#325)
+
+What a download learns about its server outlives it, so the next download from that server starts at the right pace, after a restart too.
+
+- **What is learned:** the count the adaptive ramp settled at when more connections stopped helping (`Tuning::NoGain`), and the most connections the server served before it throttled (#247). A count a speed limit chose says nothing about the server, and isn't kept. Keyed by the host and port libcurl counts connections by (`host_of`).
+- **Where it goes:** the engine keeps both per host and sends `HostLearned`; the app keeps them in its database (`host_memory`, [DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md)) for 7 days, and gives them back with `set_host_memory` when it starts. The supervisor gives a restarted engine what it last had.
+- **How a download uses it:** its ramp starts at the remembered count instead of at every connection it may use (`Ramp::starting_at`), and still judges from there. Before it settles at that count it tries one more, once: if that helps by `help_percent`, the server gives more now, and it takes the whole ceiling and judges again from the top. A remembered count can't hold a download below what the server now gives, and a server that still caps costs one extra count measured.
+- **Measured (2026-11-06, Windows 11, local per-IP-throttled server that gives no more after 2 connections, 4 asked for, 3 runs each):** started fresh, the download kept 2 connections, ran at most 4 requests at once, and settled after 27.8 s in each run; started from a remembered 2, it kept 2, ran at most 3 at once (the one extra it tries), and settled after 24.2 to 24.3 s. The speed is the server's cap either way: what remembering saves here is connections and about 3.6 s of judging, not download time (`a_remembered_count_starts_the_download_there_and_one_more_is_tried_once` and `adaptive_connections_stop_below_the_cap_when_more_stop_helping` print these). A server that throttles is where it matters more: its count now outlives a restart, so the first download after one isn't refused again (#247); that case wasn't timed.
+
 ### Opening (#247)
 
 A download doesn't ask for all its connections at once (PO decision on #247):

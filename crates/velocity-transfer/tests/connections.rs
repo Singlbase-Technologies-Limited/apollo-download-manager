@@ -353,6 +353,7 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
         ..ADAPTIVE
     };
     let timeline = ramp_timeline(&control);
+    let started = Instant::now();
     let download = run(&server, &dir, four, &control);
     wait_until_showing(
         Duration::from_secs(60),
@@ -362,6 +363,7 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
     );
     // Noise only ever keeps a connection (#221): a count noisy twice, once judged again (#281),
     // stops the ramp above 2, at 3. It never loses the 2 that help.
+    let settled = started.elapsed();
     let (kept, _) = control.connections_now().tuned.unwrap();
     assert!(
         (2..=3).contains(&kept),
@@ -372,8 +374,61 @@ fn adaptive_connections_stop_below_the_cap_when_more_stop_helping() {
     // Counted by the engine over the whole download: the server may count a stopped request's
     // tail as one more (#154).
     let peak = report.peak_requests;
-    eprintln!("per-IP: kept {kept} connections, at most {peak} requests at once");
+    eprintln!(
+        "per-IP: kept {kept} connections, at most {peak} requests at once, settled after {:.1} s",
+        settled.as_secs_f64()
+    );
     assert!(peak <= 4, "{peak} requests at once, never more than asked");
+    assert!(
+        std::fs::read(dest).unwrap() == data,
+        "the file is the source"
+    );
+}
+
+/// #325: a download from a server whose count is remembered starts there. The per-IP server gives
+/// no more after 2: remembered at 2 with 4 asked for, it never runs 4, tries one more once, and
+/// keeps 2 (or 3 after a noisy count, as above).
+#[test]
+fn a_remembered_count_starts_the_download_there_and_one_more_is_tried_once() {
+    let _serial = one_at_a_time();
+    let data = seeded_bytes(64 * MIB, 54);
+    let server = throttled_server(&data, MIB as u64, Some(3 * MIB as u64 / 2));
+    let dir = Dir::new("remembered");
+    let control = Arc::new(Control::default().with_start_connections(Some(2)));
+    let four = DownloadOptions {
+        connections: 4,
+        ..ADAPTIVE
+    };
+    let timeline = ramp_timeline(&control);
+    let started = Instant::now();
+    let download = run(&server, &dir, four, &control);
+    wait_until(Duration::from_secs(5), "2 responses run", || {
+        server.counters().answering == 2
+    });
+    wait_until_showing(
+        Duration::from_secs(60),
+        "it settles",
+        Some(&timeline),
+        || matches!(control.connections_now().tuned, Some((_, Tuning::NoGain))),
+    );
+    let settled = started.elapsed();
+    let (kept, _) = control.connections_now().tuned.unwrap();
+    assert!(
+        (2..=3).contains(&kept),
+        "kept {kept}:
+{}",
+        timeline.text()
+    );
+    let (dest, report) = download.join().unwrap();
+    let peak = report.peak_requests;
+    eprintln!(
+        "remembered at 2: kept {kept} connections, at most {peak} requests at once, settled after {:.1} s",
+        settled.as_secs_f64()
+    );
+    assert!(
+        peak <= 3,
+        "{peak} requests at once: it started at 2 and tried one more"
+    );
     assert!(
         std::fs::read(dest).unwrap() == data,
         "the file is the source"
