@@ -123,15 +123,16 @@ describe('the developer site, built from docs/ (#355)', () => {
     expect(site['index.html']).toMatch(/<a href="[^"]*developers\/">Developers<\/a>/);
   });
 
-  it('loads its one script only on developer pages, from the site itself', () => {
+  it('loads only its own scripts: the theme everywhere, and the search on developer pages (#379)', () => {
     for (const [path, body] of Object.entries(site)) {
       if (!path.endsWith('.html')) continue;
       const scripts = body.match(/<script\b[^>]*>/gi) ?? [];
+      expect(scripts[0], path).toMatch(/^<script src="(\.\/|(\.\.\/)+)theme\.js">$/);
       if (path.startsWith('developers/')) {
-        expect(scripts, path).toHaveLength(1);
-        expect(scripts[0], path).toMatch(/^<script type="module" src="(\.\/|(\.\.\/)+)search\.js">$/);
+        expect(scripts, path).toHaveLength(2);
+        expect(scripts[1], path).toMatch(/^<script type="module" src="(\.\/|(\.\.\/)+)search\.js">$/);
       } else {
-        expect(scripts, path).toEqual([]);
+        expect(scripts, path).toHaveLength(1);
       }
     }
     expect(site['developers/search.js']).toBeDefined();

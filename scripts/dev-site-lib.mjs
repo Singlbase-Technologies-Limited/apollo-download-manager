@@ -4,6 +4,7 @@
 // doesn't exist, so a pull request can't break the site's links. The only script is site/developers/search.js.
 import { posix } from 'node:path';
 import { parsePage, resolveLinks } from './guide-lib.mjs';
+import { pager, tableOfContents } from './site-layout.mjs';
 
 const START = 'START_HERE.md';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -61,11 +62,26 @@ const linkTarget = (file, pages, repo) => (href) => {
 };
 
 function contents(sections, titles, current, href) {
-  const link = (file, label) => `<li><a href="${esc(href(file))}"${file === current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
+  const link = (file, label) => {
+    const inFolder = file.includes('/') && !file.endsWith('/README.md');
+    return `<li${inFolder ? ' class="sub"' : ''}><a href="${esc(href(file))}"${file === current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
+  };
   const folds = sections
     .map((s) => `<details${s.pages.includes(current) ? ' open' : ''}><summary>${esc(s.title)}</summary><ul>${s.pages.map((f) => link(f, titles.get(f))).join('')}</ul></details>`)
     .join('\n');
   return `<nav aria-label="Developer documents"><ul>${link(START, 'Start here')}</ul>\n${folds}</nav>`;
+}
+
+/** The first page's map of every section, for someone new. */
+function topics(sections, titles, root) {
+  const shown = sections.map(
+    (s) => `<section><h2>${esc(s.title)}</h2><ul>${s.pages
+      .filter((f) => !f.includes('/') || f.endsWith('/README.md'))
+      .slice(0, 4)
+      .map((f) => `<li><a href="${esc(`${root}${pagePath(f)}`)}">${esc(titles.get(f))}</a></li>`)
+      .join('')}</ul></section>`,
+  );
+  return `\n<div class="topics">${shown.join('\n')}</div>`;
 }
 
 /** Hidden until the script runs, so a browser without scripts never shows a search that can't work. */
@@ -103,12 +119,17 @@ export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
       return `${root}${posix.normalize(posix.join(posix.dirname(file), to.image))}`;
     };
     const first = page.sections.find((s) => s.text)?.text ?? page.title;
+    const at = docs.indexOf(file);
+    const neighbour = (f) => f && { href: `${root}${pagePath(f)}`, title: titles.get(f) };
     out[path] = layout({
       path,
       title: file === START ? 'Developers' : `${page.title} · Developers`,
       description: first.length > 155 ? `${first.slice(0, 152).replace(/\s+\S*$/, '')}…` : first.padEnd(20, '.'),
-      body: renderBlocks(page.blocks, hrefOf),
-      aside: `<div class="aside dev">\n${searchForm(root)}\n${contents(sections, titles, file, (f) => `${root}${pagePath(f)}`)}\n</div>\n`,
+      body: renderBlocks(page.blocks, hrefOf) + (file === START ? topics(sections, titles, root) : ''),
+      aside: `${searchForm(root)}\n${contents(sections, titles, file, (f) => `${root}${pagePath(f)}`)}\n`,
+      toc: tableOfContents(page.headings),
+      after: pager(neighbour(docs[at - 1]), neighbour(docs[at + 1])),
+      crumb: 'Developer documents',
       head: `<script type="module" src="${root}search.js"></script>\n`,
     });
   }

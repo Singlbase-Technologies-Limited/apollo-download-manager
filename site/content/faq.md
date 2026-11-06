@@ -6,7 +6,7 @@ Yes. Apollo Download Manager is free software under the GNU General Public Licen
 
 ## Which systems does it run on?
 
-Windows 10 and 11 (64-bit), and 64-bit Linux: Ubuntu 22.04 and newer, Debian 12 and newer, Fedora and openSUSE. macOS isn't available yet.
+Windows 10 and 11 (64-bit), and 64-bit Linux: Ubuntu 22.04 and newer, Debian 12 and newer, Fedora and openSUSE.
 
 ## Why does Windows warn me when I install it?
 
