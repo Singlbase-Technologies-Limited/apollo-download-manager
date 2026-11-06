@@ -190,6 +190,12 @@ pub async fn reset_settings(
     Ok(saved)
 }
 
+/// Forgets what the engine learned about servers (#325).
+#[tauri::command]
+pub async fn forget_learned_servers(downloads: State<'_, Downloads>) -> Result<(), ErrorCode> {
+    on_manager(&downloads, |m| m.forget_learned_servers()).await?
+}
+
 /// The torrent helper's listening port and port mapping (#30).
 #[tauri::command]
 pub async fn get_torrent_network(

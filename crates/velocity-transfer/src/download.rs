@@ -136,6 +136,8 @@ pub struct Control {
     active: AtomicU32,
     /// The most connections a throttling server left it; 0 when none did.
     throttled_to: AtomicU32,
+    /// The count an earlier download from the server settled at (#325); 0 when none is known.
+    start_connections: AtomicU32,
     /// The rest of the file was too small to split for another connection.
     file_bound: AtomicBool,
     /// The server sends the file as one stream, without byte ranges (#274).
@@ -241,6 +243,14 @@ impl Control {
     /// it throttled (#247); `None` when it isn't known to throttle.
     pub fn with_throttled_to(self, connections: Option<u32>) -> Self {
         self.throttled_to
+            .store(connections.unwrap_or(0), Ordering::Release);
+        self
+    }
+
+    /// The count an earlier download from the same server settled at (#325): the adaptive ramp
+    /// starts there instead of at every connection it may use.
+    pub fn with_start_connections(self, connections: Option<u32>) -> Self {
+        self.start_connections
             .store(connections.unwrap_or(0), Ordering::Release);
         self
     }
@@ -2017,7 +2027,13 @@ fn fetch_ranges(
     let mut failure: Option<TransferError> = None;
     let mut changed: Option<TransferError> = None;
     let mut encoding_changed: Option<TransferError> = None;
-    let mut ramp = options.adaptive.map(Ramp::new);
+    let mut ramp =
+        options.adaptive.map(
+            |policy| match control.start_connections.load(Ordering::Acquire) {
+                0 => Ramp::new(policy),
+                start => Ramp::starting_at(policy, start),
+            },
+        );
     // Answers came over HTTP/2, and how its streams are used (#47).
     let mut h2 = false;
     let mut multiplex = Multiplex::First;

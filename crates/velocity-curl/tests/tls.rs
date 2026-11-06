@@ -300,3 +300,41 @@ fn the_tls_version_negotiated_is_recorded() {
     // Both backends negotiate TLS 1.3 with rustls: Schannel on Windows 11 and OpenSSL 3.5.
     assert_eq!(sessions[0].version, "TLSv1_3", "{sessions:?}");
 }
+
+/// Fetches `name` through `lp` and waits for it to end.
+fn fetch_on(lp: &CurlLoop, request: FetchRequest) -> Result<(), FetchError> {
+    let fetch = lp.fetch(request, |_: &ResponseHead| Gate::Accept);
+    let deadline = Instant::now() + WAIT;
+    loop {
+        let left = deadline.saturating_duration_since(Instant::now());
+        if let FetchEvent::Done(done) = fetch.next_event(left).expect("the fetch ends in time") {
+            return done;
+        }
+    }
+}
+
+/// #327: later connections to the same server resume the first one's TLS session instead of a
+/// full handshake, so a download's extra connections start sooner. Each fetch here is on a new
+/// connection of its own (#47), as a download's extra connections are.
+#[test]
+fn later_connections_to_a_server_resume_its_tls_session() {
+    let (server, _) = backend();
+    let front = TlsFront::start(server.addr(), Leaf::Valid, Alpn::Http1);
+    let curl = Libcurl::start().expect("libcurl starts");
+    let options = LoopOptions {
+        ca_file: Some(front.ca_file().to_owned()),
+        ..LoopOptions::default()
+    };
+    let lp = CurlLoop::start(&curl, options).expect("the loop starts");
+    for _ in 0..4 {
+        let request = FetchRequest::get(front.url("f.bin")).on_own_connection();
+        assert_eq!(fetch_on(&lp, request), Ok(()));
+    }
+    let sessions = front.sessions();
+    assert_eq!(sessions.len(), 4, "a new connection each: {sessions:?}");
+    assert!(!sessions[0].resumed, "the first is a full handshake");
+    assert!(
+        sessions[1..].iter().all(|s| s.resumed),
+        "the later ones resume it: {sessions:?}"
+    );
+}

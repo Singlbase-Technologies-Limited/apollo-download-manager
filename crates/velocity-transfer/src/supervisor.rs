@@ -31,7 +31,7 @@ use velocity_child::supervisor::{Book, Retired, Supervisor};
 pub use velocity_child::supervisor::{EngineHealth, SupervisorOptions};
 use velocity_core::domain::{Capabilities, ErrorCode};
 use velocity_core::transfer::{
-    DirectTransfer, EngineLimits, EngineSettings, Limits, TransferEvent, TransferId,
+    DirectTransfer, EngineLimits, EngineSettings, HostMemory, Limits, TransferEvent, TransferId,
     TransferSnapshot, TransferSpec,
 };
 
@@ -60,6 +60,9 @@ pub struct TransferBook {
     /// The proxy last set, given to every new engine before anything else (#192), so no
     /// transfer of a new engine ever goes around it.
     proxy: Option<Proxy>,
+    /// What is known about servers (#325): as last set, with what engines learned since, given
+    /// to every new engine.
+    hosts: std::collections::BTreeMap<String, HostMemory>,
 }
 
 impl TransferBook {
@@ -77,6 +80,7 @@ impl TransferBook {
             engine_limits: EngineLimits::DEFAULT,
             engine_settings: EngineSettings::DEFAULT,
             proxy: None,
+            hosts: std::collections::BTreeMap::new(),
         }
     }
 
@@ -93,20 +97,27 @@ impl TransferBook {
 }
 
 impl Book<ChildProcessEngine> for TransferBook {
-    type Setup = (Limits, EngineLimits, EngineSettings, Option<Proxy>);
+    type Setup = (
+        Limits,
+        EngineLimits,
+        EngineSettings,
+        Option<Proxy>,
+        Vec<HostMemory>,
+    );
 
-    fn setup(&self) -> (Limits, EngineLimits, EngineSettings, Option<Proxy>) {
+    fn setup(&self) -> Self::Setup {
         (
             self.global_limits,
             self.engine_limits,
             self.engine_settings,
             self.proxy.clone(),
+            self.hosts.values().cloned().collect(),
         )
     }
 
     fn prepare(
         engine: &ChildProcessEngine,
-        (global, limits, settings, proxy): (Limits, EngineLimits, EngineSettings, Option<Proxy>),
+        (global, limits, settings, proxy, hosts): Self::Setup,
     ) -> Result<(), ErrorCode> {
         // The proxy first (#192).
         if proxy.is_some() {
@@ -123,6 +134,10 @@ impl Book<ChildProcessEngine> for TransferBook {
         // And the user's engine settings (#30).
         if settings != EngineSettings::DEFAULT {
             engine.set_engine_settings(settings)?;
+        }
+        // And what is known about servers (#325).
+        if !hosts.is_empty() {
+            engine.set_host_memory(hosts)?;
         }
         Ok(())
     }
@@ -142,6 +157,10 @@ impl Book<ChildProcessEngine> for TransferBook {
             TransferEvent::Removed { id } => self.transfers.removed(*id),
             // Passed on for the app to save (#43); it changes no state here.
             TransferEvent::Checkpoint { .. } => {}
+            // Kept for the next engine, and passed on for the app to save (#325).
+            TransferEvent::HostLearned { memory } => {
+                self.hosts.insert(memory.host.clone(), memory.clone());
+            }
         }
         vec![event]
     }
@@ -249,6 +268,21 @@ impl DirectTransfer for SupervisedEngine {
 
     fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
         self.running(id)?.release(id)
+    }
+
+    /// Kept first, so an engine that isn't running gets it when it starts; then given to the
+    /// running one.
+    fn set_host_memory(&mut self, memory: Vec<HostMemory>) -> Result<(), ErrorCode> {
+        for m in &memory {
+            m.check()?;
+        }
+        let kept: std::collections::BTreeMap<String, HostMemory> =
+            memory.iter().map(|m| (m.host.clone(), m.clone())).collect();
+        self.supervisor.update(|book, _| {
+            book.hosts = kept;
+            ((), Vec::new())
+        });
+        self.engine()?.set_host_memory(memory)
     }
 
     fn remove(&mut self, id: TransferId) -> Result<(), ErrorCode> {

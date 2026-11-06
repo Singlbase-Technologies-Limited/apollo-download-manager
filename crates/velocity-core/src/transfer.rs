@@ -61,7 +61,31 @@ use std::sync::mpsc::Receiver;
 /// behind the plain message, and [`crate::domain::TransferError::login_required`].
 /// Version 22 (#366) added [`DirectTransfer::release`]: a paused transfer is let go of with its
 /// part file, so the app can move it to another folder.
-pub const TRANSFER_CONTRACT_VERSION: u32 = 22;
+/// Version 23 (#325) added [`HostMemory`], [`TransferEvent::HostLearned`] and
+/// [`DirectTransfer::set_host_memory`]: what the engine learned about a server outlives it.
+pub const TRANSFER_CONTRACT_VERSION: u32 = 23;
+
+/// What the engine learned about one server (#325): the host name and port its connections go
+/// to, lowercase and without a login, the count an earlier download settled at, and the most
+/// connections it served before it throttled. Nothing else about the server or the downloads.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HostMemory {
+    pub host: String,
+    pub connections: Option<u32>,
+    pub throttled_to: Option<u32>,
+}
+
+impl HostMemory {
+    /// `InvalidInput` for a count of 0 or an empty host.
+    pub fn check(&self) -> Result<(), ErrorCode> {
+        let zero = |n: Option<u32>| n == Some(0);
+        if self.host.is_empty() || zero(self.connections) || zero(self.throttled_to) {
+            return Err(ErrorCode::InvalidInput);
+        }
+        Ok(())
+    }
+}
 
 /// An engine's id for one transfer. Assigned by the engine, never reused, and never shown as the
 /// app's download id.
@@ -651,6 +675,8 @@ pub enum TransferEvent {
     Changed { snapshot: TransferSnapshot },
     /// The engine forgot the transfer after [`DirectTransfer::remove`].
     Removed { id: TransferId },
+    /// The engine learned something about a server, for the app to keep (#325).
+    HostLearned { memory: HostMemory },
     /// The transfer's part file was synced and these bytes are durable. The app saves it, and
     /// hands it back in [`TransferSpec::resume`] to continue after a crash (#43).
     Checkpoint {
@@ -694,6 +720,10 @@ pub trait DirectTransfer: Send {
     /// Forgets a finished transfer (Completed, Failed or Removed) and its checkpoint. Files are
     /// kept.
     fn remove(&mut self, id: TransferId) -> Result<(), ErrorCode>;
+    /// What the engine knows about servers from earlier downloads (#325), replacing what it knew:
+    /// a later transfer from one of them starts at its remembered count, and within its
+    /// throttled count. `InvalidInput` for a count of 0.
+    fn set_host_memory(&mut self, memory: Vec<HostMemory>) -> Result<(), ErrorCode>;
     /// Lets go of a paused transfer (#366): it is forgotten, as [`DirectTransfer::remove`] does,
     /// but its part file stays, so the app can move it and add it again with its last checkpoint
     /// in [`TransferSpec::resume`]. `InvalidState` for a transfer that isn't paused, or whose
@@ -775,6 +805,9 @@ pub enum TransferCommand {
     Release {
         id: TransferId,
     },
+    SetHostMemory {
+        memory: Vec<HostMemory>,
+    },
     SetLimits {
         id: TransferId,
         limits: Limits,
@@ -845,6 +878,10 @@ pub fn dispatch(
         }
         TransferCommand::Release { id } => {
             engine.release(id)?;
+            TransferReply::Done {}
+        }
+        TransferCommand::SetHostMemory { memory } => {
+            engine.set_host_memory(memory)?;
             TransferReply::Done {}
         }
         TransferCommand::SetLimits { id, limits } => {

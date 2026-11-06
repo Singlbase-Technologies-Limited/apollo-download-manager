@@ -15,6 +15,7 @@ All of it is in V2's own data folder ([COEXISTENCE.md](COEXISTENCE.md)):
 
 - **The downloads and their history:** links with any login removed, folders, file names, statuses and times ([DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md)). The history keeps them for the retention you set.
 - **Settings and categories.**
+- **What downloads learned about servers** (#325): for each server a download came from, its host name and port, how many connections helped, and how many it served before it throttled, so later downloads from it start at the right pace. No links, paths or names. Kept for 7 days, never exported, and forgotten at once with Settings, Advanced, **Forget servers**.
 - **Checkpoints and torrent resume data,** so downloads resume after a restart. Torrent resume data is kept without trackers.
 - **Trusted SFTP host keys,** in V2's own `known_hosts` file.
 - **Logins you asked to remember,** in the system keychain (Windows Credential Manager, or your Linux keyring), one per download, deleted with it ([ADR-0015](decisions/0015-keychain-with-consent.md)). Nothing else about a login is kept.

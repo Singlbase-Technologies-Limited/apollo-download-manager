@@ -66,6 +66,9 @@ impl DirectTransfer for MissingEngine {
     fn release(&mut self, _id: TransferId) -> Result<(), ErrorCode> {
         Err(UNAVAILABLE)
     }
+    fn set_host_memory(&mut self, _memory: Vec<super::HostMemory>) -> Result<(), ErrorCode> {
+        Err(UNAVAILABLE)
+    }
     fn set_limits(&mut self, _id: TransferId, _limits: Limits) -> Result<(), ErrorCode> {
         Err(UNAVAILABLE)
     }

@@ -38,7 +38,8 @@ The screen (#30, `src/features/settings/SettingsView.tsx`) edits every section b
 
 | Section | Setting | Default | Bounds |
 |---|---|---|---|
-| `advanced` | `globalDownloadLimitKib` | 0: none | 0, or at least 1 KiB/s (#49). Direct downloads only: torrents have their own `downloadLimit` ([TORRENTS.md](TORRENTS.md#settings-and-identity), #312) |
+| `advanced` | **Forget servers** (a button, not a saved setting) | — | Forgets what downloads learned about servers (`forget_learned_servers`, #325) |
+| | `globalDownloadLimitKib` | 0: none | 0, or at least 1 KiB/s (#49). Direct downloads only: torrents have their own `downloadLimit` ([TORRENTS.md](TORRENTS.md#settings-and-identity), #312) |
 | | `enableBittorrent` | on (V1's) | Off refuses torrents and magnet links with `PROTOCOL_DISABLED` |
 | | `enableMetalink` | off (V1's) | Offered when the engine reads Metalink, as it does since #54 |
 | | `userAgent` | `null`: `ApolloDownloadManager/<version>` | At most 256 bytes, no control characters; for downloads added after it |

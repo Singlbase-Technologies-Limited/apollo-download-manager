@@ -270,6 +270,8 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'set_settings':
           state.appSettings = args.settings as Settings;
           return state.appSettings;
+        case 'forget_learned_servers':
+          return null;
         case 'reset_settings':
           state.appSettings = { ...(fixture('settings.json') as Settings), downloads: state.appSettings.downloads };
           return state.appSettings;

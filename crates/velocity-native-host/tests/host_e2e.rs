@@ -66,16 +66,33 @@ fn host_in(dir: &Path) -> PathBuf {
     host
 }
 
+/// Starts `cmd`, retrying while Linux reports the program busy. The tests run in parallel and each
+/// writes its own copy of the host; a process another test starts at that moment inherits the
+/// open copy until it execs, and executing a file open for writing fails with ETXTBSY
+/// (rust-lang/rust#114554). The copy is complete by then, so a short retry is enough.
+fn spawn(cmd: &mut Command) -> std::process::Child {
+    let mut tries = 0;
+    loop {
+        match cmd.spawn() {
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && tries < 50 => {
+                tries += 1;
+                std::thread::sleep(std::time::Duration::from_millis(20));
+            }
+            started => return started.unwrap(),
+        }
+    }
+}
+
 /// Runs the host as the browser would, with `args` and the framed `input`; its framed answers.
 fn run_host(data_dir: &Path, args: &[String], input: Vec<u8>) -> Vec<Value> {
-    let mut child = Command::new(host_in(data_dir))
-        .args(args)
-        .env(DATA_DIR_ENV, data_dir)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .unwrap();
+    let mut child = spawn(
+        Command::new(host_in(data_dir))
+            .args(args)
+            .env(DATA_DIR_ENV, data_dir)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null()),
+    );
     // A host that refuses its caller exits without reading its input, so the pipe may be closed
     // before the message is written: what it answered is still checked.
     match child.stdin.take().unwrap().write_all(&input) {
