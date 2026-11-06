@@ -79,6 +79,9 @@ pub(super) struct TorrentJob {
     metadata_kept: bool,
     /// How many times its metadata was asked for since it was known, up to [`METADATA_TRIES`].
     metadata_tries: u32,
+    /// The folder its files were last asked to move to (#366): only a `Moved` to exactly it is
+    /// taken, since the helper's word is untrusted.
+    pub(super) moving_to: Option<PathBuf>,
     /// The info hashes and upload last saved.
     identity: (Option<String>, Option<String>, u64),
 }
@@ -94,6 +97,7 @@ impl TorrentJob {
             resume_saved: 0,
             metadata_kept: false,
             metadata_tries: 0,
+            moving_to: None,
             identity: (None, None, 0),
         }
     }
@@ -546,8 +550,12 @@ impl Manager {
             }
             // The files stay where they were, and so does its folder (#366).
             TorrentEvent::MoveFailed { id: torrent, .. } => {
-                if let Some(id) = self.by_torrent.get(&torrent) {
-                    tracing::warn!(download = %id, "the torrent couldn't move to its category's folder");
+                let Some(id) = self.by_torrent.get(&torrent).cloned() else {
+                    return false;
+                };
+                tracing::warn!(download = %id, "the torrent couldn't move to its category's folder");
+                if let Ok(job) = self.torrent_job_mut(&id) {
+                    job.moving_to = None;
                 }
                 false
             }

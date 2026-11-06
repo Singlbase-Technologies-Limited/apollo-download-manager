@@ -5581,6 +5581,36 @@ mod adding {
         );
     }
 
+    /// The helper's word is untrusted: a `Moved` the app never asked for, or to another folder,
+    /// changes nothing.
+    #[test]
+    fn a_torrent_takes_only_the_folder_it_was_moved_to() {
+        let mut s = setup("torrent-move-unasked");
+        let id = album_known(&mut s);
+        let elsewhere = s.dir.join("elsewhere");
+        s.torrents.moved(TorrentId(1), &elsewhere);
+        s.m.pump(T0 + 2);
+        assert_eq!(
+            Path::new(&s.m.get(&id).unwrap().directory),
+            s.dir,
+            "never asked"
+        );
+        s.m.set_download_category(&id, Some("documents")).unwrap();
+        s.torrents.moved(TorrentId(1), &elsewhere);
+        s.m.pump(T0 + 3);
+        assert_eq!(
+            Path::new(&s.m.get(&id).unwrap().directory),
+            s.dir,
+            "another folder"
+        );
+        s.torrents.moved(TorrentId(1), &s.dir.join("Documents"));
+        s.m.pump(T0 + 4);
+        assert_eq!(
+            Path::new(&s.m.get(&id).unwrap().directory),
+            s.dir.join("Documents")
+        );
+    }
+
     #[test]
     fn a_torrent_whose_move_fails_keeps_its_folder() {
         let mut s = setup("torrent-move-fails");

@@ -417,14 +417,28 @@ impl Manager {
         let Some(torrent) = self.downloads.get(id).and_then(|d| d.torrent()) else {
             return stayed(ErrorCode::InvalidState);
         };
-        match self.torrents.move_storage(torrent, folder) {
-            Ok(()) => CategoryMove::Moving,
+        match self.torrents.move_storage(torrent, folder.clone()) {
+            Ok(()) => {
+                if let Ok(job) = self.torrent_job_mut(id) {
+                    job.moving_to = Some(folder);
+                }
+                CategoryMove::Moving
+            }
             Err(code) => stayed(code),
         }
     }
 
-    /// A torrent's files are in `directory` now (#366): it is added again from there.
+    /// A torrent's files are in `directory` now (#366): it is added again from there. Only the
+    /// folder the app asked for is taken; the helper's word alone changes nothing.
     pub(super) fn torrent_moved(&mut self, id: &str, directory: &Path) {
+        let Ok(job) = self.torrent_job_mut(id) else {
+            return;
+        };
+        if job.moving_to.as_deref() != Some(directory) {
+            tracing::warn!(download = %id, "the torrent helper reported a move the app didn't ask for");
+            return;
+        }
+        job.moving_to = None;
         if let Some(d) = self.downloads.get_mut(id) {
             d.record.directory = directory.to_string_lossy().into_owned();
             self.mark(id);
