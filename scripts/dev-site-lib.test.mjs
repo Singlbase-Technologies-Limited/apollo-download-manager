@@ -126,7 +126,7 @@ describe('the developer site, built from docs/ (#355)', () => {
   it('loads its one script only on developer pages, from the site itself', () => {
     for (const [path, body] of Object.entries(site)) {
       if (!path.endsWith('.html')) continue;
-      const scripts = body.match(/<script\b[^>]*>/g) ?? [];
+      const scripts = body.match(/<script\b[^>]*>/gi) ?? [];
       if (path.startsWith('developers/')) {
         expect(scripts, path).toHaveLength(1);
         expect(scripts[0], path).toMatch(/^<script type="module" src="(\.\/|(\.\.\/)+)search\.js">$/);
