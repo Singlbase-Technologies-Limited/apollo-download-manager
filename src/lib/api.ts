@@ -116,6 +116,7 @@ export const api = {
   browserIntegration: () => call('get_browser_integration', undefined, BrowserIntegrationSchema),
   registerBrowser: (browser: Browser) => call('register_browser', { browser }, BrowserIntegrationSchema),
   unregisterBrowser: (browser: Browser) => call('unregister_browser', { browser }, BrowserIntegrationSchema),
+  openExtensionPage: (browser: Browser) => call('open_extension_page', { browser }, nothing),
   /** Allows what a download stopped at for the user's confirmation (#67), and retries it. */
   allowDownload: (id: string, kind: ConfirmKind) => call('allow_download', { id, kind }, nothing),
   /** Saves a download's login in the system keychain, at the user's request (#70). */

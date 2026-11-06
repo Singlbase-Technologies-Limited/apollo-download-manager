@@ -98,9 +98,11 @@ pnpm check:fast                # L1 checks: fmt, clippy, cargo test, tsc, ESLint
 pnpm check:pr                  # L3: the checks this branch's changes need
 pnpm check:full                # L4 locally: L1 + production web build + Rust release build
 pnpm check:links               # relative links and anchors in all Markdown files
+pnpm guide                     # rebuild the in-app user guide from docs/user/ after editing a guide
 pnpm check:guidance            # AGENTS.md, CLAUDE.md, rules and skills (docs/AGENT_GUIDANCE.md)
 pnpm check:pr-body <file> --title "…"  # a PR description and title against the PR template
 pnpm check:advisories          # known advisories in Cargo.lock and pnpm-lock.yaml (needs cargo-deny)
+pnpm package:extension         # the browser extension's store packages (docs/BROWSER_EXTENSION.md)
 pnpm notices                   # regenerate THIRD_PARTY_NOTICES.md after a dependency change (docs/LICENSING.md)
 pnpm version:set <X.Y.Z>       # set V2's version in package.json and Cargo.toml (docs/RELEASE_PROCESS.md)
 pnpm changelog <from>          # draft a CHANGELOG.md section from the merged PR titles

@@ -1,11 +1,14 @@
 import { ext } from './shared/ext';
 import { DEFAULT_SETTINGS, sanitizeSettings, type ExtensionSettings } from './shared/settings';
 import { $ } from './shared/dom';
+import { RECENT_KEY } from './shared/recent';
+
+const modeInputs = () => [...document.querySelectorAll<HTMLInputElement>('input[name=mode]')];
 
 const lines = (s: string) => s.split(/[\s,]+/).map((x) => x.trim()).filter(Boolean);
 
 function fill(s: ExtensionSettings) {
-  $('mode', HTMLSelectElement).value = s.mode;
+  for (const r of modeInputs()) r.checked = r.value === s.mode;
   $('fileTypes', HTMLTextAreaElement).value = s.fileTypes.join(' ');
   $('minSizeMib', HTMLInputElement).value = String(s.minSizeMib);
   $('allowDomains', HTMLTextAreaElement).value = s.allowDomains.join('\n');
@@ -20,7 +23,7 @@ async function init() {
   $('form', HTMLElement).addEventListener('submit', (e) => {
     e.preventDefault();
     const s = sanitizeSettings({
-      mode: $('mode', HTMLSelectElement).value,
+      mode: modeInputs().find((r) => r.checked)?.value,
       fileTypes: lines($('fileTypes', HTMLTextAreaElement).value),
       minSizeMib: Number($('minSizeMib', HTMLInputElement).value),
       allowDomains: lines($('allowDomains', HTMLTextAreaElement).value),
@@ -38,6 +41,12 @@ async function init() {
       fill(s);
       $('saved', HTMLElement).textContent = 'Saved.';
       setTimeout(() => ($('saved', HTMLElement).textContent = ''), 2000);
+    });
+  });
+  $('clearRecent', HTMLElement).addEventListener('click', () => {
+    void ext.storage.local.remove(RECENT_KEY).then(() => {
+      $('cleared', HTMLElement).textContent = 'Cleared.';
+      setTimeout(() => ($('cleared', HTMLElement).textContent = ''), 2000);
     });
   });
   $('reset', HTMLElement).addEventListener('click', () => {

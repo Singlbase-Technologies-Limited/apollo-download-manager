@@ -76,6 +76,7 @@ Once the PO accepts a candidate, its installers are the release: the release wor
    - **`assemble`** downloads the candidate, checks every file against its `SHA256SUMS`, and names them `apollo-download-manager-<version>-<what>`, such as `apollo-download-manager-0.2.0-windows-x64-setup.exe` (`velocity-v2-…` until 0.1.1), with a new `SHA256SUMS`. It attests their build provenance with GitHub's [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations), and takes the notes from `CHANGELOG.md`'s `## <version>` section; without one it refuses.
    - **`draft`** waits in the `release` environment for the PO's approval ([below](#the-release-environment)), then creates a **draft** GitHub release with the files and the notes. It is the only job that may write.
 3. **The PO publishes the draft,** on GitHub, after a last look. Nothing publishes it automatically.
+4. **The website's download page** updates by itself: publishing the release starts the *Website* workflow, which rebuilds the site from `main` with the new files ([WEBSITE.md](WEBSITE.md#publishing)).
 
 ### The release environment
 

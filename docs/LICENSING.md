@@ -23,7 +23,7 @@ Most crates are MIT, Apache-2.0, BSD, ISC or Zlib, often as `OR` choices. These 
 | `icu_*`, `zerovec`, `yoke`, `zerofrom`, `tinystr`, `litemap`, `writeable`, `potential_utf`, `zerotrie`, and `unicode-ident` in part (19 crates) | Unicode-3.0 | Permissive; keep the licence text in the notices |
 | `r-efi` (2 versions) | MIT OR Apache-2.0 OR LGPL-2.1-or-later | V2 uses it under MIT or Apache-2.0 |
 
-| `@fontsource-variable/inter` (the Inter font, since #29) | OFL-1.1 | The font files are bundled unmodified. Ship its licence text in the notices; never sell the font on its own (PO decision on #29) |
+| `@fontsource-variable/inter` (the Inter font, since #29) | OFL-1.1 | The font files are bundled unmodified. Ship its licence text in the notices; never sell the font on its own (PO decision on #29). The website serves the same file, with its licence beside it (#353) |
 
 No GPL, AGPL or LGPL-only component is in the shipped graph.
 

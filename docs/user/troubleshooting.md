@@ -66,7 +66,7 @@ After a disk-full or write error, if Apollo Download Manager hadn't saved any pr
 
 ## The browser doesn't send downloads
 
-See [Browser integration](browser.md#when-v2-cant-take-a-link). The extension's popup says why: V2 isn't running, or that browser isn't registered in V2's Settings, Browser.
+See [Browser integration](browser.md#when-apollo-download-manager-cant-take-a-link). The extension's popup says why: Apollo Download Manager isn't running, or that browser isn't registered in Apollo Download Manager's Settings, Browser.
 
 ## The diagnostics report
 

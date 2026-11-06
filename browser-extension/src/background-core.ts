@@ -8,6 +8,7 @@ import { browserCanDownload, buildAdd, canSend, isMagnet, newId, PROTOCOL_VERSIO
 import { sendNative, type NativeApi } from './shared/native';
 import { DEFAULT_SETTINGS, sanitizeSettings, type ExtensionSettings } from './shared/settings';
 import { SHORT_NAME } from './shared/branding';
+import { pushRecent, recentEntry, sanitizeRecent, type RecentSend } from './shared/recent';
 
 export interface DownloadItemLike {
   id: number;
@@ -44,6 +45,10 @@ export interface ExtApi extends NativeApi {
   sessionSet(key: string, value: PendingPrompt): Promise<void>;
   sessionRemove(key: string): Promise<void>;
   sessionAll(): Promise<Record<string, PendingPrompt>>;
+  /** The popup's recent sends as stored, unvalidated (#356). */
+  getRecent(): Promise<unknown>;
+  setRecent(list: RecentSend[]): Promise<void>;
+  now(): number;
 }
 
 /** Messages from the extension's own pages (popup, options, prompt). */
@@ -119,7 +124,17 @@ export function createBackground(api: ExtApi) {
     if (!canSend(payload.url)) return { v: PROTOCOL_VERSION, id: '', ok: false, error: { code: 'UNSUPPORTED', message: `Only http, https and magnet links can be sent to ${SHORT_NAME}.` } };
     const r = await sendNative(api, buildAdd(payload));
     await report(r);
+    await remember(payload, r);
     return r;
+  }
+
+  /** Adds the send to the popup's list; a list that can't be saved never stops the send. */
+  async function remember(payload: AddPayload, r: Response) {
+    try {
+      await api.setRecent(pushRecent(sanitizeRecent(await api.getRecent()), recentEntry(payload, r, api.now())));
+    } catch {
+      /* the list is a convenience: the send itself already happened */
+    }
   }
 
   /** Hand the download to Apollo Download Manager; on any failure let the browser continue it. */

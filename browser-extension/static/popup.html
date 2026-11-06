@@ -1,19 +1,46 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Apollo Download Manager</title><link rel="stylesheet" href="style.css"><style>body{width:320px;padding:14px}</style></head>
+<html lang="en"><head><meta charset="utf-8"><title>Apollo Download Manager</title><link rel="stylesheet" href="style.css"><style>body{width:360px}</style></head>
 <body>
-<h1><img src="icons/icon-32.png" alt="">Apollo Download Manager</h1>
-<div id="status" class="status" role="status">Checking…</div>
-<label for="mode">When the browser starts a download</label>
-<select id="mode">
-  <option value="auto">Send matching downloads to Apollo Download Manager</option>
-  <option value="ask">Ask me first</option>
-  <option value="off">Let the browser download</option>
-</select>
-<form id="form">
-  <label for="url">Send a link</label>
-  <div class="row"><input id="url" type="url" placeholder="https://…" required><button class="primary" type="submit">Send</button></div>
-  <p id="result" class="hint" role="status"></p>
-</form>
-<button id="options" type="button">Settings…</button>
+<header class="header">
+  <img class="mark" src="icons/icon-32.png" alt="">
+  <div class="title">
+    <h1>Apollo Download Manager</h1>
+    <div id="status" class="badge" role="status">Checking…</div>
+  </div>
+  <button id="options" class="icon-button" type="button" aria-label="Extension settings" title="Extension settings">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
+</header>
+<main class="stack">
+  <section id="offline" class="card" role="alert" hidden>
+    <h2 class="card-title">The app isn't reachable</h2>
+    <p id="offlineReason" class="text"></p>
+    <p class="text">In the app, open Settings, Browser, and register this browser.</p>
+    <div class="row"><button id="retry" class="primary" type="button">Try again</button></div>
+  </section>
+
+  <section class="card" aria-labelledby="modeTitle">
+    <h2 id="modeTitle" class="card-title">When the browser starts a download</h2>
+    <div class="segmented" role="group" aria-labelledby="modeTitle">
+      <button type="button" data-mode="auto" aria-pressed="false">Send</button>
+      <button type="button" data-mode="ask" aria-pressed="false">Ask first</button>
+      <button type="button" data-mode="off" aria-pressed="false">Browser</button>
+    </div>
+    <p id="modeHint" class="hint"></p>
+  </section>
+
+  <form id="form" class="card">
+    <label for="url" class="card-title">Send a link</label>
+    <div class="row"><input id="url" type="url" placeholder="https://…" required><button class="primary" type="submit">Send</button></div>
+    <p id="result" class="hint" role="status"></p>
+  </form>
+
+  <section class="card" aria-labelledby="recentTitle">
+    <h2 id="recentTitle" class="card-title">Recent sends</h2>
+    <ul id="recent" class="list"></ul>
+    <p id="recentEmpty" class="empty">Nothing sent yet.</p>
+    <p class="hint">Only the site and file name are kept, in this browser.</p>
+  </section>
+</main>
 <script src="popup.js"></script>
 </body></html>

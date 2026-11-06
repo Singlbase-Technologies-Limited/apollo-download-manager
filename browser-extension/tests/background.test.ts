@@ -8,6 +8,7 @@ function fakeApi(reply: Reply, settings: unknown = DEFAULT_SETTINGS) {
   const log: string[] = [];
   const sent: Record<string, unknown>[] = [];
   const session = new Map<string, PendingPrompt>();
+  const stored: { recent: unknown } = { recent: undefined };
   let nextWindow = 100;
   const api: ExtApi = {
     selfId: 'self',
@@ -28,8 +29,11 @@ function fakeApi(reply: Reply, settings: unknown = DEFAULT_SETTINGS) {
     sessionSet: (k, v) => (session.set(k, v), Promise.resolve()),
     sessionRemove: (k) => (session.delete(k), Promise.resolve()),
     sessionAll: () => Promise.resolve(Object.fromEntries(session)),
+    getRecent: () => Promise.resolve(stored.recent),
+    setRecent: (v) => ((stored.recent = v), Promise.resolve()),
+    now: () => 1234,
   };
-  return { api, log, sent, session };
+  return { api, log, sent, session, stored };
 }
 
 const ok: Reply = (m) => ({ v: 1, id: m.id, ok: true, result: { action: 'prompted' } });
@@ -172,5 +176,40 @@ describe('magnet links', () => {
     expect(isContentMessage({ type: 'magnet', url: magnet + 'a'.repeat(9000) })).toBe(false);
     expect(isContentMessage({ type: 'add', url: magnet })).toBe(false);
     expect(isContentMessage(null)).toBe(false);
+  });
+});
+
+describe('recent sends (#356)', () => {
+  it('records each send with its host and file name only', async () => {
+    const f = fakeApi(ok);
+    const bg = createBackground(f.api);
+    await bg.onPageMessage({ type: 'add', url: 'https://cdn.test/dir/a.iso?token=secret' });
+    await bg.onDownloadCreated(item({ id: 3, url: 'https://cdn.test/big.iso' }));
+    expect(f.stored.recent).toEqual([
+      { name: 'big.iso', host: 'cdn.test', ok: true, at: 1234 },
+      { name: 'a.iso', host: 'cdn.test', ok: true, at: 1234 },
+    ]);
+    expect(JSON.stringify(f.stored.recent)).not.toContain('secret');
+  });
+
+  it('records a failed send with its error code', async () => {
+    const f = fakeApi(notRunning);
+    const bg = createBackground(f.api);
+    await bg.onContextMenu({ linkUrl: 'https://cdn.test/b.zip' });
+    expect(f.stored.recent).toEqual([{ name: 'b.zip', host: 'cdn.test', ok: false, code: 'DESKTOP_NOT_RUNNING', at: 1234 }]);
+  });
+
+  it('does not record a link it refused to send', async () => {
+    const f = fakeApi(ok);
+    const bg = createBackground(f.api);
+    await bg.onPageMessage({ type: 'add', url: 'file:///etc/passwd' });
+    expect(f.stored.recent).toBeUndefined();
+  });
+
+  it('still hands off when the list cannot be saved', async () => {
+    const f = fakeApi(ok);
+    f.api.setRecent = () => Promise.reject(new Error('quota'));
+    const bg = createBackground(f.api);
+    expect(await bg.onDownloadCreated(item())).toBe('handed-off');
   });
 });

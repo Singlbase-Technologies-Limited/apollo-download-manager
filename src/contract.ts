@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 32;
+export const COMMAND_API_VERSION = 33;
 
 const bytes = z.number().int().nonnegative();
 
@@ -783,6 +783,10 @@ export const RegistrationSchema = z.strictObject({
   manifestPath: z.string(),
   /** The registered manifest starts this copy of the host; false after the app moved, until registered again. */
   hostMatches: z.boolean(),
+  /** The browser installed here (#241): its program, and whether it is a Snap or Flatpak, which may not reach the native host. `null` when not found. */
+  found: z.strictObject({ program: z.string(), sandboxed: z.boolean() }).nullable(),
+  /** The extension's store page for this browser, `null` until it is published there (#240). */
+  storeUrl: z.string().nullable(),
 });
 export type Registration = z.infer<typeof RegistrationSchema>;
 

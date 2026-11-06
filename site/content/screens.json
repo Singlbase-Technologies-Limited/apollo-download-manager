@@ -1,0 +1,27 @@
+{
+  "screens": [
+    { "id": "downloads", "label": "Downloads", "alt": "The download list: example downloads with their size, progress, speed, status and category, and the navigation on the left." },
+    { "id": "details", "label": "Details", "alt": "The download list with the details panel open, showing speed, time left, connections, link and folder." },
+    { "id": "add", "label": "Add a download", "alt": "The Add download dialog, with a link pasted in and the file name, category and folder filled in." },
+    { "id": "categories", "label": "Categories", "alt": "The Categories screen: six built-in categories, each with its file types." },
+    { "id": "browser", "label": "Browser", "alt": "Settings, Browser: taking links from the browser, and Chrome, Edge and Firefox with their register buttons." },
+    { "id": "schedule", "label": "Schedule", "alt": "Settings, Queue and performance: a schedule from 02:00 to 07:00 on every day, and the Balanced profile." },
+    { "id": "guide", "label": "User guide", "alt": "The user guide inside the app, open at Downloads." },
+    { "id": "get-started", "label": "Get started", "alt": "Get started, step 1 of 3: choosing the folder downloads go to." },
+    { "id": "dark", "label": "Dark theme", "alt": "The download list in the dark theme." }
+  ],
+  "features": [
+    { "screen": "add", "title": "Add one link, or five hundred", "text": "Paste links, one per line, or choose a .torrent file. You see the file name, category and folder before anything starts.", "guide": "guide/downloads/", "home": true },
+    { "screen": "details", "title": "See what each download is doing", "text": "Speed, time left and connections for every file. When one waits or fails, it tells you why in plain words.", "guide": "guide/downloads/", "home": true },
+    { "screen": "categories", "title": "Files sort themselves", "text": "Six built-in categories go by file type, and each can have its own folder. Add your own, with your own file types.", "guide": "guide/categories/", "home": true },
+    { "screen": "browser", "title": "Takes over from your browser", "text": "Register Chrome, Edge, Brave or Firefox, and the extension sends downloads to the app. The extension isn't in the browser stores yet.", "guide": "guide/browser/", "home": true },
+    { "screen": "schedule", "title": "Runs when you say", "text": "Choose how many downloads run at once, a speed limit, and the hours and days downloads may run.", "guide": "guide/settings/", "home": false },
+    { "screen": "dark", "title": "Light or dark", "text": "Match your system, or choose one yourself in Settings, Appearance.", "guide": "guide/settings/", "home": false }
+  ],
+  "guide": {
+    "downloads": { "adding-downloads": "add", "the-download-list": "downloads", "the-details-panel": "details" },
+    "categories": { "the-built-in-categories": "categories" },
+    "browser": { "connecting-it-to-apollo-download-manager": "browser" },
+    "settings": { "queue-and-performance": "schedule" }
+  }
+}

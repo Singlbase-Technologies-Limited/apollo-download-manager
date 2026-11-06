@@ -28,6 +28,7 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 | A confirmation (an alert dialog) takes focus, and Escape cancels it | `Accessibility.test.tsx`, "Delete asks before removing…" |
 | Menus open with Enter, move with the arrows, close with Escape and give focus back | `Accessibility.test.tsx`, "menus from the keyboard" |
 | Ctrl+N (⌘N) opens the Add dialog, Ctrl+, (⌘,) opens Settings | `src/features/add/AddDownloadDialog.test.tsx`; `src/features/settings/SettingsView.test.tsx` |
+| The user guide (#354) moves focus to the page's title, or to the heading it opened at, so a screen reader reads on from there; its contents are a navigation named "Guide contents", and the search says how many results it found (`role="status"`) | `src/features/help/GuideView.test.tsx` |
 | Number fields commit with Enter and on leaving the field | `src/features/downloads/DetailsPanel.test.tsx`; `SettingsView.test.tsx` |
 
 ### Names, announcements and the look

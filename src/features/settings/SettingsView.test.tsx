@@ -2,7 +2,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
-import type { Capabilities, Settings } from '../../contract';
+import type { Browser, Capabilities, Registration, Settings } from '../../contract';
 import { DEFAULT_LAYOUT } from '../../layout/layoutLogic';
 import { createQueryClient } from '../../lib/queries';
 import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
@@ -304,6 +304,7 @@ describe('the Browser section (#65)', () => {
 
   it('registers and unregisters each browser', async () => {
     const state = installFakeBackend();
+    installed(state, 'firefox');
     const user = await openSettings('Browser');
     await user.click(await screen.findByRole('button', { name: 'Register with Mozilla Firefox' }));
     await waitFor(() => { expect(callsOf(state, 'register_browser')).toEqual([{ cmd: 'register_browser', args: { browser: 'firefox' } }]); });
@@ -316,9 +317,72 @@ describe('the Browser section (#65)', () => {
   it('says so when the native host isn’t installed, and offers nothing to register', async () => {
     const state = installFakeBackend();
     state.browser = { ...state.browser, hostPath: null };
+    installed(state, 'firefox');
     await openSettings('Browser');
     expect(await screen.findByText(/isn’t installed beside Apollo Download Manager/)).toBeTruthy();
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Register with Mozilla Firefox' }).disabled).toBe(true);
+  });
+});
+
+/** Marks `browser` as installed here, with `extra` fields for its row (#241). */
+function installed(state: FakeState, browser: Browser, extra: Partial<Registration> = {}) {
+  state.browser = {
+    ...state.browser,
+    registrations: state.browser.registrations.map((r) =>
+      r.browser === browser ? { ...r, found: { program: `/usr/bin/${browser}`, sandboxed: false }, ...extra } : r,
+    ),
+  };
+}
+
+describe('setting up a browser (#241)', () => {
+  it('lists only the browsers installed here, and any still registered', async () => {
+    const state = installFakeBackend();
+    // The fixture: Chrome installed and registered; Edge only registered; the rest neither.
+    state.browser = {
+      ...state.browser,
+      registrations: state.browser.registrations.map((r) => (r.browser === 'edge' ? { ...r, registered: true, hostMatches: true } : r)),
+    };
+    await openSettings('Browser');
+    expect(await screen.findByText('Google Chrome')).toBeTruthy();
+    expect(screen.getByText('Microsoft Edge')).toBeTruthy();
+    expect(screen.getByText(/isn’t installed any more/)).toBeTruthy();
+    for (const gone of ['Chromium', 'Brave', 'Mozilla Firefox']) expect(screen.queryByText(gone)).toBeNull();
+  });
+
+  it('says so when no supported browser is installed', async () => {
+    const state = installFakeBackend();
+    state.browser = { ...state.browser, registrations: state.browser.registrations.map((r) => ({ ...r, found: null, registered: false, hostMatches: false })) };
+    await openSettings('Browser');
+    expect(await screen.findByText(/No supported browser was found/)).toBeTruthy();
+  });
+
+  it('warns that a Snap or Flatpak browser may not work', async () => {
+    const state = installFakeBackend();
+    installed(state, 'firefox', { found: { program: '/snap/bin/firefox', sandboxed: true } });
+    await openSettings('Browser');
+    expect(await screen.findByText(/may not work with a Snap or Flatpak browser/)).toBeTruthy();
+  });
+
+  it('keeps “Get the extension” off until the store page exists', async () => {
+    installFakeBackend();
+    await openSettings('Browser');
+    const get = await screen.findByRole<HTMLButtonElement>('button', { name: 'Get the extension for Google Chrome' });
+    expect(get.disabled).toBe(true);
+    expect(screen.getByText(/isn’t in the browser stores yet/)).toBeTruthy();
+  });
+
+  it('opens the store page in that browser, and offers the link to copy when it can’t', async () => {
+    const state = installFakeBackend();
+    const page = 'https://chromewebstore.google.com/detail/apollo/abc';
+    installed(state, 'chrome', { storeUrl: page });
+    const user = await openSettings('Browser');
+    await user.click(await screen.findByRole('button', { name: 'Get the extension for Google Chrome' }));
+    await waitFor(() => { expect(callsOf(state, 'open_extension_page')).toEqual([{ cmd: 'open_extension_page', args: { browser: 'chrome' } }]); });
+    expect(screen.queryByText(page)).toBeNull();
+    state.failures.open_extension_page = 'IO';
+    await user.click(screen.getByRole('button', { name: 'Get the extension for Google Chrome' }));
+    expect(await screen.findByText(page)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy the link' })).toBeTruthy();
   });
 });
 

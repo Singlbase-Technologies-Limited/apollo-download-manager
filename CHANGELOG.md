@@ -104,7 +104,7 @@ The first version of Velocity Download Manager V2: a new app, not an update of t
 ### Coming from V1
 
 - **Nothing is imported from V1:** V2 starts with no downloads, its own settings and an empty history. Finish unfinished V1 downloads in V1, or add their links to V2 again; their partial data is aria2's and can't be continued.
-- **Settings that changed:** "allow mid-download tuning", the progress polling interval, the Custom profile's "split" count, the torrent-engine choice and "look for more peers below this speed" are gone, because V2 does these by itself. File allocation and disk cache are now Preallocation and the write buffer, in Settings, Advanced ([V1 and V2](docs/user/v1-and-v2.md#what-is-different-in-v2)).
+- **Settings that changed:** "allow mid-download tuning", the progress polling interval, the Custom profile's "split" count, the torrent-engine choice and "look for more peers below this speed" are gone, because V2 does these by itself. File allocation and disk cache are now Preallocation and the write buffer, in Settings, Advanced ([V1 and V2](docs/user/v1-and-v2.md#what-is-different-from-v1)).
 
 ### Known limits
 

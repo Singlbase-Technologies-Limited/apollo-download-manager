@@ -1,4 +1,4 @@
-import { Copy, HelpCircle, Info, MessageSquare, Minus, ScrollText, Settings, Square, X } from 'lucide-react';
+import { BookOpen, Copy, HelpCircle, Info, MessageSquare, Minus, ScrollText, Settings, Square, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
@@ -35,11 +35,12 @@ function WindowButton({ label, onClick, danger, children }: { label: string; onC
  * The bar drags the window and a double-click maximises it; the icon and title let the drag through.
  */
 /**
- * The title bar's own buttons (#363, PO decision 2026-11-06: option B): a "?" help menu with What's new, Send
+ * The title bar's own buttons (#363, PO decision 2026-11-06: option B): a "?" help menu with the User guide (#354), What's new, Send
  * feedback… and About, and a gear for Settings (#364), always visible at any window size.
  */
 function AppButtons({ app }: { app: AppInfo }) {
   const openSettings = useUiStore((s) => s.openSettings);
+  const openGuide = useUiStore((s) => s.openGuide);
   const [whatsNew, setWhatsNew] = useState(false);
   const feedback = () => {
     api.openFeedbackPage().catch((e: unknown) => { toast.error(`The feedback page couldn’t be opened: ${toApiError(e).message}`); });
@@ -56,6 +57,7 @@ function AppButtons({ app }: { app: AppInfo }) {
           </Tooltip>
         }
         items={[
+          { label: 'User guide', icon: <BookOpen />, onSelect: () => { openGuide(); } },
           { label: 'What’s new', icon: <ScrollText />, onSelect: () => { setWhatsNew(true); } },
           { label: 'Send feedback…', icon: <MessageSquare />, onSelect: feedback },
           'separator',
