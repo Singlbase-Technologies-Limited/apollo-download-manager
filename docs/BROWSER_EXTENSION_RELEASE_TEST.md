@@ -23,7 +23,7 @@ A hand check of the extension's store packages before they are uploaded (#356, #
 
 | # | Check | Expected |
 |---|---|---|
-| 1 | Open the popup with the app running | "Connected · app <version>", in green |
+| 1 | Open the popup with the app running | `Connected · app <version>`, in green |
 | 2 | Quit the app, open the popup | "Not connected", the reason, and **Try again**; with the app started again, **Try again** shows Connected |
 | 3 | Turn off "Take links from the browser" in the app | The popup says browser requests are off, and a download stays in the browser |
 | 4 | Start a large `.iso` or `.zip` download in **Send** mode | It appears in the app, and the browser's copy is removed |

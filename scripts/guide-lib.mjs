@@ -25,6 +25,7 @@ function until(tokens, start, closeType) {
 }
 
 let current = '';
+let developer = false;
 const fail = (why) => {
   throw new Error(`${current}: ${why}`);
 };
@@ -74,10 +75,12 @@ function inline(children) {
         stack.pop();
         break;
       case 'html_inline':
-        fail(`raw HTML is not allowed (${t.content.trim()})`);
+        if (!developer) fail(`raw HTML is not allowed (${t.content.trim()})`);
+        pushText(t.content);
         break;
       case 'image':
-        fail('image: the guides have no images yet');
+        if (!developer) fail('image: the guides have no images yet');
+        top().push({ type: 'image', src: t.attrGet('src') ?? '', alt: t.content });
         break;
       default:
         fail(`unexpected Markdown (${t.type})`);
@@ -189,9 +192,12 @@ function* inlines(blocks) {
  * section's plain text. Links keep their `href` until {@link resolveLinks}. Raw HTML and images fail.
  * @param {string} file the file's name, for errors
  * @param {string} text its Markdown
+ * @param {{ developer?: boolean }} [options] a developer document (#355) may show its pictures, and text like `<Name>` stays
+ * text; the guides allow neither
  */
-export function parsePage(file, text) {
+export function parsePage(file, text, options = {}) {
   current = file;
+  developer = options.developer === true;
   const [blocks] = until(md.parse(text, {}), 0, '__end__');
   const seen = new Map();
   const headings = [];

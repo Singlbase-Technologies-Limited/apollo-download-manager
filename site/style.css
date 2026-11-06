@@ -47,6 +47,20 @@ a:hover { color: var(--accent-strong); }
 .aside a:hover { background: var(--surface-2); }
 .aside a[aria-current] { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
 main { max-width: 760px; }
+main img { max-width: 100%; height: auto; }
+.with-aside main { overflow-wrap: anywhere; }
+.with-aside main pre, .with-aside main .table { overflow-wrap: normal; }
+.dev { flex-basis: 260px; }
+.dev details { margin-top: 4px; }
+.dev summary { cursor: pointer; font-weight: 600; padding: 6px 8px; border-radius: 6px; min-height: 24px; }
+.dev summary:hover { background: var(--surface-2); }
+.dev details ul { padding-left: 8px; font-size: 0.95rem; }
+.search { margin-bottom: 8px; }
+.search label { display: block; font-size: 0.9rem; color: var(--fg-muted); padding: 0 8px 4px; }
+.search input { width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+.search p { color: var(--fg-muted); font-size: 0.85rem; margin: 4px 8px; }
+.search p:empty { display: none; }
+.search li { margin: 8px 0; }
 main.full { max-width: none; }
 .hero { background: var(--band); color: var(--band-fg); padding: 48px 0 150px; text-align: center; }
 .hero h1 { font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.06; letter-spacing: -0.02em; max-width: 15em; margin: 0 auto 16px; text-wrap: balance; }

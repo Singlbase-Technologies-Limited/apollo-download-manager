@@ -1,6 +1,6 @@
 # The website
 
-The product website (#353) is a static site on GitHub Pages, at <https://singlbase-technologies-limited.github.io/apollo-download-manager/> (the default Pages address, PO decision on #353). A developer site (#355) is planned under `/developers/` of the same site.
+The product website (#353) is a static site on GitHub Pages, at <https://singlbase-technologies-limited.github.io/apollo-download-manager/> (the default Pages address, PO decision on #353). The developer site (#355) is under `/developers/` of the same site.
 
 ## What it is built from
 
@@ -11,10 +11,22 @@ The product website (#353) is a static site on GitHub Pages, at <https://singlba
 | Screenshots | `site/screens/`, real screens of the app (below) |
 | User guide (`/guide/…`) | [docs/user/](user/README.md), the same pages the app's user guide shows (#354) |
 | Privacy | [PRIVACY.md](PRIVACY.md) |
+| Developer pages (`/developers/…`) | Every document in `docs/`, in the order of `site/content/developers.json` (below) |
 | Download | GitHub's releases, read when the site is built |
 | Look | `site/style.css`: the app's colours, light and dark, and its font, Inter |
 
 The pages are never copied: `scripts/site-lib.mjs` renders them at build time through the same parser as the in-app guide (`scripts/guide-lib.mjs`, markdown-it). In `site/content/`, a link to `/x/` goes to the site's page `x`, an `https://` link goes out, and anything else becomes plain text. Raw HTML and images in a page fail the build: a screen on a guide page comes from `screens.json`, so the in-app guide stays text. A heading that file names and a guide doesn't have fails the build too.
+
+## The developer pages
+
+Each document in `docs/` is a page, rendered by `scripts/dev-site-lib.mjs`, except the user guides and the [documentation map](README.md). [START_HERE.md](START_HERE.md) is the first page. `site/content/developers.json` sets the sections and their order; a folder listed there adds its documents by itself.
+
+A pull request that touches `docs/` builds the site, and the build fails on:
+
+- a document missing from `developers.json`, or a file listed there that doesn't exist;
+- a link to a heading that doesn't exist.
+
+A link to another document stays a link on the site, one to a user guide goes to that guide's page, and one to any other file goes to it on GitHub. These pages may show images from `docs/images/`, and text such as `<Name>` stays text. The user guides allow neither.
 
 ## The screens
 
@@ -24,7 +36,10 @@ The numbers in a picture are examples, never a speed claim.
 
 ## Private by design
 
-Every page is plain HTML and one stylesheet, with the site's own copy of the Inter font and its own screenshots: **no scripts, no analytics and nothing from another site**, so a visit asks nothing of anyone but GitHub Pages. The screen switcher on the home page is radio buttons and CSS. A test (`scripts/site-lib.test.mjs`) fails if a page loads a script or anything from another address. Each page has a title, a description, its canonical address and sharing (Open Graph) tags; `sitemap.xml` lists every page and `robots.txt` points to it.
+Every product page is plain HTML and one stylesheet, with the site's own copy of the Inter font and its own screenshots: **no scripts, no analytics and nothing from another site**, so a visit asks nothing of anyone but GitHub Pages.
+
+The developer pages have one exception, a PO decision on #355: `site/developers/search.js`, the site's own small script for the search box. It loads `search-index.json` from the site when someone first types. Without scripts the box stays hidden and the pages work. Offline, a browser shows what it has cached; there's no service worker.
+ The screen switcher on the home page is radio buttons and CSS. Tests (`scripts/site-lib.test.mjs`, `scripts/dev-site-lib.test.mjs`) fail if a product page loads a script, or any page loads anything from another address. Each page has a title, a description, its canonical address and sharing (Open Graph) tags; `sitemap.xml` lists every page and `robots.txt` points to it.
 
 ## Building it
 

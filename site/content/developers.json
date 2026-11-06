@@ -1,0 +1,45 @@
+{
+  "sections": [
+    {
+      "title": "Architecture and system design",
+      "pages": ["ARCHITECTURE.md", "UI_ARCHITECTURE.md", "CONTRACTS.md", "DATA_AND_MIGRATIONS.md", "COEXISTENCE.md", "SECURITY.md", "PRIVACY.md", "ACCESSIBILITY.md"]
+    },
+    {
+      "title": "Repository structure",
+      "pages": ["REPOSITORY_MAP.md", "GLOSSARY.md"]
+    },
+    {
+      "title": "Setting up and building",
+      "pages": ["DEVELOPMENT.md", "BUILDING_NATIVE.md", "PACKAGING.md"]
+    },
+    {
+      "title": "Running tests",
+      "pages": ["TESTING.md", "CI.md", "CI_DIAGNOSTICS.md"]
+    },
+    {
+      "title": "Engine, BitTorrent and browser extension",
+      "pages": ["ENGINE_CONTRACT.md", "ENGINE_INTERNALS.md", "ENGINE_PROTOCOL.md", "FILE_NAMING.md", "TORRENTS.md", "BROWSER_EXTENSION.md", "BROWSER_EXTENSION_RELEASE_TEST.md"]
+    },
+    {
+      "title": "Configuration and settings",
+      "pages": ["SETTINGS.md", "DIAGNOSTICS.md"]
+    },
+    {
+      "title": "Standards and contributing",
+      "pages": ["CONVENTIONS.md", "DEVELOPMENT_WORKFLOW.md", "REVIEWING.md", "AGENT_GUIDANCE.md", "AI_AGENT_ACCOUNT.md", "DEPENDENCIES.md", "LICENSING.md", "OPEN_SOURCE.md", "BRANDING.md", "WEBSITE.md"]
+    },
+    {
+      "title": "Releases and versioning",
+      "pages": ["RELEASE_PROCESS.md", "RELEASE_CANDIDATES.md", "REPOSITORY_SETTINGS.md"]
+    },
+    {
+      "title": "Troubleshooting",
+      "pages": ["TROUBLESHOOTING.md"]
+    },
+    {
+      "title": "Decisions and research",
+      "pages": ["PARITY.md"],
+      "folders": ["decisions", "research"]
+    }
+  ]
+}
