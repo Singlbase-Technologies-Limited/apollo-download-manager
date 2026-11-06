@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use super::registration::Browser;
+use crate::domain::ErrorCode;
 
 /// An installed browser.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -203,9 +204,40 @@ fn program_at(p: &Path) -> bool {
     }
 }
 
+/// What starts `browser` on the extension's store page (#241): the program the browser was found
+/// at and the page, as its one argument. Never a shell, and never a link from outside: the page is
+/// `branding.json`'s. `NotFound` when the browser isn't installed, `Unsupported` until the
+/// extension is published in its store (#240).
+pub fn store_page_launch(
+    finder: &Finder,
+    browser: Browser,
+) -> Result<(PathBuf, String), ErrorCode> {
+    let found = finder.find(browser).ok_or(ErrorCode::NotFound)?;
+    let url = browser.store_url().ok_or(ErrorCode::Unsupported)?;
+    Ok((PathBuf::from(found.program), url.to_owned()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_store_page_needs_the_browser_and_a_published_page() {
+        let d = Dir::new("launch");
+        assert_eq!(
+            store_page_launch(&d.finder(), Browser::Firefox),
+            Err(ErrorCode::NotFound)
+        );
+        #[cfg(target_os = "linux")]
+        {
+            d.program("usr/bin/firefox");
+            // No store has the extension yet (#240).
+            assert_eq!(
+                store_page_launch(&d.finder(), Browser::Firefox),
+                Err(ErrorCode::Unsupported)
+            );
+        }
+    }
 
     struct Dir(PathBuf);
 

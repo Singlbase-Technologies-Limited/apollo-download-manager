@@ -10,6 +10,7 @@ use tauri::{AppHandle, Emitter};
 use velocity_core::browser::bridge::{
     answer_added, prompted, route, AppStatus, BrowserPrompt, RateLimiter, Route,
 };
+use velocity_core::browser::detect::{store_page_launch, Finder};
 use velocity_core::browser::ipc::{self, Token};
 use velocity_core::browser::protocol::{BrowserResponse, IpcEnvelope};
 use velocity_core::browser::registration::{Browser, BrowserIntegration, Locations};
@@ -130,7 +131,11 @@ fn host_path() -> Option<PathBuf> {
 
 fn integration() -> Result<BrowserIntegration, ErrorCode> {
     let locations = Locations::for_user(&Paths::resolve()?)?;
-    Ok(BrowserIntegration::of(&locations, host_path().as_deref()))
+    Ok(BrowserIntegration::of(
+        &locations,
+        host_path().as_deref(),
+        &Finder::for_user(),
+    ))
 }
 
 async fn blocking<R: Send + 'static>(
@@ -165,6 +170,34 @@ pub async fn unregister_browser(browser: Browser) -> Result<BrowserIntegration, 
     blocking(move || {
         Locations::for_user(&Paths::resolve()?)?.unregister(browser)?;
         integration()
+    })
+    .await
+}
+
+/// Opens the extension's store page in `browser` (#241). The page is `branding.json`'s, never one
+/// from the window, and the browser starts with an argument list, no shell. `NotFound` when the
+/// browser isn't installed, `Unsupported` while the extension isn't in that store yet (#240), and
+/// `Io` when the browser didn't start: the window then shows the link to copy.
+#[tauri::command]
+pub async fn open_extension_page(browser: Browser) -> Result<(), ErrorCode> {
+    blocking(move || {
+        let (program, url) = store_page_launch(&Finder::for_user(), browser)?;
+        let mut child = std::process::Command::new(&program)
+            .arg(&url)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .map_err(|e| {
+                tracing::warn!("{browser:?} didn't start for its store page: {e}");
+                ErrorCode::Io
+            })?;
+        // A browser already open hands the page over and exits; one that wasn't keeps running.
+        // Either way it is waited for on a thread of its own, so it never lingers as a zombie.
+        std::thread::spawn(move || {
+            let _ = child.wait();
+        });
+        Ok(())
     })
     .await
 }

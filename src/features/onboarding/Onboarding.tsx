@@ -10,6 +10,7 @@ import { api } from '../../lib/api';
 import { ERROR_MESSAGES, toApiError } from '../../lib/errors';
 import { keys } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
+import { BrowserSetup } from '../settings/BrowserSetup';
 
 function EngineStatus({ health }: { health: EngineHealth | undefined }) {
   const [icon, title, detail] =
@@ -91,8 +92,11 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
           <li>
             <h2 className="text-[13px] font-semibold">3. Optional: the browser extension</h2>
             <p className="mt-1 text-xs text-fg-muted">
-              After setup, register Chrome, Edge, Brave or Firefox in Settings, Browser, then install the Apollo Download Manager extension.
+              Register a browser so it can send downloads here, then add the Apollo Download Manager extension to it. You can do this later in Settings, Browser.
             </p>
+            <div className="mt-1.5">
+              <BrowserSetup />
+            </div>
           </li>
         </ol>
 

@@ -12,7 +12,7 @@ import { contentClass, overlayClass } from '../../components/dialogStyles';
 import { navItemClass } from '../../components/navStyles';
 import { useReturnFocus } from '../../components/returnFocus';
 import { Spinner } from '../../components/Spinner';
-import type { AppearanceSettings, Browser, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme, TimeFormat } from '../../contract';
+import type { AppearanceSettings, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme, TimeFormat } from '../../contract';
 import { api } from '../../lib/api';
 import { toApiError } from '../../lib/errors';
 import { cn } from '../../lib/cn';
@@ -22,6 +22,7 @@ import { DiagnosticsPanel } from '../diagnostics/DiagnosticsPanel';
 import { SeedingFields } from '../torrents/SeedingFields';
 import { portMapText } from '../torrents/torrentLogic';
 import { Input } from '../../components/Input';
+import { BrowserSetup } from './BrowserSetup';
 import { Choice, Group, Num, Text, TimeSetting, Toggle } from './fields';
 import { searchSettings } from './settingsIndex';
 import { useDownloadsStore } from '../../stores/downloads';
@@ -333,30 +334,8 @@ function ProxySection({ s, patch }: { s: Settings; patch: Patch }) {
   );
 }
 
-const BROWSER_NAMES: Record<Browser, string> = {
-  chrome: 'Google Chrome',
-  chromium: 'Chromium',
-  edge: 'Microsoft Edge',
-  brave: 'Brave',
-  firefox: 'Mozilla Firefox',
-};
-
 /** Links from the browser extension (#65, V1's Browser integration): what happens to them, and each browser's registration. */
 function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
-  const qc = useQueryClient();
-  const integration = useQuery({ queryKey: ['browser-integration'], queryFn: api.browserIntegration });
-  const [busy, setBusy] = useState<Browser | null>(null);
-  const change = async (browser: Browser, register: boolean) => {
-    setBusy(browser);
-    try {
-      qc.setQueryData(['browser-integration'], await (register ? api.registerBrowser(browser) : api.unregisterBrowser(browser)));
-      toast.success(`${register ? 'Registered with' : 'Unregistered from'} ${BROWSER_NAMES[browser]}`);
-    } catch (e) {
-      toast.error(toApiError(e).message);
-    } finally {
-      setBusy(null);
-    }
-  };
   return (
     <>
       <Group title="Links from the browser" description="The Apollo Download Manager browser extension sends downloads here. It never sends cookies or logins.">
@@ -371,44 +350,9 @@ function BrowserSection({ s, patch }: { s: Settings; patch: Patch }) {
       </Group>
       <Group
         title="Browsers"
-        description="Registering lets a browser start Apollo Download Manager’s connection, for your user only."
+        description="Register a browser so it can reach Apollo Download Manager, for your user only, then add the extension to it."
       >
-        {integration.isPending ? (
-          <div className="flex items-center gap-2 py-2.5 text-xs text-fg-muted">
-            <Spinner /> Checking the browsers…
-          </div>
-        ) : integration.isError ? (
-          <p role="alert" className="py-2.5 text-xs text-danger">
-            {toApiError(integration.error).message}
-          </p>
-        ) : (
-          <>
-            {integration.data.hostPath === null ? (
-              <p role="alert" className="py-2.5 text-xs text-danger">
-                The browser connection program isn’t installed beside Apollo Download Manager, so no browser can be registered. Reinstall Apollo Download Manager.
-              </p>
-            ) : null}
-            {integration.data.registrations.map((r) => (
-              <div key={r.browser} className="flex items-center justify-between gap-4 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-[13px]">{BROWSER_NAMES[r.browser]}</p>
-                  <p className="text-xs text-fg-muted">
-                    {!r.registered ? 'Not registered' : r.hostMatches ? 'Registered' : 'Registered for another copy of Apollo Download Manager. Register again to use this one.'}
-                  </p>
-                </div>
-                {r.registered && r.hostMatches ? (
-                  <Button size="sm" variant="secondary" aria-label={`Unregister from ${BROWSER_NAMES[r.browser]}`} busy={busy === r.browser} disabled={busy !== null} onClick={() => void change(r.browser, false)}>
-                    Unregister
-                  </Button>
-                ) : (
-                  <Button size="sm" variant="secondary" aria-label={`Register with ${BROWSER_NAMES[r.browser]}`} busy={busy === r.browser} disabled={busy !== null || integration.data.hostPath === null} onClick={() => void change(r.browser, true)}>
-                    Register
-                  </Button>
-                )}
-              </div>
-            ))}
-          </>
-        )}
+        <BrowserSetup />
       </Group>
     </>
   );

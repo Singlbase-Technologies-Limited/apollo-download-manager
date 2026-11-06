@@ -106,6 +106,7 @@ pub fn run() {
             browser::get_browser_integration,
             browser::register_browser,
             browser::unregister_browser,
+            browser::open_extension_page,
             downloads::remember_login,
             downloads::choose_torrent_files,
             downloads::set_torrent_seeding,

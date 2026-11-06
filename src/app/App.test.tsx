@@ -88,11 +88,13 @@ describe('the first-run setup', () => {
     expect(callsOf(backend, 'complete_onboarding').map((c) => c.args)).toEqual([{ directory: '/data/Apollo Download Manager' }]);
   });
 
-  it('points to the Browser settings for the extension, as an optional step (#65)', async () => {
+  it('sets up the browsers found here as an optional step (#65, #241)', async () => {
     installFakeBackend({ settings: firstRun() });
     renderApp();
     expect(await screen.findByRole('heading', { name: '3. Optional: the browser extension' })).toBeTruthy();
-    expect(screen.getByText(/register Chrome, Edge, Brave or Firefox in Settings, Browser/)).toBeTruthy();
+    expect(screen.getByText(/You can do this later in Settings, Browser/)).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Unregister from Google Chrome' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Get the extension for Google Chrome' })).toBeTruthy();
   });
 
   it('shows why the folder was refused and stays open', async () => {

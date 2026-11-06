@@ -214,6 +214,8 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           return null;
         case 'get_browser_integration':
           return state.browser;
+        case 'open_extension_page':
+          return null;
         case 'register_browser':
         case 'unregister_browser':
           state.browser = {
