@@ -344,3 +344,52 @@ fn trackers_and_peers_go_through_a_socks5_proxy() {
     );
     assert_eq!(record.refused, 0, "{record:?}");
 }
+
+/// `name`'s corpus torrent with `private: 1` in its info dictionary, the key after `pieces`.
+fn private_torrent(name: &str) -> Vec<u8> {
+    let bytes = std::fs::read(corpus().join(format!("{name}.torrent"))).unwrap();
+    let end = bytes.len() - 2;
+    assert_eq!(&bytes[end..], b"ee", "the info dictionary ends the file");
+    [&bytes[..end], b"7:privatei1e", &bytes[end..]].concat()
+}
+
+const EXTRA: &str = "http://127.0.0.1:9/announce";
+
+fn with_extra_tracker() -> TorrentSettings {
+    TorrentSettings {
+        extra_trackers: vec![EXTRA.to_owned()],
+        ..OFF
+    }
+}
+
+/// #377: an extra tracker would learn a private torrent's hash and the user's address.
+#[test]
+fn a_private_torrent_gets_no_extra_tracker() {
+    let dir = Dir::new("private-file");
+    let path = dir.0.join("private.torrent");
+    std::fs::write(&path, private_torrent("v1-single")).unwrap();
+    let own = "http://127.0.0.1:8/announce".to_owned();
+    let (mut engine, _events) = helper_with(with_extra_tracker());
+    let id = engine
+        .add(spec(TorrentSource::File { path }, &dir.0, vec![own]))
+        .unwrap();
+    let urls: Vec<String> = engine
+        .trackers(id)
+        .unwrap()
+        .into_iter()
+        .map(|t| t.url)
+        .collect();
+    assert_eq!(urls.len(), 1, "only its own tracker: {urls:?}");
+    assert!(urls[0].contains(":8"), "{urls:?}");
+}
+
+/// A public torrent still gets them: the rule is about private torrents only.
+#[test]
+fn a_public_torrent_still_gets_the_extra_tracker() {
+    let dir = Dir::new("public-file");
+    let (mut engine, _events) = helper_with(with_extra_tracker());
+    let id = engine
+        .add(spec(file("v1-single"), &dir.0, Vec::new()))
+        .unwrap();
+    assert_eq!(engine.trackers(id).unwrap().len(), 1);
+}

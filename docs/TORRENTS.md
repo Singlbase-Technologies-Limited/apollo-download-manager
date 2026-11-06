@@ -205,7 +205,7 @@ The Settings screen's BitTorrent section edits them ([SETTINGS.md](SETTINGS.md#a
 | `listenPort` | 6890 | 0, or 1,024 to 65,535 | The TCP and UDP port on every interface. V1's 6881 and 6882 are never reused (PO decision on #62). 0 picks one free port when it is set, the same on every interface; libtorrent given 0 itself would pick one per interface |
 | `portMapping` | off | | Asks the router to forward the port, by UPnP and NAT-PMP |
 | `uploadLimit`, `downloadLimit` | 0 | 0 to 2,147,483,647 bytes per second | All torrents together; 0 for none. Separate from the direct downloads' limit (PO decision on #62) |
-| `extraTrackers` | none | at most 64, each a valid tracker | Added to every torrent added from then on |
+| `extraTrackers` | none | at most 64, each a valid tracker | Added to every public torrent added from then on. A private torrent never gets them, since they would learn its info hash and the user's address (#377). A magnet link doesn't say whether it's private, so it has them until its metadata arrives; libtorrent doesn't share a private torrent's metadata with peers anyway |
 | `maxPeersPerTorrent` | 55 | 1 to 512 | Peers each torrent added from then on connects to at most |
 | `dhtBootstrapNodes` | none | at most 16, each `host:port` | Where DHT starts from (V1's `dht_entry_point`); none means libtorrent's own default nodes |
 

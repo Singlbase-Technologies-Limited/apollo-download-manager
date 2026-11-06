@@ -149,9 +149,13 @@ fn session_config(settings: &TorrentSettings, port: u16, proxy: Option<&Proxy>) 
     }
 }
 
-/// A torrent's trackers, then the settings' extra ones it hasn't.
-fn with_extra(own: &[String], extra: &[String]) -> Vec<String> {
+/// A torrent's trackers, then the settings' extra ones it hasn't. A private torrent gets only its
+/// own: an extra tracker would learn its info hash and the user's address (#377).
+fn with_extra(own: &[String], extra: &[String], private: bool) -> Vec<String> {
     let mut all = own.to_vec();
+    if private {
+        return all;
+    }
     for tracker in extra {
         if !all.contains(tracker) {
             all.push(tracker.clone());
@@ -475,6 +479,8 @@ struct Torrent {
     resume_asked: Option<Instant>,
     /// Paused by the user, or added paused: it doesn't start seeding by itself on completing.
     user_paused: bool,
+    /// Its own trackers, without the settings' extra ones: all a private torrent may use (#377).
+    own_trackers: Vec<String>,
 }
 
 struct State {
@@ -522,6 +528,8 @@ struct Seen {
     base: AddParams,
     resume_asked: Option<Instant>,
     user_paused: bool,
+    /// Its own trackers, without the settings' extra ones: all a private torrent may use (#377).
+    own_trackers: Vec<String>,
 }
 
 impl Shared {
@@ -575,6 +583,7 @@ impl Shared {
                 base: t.base.clone(),
                 resume_asked: t.resume_asked,
                 user_paused: t.user_paused,
+                own_trackers: t.own_trackers.clone(),
             })
             .collect();
         self.send_resume_data(&alerts);
@@ -791,7 +800,13 @@ impl Shared {
         let mut readd = None;
         if phase == Phase::Unchecked && status.has_metadata {
             match self.check_metadata(lt) {
-                Ok((files, bytes)) => {
+                Ok((files, bytes, private)) => {
+                    // Its metadata says it's private: from now on, only its own trackers (#377).
+                    let trackers = if private {
+                        seen.own_trackers.clone()
+                    } else {
+                        seen.base.trackers.clone()
+                    };
                     if seen.choose_after_metadata {
                         phase = Phase::Choosing;
                     } else {
@@ -800,11 +815,12 @@ impl Shared {
                         readd = Some(AddParams {
                             torrent: bytes.clone(),
                             file_priorities: priorities,
+                            trackers: trackers.clone(),
                             ..seen.base.clone()
                         });
                         phase = Phase::Wanted;
                     }
-                    checked = Some((files, bytes));
+                    checked = Some((files, bytes, trackers));
                 }
                 Err(why) => {
                     // Nothing was wanted, so nothing was written; stop it talking to peers.
@@ -886,9 +902,11 @@ impl Shared {
         }
         torrent.phase = phase;
         torrent.finish = finish;
-        if let Some((files, bytes)) = checked {
+        if let Some((files, bytes, trackers)) = checked {
             torrent.files = Some(files);
             torrent.metadata = Some(bytes);
+            // Choosing files, or more files later, adds it again with these.
+            torrent.base.trackers = trackers;
         }
         if readd.is_some() {
             // Out of the session now; the next poll adds it again with its files wanted.
@@ -918,9 +936,9 @@ impl Shared {
         }
     }
 
-    /// Checks a magnet's metadata, now that libtorrent has it. Returns its files and its bytes,
-    /// or why the metadata is refused.
-    fn check_metadata(&self, lt: u64) -> Result<(Vec<TorrentFile>, Vec<u8>), String> {
+    /// Checks a magnet's metadata, now that libtorrent has it. Returns its files, its bytes and
+    /// whether it is private, or why the metadata is refused.
+    fn check_metadata(&self, lt: u64) -> Result<(Vec<TorrentFile>, Vec<u8>, bool), String> {
         let bytes = self
             .session
             .metadata(lt)
@@ -935,7 +953,7 @@ impl Shared {
                 "libtorrent lists the torrent's files differently from its metadata.".into(),
             );
         }
-        Ok((meta.files, bytes))
+        Ok((meta.files, bytes, meta.private))
     }
 }
 
@@ -1027,17 +1045,21 @@ impl LtEngine {
         let mut base = AddParams {
             save_path,
             paused: spec.paused,
-            trackers: with_extra(&spec.trackers, &settings.extra_trackers),
+            // A magnet doesn't say whether it's private: it gets the extra trackers until its
+            // metadata does (#377).
+            trackers: with_extra(&spec.trackers, &settings.extra_trackers, false),
             disable_pex: !settings.peer_exchange,
             upload_limit: rate(spec.upload_limit),
             download_limit: rate(spec.download_limit),
             max_connections: i32::try_from(settings.max_peers_per_torrent).unwrap_or(i32::MAX),
             ..Default::default()
         };
+        let mut own_trackers = spec.trackers.clone();
         let (first, phase, files, partial, metadata) = match &spec.source {
             TorrentSource::File { path } => {
                 let bytes = read_torrent_file(path)?;
                 let meta = parse_torrent(&bytes).map_err(|e| e.code())?;
+                base.trackers = with_extra(&spec.trackers, &settings.extra_trackers, meta.private);
                 let all = every_file(&meta.files);
                 let (priorities, phase, partial) = if spec.choose_files {
                     (vec![0; meta.files.len()], Phase::Choosing, false)
@@ -1070,6 +1092,11 @@ impl LtEngine {
                     return Err(ErrorCode::InvalidInput);
                 }
                 let checked = check_resume_data(&bytes).map_err(|e| e.code())?;
+                base.trackers = with_extra(
+                    &spec.trackers,
+                    &settings.extra_trackers,
+                    checked.meta.private,
+                );
                 let priorities = match &spec.files {
                     Some(wanted) => {
                         file_priorities(&checked.meta.files, wanted).map_err(|e| e.code())?
@@ -1102,6 +1129,9 @@ impl LtEngine {
                 for tracker in &magnet.trackers {
                     if !base.trackers.contains(tracker) {
                         base.trackers.push(tracker.clone());
+                    }
+                    if !own_trackers.contains(tracker) {
+                        own_trackers.push(tracker.clone());
                     }
                 }
                 let first = AddParams {
@@ -1163,6 +1193,7 @@ impl LtEngine {
                 last: None,
                 resume_asked: None,
                 user_paused: spec.paused,
+                own_trackers,
             },
         );
         Ok(id)
@@ -1522,6 +1553,20 @@ impl Drop for LtEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_private_torrent_gets_only_its_own_trackers() {
+        let own = vec!["http://own.test/announce".to_owned()];
+        let extra = vec![
+            "udp://extra.test:1".to_owned(),
+            "http://own.test/announce".to_owned(),
+        ];
+        assert_eq!(
+            with_extra(&own, &extra, false),
+            vec!["http://own.test/announce", "udp://extra.test:1"]
+        );
+        assert_eq!(with_extra(&own, &extra, true), own);
+    }
 
     fn status(state: u8) -> TorrentStatus {
         TorrentStatus {
