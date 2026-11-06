@@ -158,6 +158,10 @@ impl ChildProcessEngine {
         self.done(TransferCommand::Remove { id })
     }
 
+    pub fn release(&self, id: TransferId) -> Result<(), ErrorCode> {
+        self.done(TransferCommand::Release { id })
+    }
+
     pub fn set_limits(&self, id: TransferId, limits: Limits) -> Result<(), ErrorCode> {
         self.done(TransferCommand::SetLimits { id, limits })
     }
@@ -275,6 +279,10 @@ impl DirectTransfer for ChildProcessEngine {
 
     fn remove(&mut self, id: TransferId) -> Result<(), ErrorCode> {
         ChildProcessEngine::remove(self, id)
+    }
+
+    fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
+        ChildProcessEngine::release(self, id)
     }
 
     fn set_limits(&mut self, id: TransferId, limits: Limits) -> Result<(), ErrorCode> {

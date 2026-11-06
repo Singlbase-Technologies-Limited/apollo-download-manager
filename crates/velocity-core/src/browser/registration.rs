@@ -338,16 +338,17 @@ impl Locations {
     }
 }
 
-/// `HKEY_CURRENT_USER` keys with one default string value: what Windows browsers read
-/// (`windows-sys`, PO decision on #65).
+/// `HKEY_CURRENT_USER` string values: a key's default value, which Windows browsers read
+/// (`windows-sys`, PO decision on #65), and named values, such as the start-up list's (#321).
 #[cfg(windows)]
 pub(crate) mod registry {
     use std::ptr;
 
     use windows_sys::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_SUCCESS};
     use windows_sys::Win32::System::Registry::{
-        RegCloseKey, RegCreateKeyExW, RegDeleteKeyW, RegGetValueW, RegSetValueExW, HKEY,
-        HKEY_CURRENT_USER, KEY_WRITE, REG_OPTION_NON_VOLATILE, REG_SZ, RRF_RT_REG_SZ,
+        RegCloseKey, RegCreateKeyExW, RegDeleteKeyValueW, RegDeleteKeyW, RegGetValueW,
+        RegSetValueExW, HKEY, HKEY_CURRENT_USER, KEY_WRITE, REG_OPTION_NON_VOLATILE, REG_SZ,
+        RRF_RT_REG_SZ,
     };
 
     use crate::domain::ErrorCode;
@@ -356,9 +357,28 @@ pub(crate) mod registry {
         s.encode_utf16().chain(std::iter::once(0)).collect()
     }
 
+    /// `name` as a NUL-terminated UTF-16 string, or `None` for the default value.
+    fn wide_name(name: Option<&str>) -> Option<Vec<u16>> {
+        name.map(wide)
+    }
+
+    fn name_ptr(name: &Option<Vec<u16>>) -> *const u16 {
+        name.as_ref().map_or(ptr::null(), |n| n.as_ptr())
+    }
+
     /// Creates `key` if needed and sets its default value to `value`.
     pub(crate) fn set_default(key: &str, value: &str) -> Result<(), ErrorCode> {
-        let (key, value) = (wide(key), wide(value));
+        set_value(key, None, value)
+    }
+
+    /// The default value of `key`, if it exists and is a string.
+    pub(crate) fn get_default(key: &str) -> Option<String> {
+        get_value(key, None)
+    }
+
+    /// Creates `key` if needed and sets its value `name` (`None`: its default value) to `value`.
+    pub(crate) fn set_value(key: &str, name: Option<&str>, value: &str) -> Result<(), ErrorCode> {
+        let (key, name, value) = (wide(key), wide_name(name), wide(value));
         let mut handle: HKEY = ptr::null_mut();
         // SAFETY: `key` is NUL-terminated and outlives the call; `handle` receives a key that is
         // closed below; the other pointers may be null.
@@ -379,10 +399,19 @@ pub(crate) mod registry {
             return Err(ErrorCode::Io);
         }
         let bytes = u32::try_from(value.len() * 2).map_err(|_| ErrorCode::InvalidInput)?;
-        // SAFETY: `handle` is the open key from above; a null name sets the default value;
-        // `value` is a NUL-terminated UTF-16 string of `bytes` bytes, read during the call.
-        let set =
-            unsafe { RegSetValueExW(handle, ptr::null(), 0, REG_SZ, value.as_ptr().cast(), bytes) };
+        // SAFETY: `handle` is the open key from above; the name is NUL-terminated or null (the
+        // default value); `value` is a NUL-terminated UTF-16 string of `bytes` bytes, read during
+        // the call.
+        let set = unsafe {
+            RegSetValueExW(
+                handle,
+                name_ptr(&name),
+                0,
+                REG_SZ,
+                value.as_ptr().cast(),
+                bytes,
+            )
+        };
         // SAFETY: `handle` is open, and closed only here.
         unsafe { RegCloseKey(handle) };
         if set == ERROR_SUCCESS {
@@ -392,16 +421,17 @@ pub(crate) mod registry {
         }
     }
 
-    /// The default value of `key`, if it exists and is a string.
-    pub(crate) fn get_default(key: &str) -> Option<String> {
-        let key = wide(key);
+    /// The value `name` of `key` (`None`: its default value), if it exists and is a string.
+    pub(crate) fn get_value(key: &str, name: Option<&str>) -> Option<String> {
+        let (key, name) = (wide(key), wide_name(name));
         let mut size = 0u32;
-        // SAFETY: `key` is NUL-terminated; a null buffer asks for the size only.
+        // SAFETY: `key` is NUL-terminated, the name NUL-terminated or null; a null buffer asks
+        // for the size only.
         let sized = unsafe {
             RegGetValueW(
                 HKEY_CURRENT_USER,
                 key.as_ptr(),
-                ptr::null(),
+                name_ptr(&name),
                 RRF_RT_REG_SZ,
                 ptr::null_mut(),
                 ptr::null_mut(),
@@ -417,7 +447,7 @@ pub(crate) mod registry {
             RegGetValueW(
                 HKEY_CURRENT_USER,
                 key.as_ptr(),
-                ptr::null(),
+                name_ptr(&name),
                 RRF_RT_REG_SZ,
                 ptr::null_mut(),
                 buffer.as_mut_ptr().cast(),
@@ -436,6 +466,16 @@ pub(crate) mod registry {
         let key = wide(key);
         // SAFETY: `key` is NUL-terminated and outlives the call.
         match unsafe { RegDeleteKeyW(HKEY_CURRENT_USER, key.as_ptr()) } {
+            ERROR_SUCCESS | ERROR_FILE_NOT_FOUND => Ok(()),
+            _ => Err(ErrorCode::Io),
+        }
+    }
+
+    /// Deletes the value `name` of `key`. A value or key that isn't there is fine.
+    pub(crate) fn delete_value(key: &str, name: &str) -> Result<(), ErrorCode> {
+        let (key, name) = (wide(key), wide(name));
+        // SAFETY: both are NUL-terminated and outlive the call.
+        match unsafe { RegDeleteKeyValueW(HKEY_CURRENT_USER, key.as_ptr(), name.as_ptr()) } {
             ERROR_SUCCESS | ERROR_FILE_NOT_FOUND => Ok(()),
             _ => Err(ErrorCode::Io),
         }

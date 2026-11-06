@@ -2,7 +2,7 @@
 //! reached over the child's stdin and stdout with `velocity_child`'s protocol. The child gets one
 //! argument, `serve`, and a cleared environment, as the direct-download engine does.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
@@ -145,6 +145,10 @@ impl ChildTorrentEngine {
         self.done(TorrentCommand::SetFiles { id, files })
     }
 
+    pub fn move_storage(&self, id: TorrentId, directory: PathBuf) -> Result<(), ErrorCode> {
+        self.done(TorrentCommand::MoveStorage { id, directory })
+    }
+
     pub fn metadata(&self, id: TorrentId, offset: u64) -> Result<Chunk, ErrorCode> {
         match self
             .process
@@ -258,6 +262,10 @@ impl TorrentEngine for ChildTorrentEngine {
 
     fn set_files(&mut self, id: TorrentId, files: Vec<u32>) -> Result<(), ErrorCode> {
         ChildTorrentEngine::set_files(self, id, files)
+    }
+
+    fn move_storage(&mut self, id: TorrentId, directory: PathBuf) -> Result<(), ErrorCode> {
+        ChildTorrentEngine::move_storage(self, id, directory)
     }
 
     fn metadata(&self, id: TorrentId, offset: u64) -> Result<Chunk, ErrorCode> {

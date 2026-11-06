@@ -6,6 +6,7 @@ import {
   AddResultSchema,
   AppearanceSettingsSchema,
   BatchResultSchema,
+  CategoryMoveSchema,
   BrowserIntegrationSchema,
   CapabilitiesSchema,
   CategorySchema,
@@ -152,7 +153,8 @@ export const api = {
   setSpeedLimit: (id: string, kib: number) => call('set_download_speed_limit', { id, kib }, nothing),
   /** Asks for `connections`; answers how many apply. */
   setConnections: (id: string, connections: number) => call('set_download_connections', { id, connections }, z.number().int().positive()),
-  setCategory: (id: string, categoryId: string | null) => call('set_download_category', { id, categoryId }, nothing),
+  /** Changes a download's category, which moves its file to that category's folder (#366); answers what happened to the file. */
+  setCategory: (id: string, categoryId: string | null) => call('set_download_category', { id, categoryId }, CategoryMoveSchema),
   /** Opens the finished file; `CONFIRMATION_REQUIRED` for a program until `allowProgram`. */
   openFile: (id: string, allowProgram: boolean) => call('open_download_file', { id, allowProgram }, nothing),
   /** Shows the file in its folder, or the folder when the file is gone. */

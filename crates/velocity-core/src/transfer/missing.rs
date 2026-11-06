@@ -63,6 +63,9 @@ impl DirectTransfer for MissingEngine {
     fn remove(&mut self, _id: TransferId) -> Result<(), ErrorCode> {
         Err(UNAVAILABLE)
     }
+    fn release(&mut self, _id: TransferId) -> Result<(), ErrorCode> {
+        Err(UNAVAILABLE)
+    }
     fn set_limits(&mut self, _id: TransferId, _limits: Limits) -> Result<(), ErrorCode> {
         Err(UNAVAILABLE)
     }

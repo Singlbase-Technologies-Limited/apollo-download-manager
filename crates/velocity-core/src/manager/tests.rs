@@ -4574,8 +4574,11 @@ mod categories {
     use super::*;
     use crate::category::CategoryInput;
     use crate::destination::{Choice, FolderSettings, OnConflict, Placement};
-    use crate::domain::DestinationCheck;
+    use crate::domain::{CategoryMove, DestinationCheck};
+    use crate::naming::PART_FILE_SUFFIX;
+    use crate::transfer::{Checkpoint, Resume, CHECKPOINT_FORMAT};
     use std::fs;
+    use std::path::Path;
 
     /// A manager whose default folder is a fresh `dir`, with its database.
     fn in_folder(test: &str) -> (Manager, FakeControl, Arc<Database>, PathBuf) {
@@ -4640,19 +4643,272 @@ mod categories {
         fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// A finished `a.zip` of 4096 bytes in `dir`, with no category.
+    fn finished_in(m: &mut Manager, control: &FakeControl, dir: &std::path::Path) -> String {
+        let spec = TransferSpec {
+            directory: dir.to_path_buf(),
+            ..spec()
+        };
+        let id = m.add(DownloadKind::Http, spec, T0).unwrap();
+        control.progress(TransferId(1), 4096, Some(4096));
+        control.complete(TransferId(1));
+        m.pump(T0 + 1);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Completed);
+        fs::write(dir.join("a.zip"), vec![7u8; 4096]).unwrap();
+        id
+    }
+
+    fn stored_directory(db: &Database, id: &str) -> String {
+        db.downloads()
+            .unwrap()
+            .into_iter()
+            .find(|d| d.id == id)
+            .expect("stored")
+            .directory
+    }
+
     #[test]
-    fn changing_a_downloads_category_moves_nothing() {
-        // V1's `set_download_category`; moving files is a non-goal of #31.
-        let (mut m, _control, db, dir) = in_folder("set");
-        let id = m.add(DownloadKind::Http, spec(), T0).unwrap();
-        m.set_download_category(&id, Some("documents")).unwrap();
+    fn a_finished_download_moves_to_its_new_categorys_folder() {
+        let (mut m, control, db, dir) = in_folder("move");
+        let id = finished_in(&mut m, &control, &dir);
+        let documents = dir.join("Documents");
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        let path = documents.join("a.zip");
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: path.to_string_lossy().into_owned()
+            }
+        );
+        assert_eq!(fs::read(&path).unwrap(), vec![7u8; 4096]);
+        assert!(!dir.join("a.zip").exists());
         let r = m.get(&id).unwrap();
         assert_eq!(r.category_id.as_deref(), Some("documents"));
-        assert_eq!(r.directory, "downloads", "the folder is unchanged");
-        assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
+        assert_eq!(Path::new(&r.directory), documents);
+        assert_eq!(Path::new(&stored_directory(&db, &id)), documents);
+        // Clearing the category brings it back to the default folder.
         m.set_download_category(&id, None).unwrap();
-        assert_eq!(m.get(&id).unwrap().category_id, None);
+        assert!(dir.join("a.zip").is_file());
+        assert_eq!(Path::new(&m.get(&id).unwrap().directory), dir);
         assert_eq!(stored_category(&db, &id), None);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_finished_file_from_a_metalink_moves_like_any_other() {
+        let (_, _, db, dir) = in_folder("move-metalink");
+        let fake = FakeTransfer::with_capabilities(Capabilities {
+            metalink: true,
+            ..Capabilities::sample()
+        });
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+        m.set_metalink_enabled(true);
+        let spec = TransferSpec {
+            directory: dir.clone(),
+            ..spec()
+        };
+        let id = m.add(DownloadKind::Metalink, spec, T0).unwrap();
+        control.progress(TransferId(1), 4096, Some(4096));
+        control.complete(TransferId(1));
+        m.pump(T0 + 1);
+        fs::write(dir.join("a.zip"), vec![7u8; 4096]).unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert!(matches!(moved, CategoryMove::Moved { .. }), "{moved:?}");
+        assert!(dir.join("Documents").join("a.zip").is_file());
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_moved_download_takes_the_next_free_name_and_replaces_nothing() {
+        let (mut m, control, db, dir) = in_folder("move-taken");
+        let id = finished_in(&mut m, &control, &dir);
+        let documents = dir.join("Documents");
+        fs::create_dir_all(&documents).unwrap();
+        fs::write(documents.join("a.zip"), b"keep me").unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        let path = documents.join("a (1).zip");
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: path.to_string_lossy().into_owned()
+            }
+        );
+        assert_eq!(fs::read(documents.join("a.zip")).unwrap(), b"keep me");
+        assert_eq!(fs::read(&path).unwrap(), vec![7u8; 4096]);
+        let r = m.get(&id).unwrap();
+        assert_eq!(r.file_name.as_deref(), Some("a (1).zip"));
+        let stored = db
+            .downloads()
+            .unwrap()
+            .into_iter()
+            .find(|d| d.id == id)
+            .unwrap();
+        assert_eq!(stored.file_name.as_deref(), Some("a (1).zip"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_finished_file_that_is_gone_stays_and_the_category_still_changes() {
+        let (mut m, control, db, dir) = in_folder("move-gone");
+        let id = finished_in(&mut m, &control, &dir);
+        fs::remove_file(dir.join("a.zip")).unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert_eq!(
+            moved,
+            CategoryMove::Stayed {
+                path: dir.join("a.zip").to_string_lossy().into_owned(),
+                code: ErrorCode::NotFound,
+            }
+        );
+        assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
+        assert_eq!(Path::new(&m.get(&id).unwrap().directory), dir);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    fn saved_checkpoint() -> Checkpoint {
+        Checkpoint {
+            format: CHECKPOINT_FORMAT,
+            source: "https://example.com/files/a.zip".to_owned(),
+            total: 4096,
+            etag: Some("\"v1\"".to_owned()),
+            last_modified: None,
+            content_encoding: None,
+            durable: vec![(0, 1024)],
+        }
+    }
+
+    /// `a.zip` in `dir`, 1024 of 4096 bytes in, with a saved checkpoint and its part file.
+    fn started_in(m: &mut Manager, control: &FakeControl, dir: &std::path::Path) -> String {
+        let spec = TransferSpec {
+            directory: dir.to_path_buf(),
+            ..spec()
+        };
+        let id = m.add(DownloadKind::Http, spec, T0).unwrap();
+        control.progress(TransferId(1), 1024, Some(4096));
+        control.emit(TransferEvent::Checkpoint {
+            id: TransferId(1),
+            checkpoint: saved_checkpoint(),
+        });
+        m.pump(T0 + 1);
+        fs::write(
+            dir.join(format!("a.zip{PART_FILE_SUFFIX}")),
+            vec![7u8; 1024],
+        )
+        .unwrap();
+        id
+    }
+
+    #[test]
+    fn a_paused_download_moves_its_part_file_and_resumes_from_its_checkpoint_there() {
+        let (mut m, control, db, dir) = in_folder("move-paused");
+        let id = started_in(&mut m, &control, &dir);
+        m.pause(&id).unwrap();
+        m.pump(T0 + 2);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Paused);
+        let documents = dir.join("Documents");
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: documents.join("a.zip").to_string_lossy().into_owned()
+            }
+        );
+        assert!(control.log().contains(&"release 1".to_owned()));
+        let part = documents.join(format!("a.zip{PART_FILE_SUFFIX}"));
+        assert_eq!(fs::read(&part).unwrap(), vec![7u8; 1024]);
+        assert!(!dir.join(format!("a.zip{PART_FILE_SUFFIX}")).exists());
+        assert_eq!(Path::new(&stored_directory(&db, &id)), documents);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Paused);
+        m.pump(T0 + 3);
+        assert_eq!(
+            m.get(&id).unwrap().status,
+            DownloadStatus::Paused,
+            "still paused"
+        );
+
+        m.resume(&id).unwrap();
+        m.pump(T0 + 4);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.directory, documents);
+        assert_eq!(again.file_name.as_deref(), Some("a.zip"));
+        assert_eq!(
+            again.resume,
+            Some(Resume::Checkpoint {
+                checkpoint: saved_checkpoint()
+            })
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_failed_download_moves_its_part_file_under_a_free_name_and_retries_there() {
+        let (mut m, control, _db, dir) = in_folder("move-failed");
+        let id = started_in(&mut m, &control, &dir);
+        control.fail(
+            TransferId(1),
+            TransferError::new(FailureClass::Permanent, None, "gone"),
+        );
+        m.pump(T0 + 2);
+        let documents = dir.join("Documents");
+        fs::create_dir_all(&documents).unwrap();
+        // Another download's unfinished "a.zip" is there: the name is taken.
+        fs::write(
+            documents.join(format!("a.zip{PART_FILE_SUFFIX}")),
+            b"theirs",
+        )
+        .unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: documents.join("a (1).zip").to_string_lossy().into_owned()
+            }
+        );
+        assert_eq!(
+            fs::read(documents.join(format!("a.zip{PART_FILE_SUFFIX}"))).unwrap(),
+            b"theirs"
+        );
+        let part = documents.join(format!("a (1).zip{PART_FILE_SUFFIX}"));
+        assert_eq!(fs::read(&part).unwrap(), vec![7u8; 1024]);
+        m.retry(&id).unwrap();
+        m.pump(T0 + 3);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.directory, documents);
+        assert_eq!(again.file_name.as_deref(), Some("a (1).zip"));
+        assert!(matches!(again.resume, Some(Resume::Checkpoint { .. })));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_running_download_is_paused_moved_and_resumed() {
+        let (mut m, control, db, dir) = in_folder("move-running");
+        let id = started_in(&mut m, &control, &dir);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Downloading);
+        let documents = dir.join("Documents");
+        assert_eq!(
+            m.set_download_category(&id, Some("documents")),
+            Ok(CategoryMove::Moving)
+        );
+        assert!(control.log().contains(&"pause 1".to_owned()));
+        assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
+        // Once the engine has paused it, it moves and carries on from its checkpoint.
+        m.pump(T0 + 2);
+        assert!(control.log().contains(&"release 1".to_owned()));
+        let part = documents.join(format!("a.zip{PART_FILE_SUFFIX}"));
+        assert_eq!(fs::read(&part).unwrap(), vec![7u8; 1024]);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.directory, documents);
+        assert!(matches!(again.resume, Some(Resume::Checkpoint { .. })));
+        assert_ne!(m.get(&id).unwrap().status, DownloadStatus::Paused);
+        assert_eq!(Path::new(&stored_directory(&db, &id)), documents);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_category_change_checks_the_category_and_the_download() {
+        let (mut m, control, _db, dir) = in_folder("set");
+        let id = finished_in(&mut m, &control, &dir);
         assert_eq!(
             m.set_download_category(&id, Some("c-404")),
             Err(ErrorCode::NotFound)
@@ -4661,6 +4917,7 @@ mod categories {
             m.set_download_category("d-404", Some("video")),
             Err(ErrorCode::NotFound)
         );
+        assert!(dir.join("a.zip").is_file(), "nothing moved");
         fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -4939,6 +5196,7 @@ mod adding {
     //! folder, and the options that reach the engines.
     use super::*;
     use crate::destination::{FolderSettings, OnConflict};
+    use crate::domain::CategoryMove;
     use crate::manager::adding::{AddOutcome, AddRequest, Duplicate, FileChoice, MAX_ADD};
     use crate::seeding::SeedPolicy;
     use crate::torrent::bencode::{encode, Value};
@@ -5247,6 +5505,123 @@ mod adding {
             matches!(&again[0].outcome, AddOutcome::Duplicate { duplicate } if duplicate.existing_id == id),
             "{:?}",
             again[0].outcome
+        );
+    }
+
+    /// The album torrent added to `s.dir`, its name known, with category subfolders turned on
+    /// afterwards, so another category's folder is a subfolder.
+    fn album_known(s: &mut Setup) -> String {
+        let source = s.dir.join("from");
+        fs::create_dir_all(&source).unwrap();
+        let (path, hash) = album_file(&source);
+        let request = AddRequest {
+            torrent_files: vec![path.to_string_lossy().into_owned()],
+            ..AddRequest::default()
+        };
+        let id = added(&s.m.add_request(&request, T0).unwrap()[0].outcome);
+        s.torrents.hash_known(TorrentId(1), "album", &hash, 32_000);
+        s.m.pump(T0 + 1);
+        s.db.save_section(
+            &FolderSettings {
+                default_directory: s.dir.to_string_lossy().into_owned(),
+                ..FolderSettings::default()
+            },
+            T0,
+        )
+        .unwrap();
+        id
+    }
+
+    /// #366: a torrent's category change has the torrent engine move its files; its folder
+    /// follows once they are there.
+    #[test]
+    fn a_torrent_moves_through_its_engine_and_its_folder_follows() {
+        let mut s = setup("torrent-move");
+        let id = album_known(&mut s);
+        let documents = s.dir.join("Documents");
+        assert_eq!(
+            s.m.set_download_category(&id, Some("documents")),
+            Ok(CategoryMove::Moving)
+        );
+        assert!(s
+            .torrents
+            .log()
+            .contains(&format!("move_storage 1 {}", documents.display())));
+        assert_eq!(Path::new(&s.m.get(&id).unwrap().directory), s.dir);
+        s.torrents.moved(TorrentId(1), &documents);
+        s.m.pump(T0 + 2);
+        assert_eq!(Path::new(&s.m.get(&id).unwrap().directory), documents);
+        let stored = s.db.downloads().unwrap();
+        let stored = stored.iter().find(|d| d.id == id).unwrap();
+        assert_eq!(Path::new(&stored.directory), documents);
+        assert_eq!(stored.category_id.as_deref(), Some("documents"));
+    }
+
+    #[test]
+    fn a_torrent_whose_name_is_taken_there_stays_and_says_so() {
+        let mut s = setup("torrent-move-taken");
+        let id = album_known(&mut s);
+        let documents = s.dir.join("Documents");
+        fs::create_dir_all(documents.join("album")).unwrap();
+        assert_eq!(
+            s.m.set_download_category(&id, Some("documents")),
+            Ok(CategoryMove::Stayed {
+                path: s.dir.join("album").to_string_lossy().into_owned(),
+                code: ErrorCode::FileExists,
+            })
+        );
+        assert!(!s
+            .torrents
+            .log()
+            .iter()
+            .any(|c| c.starts_with("move_storage")));
+        assert_eq!(
+            s.m.get(&id).unwrap().category_id.as_deref(),
+            Some("documents")
+        );
+    }
+
+    /// The helper's word is untrusted: a `Moved` the app never asked for, or to another folder,
+    /// changes nothing.
+    #[test]
+    fn a_torrent_takes_only_the_folder_it_was_moved_to() {
+        let mut s = setup("torrent-move-unasked");
+        let id = album_known(&mut s);
+        let elsewhere = s.dir.join("elsewhere");
+        s.torrents.moved(TorrentId(1), &elsewhere);
+        s.m.pump(T0 + 2);
+        assert_eq!(
+            Path::new(&s.m.get(&id).unwrap().directory),
+            s.dir,
+            "never asked"
+        );
+        s.m.set_download_category(&id, Some("documents")).unwrap();
+        s.torrents.moved(TorrentId(1), &elsewhere);
+        s.m.pump(T0 + 3);
+        assert_eq!(
+            Path::new(&s.m.get(&id).unwrap().directory),
+            s.dir,
+            "another folder"
+        );
+        s.torrents.moved(TorrentId(1), &s.dir.join("Documents"));
+        s.m.pump(T0 + 4);
+        assert_eq!(
+            Path::new(&s.m.get(&id).unwrap().directory),
+            s.dir.join("Documents")
+        );
+    }
+
+    #[test]
+    fn a_torrent_whose_move_fails_keeps_its_folder() {
+        let mut s = setup("torrent-move-fails");
+        let id = album_known(&mut s);
+        s.m.set_download_category(&id, Some("documents")).unwrap();
+        s.torrents.move_failed(TorrentId(1), "the disk is full");
+        s.m.pump(T0 + 2);
+        assert_eq!(Path::new(&s.m.get(&id).unwrap().directory), s.dir);
+        assert_eq!(
+            s.m.get(&id).unwrap().category_id.as_deref(),
+            Some("documents")
         );
     }
 

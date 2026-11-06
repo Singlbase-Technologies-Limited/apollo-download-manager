@@ -8,6 +8,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use super::finished::Forget;
 use super::Manager;
 use crate::database::resume_from;
 use crate::domain::DownloadStatus;
@@ -37,7 +38,7 @@ impl Manager {
     /// Lets the engine forget the failed transfer, and keeps the checkpoint to resume from, so
     /// the download starts again like any waiting one.
     pub(super) fn wait_for_network(&mut self, id: &str) {
-        if let Err(code) = self.forget_transfer(id, true) {
+        if let Err(code) = self.forget_transfer(id, Forget::Remove) {
             // The engine still has the failed transfer; starting again replaces it.
             tracing::warn!("download {id}: the engine couldn't forget its transfer: {code:?}");
         }

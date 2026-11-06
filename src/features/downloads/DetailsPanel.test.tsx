@@ -439,6 +439,23 @@ describe('the details panel (#61)', () => {
     expect(screen.queryByRole('dialog', { name: 'Edit download' })).toBeNull();
   });
 
+  it('says where the file went when its category changes, and why it stayed when it couldn’t move (#366)', async () => {
+    const user = userEvent.setup();
+    state.categoryMove = () => ({ kind: 'moved', path: '/home/user/Downloads/Video/movie.mp4' });
+    renderApp();
+    await user.dblClick(await rowFor('movie.mp4'));
+    let dialog = await openEdit(user, await panel());
+    await chooseOption(user, within(dialog).getByLabelText('Category'), 'None');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Moved to /home/user/Downloads/Video/movie.mp4')).toBeTruthy();
+
+    state.categoryMove = () => ({ kind: 'stayed', path: '/home/user/Downloads/movie.mp4', code: 'NOT_FOUND' });
+    dialog = await openEdit(user, await panel());
+    await chooseOption(user, within(dialog).getByLabelText('Category'), state.categories[0]?.name ?? '');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText(/^The category changed, but the file stayed at \/home\/user\/Downloads\/movie\.mp4/)).toBeTruthy();
+  });
+
   it('shows the verification state of a completed download', async () => {
     const user = userEvent.setup();
     renderApp();

@@ -25,6 +25,17 @@ use crate::torrent_files::{delete_owned, Kept, OwnedFile, OwnedPaths};
 /// once nothing has it open.
 pub(super) const DELETE_WAIT: Duration = Duration::from_secs(2);
 
+/// How [`Manager::forget_transfer`] has the engine forget a transfer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Forget {
+    /// A finished one: forgotten, its file kept.
+    Remove,
+    /// An unfinished one: stopped, its part file discarded.
+    Cancel,
+    /// A paused one: forgotten, its part file kept to move and resume elsewhere (#366).
+    Release,
+}
+
 impl Manager {
     /// Retries a failed or removed download: the engine forgets the old transfer, and the download
     /// waits as Queued at the end of the queue. One waiting for the network (#318) waits as
@@ -48,7 +59,7 @@ impl Manager {
         if d.needs_login {
             return Err(ErrorCode::ConfirmationRequired);
         }
-        self.forget_transfer(id, true)?;
+        self.forget_transfer(id, Forget::Remove)?;
         let checkpoint = self.database.checkpoint(id).map_err(|e| e.code)?;
         let d = self.downloads.get_mut(id).expect("known");
         let removed = d.record.status == DownloadStatus::Removed;
@@ -102,7 +113,12 @@ impl Manager {
             // The time is only the row's last change, so the wall clock will do.
             self.keep_metadata_to_delete(id, super::service::now_ms());
         }
-        self.forget_transfer(id, finished)?;
+        let how = if finished {
+            Forget::Remove
+        } else {
+            Forget::Cancel
+        };
+        self.forget_transfer(id, how)?;
         let mut d = self.take(id);
         if !finished {
             d.record.status = DownloadStatus::Removed;
@@ -165,9 +181,9 @@ impl Manager {
             .collect()
     }
 
-    /// Has the engine forget the download's transfer: `remove` for a finished one, `cancel` for
-    /// one still running. One the engine no longer knows is forgotten already.
-    pub(super) fn forget_transfer(&mut self, id: &str, finished: bool) -> Result<(), ErrorCode> {
+    /// Has the engine forget the download's transfer, as `how` says. One the engine no longer
+    /// knows is forgotten already.
+    pub(super) fn forget_transfer(&mut self, id: &str, how: Forget) -> Result<(), ErrorCode> {
         if self
             .downloads
             .get(id)
@@ -178,10 +194,10 @@ impl Manager {
         let Some(transfer) = self.downloads.get(id).and_then(|d| d.transfer()) else {
             return Ok(());
         };
-        let result = if finished {
-            self.engine.remove(transfer)
-        } else {
-            self.engine.cancel(transfer)
+        let result = match how {
+            Forget::Remove => self.engine.remove(transfer),
+            Forget::Cancel => self.engine.cancel(transfer),
+            Forget::Release => self.engine.release(transfer),
         };
         match result {
             Ok(()) | Err(ErrorCode::NotFound) => {}

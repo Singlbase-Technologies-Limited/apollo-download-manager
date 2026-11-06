@@ -16,7 +16,8 @@ The limits of every setting are in the [developer documents](../SETTINGS.md).
 | Setting | Default |
 |---|---|
 | Close to tray: closing the window keeps Apollo Download Manager running in the tray | On |
-| Start minimized, in the tray | Off |
+| Start minimized, in the tray, also when it opens at sign-in | Off |
+| Start Apollo Download Manager when I sign in, so queued downloads and seeding carry on after a restart | On for a new install; off if you used an earlier version |
 | Confirm before quitting with active downloads | On |
 
 On Linux the tray needs an AppIndicator library. Without a tray, closing the window quits Apollo Download Manager, and it never starts hidden.

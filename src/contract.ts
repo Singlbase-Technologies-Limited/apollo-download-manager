@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 30;
+export const COMMAND_API_VERSION = 31;
 
 const bytes = z.number().int().nonnegative();
 
@@ -234,6 +234,19 @@ export const DownloadsSnapshotSchema = z.strictObject({
   schedule: z.strictObject({ opens: z.string(), closes: z.string(), open: z.boolean() }).nullable(),
 });
 export type DownloadsSnapshot = z.infer<typeof DownloadsSnapshotSchema>;
+
+/** What changing a download's category did with its file (#366); the category changes whatever happens to it. */
+export const CategoryMoveSchema = z.discriminatedUnion('kind', [
+  /** The file is in the new category's folder, at `path`. */
+  z.strictObject({ kind: z.literal('moved'), path: z.string() }),
+  /** Nothing to move: already in that folder, or no file yet. */
+  z.strictObject({ kind: z.literal('unchanged') }),
+  /** Running, or a torrent: it moves in the background and carries on. */
+  z.strictObject({ kind: z.literal('moving') }),
+  /** The file couldn't move and is still at `path`. */
+  z.strictObject({ kind: z.literal('stayed'), path: z.string(), code: ErrorCodeSchema }),
+]);
+export type CategoryMove = z.infer<typeof CategoryMoveSchema>;
 
 /** Why a removal with files left a file in place (#58). */
 export const KeptReasonSchema = z.enum(['notPlain', 'tooLarge', 'behindLink', 'notEmpty', 'failed']);
@@ -668,7 +681,7 @@ export type PeerStatus = z.infer<typeof PeerStatusSchema>;
 // The Settings screen's settings (#30): every section, checked again in Rust whatever the window sends
 // (crates/velocity-core/src/settings.rs). The bounds below mirror Rust's, for the screen to say.
 
-export const GeneralSettingsSchema = z.strictObject({ closeToTray: z.boolean(), startMinimized: z.boolean(), confirmExitWithActive: z.boolean() });
+export const GeneralSettingsSchema = z.strictObject({ closeToTray: z.boolean(), startMinimized: z.boolean(), confirmExitWithActive: z.boolean(), /** Start the app at sign-in (#321). */ startAtLogin: z.boolean() });
 export const NotificationSettingsSchema = z.strictObject({ onComplete: z.boolean(), onFailure: z.boolean(), onStart: z.boolean(), onEngineFailure: z.boolean() });
 export const FolderSettingsSchema = z.strictObject({ defaultDirectory: z.string(), autoCategorize: z.boolean(), categorySubfolders: z.boolean() });
 

@@ -52,6 +52,9 @@ struct Download {
     start_at: Option<DateTime>,
     /// The user cancelled it, and the engine hasn't confirmed yet: it never runs again (#339).
     cancelling: bool,
+    /// Its category changed while it ran (#366): it was paused, and moves to the category's
+    /// folder and carries on once the engine has stopped it.
+    move_when_paused: bool,
     /// When the engine's events last saved it; progress alone is saved at most every
     /// [`persist::PROGRESS_SAVE_MS`].
     saved_at_ms: Option<u64>,
@@ -143,6 +146,9 @@ pub enum MoveDirection {
 /// Owns the download records, the queue, and one direct-download engine.
 pub struct Manager {
     engine: Box<dyn DirectTransfer>,
+    /// The user's start-up list and this app's entry in it (#321); `None` until the shell gives
+    /// them ([`Manager::with_startup`]).
+    startup: Option<(crate::autostart::StartupList, crate::autostart::Entry)>,
     /// Where the records are kept, so a restart brings them back (#58).
     database: Arc<Database>,
     /// Records changed since they were last saved ([`Manager::flush`]).
@@ -304,6 +310,7 @@ impl Manager {
             torrent_events,
             by_torrent: HashMap::new(),
             engine,
+            startup: None,
             database,
             unsaved: BTreeSet::new(),
             storage_error: None,
@@ -426,6 +433,7 @@ impl Manager {
                 && (options.scheduled || self.settings.schedule.enabled),
             start_at: options.start_at,
             cancelling: false,
+            move_when_paused: false,
             saved_at_ms: None,
             needs_login: false,
             activity: activity::Tracker::default(),
@@ -815,6 +823,7 @@ impl Manager {
         for id in std::mem::take(&mut self.just_completed) {
             self.follow_metalink(&id, now_ms);
         }
+        self.move_paused_downloads();
         self.fill();
         // What the user's actions and the queue changed (#251).
         for download in self.downloads.values_mut() {

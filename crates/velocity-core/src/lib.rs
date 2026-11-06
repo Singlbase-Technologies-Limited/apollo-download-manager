@@ -4,6 +4,7 @@
 //! (`domain`, docs/CONTRACTS.md).
 
 pub mod app_settings;
+pub mod autostart;
 pub mod branding;
 pub mod browser;
 pub mod category;
@@ -12,6 +13,7 @@ pub mod database;
 pub mod destination;
 pub mod diagnostics;
 pub mod domain;
+pub mod file_move;
 pub mod fs_safety;
 pub mod history;
 pub mod keychain;
@@ -72,7 +74,9 @@ use serde::Serialize;
 /// [`domain::DownloadsSnapshot::schedule`], [`manager::AddRequest::start_at`] and `set_start_at`.
 /// Version 30 (#252, #249) added [`domain::TransferError::detail`] and
 /// [`domain::TransferError::login_required`].
-pub const COMMAND_API_VERSION: u32 = 30;
+/// Version 31 (#366): `set_download_category` answers a [`domain::CategoryMove`], since changing
+/// a download's category moves its file; and (#321) [`app_settings::GeneralSettings::start_at_login`].
+pub const COMMAND_API_VERSION: u32 = 31;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

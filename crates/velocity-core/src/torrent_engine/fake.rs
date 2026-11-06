@@ -3,6 +3,7 @@
 //! and the test scripts everything else through a [`FakeTorrentControl`]. Compiled for tests only.
 
 use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -220,6 +221,26 @@ impl FakeTorrentControl {
         }
     }
 
+    /// Ends a [`TorrentEngine::move_storage`]: the files are in `directory`.
+    pub fn moved(&self, id: TorrentId, directory: &Path) {
+        let mut s = lock(&self.state);
+        if let Ok(t) = s.torrent(id) {
+            t.spec.directory = directory.to_path_buf();
+        }
+        s.emit(TorrentEvent::Moved {
+            id,
+            directory: directory.to_path_buf(),
+        });
+    }
+
+    /// Ends a [`TorrentEngine::move_storage`] that failed.
+    pub fn move_failed(&self, id: TorrentId, message: &str) {
+        lock(&self.state).emit(TorrentEvent::MoveFailed {
+            id,
+            message: message.to_owned(),
+        });
+    }
+
     pub fn set_health(&self, health: EngineHealth) {
         lock(&self.state).health = Some(health);
     }
@@ -321,6 +342,13 @@ impl TorrentEngine for FakeTorrentEngine {
         s.command(format!("remove {}", id.0))?;
         s.torrents.remove(&id).ok_or(ErrorCode::NotFound)?;
         s.emit(TorrentEvent::Removed { id });
+        Ok(())
+    }
+
+    fn move_storage(&mut self, id: TorrentId, directory: PathBuf) -> Result<(), ErrorCode> {
+        let mut s = lock(&self.state);
+        s.command(format!("move_storage {} {}", id.0, directory.display()))?;
+        s.torrent(id)?;
         Ok(())
     }
 

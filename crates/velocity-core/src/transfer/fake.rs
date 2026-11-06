@@ -336,6 +336,17 @@ impl DirectTransfer for FakeTransfer {
         Ok(())
     }
 
+    fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
+        let mut s = lock(&self.state);
+        s.command(format!("release {}", id.0))?;
+        if s.transfer(id)?.snapshot.status != DownloadStatus::Paused {
+            return Err(ErrorCode::InvalidState);
+        }
+        s.transfers.remove(&id);
+        s.emit(TransferEvent::Removed { id });
+        Ok(())
+    }
+
     fn set_limits(&mut self, id: TransferId, limits: Limits) -> Result<(), ErrorCode> {
         let mut s = lock(&self.state);
         s.command(format!("set_limits {}", id.0))?;

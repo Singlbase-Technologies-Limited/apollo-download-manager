@@ -47,6 +47,16 @@ describe('settings (V1)', () => {
     expect(state.appSettings.general.startMinimized).toBe(true);
   });
 
+  it('starts the app at sign-in when switched on (#321)', async () => {
+    const state = installFakeBackend();
+    const user = await openSettings();
+    const box = await screen.findByRole<HTMLInputElement>('checkbox', { name: 'Start Apollo Download Manager when I sign in' });
+    expect(box.checked).toBe(false);
+    await user.click(box);
+    await waitFor(() => { expect(saved(state)).toHaveLength(1); });
+    expect(state.appSettings.general.startAtLogin).toBe(true);
+  });
+
   it('commits numeric settings on blur with clamping', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Queue and performance');

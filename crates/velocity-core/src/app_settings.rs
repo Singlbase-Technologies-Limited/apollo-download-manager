@@ -19,6 +19,9 @@ pub struct GeneralSettings {
     pub start_minimized: bool,
     /// Ask before quitting while downloads are active.
     pub confirm_exit_with_active: bool,
+    /// Start the app when the user signs in (#321). Off until set: finishing the first-run setup
+    /// turns it on in a released build (PO decision), so users from before it keep it off.
+    pub start_at_login: bool,
 }
 
 impl Default for GeneralSettings {
@@ -28,6 +31,7 @@ impl Default for GeneralSettings {
             close_to_tray: true,
             start_minimized: false,
             confirm_exit_with_active: true,
+            start_at_login: false,
         }
     }
 }

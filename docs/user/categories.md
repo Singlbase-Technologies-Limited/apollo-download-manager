@@ -30,4 +30,12 @@ When you add a download, Apollo Download Manager chooses:
 
 Both switches are in Settings, Downloads, and both are on by default. A missing category subfolder is created when you add the download; any other missing folder is offered in the Add dialog as **Create this folder**.
 
-You can change a download's category later in its details panel. That changes how it is listed, and doesn't move its file.
+You can change a download's category later, with **Edit…** in its details panel. Its file then moves to the folder a new download of that category would get, and a message says where it went:
+
+- **A finished download** moves at once.
+- **An unfinished one**, paused, waiting or failed, moves its partial file and carries on from where it was, in the new folder.
+- **A running one** is paused, moved, and carries on by itself.
+- **A name already taken** in the new folder is never replaced: the moved file gets the next free name, such as `report (1).pdf`.
+- **Moving to another drive** copies the file first, and removes the original only once the copy is complete.
+- **A torrent** moves too, and keeps seeding from its new folder. If a file or folder with its name is already there, the torrent stays where it is, and the message says so.
+- **A file that can't move**, because it was deleted or its drive is gone, stays where it is. The category still changes, and the message says why.
