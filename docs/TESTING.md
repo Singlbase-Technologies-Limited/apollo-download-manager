@@ -146,6 +146,7 @@ How to run a session, what it may download and how links are kept private: [test
 - **Clicks and typing** go through Testing Library's `user-event`; a drag goes through pointer events. The assertions read roles, names, text and attributes directly, without extra matchers.
 - **Contract fixtures:** the shapes the Rust side sends are generated from Rust into `tests/fixtures/contract/` and validated by the UI's strict schemas, so neither side can drift ([CONTRACTS.md](CONTRACTS.md)).
 - **What the user sees:** tests check text, roles and actions, not component internals.
+- **Keeping `findByRole` fast (#371):** it styles every element on the page to see whether it's hidden, and that was most of an app test's time. Cost grows with the page's elements and CSS rules, so `src/test/setup.ts` removes the toast library's stylesheet and clears its toasts after each test. Without that, a file's later tests redrew every earlier toast.
 
 ## Reporting results per platform
 
