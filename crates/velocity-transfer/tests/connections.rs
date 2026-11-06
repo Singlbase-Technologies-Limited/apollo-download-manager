@@ -441,8 +441,9 @@ fn under_a_speed_limit_a_download_keeps_only_the_connections_the_limit_needs() {
     // #278: a download limited to 2 MiB/s from a server that isn't throttled. One loopback
     // connection carries far more, so every count gives the limit's speed: the ramp halves to one
     // and names the limit. 4 asked for: 4, 2, 1, about 14 s after a first window that isn't
-    // measured; 48 MiB at 2 MiB/s, about 24 s.
-    let data = seeded_bytes(48 * MIB, 54);
+    // measured. On a busy runner one window can look slow, and the ramp tries 2 again before it
+    // settles, at about 32 s (#378), so the file outlasts that: 80 MiB at 2 MiB/s, about 40 s.
+    let data = seeded_bytes(80 * MIB, 54);
     let server = TestServer::start(
         vec![("f.bin".into(), data.clone())],
         ServerOptions::default(),
