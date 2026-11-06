@@ -18,6 +18,8 @@ If something fails, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ## 2. Learn the code
 
+The [developer site](https://singlbase-technologies-limited.github.io/apollo-download-manager/developers/) has every document below, with search; [docs/START_HERE.md](docs/START_HERE.md) is its first page.
+
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):** the components, who owns which state, and the open decisions.
 - **[docs/GLOSSARY.md](docs/GLOSSARY.md):** the terms the code and issues use.
 - **[docs/CONVENTIONS.md](docs/CONVENTIONS.md):** naming.

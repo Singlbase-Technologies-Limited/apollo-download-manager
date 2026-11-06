@@ -1,11 +1,12 @@
 // The product website (#353): static pages for GitHub Pages, built from the same sources as the in-app guide.
 // The user guides (docs/user/) and the privacy document (docs/PRIVACY.md) are rendered, never copied; the home,
 // FAQ, support and licence pages are in site/content/. Every page is plain HTML, one stylesheet, and the site's own
-// font and screenshots: no scripts, and nothing from another site, so a visit asks nothing of anyone but GitHub
-// Pages. The screens are real ones of the app, in site/screens/ (`pnpm site:screens`), and what each one shows is in
+// font and screenshots: no scripts (the developer pages have one, for their search: scripts/dev-site-lib.mjs), and
+// nothing from another site, so a visit asks nothing of anyone but GitHub Pages. The screens are real ones of the app, in site/screens/ (`pnpm site:screens`), and what each one shows is in
 // site/content/screens.json. The download page is made at build time from the GitHub releases the workflow passes in.
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { buildDevSite } from './dev-site-lib.mjs';
 import { buildGuide, parsePage, resolveLinks } from './guide-lib.mjs';
 
 /** The site's address: the default GitHub Pages one (PO decision on #353). */
@@ -28,6 +29,7 @@ export function siteFiles() {
     { from: at(`${font}files/inter-latin-wght-normal.woff2`), to: 'fonts/inter-latin-wght-normal.woff2' },
     { from: at(`${font}LICENSE`), to: 'fonts/LICENSE.txt' },
     ...content.screens.map((s) => ({ from: at(`site/screens/${s.id}.png`), to: `screens/${s.id}.png` })),
+    ...readdirSync(new URL('docs/images/', root)).map((f) => ({ from: at(`docs/images/${f}`), to: `developers/images/${f}` })),
   ];
 }
 
@@ -43,6 +45,8 @@ function inlineHtml(content, hrefOf) {
           return `<code>${esc(n.text)}</code>`;
         case 'break':
           return '<br>';
+        case 'image':
+          return `<img src="${esc(hrefOf({ image: n.src }))}" alt="${esc(n.alt)}" loading="lazy">`;
         case 'strong':
           return `<strong>${inlineHtml(n.content, hrefOf)}</strong>`;
         case 'em':
@@ -153,6 +157,7 @@ const NAV = [
   ['guide/', 'User guide'],
   ['faq/', 'FAQ'],
   ['support/', 'Support'],
+  ['developers/', 'Developers'],
 ];
 
 /** One screen of the app, at its real size; the browser fetches it when it comes into view, unless `eager`. */
@@ -205,7 +210,7 @@ ${screenSwitcher('./')}
 <div class="wrap prose">${renderBlocks(rest, hrefOf)}</div>`;
 }
 
-function layout({ path, title, description, body, aside = '', wide = false }) {
+function layout({ path, title, description, body, aside = '', head = '', wide = false }) {
   const depth = path.split('/').length - 1;
   const up = depth === 0 ? './' : '../'.repeat(depth);
   const here = path.replace(/index\.html$/, '');
@@ -226,7 +231,7 @@ ${canonical}<meta property="og:title" content="${esc(full)}">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="${up}icon.png">
 <link rel="stylesheet" href="${up}style.css">
-</head>
+${head}</head>
 <body>
 <a class="skip" href="#main">Skip to the content</a>
 <header class="top"><div class="wrap">
@@ -314,6 +319,15 @@ export function buildSite({ releases }) {
     }
     emit(path, p, { aside, afterHeading, title: p.id === 'index' ? 'User guide' : p.title });
   }
+
+  const docFiles = (dir) =>
+    readdirSync(new URL(`docs/${dir}`, root), { withFileTypes: true }).flatMap((e) => {
+      if (e.isDirectory()) return e.name === 'user' || e.name === 'images' ? [] : docFiles(`${dir}${e.name}/`);
+      return e.name.endsWith('.md') ? [`${dir}${e.name}`] : [];
+    });
+  const files = Object.fromEntries(docFiles('').map((f) => [f, read(`docs/${f}`)]));
+  Object.assign(out, buildDevSite({ files, nav: JSON.parse(read('site/content/developers.json')), layout, renderBlocks, repo: REPO }));
+  out['developers/search.js'] = read('site/developers/search.js');
 
   out['404.html'] = layout({ path: '404.html', title: 'Page not found', description: `This page of the ${NAME} website doesn't exist.`, body: `<h1>Page not found</h1>\n<p>This page doesn't exist. Try the <a href="${SITE_URL}">home page</a> or the <a href="${SITE_URL}guide/">user guide</a>.</p>` });
 

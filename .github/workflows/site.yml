@@ -1,5 +1,5 @@
-# The product website (#353, docs/WEBSITE.md): builds site-out/ from docs/user/, docs/PRIVACY.md and site/, with
-# the download page made from the published releases, and deploys it to GitHub Pages from main.
+# The website (#353, #355, docs/WEBSITE.md): builds site-out/ from docs/ and site/, with the download page made from
+# the published releases, and deploys it to GitHub Pages from main.
 #
 # - Pull requests: build only, with a read-only token, so a broken page or link fails the PR.
 # - main: build, then deploy. Only the deploy job may write to Pages.
@@ -10,11 +10,11 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - docs/user/**
-      - docs/PRIVACY.md
+      - docs/**
       - site/**
       - scripts/build-site.mjs
       - scripts/site-lib.mjs
+      - scripts/dev-site-lib.mjs
       - scripts/guide-lib.mjs
       - scripts/links-lib.mjs
       - src-tauri/icons/128x128.png
@@ -24,11 +24,11 @@ on:
   push:
     branches: [main]
     paths:
-      - docs/user/**
-      - docs/PRIVACY.md
+      - docs/**
       - site/**
       - scripts/build-site.mjs
       - scripts/site-lib.mjs
+      - scripts/dev-site-lib.mjs
       - scripts/guide-lib.mjs
       - scripts/links-lib.mjs
       - src-tauri/icons/128x128.png

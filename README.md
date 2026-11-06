@@ -14,7 +14,7 @@ The full setup for Windows, Linux and macOS is in [docs/DEVELOPMENT.md](docs/DEV
 
 ## Documentation
 
-The [user guide](docs/user/README.md) is for people who use V2; it is also in the app (Help, User guide) and on the [website](docs/WEBSITE.md). [docs/README.md](docs/README.md) maps every document. The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and accepted decisions are in [docs/decisions/](docs/decisions/README.md).
+The [user guide](docs/user/README.md) is for people who use V2; it is also in the app (Help, User guide) and on the [website](docs/WEBSITE.md). [docs/README.md](docs/README.md) maps every document, and the [developer site](https://singlbase-technologies-limited.github.io/apollo-download-manager/developers/) shows them with search. The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and accepted decisions are in [docs/decisions/](docs/decisions/README.md).
 
 ## Contributing
 
