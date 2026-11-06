@@ -14,6 +14,7 @@
     "dev:engine": "cargo build -p velocity-transfer --bin velocity-transfer && cargo build -p velocity-torrent --bin velocity-torrent && cargo build -p velocity-native-host --bin velocity-native-host-v2",
     "build:web": "tsc --noEmit && vite build",
     "build:extension": "node scripts/build-extension.mjs",
+    "package:extension": "node scripts/package-extension.mjs",
     "tauri": "tauri",
     "typecheck": "tsc --noEmit && tsc --noEmit -p browser-extension",
     "lint": "eslint . --max-warnings 0",
