@@ -4,8 +4,10 @@
 
 use std::path::{Path, PathBuf};
 
+use super::finished::Forget;
 use super::Manager;
 use crate::category::{for_file_name, Category, CategoryInput};
+use crate::database::resume_from;
 use crate::database::Database;
 use crate::destination::{
     existing, resolve, system_downloads, Choice, FolderSettings, OnConflict, Place, Placement,
@@ -13,9 +15,10 @@ use crate::destination::{
 use crate::domain::{
     CategoryMove, DestinationCheck, DownloadKind, DownloadRecord, DownloadStatus, ErrorCode,
 };
-use crate::file_move::{move_error, move_into};
+use crate::file_move::{move_error, move_into, move_no_replace};
 use crate::metalink::create_folders;
 use crate::naming::name_for_download;
+use crate::naming::{free_file_name, PART_FILE_SUFFIX};
 use crate::request::MAX_URL_BYTES;
 
 impl Manager {
@@ -59,17 +62,34 @@ impl Manager {
         category_id: Option<&str>,
     ) -> Result<CategoryMove, ErrorCode> {
         let category_id = self.known_category(category_id)?;
-        let mut record = self
-            .downloads
-            .get(id)
-            .ok_or(ErrorCode::NotFound)?
-            .record
-            .clone();
+        let d = self.downloads.get(id).ok_or(ErrorCode::NotFound)?;
+        let mut record = d.record.clone();
         record.category_id = category_id;
-        let moved = if record.status == DownloadStatus::Completed && single_file(record.kind) {
-            self.move_finished(&mut record)
-        } else {
-            CategoryMove::Unchanged
+        let direct = d.direct().is_some() && single_file(record.kind);
+        let at_rest = !d.running && direct;
+        if d.running && direct && record.status != DownloadStatus::Completed {
+            // Moved once the engine has stopped it ([`Manager::move_paused_downloads`]).
+            self.pause(id)?;
+            let d = self.downloads.get_mut(id).expect("known");
+            d.move_when_paused = true;
+            d.record.category_id = record.category_id.clone();
+            let record = d.record.clone();
+            self.database
+                .update_download(&record, &d.activity.totals)
+                .map_err(|e| e.code)?;
+            return Ok(CategoryMove::Moving);
+        }
+        let moved = match record.status {
+            DownloadStatus::Completed if at_rest => self.move_finished(&mut record),
+            DownloadStatus::Paused
+            | DownloadStatus::Queued
+            | DownloadStatus::Failed
+            | DownloadStatus::WaitingForNetwork
+                if at_rest =>
+            {
+                self.move_unfinished(id, &mut record)
+            }
+            _ => CategoryMove::Unchanged,
         };
         let download = self.downloads.get_mut(id).ok_or(ErrorCode::NotFound)?;
         self.database
@@ -120,16 +140,10 @@ impl Manager {
         if Path::new(&record.directory) == folder {
             return CategoryMove::Unchanged;
         }
-        let taken = |n: &str| {
-            let found = existing(&folder, Some(n), |n| self.waiting_at(&folder, n));
-            found.file_exists || found.partial_download_exists
-        };
-        match move_into(&source, &folder, taken) {
+        match move_into(&source, &folder, |n| self.name_taken(&folder, n)) {
             Ok(moved) => {
                 record.directory = folder.to_string_lossy().into_owned();
-                record.file_name = moved
-                    .file_name()
-                    .map(|n| n.to_string_lossy().into_owned());
+                record.file_name = moved.file_name().map(|n| n.to_string_lossy().into_owned());
                 CategoryMove::Moved {
                     path: moved.to_string_lossy().into_owned(),
                 }
@@ -277,6 +291,109 @@ impl Manager {
         }
     }
 
+    /// Moves an unfinished download that isn't running to its category's folder (#366): the engine
+    /// lets go of it, its part file moves under a name free there, and its next start resumes from
+    /// its saved checkpoint in the new folder, as after a restart. Whatever happens to the file,
+    /// the download stays resumable.
+    fn move_unfinished(&mut self, id: &str, record: &mut DownloadRecord) -> CategoryMove {
+        let Some(name) = record.file_name.clone() else {
+            return CategoryMove::Unchanged;
+        };
+        let directory = PathBuf::from(&record.directory);
+        let stayed = |code| CategoryMove::Stayed {
+            path: directory.join(&name).to_string_lossy().into_owned(),
+            code,
+        };
+        let folder = match self.category_folder(record) {
+            Ok(folder) if folder == directory => return CategoryMove::Unchanged,
+            Ok(folder) => folder,
+            Err(code) => return stayed(code),
+        };
+        let how = if record.status == DownloadStatus::Failed {
+            Forget::Remove
+        } else {
+            Forget::Release
+        };
+        if let Err(code) = self.forget_transfer(id, how) {
+            return stayed(code);
+        }
+        let resume = match self.database.checkpoint(id) {
+            Ok(checkpoint) => resume_from(&record.source_url, checkpoint.as_ref()),
+            Err(e) => return stayed(e.code),
+        };
+        let job = self
+            .downloads
+            .get_mut(id)
+            .and_then(|d| d.direct_mut())
+            .expect("a direct download");
+        job.resume = Some(resume);
+        let Some(free) = free_file_name(&name, |n| self.name_taken(&folder, n)) else {
+            return stayed(ErrorCode::FileExists);
+        };
+        let part = |dir: &Path, n: &str| dir.join(format!("{n}{PART_FILE_SUFFIX}"));
+        match move_no_replace(&part(&directory, &name), &part(&folder, &free)) {
+            // Nothing written yet: the download simply starts in the new folder.
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return stayed(move_error(&e)),
+            Ok(()) => {}
+        }
+        let job = self
+            .downloads
+            .get_mut(id)
+            .and_then(|d| d.direct_mut())
+            .expect("a direct download");
+        job.request.directory = folder.clone();
+        job.request.file_name = Some(free.clone());
+        record.directory = folder.to_string_lossy().into_owned();
+        record.file_name = Some(free.clone());
+        CategoryMove::Moved {
+            path: folder.join(free).to_string_lossy().into_owned(),
+        }
+    }
+
+    /// Moves the downloads paused for a move (#366) once the engine has stopped them, and lets
+    /// them carry on. One that ended otherwise meanwhile stays where it is.
+    pub(super) fn move_paused_downloads(&mut self) {
+        let ready: Vec<String> = self
+            .downloads
+            .iter()
+            .filter(|(_, d)| d.move_when_paused && !d.running)
+            .map(|(id, _)| id.clone())
+            .collect();
+        for id in ready {
+            let d = self.downloads.get_mut(&id).expect("listed");
+            d.move_when_paused = false;
+            if d.record.status != DownloadStatus::Paused {
+                continue;
+            }
+            let mut record = d.record.clone();
+            match self.move_unfinished(&id, &mut record) {
+                CategoryMove::Stayed { code, .. } => {
+                    tracing::warn!(download = %id, ?code, "the download couldn't move to its category's folder");
+                }
+                _ => {
+                    let d = self.downloads.get_mut(&id).expect("listed");
+                    match self.database.update_download(&record, &d.activity.totals) {
+                        Ok(()) => d.record = record,
+                        Err(e) => {
+                            tracing::warn!(download = %id, code = ?e.code, "the moved download couldn't be saved")
+                        }
+                    }
+                }
+            }
+            if let Err(code) = self.resume(&id) {
+                tracing::warn!(download = %id, ?code, "the moved download couldn't carry on");
+            }
+        }
+    }
+
+    /// `name` in `folder` is taken by a file, a part file or a download in the list that hasn't
+    /// finished.
+    fn name_taken(&self, folder: &Path, name: &str) -> bool {
+        let found = existing(folder, Some(name), |n| self.waiting_at(folder, n));
+        found.file_exists || found.partial_download_exists
+    }
+
     /// A download in the list that hasn't finished is to be saved as `name` in `directory`.
     fn waiting_at(&self, directory: &Path, name: &str) -> bool {
         self.downloads.values().any(|d| {
@@ -290,7 +407,10 @@ impl Manager {
 /// A download that saves one file under its own name: a torrent's or a Metalink's files are moved
 /// as a whole by their own engine.
 fn single_file(kind: DownloadKind) -> bool {
-    matches!(kind, DownloadKind::Http | DownloadKind::Ftp | DownloadKind::Sftp)
+    matches!(
+        kind,
+        DownloadKind::Http | DownloadKind::Ftp | DownloadKind::Sftp
+    )
 }
 
 /// `name` in `directory` as the UI shows it, in the platform's separator (#277).

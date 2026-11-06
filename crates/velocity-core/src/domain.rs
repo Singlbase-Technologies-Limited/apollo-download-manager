@@ -479,6 +479,9 @@ pub enum CategoryMove {
     Moved { path: String },
     /// Nothing to move: the file is already in that folder, or the download has none yet.
     Unchanged,
+    /// The download is running: it pauses, moves once the engine has stopped it, and carries
+    /// on. The app's log says if the move then fails; the download carries on where it was.
+    Moving,
     /// The file couldn't be moved and is still at `path`; `code` says why.
     Stayed { path: String, code: ErrorCode },
 }
@@ -1457,6 +1460,22 @@ mod tests {
                 },
             ];
             check("engine-health.json", serde_json::to_value(all).unwrap());
+        }
+
+        #[test]
+        fn contract_category_move() {
+            let all = [
+                CategoryMove::Moved {
+                    path: "/home/user/Downloads/Documents/report (1).pdf".to_owned(),
+                },
+                CategoryMove::Unchanged,
+                CategoryMove::Moving,
+                CategoryMove::Stayed {
+                    path: "/home/user/Downloads/report.pdf".to_owned(),
+                    code: ErrorCode::NotFound,
+                },
+            ];
+            check("category-move.json", serde_json::to_value(all).unwrap());
         }
 
         #[test]

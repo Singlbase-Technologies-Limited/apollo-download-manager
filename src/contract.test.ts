@@ -21,6 +21,7 @@ import {
   DownloadRecordSchema,
   DownloadsSnapshotSchema,
   DownloadStatusSchema,
+  CategoryMoveSchema,
   EngineHealthSchema,
   ErrorCodeSchema,
   KeptReasonSchema,
@@ -83,6 +84,11 @@ describe('contract fixtures generated from Rust', () => {
   it('engine health: running, restarting and unavailable (#58)', () => {
     const all = fixture('engine-health.json') as unknown[];
     expect(all.map((h) => EngineHealthSchema.parse(h))).toEqual(all);
+  });
+
+  it('category move: moved, unchanged, moving and stayed (#366)', () => {
+    const all = fixture('category-move.json') as unknown[];
+    expect(all.map((m) => CategoryMoveSchema.parse(m))).toEqual(all);
   });
 
   it('batch result (#58)', () => {

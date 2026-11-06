@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 30;
+export const COMMAND_API_VERSION = 31;
 
 const bytes = z.number().int().nonnegative();
 
@@ -234,6 +234,19 @@ export const DownloadsSnapshotSchema = z.strictObject({
   schedule: z.strictObject({ opens: z.string(), closes: z.string(), open: z.boolean() }).nullable(),
 });
 export type DownloadsSnapshot = z.infer<typeof DownloadsSnapshotSchema>;
+
+/** What changing a download's category did with its file (#366); the category changes whatever happens to it. */
+export const CategoryMoveSchema = z.discriminatedUnion('kind', [
+  /** The file is in the new category's folder, at `path`. */
+  z.strictObject({ kind: z.literal('moved'), path: z.string() }),
+  /** Nothing to move: already in that folder, or no file yet. */
+  z.strictObject({ kind: z.literal('unchanged') }),
+  /** Running: it pauses, moves, and carries on. */
+  z.strictObject({ kind: z.literal('moving') }),
+  /** The file couldn't move and is still at `path`. */
+  z.strictObject({ kind: z.literal('stayed'), path: z.string(), code: ErrorCodeSchema }),
+]);
+export type CategoryMove = z.infer<typeof CategoryMoveSchema>;
 
 /** Why a removal with files left a file in place (#58). */
 export const KeptReasonSchema = z.enum(['notPlain', 'tooLarge', 'behindLink', 'notEmpty', 'failed']);

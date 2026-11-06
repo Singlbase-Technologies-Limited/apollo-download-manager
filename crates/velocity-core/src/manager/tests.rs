@@ -4575,8 +4575,10 @@ mod categories {
     use crate::category::CategoryInput;
     use crate::destination::{Choice, FolderSettings, OnConflict, Placement};
     use crate::domain::{CategoryMove, DestinationCheck};
-    use std::path::Path;
+    use crate::naming::PART_FILE_SUFFIX;
+    use crate::transfer::{Checkpoint, Resume, CHECKPOINT_FORMAT};
     use std::fs;
+    use std::path::Path;
 
     /// A manager whose default folder is a fresh `dir`, with its database.
     fn in_folder(test: &str) -> (Manager, FakeControl, Arc<Database>, PathBuf) {
@@ -4711,7 +4713,12 @@ mod categories {
         assert_eq!(fs::read(&path).unwrap(), vec![7u8; 4096]);
         let r = m.get(&id).unwrap();
         assert_eq!(r.file_name.as_deref(), Some("a (1).zip"));
-        let stored = db.downloads().unwrap().into_iter().find(|d| d.id == id).unwrap();
+        let stored = db
+            .downloads()
+            .unwrap()
+            .into_iter()
+            .find(|d| d.id == id)
+            .unwrap();
         assert_eq!(stored.file_name.as_deref(), Some("a (1).zip"));
         fs::remove_dir_all(&dir).unwrap();
     }
@@ -4731,6 +4738,145 @@ mod categories {
         );
         assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
         assert_eq!(Path::new(&m.get(&id).unwrap().directory), dir);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    fn saved_checkpoint() -> Checkpoint {
+        Checkpoint {
+            format: CHECKPOINT_FORMAT,
+            source: "https://example.com/files/a.zip".to_owned(),
+            total: 4096,
+            etag: Some("\"v1\"".to_owned()),
+            last_modified: None,
+            content_encoding: None,
+            durable: vec![(0, 1024)],
+        }
+    }
+
+    /// `a.zip` in `dir`, 1024 of 4096 bytes in, with a saved checkpoint and its part file.
+    fn started_in(m: &mut Manager, control: &FakeControl, dir: &std::path::Path) -> String {
+        let spec = TransferSpec {
+            directory: dir.to_path_buf(),
+            ..spec()
+        };
+        let id = m.add(DownloadKind::Http, spec, T0).unwrap();
+        control.progress(TransferId(1), 1024, Some(4096));
+        control.emit(TransferEvent::Checkpoint {
+            id: TransferId(1),
+            checkpoint: saved_checkpoint(),
+        });
+        m.pump(T0 + 1);
+        fs::write(
+            dir.join(format!("a.zip{PART_FILE_SUFFIX}")),
+            vec![7u8; 1024],
+        )
+        .unwrap();
+        id
+    }
+
+    #[test]
+    fn a_paused_download_moves_its_part_file_and_resumes_from_its_checkpoint_there() {
+        let (mut m, control, db, dir) = in_folder("move-paused");
+        let id = started_in(&mut m, &control, &dir);
+        m.pause(&id).unwrap();
+        m.pump(T0 + 2);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Paused);
+        let documents = dir.join("Documents");
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: documents.join("a.zip").to_string_lossy().into_owned()
+            }
+        );
+        assert!(control.log().contains(&"release 1".to_owned()));
+        let part = documents.join(format!("a.zip{PART_FILE_SUFFIX}"));
+        assert_eq!(fs::read(&part).unwrap(), vec![7u8; 1024]);
+        assert!(!dir.join(format!("a.zip{PART_FILE_SUFFIX}")).exists());
+        assert_eq!(Path::new(&stored_directory(&db, &id)), documents);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Paused);
+        m.pump(T0 + 3);
+        assert_eq!(
+            m.get(&id).unwrap().status,
+            DownloadStatus::Paused,
+            "still paused"
+        );
+
+        m.resume(&id).unwrap();
+        m.pump(T0 + 4);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.directory, documents);
+        assert_eq!(again.file_name.as_deref(), Some("a.zip"));
+        assert_eq!(
+            again.resume,
+            Some(Resume::Checkpoint {
+                checkpoint: saved_checkpoint()
+            })
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_failed_download_moves_its_part_file_under_a_free_name_and_retries_there() {
+        let (mut m, control, _db, dir) = in_folder("move-failed");
+        let id = started_in(&mut m, &control, &dir);
+        control.fail(
+            TransferId(1),
+            TransferError::new(FailureClass::Permanent, None, "gone"),
+        );
+        m.pump(T0 + 2);
+        let documents = dir.join("Documents");
+        fs::create_dir_all(&documents).unwrap();
+        // Another download's unfinished "a.zip" is there: the name is taken.
+        fs::write(
+            documents.join(format!("a.zip{PART_FILE_SUFFIX}")),
+            b"theirs",
+        )
+        .unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert_eq!(
+            moved,
+            CategoryMove::Moved {
+                path: documents.join("a (1).zip").to_string_lossy().into_owned()
+            }
+        );
+        assert_eq!(
+            fs::read(documents.join(format!("a.zip{PART_FILE_SUFFIX}"))).unwrap(),
+            b"theirs"
+        );
+        let part = documents.join(format!("a (1).zip{PART_FILE_SUFFIX}"));
+        assert_eq!(fs::read(&part).unwrap(), vec![7u8; 1024]);
+        m.retry(&id).unwrap();
+        m.pump(T0 + 3);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.directory, documents);
+        assert_eq!(again.file_name.as_deref(), Some("a (1).zip"));
+        assert!(matches!(again.resume, Some(Resume::Checkpoint { .. })));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_running_download_is_paused_moved_and_resumed() {
+        let (mut m, control, db, dir) = in_folder("move-running");
+        let id = started_in(&mut m, &control, &dir);
+        assert_eq!(m.get(&id).unwrap().status, DownloadStatus::Downloading);
+        let documents = dir.join("Documents");
+        assert_eq!(
+            m.set_download_category(&id, Some("documents")),
+            Ok(CategoryMove::Moving)
+        );
+        assert!(control.log().contains(&"pause 1".to_owned()));
+        assert_eq!(stored_category(&db, &id).as_deref(), Some("documents"));
+        // Once the engine has paused it, it moves and carries on from its checkpoint.
+        m.pump(T0 + 2);
+        assert!(control.log().contains(&"release 1".to_owned()));
+        let part = documents.join(format!("a.zip{PART_FILE_SUFFIX}"));
+        assert_eq!(fs::read(&part).unwrap(), vec![7u8; 1024]);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.directory, documents);
+        assert!(matches!(again.resume, Some(Resume::Checkpoint { .. })));
+        assert_ne!(m.get(&id).unwrap().status, DownloadStatus::Paused);
+        assert_eq!(Path::new(&stored_directory(&db, &id)), documents);
         fs::remove_dir_all(&dir).unwrap();
     }
 

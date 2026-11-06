@@ -247,6 +247,10 @@ impl DirectTransfer for SupervisedEngine {
         self.running(id)?.cancel(id)
     }
 
+    fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
+        self.running(id)?.release(id)
+    }
+
     fn remove(&mut self, id: TransferId) -> Result<(), ErrorCode> {
         let orphan = self.supervisor.update(|book, _| {
             if book.transfers.remove_orphan(id) {

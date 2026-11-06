@@ -727,6 +727,19 @@ impl DirectTransfer for InProcessEngine {
         Ok(())
     }
 
+    fn release(&mut self, id: TransferId) -> Result<(), ErrorCode> {
+        let mut state = self.known(id)?;
+        let entry = &state.transfers[&id];
+        // Paused and set by the worker as it ended, under this lock: no worker holds the file.
+        if entry.running || entry.snapshot.status != DownloadStatus::Paused {
+            return Err(ErrorCode::InvalidState);
+        }
+        // The part file and its checkpoint are the app's now; nothing on disk is touched.
+        state.transfers.remove(&id);
+        state.emit(TransferEvent::Removed { id });
+        Ok(())
+    }
+
     fn set_limits(&mut self, id: TransferId, limits: Limits) -> Result<(), ErrorCode> {
         let state = self.known(id)?;
         limits.check()?;

@@ -59,7 +59,9 @@ use std::sync::mpsc::Receiver;
 /// failure made by having no network, so the download waits for it.
 /// Version 21 (#252, #249) added [`crate::domain::TransferError::detail`], the technical text
 /// behind the plain message, and [`crate::domain::TransferError::login_required`].
-pub const TRANSFER_CONTRACT_VERSION: u32 = 21;
+/// Version 22 (#366) added [`DirectTransfer::release`]: a paused transfer is let go of with its
+/// part file, so the app can move it to another folder.
+pub const TRANSFER_CONTRACT_VERSION: u32 = 22;
 
 /// An engine's id for one transfer. Assigned by the engine, never reused, and never shown as the
 /// app's download id.
@@ -692,6 +694,11 @@ pub trait DirectTransfer: Send {
     /// Forgets a finished transfer (Completed, Failed or Removed) and its checkpoint. Files are
     /// kept.
     fn remove(&mut self, id: TransferId) -> Result<(), ErrorCode>;
+    /// Lets go of a paused transfer (#366): it is forgotten, as [`DirectTransfer::remove`] does,
+    /// but its part file stays, so the app can move it and add it again with its last checkpoint
+    /// in [`TransferSpec::resume`]. `InvalidState` for a transfer that isn't paused, or whose
+    /// worker hasn't stopped yet.
+    fn release(&mut self, id: TransferId) -> Result<(), ErrorCode>;
     /// Limits one transfer. It holds alongside the global limit: the lower of the two applies.
     fn set_limits(&mut self, id: TransferId, limits: Limits) -> Result<(), ErrorCode>;
     /// Limits all transfers together; the allowance is shared among the active ones (#49).
@@ -765,6 +772,9 @@ pub enum TransferCommand {
     Remove {
         id: TransferId,
     },
+    Release {
+        id: TransferId,
+    },
     SetLimits {
         id: TransferId,
         limits: Limits,
@@ -831,6 +841,10 @@ pub fn dispatch(
         }
         TransferCommand::Remove { id } => {
             engine.remove(id)?;
+            TransferReply::Done {}
+        }
+        TransferCommand::Release { id } => {
+            engine.release(id)?;
             TransferReply::Done {}
         }
         TransferCommand::SetLimits { id, limits } => {

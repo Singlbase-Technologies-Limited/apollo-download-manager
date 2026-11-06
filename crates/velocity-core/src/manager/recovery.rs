@@ -245,6 +245,7 @@ impl Manager {
                 scheduled,
                 start_at,
                 cancelling: false,
+                move_when_paused: false,
                 saved_at_ms: None,
                 needs_login,
                 activity,

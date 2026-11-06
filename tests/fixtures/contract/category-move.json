@@ -1,0 +1,17 @@
+[
+  {
+    "kind": "moved",
+    "path": "/home/user/Downloads/Documents/report (1).pdf"
+  },
+  {
+    "kind": "unchanged"
+  },
+  {
+    "kind": "moving"
+  },
+  {
+    "code": "NOT_FOUND",
+    "kind": "stayed",
+    "path": "/home/user/Downloads/report.pdf"
+  }
+]

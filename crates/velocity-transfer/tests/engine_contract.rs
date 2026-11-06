@@ -710,6 +710,81 @@ fn a_paused_transfer_can_be_cancelled_and_its_part_file_goes() {
     }
 }
 
+/// #366: a paused transfer the engine lets go of keeps its part file, which can then be moved and
+/// resumed elsewhere from its checkpoint, as after a restart.
+#[test]
+fn a_released_paused_transfer_keeps_its_part_file_and_resumes_after_a_move() {
+    let data = seeded_bytes(4_000_000, 36);
+    let server = TestServer::start(
+        vec![("big.bin".into(), data.clone())],
+        ServerOptions {
+            throttle_bytes_per_sec: Some(300_000),
+            ..ServerOptions::default()
+        },
+    );
+    for (mode, mut engine) in engines() {
+        let dir = Dir::new(&format!("release-{}", mode.replace(' ', "-")));
+        let dest = dir.0.join("out.bin");
+        let events = engine.subscribe();
+        let id = engine
+            .add(spec(server.url("big.bin"), dest.clone()))
+            .expect("add");
+        wait_for(&events, id, |s| s == DownloadStatus::Downloading);
+        assert_eq!(
+            engine.release(id),
+            Err(ErrorCode::InvalidState),
+            "{mode}: a running transfer isn't released"
+        );
+        engine.pause(id).expect("pause");
+        let (_, checkpoint) = wait_with_checkpoint(&events, id, DownloadStatus::Paused);
+        let checkpoint = checkpoint.expect("a checkpoint at the pause");
+        engine.release(id).expect("release");
+        let deadline = Instant::now() + WAIT;
+        loop {
+            match events
+                .recv_timeout(deadline.saturating_duration_since(Instant::now()))
+                .expect("the Removed event")
+            {
+                TransferEvent::Removed { id: removed } if removed == id => break,
+                TransferEvent::Changed { snapshot } if snapshot.id == id => {
+                    assert_eq!(snapshot.status, DownloadStatus::Paused, "{mode}")
+                }
+                _ => {}
+            }
+        }
+        assert!(
+            engine
+                .snapshot()
+                .expect("snapshot")
+                .iter()
+                .all(|s| s.id != id),
+            "{mode}: forgotten"
+        );
+        assert!(part_of(&dest).exists(), "{mode}: the part file stays");
+
+        let moved = dir.0.join("Documents").join("out.bin");
+        std::fs::create_dir_all(moved.parent().unwrap()).unwrap();
+        std::fs::rename(part_of(&dest), part_of(&moved)).unwrap();
+        let mut again = spec(server.url("big.bin"), moved.clone());
+        again.resume = Some(velocity_core::transfer::Resume::Checkpoint { checkpoint });
+        let id = engine.add(again).expect("add again");
+        let done = wait_for(&events, id, |s| {
+            matches!(s, DownloadStatus::Completed | DownloadStatus::Failed)
+        });
+        assert_eq!(
+            done.status,
+            DownloadStatus::Completed,
+            "{mode}: {:?}",
+            done.error
+        );
+        assert!(
+            std::fs::read(&moved).unwrap() == data,
+            "{mode}: the file differs"
+        );
+        assert!(!dest.exists() && !part_of(&dest).exists(), "{mode}");
+    }
+}
+
 /// How long it takes transfer `id` to complete, from now.
 fn time_to_complete(events: &Receiver<TransferEvent>, id: TransferId) -> Duration {
     let started = Instant::now();

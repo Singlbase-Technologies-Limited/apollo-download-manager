@@ -30,6 +30,7 @@ They're defined once in Rust, in `crates/velocity-core/src/domain.rs` (plus `App
 | `DownloadLogin` | What `set_download_login` gives a download again (#59): `credentials` (`{ userName, password }` or `null`), `sshKey` (`{ path, passphrase }` or `null`) and `headers`. The fixture `download-login.json` sets every part | Since contract version 12. Kept in memory only, never saved, and redacted in diagnostics |
 | `AddResult` | `{ source, outcome }` for each link, `.torrent` file and Metalink file, in the request's order. `outcome.kind` is `added` (`id`), `metalinkAdded` (`ids`: every download a Metalink file added, in its order; since contract version 22, #222), `conflict` (`check`, a `DestinationCheck`), `duplicate` (`duplicate`: `existingId`, `name`, `status`, `inList`, `canAddAnyway`), `failed` (`code`) or `notFetched` (`error`, a `TransferError`: a `.torrent` link couldn't be fetched) | Since contract version 11. The fixture `add-results.json` has one of each |
 | `ShellSettings` | What the window starts with (#29): `appearance` (`theme`, `density`, `layout`, and the download list's `visibleColumns` and `columnWidths`), `onboardingCompleted`, and `defaultDirectory`, the folder downloads go to now (`null` when the system names none). The fixtures `themes.json` and `densities.json` list the themes and densities, and `columns.json` the column ids, the default columns and the width bounds | Since contract version 10; the columns since version 12 (#59). The settings are in [SETTINGS.md](SETTINGS.md#the-window). `set_appearance` takes and returns an `AppearanceSettings` |
+| `CategoryMove` | What changing a download's category did with its file (#366): `{ kind: "moved", path }`, `{ kind: "unchanged" }` (already there, or no file yet), `{ kind: "moving" }` (running: it pauses, moves and carries on) or `{ kind: "stayed", path, code }`. The category changes in every case | Since contract version 31. The fixture `category-move.json` lists one of each |
 | `BatchResult` | What a command over several downloads did: `done` (ids), `failed` (`{ id, code }`), and `kept` (`{ path, reason, code }`, files a removal with files left in place). `reason` is `notPlain`, `tooLarge`, `behindLink`, `notEmpty` or `failed`; `code` is set only for `failed` | The fixture `kept-reasons.json` lists the reasons |
 
 **Conventions:**
@@ -57,7 +58,7 @@ The commands of [`src-tauri/src/downloads.rs`](../src-tauri/src/downloads.rs) (#
 | `set_download_login` | `id`, `login` (a `DownloadLogin`) | nothing; `INVALID_STATE` for a download that doesn't need its login, and the Add path's codes for an invalid one. The window then resumes or retries it (#59) |
 | `set_download_connections` | `id`, `connections` | the connections that apply |
 | `set_download_speed_limit` | `id`, `kib` (KiB/s; 0 for no limit, otherwise at least 1) | nothing |
-| `set_download_category` | `id`, `categoryId` (`null` for none) | nothing; nothing is moved (#31) |
+| `set_download_category` | `id`, `categoryId` (`null` for none) | a `CategoryMove`: the download's file moves to that category's folder ([FILE_NAMING.md](FILE_NAMING.md#categories)). Since contract version 31 (#366); nothing moved before |
 | `open_download_file` | `id`, `allowProgram` | nothing; opens the finished file, or a torrent's folder, with the system's program. `INVALID_STATE` before it finished, `NOT_FOUND` when the file is gone, `INVALID_PATH` for a link, `CONFIRMATION_REQUIRED` for a program until `allowProgram`, and `IO` when the program can't start (#61) |
 | `open_feedback_page` | none | nothing; opens the repository's "new issue" chooser in the default browser, a fixed address the window can't change. Sends nothing itself (#363) |
 | `open_download_folder` | `id` | nothing; shows the file selected in its folder (on Linux, the folder), or the folder when the file is gone. `DESTINATION_MISSING` when the folder is gone (#61) |
@@ -97,7 +98,7 @@ The commands of [`src-tauri/src/categories.rs`](../src-tauri/src/categories.rs) 
 | `create_category` | `input` (a `CategoryInput`) | the `Category`; `INVALID_INPUT`, `INVALID_PATH` or `NAME_TAKEN` |
 | `update_category` | `id`, `input` | the `Category`; also `NOT_FOUND` |
 | `delete_category` | `id` | nothing; `NOT_FOUND`, or `INVALID_STATE` for a built-in one. Its downloads are left without one |
-| `set_download_category` | `id`, `categoryId` (`null` for none) | nothing; nothing is moved |
+| `set_download_category` | `id`, `categoryId` (`null` for none) | a `CategoryMove` (#366) |
 | `check_destination` | `url`, `directory`, `fileName`, `categoryId` (each `null` for automatic) | `DestinationCheck` |
 
 ## Diagnostics

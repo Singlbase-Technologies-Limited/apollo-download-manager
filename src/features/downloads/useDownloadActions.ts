@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { confirmAction } from '../../components/confirmStore';
-import type { BatchResult, ConfirmKind, DownloadRecord, ErrorCode, KeptFile, KeptReason, MoveDirection } from '../../contract';
+import type { BatchResult, CategoryMove, ConfirmKind, DownloadRecord, ErrorCode, KeptFile, KeptReason, MoveDirection } from '../../contract';
 import { displayName } from '../../downloads/list';
 import { api } from '../../lib/api';
 import { copyText } from '../../lib/clipboard';
@@ -23,6 +23,23 @@ const KEPT: Record<KeptReason, string> = {
 function reportKept(kept: readonly KeptFile[]) {
   const first = kept[0];
   if (first) toast.warning(`${plural(kept.length, 'file')} left in place, as ${KEPT[first.reason]}: ${first.path}`);
+}
+
+/** Where a category change put the download's file (#366); a file that couldn't move says why. */
+function reportMove(m: CategoryMove) {
+  switch (m.kind) {
+    case 'moved':
+      toast.success(`Moved to ${m.path}`);
+      break;
+    case 'moving':
+      toast.success('Pausing it to move it to the new folder; it carries on there');
+      break;
+    case 'stayed':
+      toast.warning(`The category changed, but the file stayed at ${m.path}: ${ERROR_MESSAGES[m.code]}`);
+      break;
+    case 'unchanged':
+      break;
+  }
 }
 
 /**
@@ -137,7 +154,7 @@ export function useDownloadActions() {
           const applied = await api.setConnections(id, connections);
           toast.success(applied === connections ? `Connections set to ${String(applied)}` : `Asked for ${String(connections)} connections; ${String(applied)} apply`);
         }),
-      setCategory: (id: string, categoryId: string | null) => send(() => api.setCategory(id, categoryId)),
+      setCategory: (id: string, categoryId: string | null) => send(async () => { reportMove(await api.setCategory(id, categoryId)); }),
       // A torrent's (#63).
       reannounce: (id: string) => send(async () => { await api.reannounce(id); toast.success('Asked the trackers for peers'); }),
       setUploadLimit: (id: string, kib: number) => send(() => api.setUploadLimit(id, kib)),

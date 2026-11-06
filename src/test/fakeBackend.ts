@@ -13,6 +13,7 @@ import {
   type BrowserIntegration,
   type Capabilities,
   type Category,
+  type CategoryMove,
   type DestinationCheck,
   type DiagnosticReport,
   type DownloadsSnapshot,
@@ -63,6 +64,8 @@ export interface FakeState {
   proxyPassword: string | null;
   browser: BrowserIntegration;
   network: NetworkStatus;
+  /** What `set_download_category` answers (#366); by default, nothing moved. */
+  categoryMove: (args: { id: string; categoryId: string | null }) => CategoryMove;
   /** Commands that fail, with the code they fail with. */
   failures: Partial<Record<string, ErrorCode>>;
   /** Downloads whose file is a program: opening one needs `allowProgram` (#61). */
@@ -137,6 +140,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
     proxyPassword: null,
     browser: fixture('browser-integration.json') as BrowserIntegration,
     network: { listenPort: 6890, listenError: null, portMapping: { state: 'off' } },
+    categoryMove: () => ({ kind: 'unchanged' }),
     failures: {},
     programs: [],
     preview: () => {
@@ -233,10 +237,11 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'set_torrent_seeding':
         case 'set_download_login':
         case 'set_download_speed_limit':
-        case 'set_download_category':
         case 'open_download_folder':
         case 'open_feedback_page':
           return null;
+        case 'set_download_category':
+          return state.categoryMove(args as { id: string; categoryId: string | null });
         case 'set_download_connections':
           return args.connections;
         case 'preview_torrent_file':

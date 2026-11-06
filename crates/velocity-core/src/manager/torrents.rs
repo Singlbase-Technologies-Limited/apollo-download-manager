@@ -225,6 +225,7 @@ impl Manager {
                 && (options.scheduled || self.settings.schedule.enabled),
             start_at: options.start_at,
             cancelling: false,
+            move_when_paused: false,
             saved_at_ms: None,
             needs_login: false,
             activity: super::activity::Tracker::default(),

@@ -73,7 +73,9 @@ use serde::Serialize;
 /// [`domain::DownloadsSnapshot::schedule`], [`manager::AddRequest::start_at`] and `set_start_at`.
 /// Version 30 (#252, #249) added [`domain::TransferError::detail`] and
 /// [`domain::TransferError::login_required`].
-pub const COMMAND_API_VERSION: u32 = 30;
+/// Version 31 (#366): `set_download_category` answers a [`domain::CategoryMove`], since changing
+/// a download's category moves its file.
+pub const COMMAND_API_VERSION: u32 = 31;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
