@@ -73,6 +73,8 @@ pub struct Session {
     pub version: String,
     /// The protocol ALPN agreed on, if any.
     pub alpn: Option<String>,
+    /// The client resumed an earlier session instead of a full handshake (#327).
+    pub resumed: bool,
 }
 
 /// A test CA made fresh, the leaf it signed, and the server of its revocation list on a fresh port
@@ -395,6 +397,7 @@ async fn accept(
                 alpn: conn
                     .alpn_protocol()
                     .map(|p| String::from_utf8_lossy(p).into_owned()),
+                resumed: conn.handshake_kind() == Some(rustls::HandshakeKind::Resumed),
             });
             let Ok(mut plain) = TcpStream::connect(backend).await else {
                 return;
