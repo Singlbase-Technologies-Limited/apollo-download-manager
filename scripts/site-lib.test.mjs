@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { posix } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildSite, pickDownloads, renderBlocks, siteFiles, SITE_URL } from './site-lib.mjs';
@@ -57,18 +57,18 @@ describe('the website (#353)', () => {
       expect(body, path).toMatch(/<meta property="og:title" content="[^"]+">/);
       if (path !== '404.html') expect(body, path).toContain(`<link rel="canonical" href="${SITE_URL}`);
       // The canonical address is the page's own; nothing else is loaded from anywhere.
-      // The developer pages' one script is checked in dev-site-lib.test.mjs.
-      const page = path.startsWith('developers/') ? body.replace(/<script type="module" src="[./]*search\.js"><\/script>/, '') : body;
+      // The site's own scripts are checked in dev-site-lib.test.mjs: nothing else may load.
+      const page = body.replace(/<script src="[./]*theme\.js"><\/script>/, '').replace(/<script type="module" src="[./]*search\.js"><\/script>/, '');
       expect(page, path).not.toMatch(/<script|<iframe|fonts\.googleapis|<link(?![^>]*rel="canonical")[^>]+href="https?:|<img[^>]+src="https?:/i);
       expect(body, path).toMatch(/<a class="skip" href="#main">/);
     }
   });
 
-  it('lists the Windows and Linux downloads, with macOS not available', () => {
+  it('lists the Windows and Linux downloads, and no other system (PO decision on #379)', () => {
     const page = buildSite({ releases: [release()] })['download/index.html'];
     expect(page).toContain('apollo-download-manager-0.2.0-windows-x64-setup.exe');
     expect(page).toContain('apollo-download-manager-0.2.0-linux-amd64.deb');
-    expect(page).toMatch(/macOS[^<]*<\/h2>\s*<p>Not available yet/);
+    expect(page).not.toMatch(/macOS/);
   });
 
   it('says where to look when no release is known at build time', () => {
@@ -109,7 +109,8 @@ describe('the website shows the real app (#353)', () => {
   it('opens the home page with what it is, the download and the app', () => {
     const home = site['index.html'];
     expect(home).toMatch(/<h1[^>]*>A free download manager for Windows and Linux<\/h1>/);
-    expect(home.indexOf('class="button"')).toBeLessThan(home.indexOf('screens/downloads.png'));
+    expect(home.indexOf('class="button large"')).toBeGreaterThan(0);
+    expect(home.indexOf('class="button large"')).toBeLessThan(home.indexOf('screens/downloads.webp'));
     expect(home).toContain('The real app, with example downloads.');
   });
 
@@ -132,12 +133,12 @@ describe('the website shows the real app (#353)', () => {
     const features = page.match(/<section class="feature"/g) ?? [];
     expect(features.length).toBeGreaterThanOrEqual(5);
     expect(images(page.slice(page.indexOf('<main'))).length).toBeGreaterThanOrEqual(features.length);
-    expect(page).toContain('screens/schedule.png');
+    expect(page).toContain('screens/schedule.webp');
   });
 
   it('shows the screen a guide section describes, right under its heading', () => {
-    expect(site['guide/downloads/index.html']).toMatch(/id="adding-downloads">[^<]*<\/h2>\s*<figure[^>]*><img[^>]+screens\/add\.png/);
-    expect(site['guide/categories/index.html']).toContain('screens/categories.png');
+    expect(site['guide/downloads/index.html']).toMatch(/id="adding-downloads">[^<]*<\/h2>\s*<figure[^>]*><img[^>]+screens\/add\.webp/);
+    expect(site['guide/categories/index.html']).toContain('screens/categories.webp');
   });
 
   it('describes every screen, gives it a size, and has its file', () => {
@@ -148,7 +149,7 @@ describe('the website shows the real app (#353)', () => {
         if (!tag.includes('screens/')) continue;
         expect(tag, path).toMatch(/ alt="[^"]{15,}"/);
         expect(tag, path).toMatch(/ width="\d+" height="\d+"/);
-        expect(files, path).toContain(/screens\/[a-z-]+\.png/.exec(tag)[0]);
+        expect(files, path).toContain(/screens\/[a-z-]+\.webp/.exec(tag)[0]);
       }
     }
   });
@@ -159,6 +160,42 @@ describe('the website shows the real app (#353)', () => {
     const files = siteFiles();
     expect(files.map((f) => f.to)).toEqual(expect.arrayContaining(['fonts/inter-latin-wght-normal.woff2', 'fonts/LICENSE.txt']));
     for (const f of files) expect(existsSync(f.from), f.from).toBe(true);
+  });
+
+  it('shows the logo of the app’s loading screen and Get started, for each theme (#379)', () => {
+    const app = readFileSync(new URL('../src/components/BrandLogo.tsx', import.meta.url), 'utf8');
+    const shapes = (text) => [...text.matchAll(/ d="([^"]+)"/g)].map((m) => m[1]);
+    expect(shapes(site['logo-light.svg'])).toEqual(shapes(app));
+    expect(shapes(site['logo-dark.svg'])).toEqual(shapes(app));
+    expect(site['logo-light.svg']).toContain('fill="#1659B3"');
+    expect(site['logo-dark.svg']).toContain('fill="#2F80E4"');
+    expect(site['logo-light.svg']).not.toMatch(/className|\{/);
+    expect(site['index.html']).toMatch(/<a class="brand"[^>]*><img class="logo-light" src="\.\/logo-light\.svg"/);
+  });
+
+  it('opens light whatever the system prefers, with the app’s colours (#379)', () => {
+    const css = site['style.css'];
+    expect(css).not.toMatch(/prefers-color-scheme/);
+    const tokens = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+    for (const token of ['--bg', '--surface', '--border', '--fg', '--accent', '--accent-strong', '--frame']) {
+      const value = (text) => new RegExp(`${token}:\\s*(#[0-9a-f]{6})`).exec(text)?.[1];
+      expect(value(css), token).toBe(value(tokens));
+    }
+    expect(site['theme.js']).toMatch(/read\(\) === 'dark'/);
+  });
+
+  it('gives a long document its contents, and previous and next links (#379)', () => {
+    const page = site['guide/torrents/index.html'];
+    expect(page).toMatch(/<nav class="toc" aria-label="On this page">/);
+    expect(page).toMatch(/<a rel="prev" href="\.\.\/\.\.\/guide\/downloads\/">/);
+    expect(page).toMatch(/<a rel="next" href="\.\.\/\.\.\/guide\/categories\/">/);
+    expect(page).toContain('aria-current="page">Torrents');
+  });
+
+  it('keeps every address the site had', () => {
+    for (const p of ['features', 'download', 'guide', 'guide/downloads', 'guide/protocols', 'guide/torrents', 'guide/categories', 'guide/settings', 'guide/browser', 'guide/troubleshooting', 'guide/installing', 'guide/v1-and-v2', 'faq', 'support', 'privacy', 'licence', 'developers']) {
+      expect(Object.keys(site)).toContain(`${p}/index.html`);
+    }
   });
 
   it('says several connections only of HTTP and HTTPS', () => {

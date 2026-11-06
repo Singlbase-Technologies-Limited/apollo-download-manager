@@ -4,7 +4,7 @@
 // itself, with made-up downloads of free software, so no native side runs and no real data is shown. It stops if the
 // list doesn't load: the window checks every answer against the contract, and refuses one that doesn't fit.
 /* global window -- installBackend runs in the page. */
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -184,8 +184,21 @@ async function open(theme, { onboarded = true, over = {} } = {}) {
 
 const shot = async (page, name) => {
   await page.waitForTimeout(350);
-  await page.screenshot({ path: join(out, `${name}.png`) });
-  console.log(`site/screens/${name}.png`);
+  const png = await page.screenshot();
+  /* global Image, document -- this callback runs in the page */
+  // WebP, drawn by the browser itself: a third of a PNG's size, with no tool to add (#379).
+  const webp = await page.evaluate(async (data) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${data}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    canvas.getContext('2d').drawImage(image, 0, 0);
+    return canvas.toDataURL('image/webp', 0.88).split(',')[1];
+  }, png.toString('base64'));
+  writeFileSync(join(out, `${name}.webp`), Buffer.from(webp, 'base64'));
+  console.log(`site/screens/${name}.webp`);
 };
 const settingsSection = (page, name) => page.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name }).click();
 
