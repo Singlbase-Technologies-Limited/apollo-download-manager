@@ -79,6 +79,7 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [research/2026-10-21-libcurl-engine-research-r2.md](research/2026-10-21-libcurl-engine-research-r2.md) | Read the libcurl download-engine research report, revision 2 |
 | [research/engine-prototype-results.md](research/engine-prototype-results.md) | Read what the engine prototype (#37) showed, in both modes, as evidence for #38 |
 | [research/engine-mode-costs.md](research/engine-mode-costs.md) | Read what running the engine as a child process costs, measured for #38 |
+| [research/2026-11-06-torrent-performance.md](research/2026-11-06-torrent-performance.md) | See how torrents find peers and how fast they download, measured, and the follow-ups (#352) |
 | [research/2026-11-05-product-name-shortlist.md](research/2026-11-05-product-name-shortlist.md) | Compare the candidate product names for #346 and what their first checks found |
 
 `images/` holds screenshots that the pages above embed.
