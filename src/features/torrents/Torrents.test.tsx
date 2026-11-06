@@ -9,6 +9,7 @@ import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { makeRecord } from '../../test/records';
+import { chooseOption } from '../../test/select';
 
 // V1's torrent tests (tests/unit/torrent.test.tsx and torrentControls.test.tsx), ported to V2 (#63). Those for aria2
 // builds have no V2 counterpart: V2 always runs libtorrent (ADR-0014). The BitTorrent settings' are #30's (PO
@@ -113,7 +114,7 @@ describe('adding torrents (V1)', () => {
     act(() => { useUiStore.getState().openAdd(); });
     await user.click(await screen.findByRole('button', { name: /Choose .torrent files/ }));
     expect(await screen.findByText('3 of 3 files · 3.1 MiB')).toBeTruthy();
-    await user.selectOptions(screen.getByLabelText('Seeding after download'), 'Until a share ratio');
+    await chooseOption(user, screen.getByLabelText('Seeding after download'), 'Until a share ratio');
     const ratio = screen.getByLabelText<HTMLInputElement>('Share ratio');
     await user.clear(ratio);
     await user.type(ratio, '2');
@@ -169,10 +170,11 @@ describe('torrents in the list (V1)', () => {
     installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [d] }, torrentDetails: () => details() });
     const user = userEvent.setup();
     const p = await openDetails('m');
-    const button = within(p).getByRole('button', { name: 'Choose files…' });
-    // At the top, before the Transfer section, where it's seen without scrolling.
-    const transfer = within(p).getByRole('region', { name: 'Transfer' });
-    expect(button.compareDocumentPosition(transfer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Seen without scrolling (#276): the first action of the footer, which stays below the sections (#349).
+    const footer = within(p).getByRole('group', { name: 'Actions for this download' });
+    const button = within(footer).getAllByRole('button')[0];
+    if (!button) throw new Error('no action in the footer');
+    expect(button.textContent.trim()).toBe('Choose files…');
     await user.click(button);
     expect(await screen.findByRole('dialog', { name: 'Choose files to download' })).toBeTruthy();
   });
@@ -205,7 +207,8 @@ describe('torrents in the list (V1)', () => {
     const g = await screen.findByRole('grid', { name: 'Downloads' });
     await waitFor(() => { expect(within(g).queryByText('plain.zip')).toBeNull(); });
     act(() => { useUiStore.getState().showDetails('s'); });
-    await user.click(within(await panel()).getByRole('button', { name: 'Stop seeding' }));
+    await user.click(within(await panel()).getByRole('button', { name: 'More actions for this download' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Stop seeding' }));
     await waitFor(() => { expect(callsOf(state, 'set_torrent_seeding')[0]?.args).toEqual({ id: 's', seeding: { mode: 'never' } }); });
   });
 
@@ -239,7 +242,8 @@ describe('trackers, peers and limits in the details (V1)', () => {
     expect(items[0]?.textContent).toContain('torrent not registered');
     expect(items[1]?.textContent).toContain('Working');
     expect(items[1]?.textContent).toContain('4 seeds, 9 peers');
-    await user.click(within(p).getByRole('button', { name: 'Re-announce' }));
+    await user.click(within(p).getByRole('button', { name: 'More actions for this download' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Re-announce' }));
     await waitFor(() => { expect(callsOf(state, 'reannounce_torrent')[0]?.args).toEqual({ id: 'l' }); });
   });
 
@@ -259,10 +263,13 @@ describe('trackers, peers and limits in the details (V1)', () => {
     const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [torrent({ id: 'u', status: 'downloading' })] }, torrentDetails: () => details() });
     const user = userEvent.setup();
     const p = await openDetails('u');
-    const limit = await within(p).findByLabelText<HTMLInputElement>(/Upload limit/);
+    // #349: from the Edit dialog, opened from the panel's footer.
+    await user.click(within(p).getByRole('button', { name: 'Edit…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit download' });
+    const limit = await within(dialog).findByLabelText<HTMLInputElement>(/Upload limit/);
     await user.clear(limit);
     await user.type(limit, '128');
-    await user.tab();
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_torrent_upload_limit').at(-1)?.args).toEqual({ id: 'u', kib: 128 }); });
   });
 
@@ -322,7 +329,8 @@ describe('the seeding queue (V1)', () => {
     if (!row) throw new Error('no row');
     expect(within(row).getByText('Waiting to seed')).toBeTruthy();
     expect(await within(p).findByText(/Waiting for a free seeding slot/)).toBeTruthy();
-    await user.click(within(p).getByRole('button', { name: 'Leave seeding queue' }));
+    await user.click(within(p).getByRole('button', { name: 'More actions for this download' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Leave seeding queue' }));
     await waitFor(() => { expect(callsOf(state, 'set_torrent_seeding')[0]?.args).toEqual({ id: 'q', seeding: { mode: 'never' } }); });
   });
 });

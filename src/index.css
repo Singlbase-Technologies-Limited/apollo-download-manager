@@ -17,9 +17,10 @@
   --surface-3: #eef2f6;
   --border: #e1e6ed;
   --border-strong: #cbd3de;
-  --fg: #0f172a;
-  --fg-muted: #526077;
-  --fg-subtle: #606b7d;
+  /* Deeper text, easier on the eyes (PO, 2026-11-06); every pair keeps at least AA contrast. */
+  --fg: #0b1220;
+  --fg-muted: #3d495c;
+  --fg-subtle: #4f5a6c;
   --accent: #1b68cb;
   --accent-strong: #1659b3;
   --accent-soft: #e5effc;
@@ -36,6 +37,9 @@
   --row-hover: #f1f5fb;
   --row-selected: #e2ecfb;
   --shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px rgb(15 23 42 / 0.05);
+  /* The checkbox's tick and dash (#348), in --accent-fg, so they keep their contrast on --accent. */
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --check-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8h7' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   color-scheme: light;
 }
 
@@ -46,9 +50,9 @@
   --surface-3: #1d2532;
   --border: #253041;
   --border-strong: #334155;
-  --fg: #e6ebf2;
-  --fg-muted: #9aa6b8;
-  --fg-subtle: #8993a3;
+  --fg: #eef2f7;
+  --fg-muted: #b0bacb;
+  --fg-subtle: #9ea8b9;
   --accent: #5092f0;
   --accent-strong: #6aa3f5;
   --accent-soft: #172a45;
@@ -65,6 +69,8 @@
   --row-hover: #18202c;
   --row-selected: #1b2b44;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  --check-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='%2306101f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --check-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 8h7' stroke='%2306101f' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -107,6 +113,8 @@
   body {
     @apply bg-bg text-fg font-sans antialiased;
     font-size: 13px;
+    /* A touch heavier than regular, so small text doesn't look thin (PO, 2026-11-06). */
+    font-weight: 450;
     font-feature-settings: 'cv11', 'ss01', 'tnum';
     overflow: hidden;
     user-select: none;
@@ -115,6 +123,22 @@
   textarea,
   [data-selectable] {
     user-select: text;
+  }
+  /* A hand over what can be clicked, and "not allowed" over what is disabled (#348 E). Tailwind's reset gives buttons
+     the arrow; menu items keep it, as desktop menus do. Components may still set their own. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='option']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  a[href],
+  label:has(> input:not(:disabled)) {
+    cursor: pointer;
+  }
+  button:disabled,
+  input:disabled,
+  textarea:disabled,
+  [aria-disabled='true']:not([role='menuitem']) {
+    cursor: not-allowed;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -138,6 +162,20 @@
   }
 }
 
+/* The start-up loader's bar (#363), sliding across; still under reduced motion, by the rule above. */
+@keyframes velocity-loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.loader-bar {
+  animation: velocity-loading 1.4s ease-in-out infinite;
+}
+
 /* An active progress bar's moving stripes (V1's); still under reduced motion, by the rule above. */
 @keyframes velocity-stripes {
   to {
@@ -157,4 +195,40 @@
   );
   background-size: 16px 16px;
   animation: velocity-stripes 1s linear infinite;
+}
+
+/* The window's one checkbox (#348 G, components/CheckInput.tsx): a native input with the app's look in both themes. */
+.check-input {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1.5px solid var(--fg-subtle);
+  border-radius: 4px;
+  background: var(--surface) center / 100% no-repeat;
+  cursor: pointer;
+  transition: background-color 0.1s, border-color 0.1s;
+}
+.check-input:checked,
+.check-input:indeterminate {
+  border-color: var(--accent);
+  background-color: var(--accent);
+}
+.check-input:checked {
+  background-image: var(--check-mark);
+}
+.check-input:indeterminate {
+  background-image: var(--check-dash);
+}
+.check-input:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.check-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -10,6 +10,7 @@ import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { makeRecord } from '../../test/records';
+import { chooseOption } from '../../test/select';
 
 // V1's download-list tests (tests/unit/app.test.tsx, "download list"), ported to V2's list, and the list's own (#59).
 
@@ -35,7 +36,7 @@ const broken = makeRecord({
   fileName: 'broken.iso',
   status: 'failed',
   createdAtMs: 3,
-  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false },
+  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
 });
 
 function withDownloads(downloads: DownloadRecord[], over: Partial<DownloadsSnapshot> = {}): DownloadsSnapshot {
@@ -111,6 +112,21 @@ describe('the download list (V1)', () => {
     expect(button('Pause selected').disabled).toBe(true);
     await user.click(button('Resume selected'));
     await waitFor(() => { expect(callsOf(state, 'resume_downloads')[0]?.args).toEqual({ ids: ['b'] }); });
+  });
+
+  // #348 D: no toast for a routine action the list already shows; a failure still says so (next tests).
+  it('shows no toast for a pause or resume that worked, since the row shows it', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('archive.zip'));
+    await user.click(button('Pause selected'));
+    await waitFor(() => { expect(callsOf(state, 'pause_downloads')).toHaveLength(1); });
+    await user.click(await rowFor('movie.mp4'));
+    await user.click(button('Resume selected'));
+    await waitFor(() => { expect(callsOf(state, 'resume_downloads')).toHaveLength(1); });
+    await new Promise((r) => setTimeout(r, 50));
+    const toasts = screen.queryByRole('region', { name: /Notifications/ });
+    expect(toasts?.textContent ?? '').not.toMatch(/Paused|Resumed/);
   });
 
   it('retries a failed download', async () => {
@@ -318,6 +334,7 @@ describe('a download’s own start time', () => {
   const waiting = makeRecord({ id: 'w', fileName: 'night.iso', status: 'queued', createdAtMs: 4 });
 
   it('is chosen from the menu of a waiting download, and sent as local time', async () => {
+    const user = userEvent.setup();
     const state = installFakeBackend({ snapshot: withDownloads([waiting, archive]) });
     renderApp();
     fireEvent.contextMenu(await rowFor('archive.zip'));
@@ -327,8 +344,8 @@ describe('a download’s own start time', () => {
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Start at…' }));
     const dialog = await screen.findByRole('dialog', { name: 'Start at' });
     fireEvent.change(within(dialog).getByLabelText('Start date'), { target: { value: '2030-01-05' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, hour'), { target: { value: '3' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, minute'), { target: { value: '15' } });
+    await chooseOption(user, within(dialog).getByLabelText('Start time, hour'), '03');
+    await chooseOption(user, within(dialog).getByLabelText('Start time, minute'), '15');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Start at this time' }));
     await waitFor(() => { expect(callsOf(state, 'set_start_at').map((c) => c.args)).toEqual([{ id: 'w', startAt: '2030-01-05T03:15' }]); });
     await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'Start at' })).toBeNull(); });
@@ -344,5 +361,64 @@ describe('a download’s own start time', () => {
     expect(within(dialog).getByLabelText<HTMLInputElement>('Start date').value).toBe('2030-01-05');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Clear the time' }));
     await waitFor(() => { expect(callsOf(state, 'set_start_at').map((c) => c.args)).toEqual([{ id: 'w', startAt: null }]); });
+  });
+});
+
+// #249: when the server refuses the login, the window asks for another and retries with it.
+describe('a refused login', () => {
+  const refusedError = { class: 'permanent' as const, httpStatus: 401, message: 'The server requires a user name and password.', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: true };
+  const running = makeRecord({ id: 'r', fileName: 'private.zip', status: 'downloading', createdAtMs: 5 });
+  const refused = { ...running, status: 'failed' as const, error: refusedError };
+
+  it('opens the login window once the server refuses the login, and retries with the new one', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: withDownloads([running]) });
+    renderApp();
+    await rowFor('private.zip');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await act(() => emit('downloads-snapshot', withDownloads([refused])));
+    const dialog = await screen.findByRole('dialog', { name: 'Log in to download' });
+    expect(dialog.textContent).toContain('The server refused the login');
+    await user.type(within(dialog).getByLabelText('User name'), 'alice');
+    await user.type(within(dialog).getByLabelText('Password'), 'right');
+    await user.click(within(dialog).getByRole('button', { name: 'Log in and retry' }));
+    await waitFor(() => { expect(callsOf(state, 'retry_downloads')).toHaveLength(1); });
+    expect(callsOf(state, 'set_download_login')[0]?.args).toMatchObject({ id: 'r', login: { credentials: { userName: 'alice', password: 'right' } } });
+    expect(callsOf(state, 'remember_login')).toHaveLength(0);
+  });
+
+  it('remembers the login only when asked', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: withDownloads([running]) });
+    renderApp();
+    await rowFor('private.zip');
+    await act(() => emit('downloads-snapshot', withDownloads([refused])));
+    const dialog = await screen.findByRole('dialog', { name: 'Log in to download' });
+    await user.type(within(dialog).getByLabelText('User name'), 'alice');
+    await user.click(within(dialog).getByRole('checkbox', { name: /Remember this login/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Log in and retry' }));
+    await waitFor(() => { expect(callsOf(state, 'remember_login').map((c) => c.args)).toEqual([{ id: 'r' }]); });
+  });
+
+  it('leaves the download failed when the user says not now', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: withDownloads([running]) });
+    renderApp();
+    await rowFor('private.zip');
+    await act(() => emit('downloads-snapshot', withDownloads([refused])));
+    await user.click(within(await screen.findByRole('dialog', { name: 'Log in to download' })).getByRole('button', { name: 'Not now' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(callsOf(state, 'retry_downloads')).toHaveLength(0);
+    expect(within(await rowFor('private.zip')).getByText('Failed')).toBeTruthy();
+  });
+
+  it('does not open for a failure that was already there when the app started, nor for another failure', async () => {
+    installFakeBackend({ snapshot: withDownloads([refused]) });
+    renderApp();
+    await rowFor('private.zip');
+    const notFound = { ...running, id: 'n', fileName: 'gone.zip', status: 'failed' as const, error: { ...refusedError, httpStatus: 404, message: 'Not found.', loginRequired: false } };
+    await act(() => emit('downloads-snapshot', withDownloads([refused, notFound])));
+    await rowFor('gone.zip');
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

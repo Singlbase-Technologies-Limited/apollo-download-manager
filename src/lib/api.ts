@@ -157,6 +157,8 @@ export const api = {
   openFile: (id: string, allowProgram: boolean) => call('open_download_file', { id, allowProgram }, nothing),
   /** Shows the file in its folder, or the folder when the file is gone. */
   openFolder: (id: string) => call('open_download_folder', { id }, nothing),
+  /** The feedback page in the browser (#363): a fixed address, nothing sent. */
+  openFeedbackPage: () => call('open_feedback_page', {}, nothing),
   // Torrents (#63).
   /** What adding the `.torrent` file at `path` would add. */
   previewTorrent: (path: string) => call('preview_torrent_file', { path }, TorrentPreviewSchema),

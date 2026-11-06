@@ -110,6 +110,19 @@ pub struct TransferError {
     /// setting allows it. False otherwise; absent in errors stored before it existed.
     #[serde(default)]
     pub no_network: bool,
+    /// The technical text behind `message` (#252): the library's own error and code, such as
+    /// "libcurl error 60: …". The window shows it only behind "Technical details"; `message`
+    /// stays in plain words. It holds the library text that `message` itself carried before; logs
+    /// and diagnostics redact it as they do `message` (#28). `None` when there is none; absent in
+    /// errors stored before it existed.
+    #[serde(default)]
+    pub detail: Option<String>,
+    /// The server refused the login (#249): HTTP's `401`, FTP's or SFTP's refused login. The app
+    /// then asks the user for another user name, password or key, and retries with it. A file the
+    /// user may not read isn't one, nor is a proxy's login (Settings, Proxy). False otherwise;
+    /// absent in errors stored before it existed.
+    #[serde(default)]
+    pub login_required: bool,
 }
 
 /// What a download stopped at, for the user to confirm (#67).
@@ -166,6 +179,29 @@ impl TransferError {
             host_key: None,
             confirm: None,
             no_network: false,
+            detail: None,
+            login_required: false,
+        }
+    }
+
+    /// The same error, marked as a refused login (#249).
+    pub fn with_login_required(mut self) -> Self {
+        self.login_required = true;
+        self
+    }
+
+    /// The same error, with the technical text behind its plain message (#252).
+    pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
+        self.detail = Some(detail.into());
+        self
+    }
+
+    /// The message with its technical detail in brackets, for the logs (#251): they keep the
+    /// library's own words, which the window shows only behind "Technical details" (#252).
+    pub fn with_details_text(&self) -> String {
+        match &self.detail {
+            Some(detail) => format!("{} ({detail})", self.message),
+            None => self.message.clone(),
         }
     }
 
@@ -947,8 +983,62 @@ mod tests {
         .unwrap();
         assert_eq!(
             json,
-            r#"{"class":"throttled","httpStatus":503,"message":"Service unavailable","retryable":true,"hostKey":null,"confirm":null,"noNetwork":false}"#
+            r#"{"class":"throttled","httpStatus":503,"message":"Service unavailable","retryable":true,"hostKey":null,"confirm":null,"noNetwork":false,"detail":null,"loginRequired":false}"#
         );
+    }
+
+    #[test]
+    fn the_technical_text_is_kept_apart_from_the_plain_message() {
+        // #252: the user reads `message`; the library's own words go to `detail`, behind a toggle.
+        let e = TransferError::new(
+            FailureClass::Permanent,
+            None,
+            "The certificate has expired.",
+        )
+        .with_detail("libcurl error 60: SSL certificate problem: certificate has expired");
+        assert_eq!(e.message, "The certificate has expired.");
+        assert_eq!(
+            e.detail.as_deref(),
+            Some("libcurl error 60: SSL certificate problem: certificate has expired")
+        );
+        assert_eq!(
+            TransferError::new(FailureClass::Transient, None, "Reset").detail,
+            None
+        );
+    }
+
+    #[test]
+    fn the_log_reads_the_message_with_its_detail() {
+        // #251: the log keeps libcurl's own words, as it did when they sat in the message.
+        let e = TransferError::new(
+            FailureClass::Transient,
+            None,
+            "The connection was interrupted.",
+        )
+        .with_detail("libcurl error 56: Failure when receiving data from the peer");
+        assert_eq!(
+            e.with_details_text(),
+            "The connection was interrupted. (libcurl error 56: Failure when receiving data from the peer)"
+        );
+        let plain = TransferError::new(FailureClass::Permanent, Some(404), "Not found.");
+        assert_eq!(plain.with_details_text(), "Not found.");
+    }
+
+    #[test]
+    fn an_error_stored_before_the_detail_existed_still_loads() {
+        let old = r#"{"class":"permanent","httpStatus":404,"message":"Not found","retryable":false,"hostKey":null,"confirm":null,"noNetwork":false}"#;
+        let e: TransferError = serde_json::from_str(old).unwrap();
+        assert_eq!(e.message, "Not found");
+        assert_eq!(e.detail, None);
+        assert!(!e.login_required);
+    }
+
+    #[test]
+    fn a_refused_login_is_marked_so_the_app_can_ask_for_another() {
+        // #249: only the engine knows the server refused the login; the window then asks again.
+        let e = TransferError::new(FailureClass::Permanent, Some(401), "Login refused.");
+        assert!(!e.login_required);
+        assert!(e.with_login_required().login_required);
     }
 
     #[test]

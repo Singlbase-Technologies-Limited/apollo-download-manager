@@ -7,8 +7,8 @@ use std::time::{Duration, Instant};
 use std::sync::Arc;
 
 use velocity_curl::{
-    CurlFailure, CurlLoop, FetchError, FetchEvent, FetchRequest, Gate, Libcurl, LoopOptions,
-    RequestOptions, ResponseHead,
+    CertificateProblem, CurlFailure, CurlLoop, FetchError, FetchEvent, FetchRequest, Gate, Libcurl,
+    LoopOptions, RequestOptions, ResponseHead,
 };
 use velocity_test_http::tls::{Alpn, Leaf, TlsFront};
 use velocity_test_http::{seeded_bytes, Http2Options, Http2Server, ServerOptions, TestServer};
@@ -132,6 +132,8 @@ fn assert_accepted(leaf: Leaf) {
 struct Reason {
     schannel: &'static str,
     openssl: &'static str,
+    /// What the user is told it was (#252).
+    problem: CertificateProblem,
 }
 
 fn assert_refused(leaf: Leaf, trust_ca: bool, reason: Reason) {
@@ -142,7 +144,12 @@ fn assert_refused(leaf: Leaf, trust_ca: bool, reason: Reason) {
     eprintln!("{leaf:?} (CA trusted: {trust_ca}): {:?}", o.done);
     match &o.done {
         Err(FetchError::Curl { kind, message, .. }) => {
-            assert_eq!(*kind, CurlFailure::Certificate, "{leaf:?}: {:?}", o.done);
+            assert_eq!(
+                *kind,
+                CurlFailure::Certificate(reason.problem),
+                "{leaf:?}: {:?}",
+                o.done
+            );
             let expected = if cfg!(windows) {
                 reason.schannel
             } else {
@@ -183,6 +190,7 @@ fn a_certificate_not_for_server_authentication_is_refused() {
         Reason {
             schannel: "schannel: error 0x00000010",
             openssl: "unsuitable certificate purpose (26)",
+            problem: CertificateProblem::Other,
         },
     );
     assert_refused(
@@ -191,6 +199,7 @@ fn a_certificate_not_for_server_authentication_is_refused() {
         Reason {
             schannel: "schannel: error 0x00000010",
             openssl: "unsuitable certificate purpose (26)",
+            problem: CertificateProblem::Other,
         },
     );
 }
@@ -203,6 +212,7 @@ fn a_certificate_from_an_untrusted_issuer_is_refused() {
         Reason {
             schannel: "the certificate chain is incomplete",
             openssl: "unable to get local issuer certificate (20)",
+            problem: CertificateProblem::NotTrusted,
         },
     );
 }
@@ -215,6 +225,7 @@ fn a_certificate_for_another_host_is_refused() {
         Reason {
             schannel: "failed to match connection hostname (localhost)",
             openssl: "no alternative certificate subject name matches target hostname 'localhost'",
+            problem: CertificateProblem::WrongHost,
         },
     );
 }
@@ -227,6 +238,7 @@ fn an_expired_certificate_is_refused() {
         Reason {
             schannel: "is not time valid",
             openssl: "certificate has expired (10)",
+            problem: CertificateProblem::Expired,
         },
     );
 }
@@ -239,6 +251,7 @@ fn the_test_ca_is_not_trusted_unless_it_is_given() {
         Reason {
             schannel: "SEC_E_UNTRUSTED_ROOT",
             openssl: "unable to get local issuer certificate (20)",
+            problem: CertificateProblem::NotTrusted,
         },
     );
 }
@@ -255,6 +268,7 @@ fn a_revoked_certificate_is_refused_on_windows_and_accepted_on_linux() {
             Reason {
                 schannel: "has been revoked",
                 openssl: "unused: OpenSSL accepts it",
+                problem: CertificateProblem::Other,
             },
         );
     } else {

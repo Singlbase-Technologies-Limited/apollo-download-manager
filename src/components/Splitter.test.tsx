@@ -107,6 +107,30 @@ describe('Splitter dragging', () => {
     expect(document.body.style.userSelect).toBe('');
   });
 
+  // #363: dragging a collapsed panel's edge opens it fully at once, then it follows the pointer.
+  it('opens a collapsed panel at once when a drag starts, then follows the pointer from there', async () => {
+    const onDragStart = vi.fn();
+    const { handle, onPreview, onCommit } = setup({ value: 0, min: 0, openTo: 240, onDragStart });
+    fireEvent.pointerDown(handle, { pointerId: 3, button: 0, clientX: 100 });
+    expect(onDragStart).toHaveBeenCalledTimes(1);
+    expect(onPreview).toHaveBeenLastCalledWith(240);
+    fireEvent.pointerMove(handle, { pointerId: 3, clientX: 130 });
+    await nextFrame();
+    expect(onPreview).toHaveBeenLastCalledWith(270);
+    fireEvent.pointerUp(handle, { pointerId: 3, clientX: 130 });
+    expect(onCommit).toHaveBeenLastCalledWith(270, 270);
+  });
+
+  it('starts an open panel’s drag from its own width, not openTo', () => {
+    const onDragStart = vi.fn();
+    const { handle, onPreview, onCommit } = setup({ openTo: undefined, onDragStart });
+    fireEvent.pointerDown(handle, { pointerId: 4, button: 0, clientX: 100 });
+    expect(onDragStart).toHaveBeenCalledTimes(1);
+    expect(onPreview).not.toHaveBeenCalled();
+    fireEvent.pointerUp(handle, { pointerId: 4, clientX: 110 });
+    expect(onCommit).toHaveBeenLastCalledWith(250, 250);
+  });
+
   it('clamps the preview but reports the raw width on release', async () => {
     const { handle, onPreview, onCommit } = setup({ side: 'end' });
     fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientX: 500 });

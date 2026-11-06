@@ -1,8 +1,8 @@
-import { AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, FolderCog, History, Layers, PanelLeftClose, PanelLeftOpen, Plus, Settings, type LucideIcon } from 'lucide-react';
+import { AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Clock3, FolderCog, History, Layers, PanelLeftClose, PanelLeftOpen, Plus, type LucideIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
-import { BrandIcon } from '../components/BrandIcon';
-import { BrandLogo } from '../components/BrandLogo';
 import { CategoryGlyph } from '../components/CategoryGlyph';
+import { navGroupTitle, navItemClass } from '../components/navStyles';
+import { Tooltip } from '../components/Tooltip';
 import type { AppInfo } from '../contract';
 import { countByView, type ListView } from '../downloads/views';
 import { PANEL } from '../layout/panel';
@@ -38,19 +38,12 @@ function NavButton({
   children?: ReactNode;
 }) {
   const counted = count !== undefined && count > 0;
-  return (
+  const button = (
     <button
       type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      // Icons only: the label stays the accessible name and shows as a tooltip.
-      title={compact ? label : undefined}
-      className={cn(
-        'group flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md text-left text-[13px] transition-colors',
-        compact ? 'relative justify-center px-0' : 'px-2.5',
-        // The hover tints the row with the accent, so it shows against the sidebar in both themes (PO, #347).
-        active ? 'bg-surface-3 font-medium text-fg' : 'text-fg-muted hover:bg-accent-soft hover:text-fg',
-      )}
+      className={cn(navItemClass(active), compact && 'relative justify-center px-0')}
     >
       {Icon ? <Icon className={cn('size-4 shrink-0', active ? 'text-accent' : 'text-fg-subtle group-hover:text-accent')} aria-hidden /> : children}
       <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{label}</span>
@@ -58,9 +51,11 @@ function NavButton({
       {counted && compact ? <span className="sr-only">, {count}</span> : null}
     </button>
   );
+  // Icons only: the label stays the accessible name and shows in a tooltip beside the rail.
+  return compact ? <Tooltip label={label} side="right">{button}</Tooltip> : button;
 }
 
-const groupLabel = 'px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle';
+const groupLabel = navGroupTitle;
 
 /**
  * The navigation (V1's Sidebar). Its width comes from the shell (`--sidebar-w`); `compact` shows icons
@@ -83,50 +78,41 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
     return m;
   }, [downloads]);
 
-  // Collapsing sits beside the logo; when the window is too narrow, the shell collapses it instead.
-  const toggle = autoCompact ? null : (
+  const addButton = (
     <button
       type="button"
-      onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
-      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-      title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-      className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+      onClick={() => { openAdd(); }}
+      aria-keyshortcuts="Control+N"
+      className={cn(
+        'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
+        compact ? 'justify-center' : 'px-2.5',
+      )}
     >
-      {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
+      <Plus className="size-4 shrink-0" aria-hidden />
+      <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate text-left'}>Add download</span>
     </button>
+  );
+
+  // Collapsing sits in the footer; when the window is too narrow, the shell collapses it instead.
+  const toggle = autoCompact ? null : (
+    <Tooltip label={collapsed ? 'Expand navigation' : 'Collapse navigation'} side="right">
+      <button
+        type="button"
+        onClick={() => { setLayout({ sidebarCollapsed: !collapsed }); }}
+        aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg-subtle transition-colors hover:bg-accent-soft hover:text-accent"
+      >
+        {collapsed ? <PanelLeftOpen className="size-4" aria-hidden /> : <PanelLeftClose className="size-4" aria-hidden />}
+      </button>
+    </Tooltip>
   );
 
   return (
     <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className={cn(PANEL, 'flex shrink-0 flex-col bg-sidebar')} style={{ width: 'var(--sidebar-w)' }}>
-      {compact ? (
-        <div className="flex shrink-0 flex-col items-center gap-1 pb-1 pt-3">
-          <span className="flex size-7 shrink-0" title={app.name}>
-            <BrandIcon className="size-7" />
-          </span>
-          <span className="sr-only">Apollo Download Manager</span>
-          {toggle}
-        </div>
-      ) : (
-        <div className="flex shrink-0 items-center justify-between gap-2 pb-3 pl-5 pr-2.5 pt-4">
-          <BrandLogo className="h-auto w-[112px] max-w-full" />
-          {toggle}
-        </div>
-      )}
-      {/* The button stays put while the list below it scrolls; a line marks where the scrolling starts. */}
-      <div className={cn('shrink-0 border-b border-border-strong pb-3', compact ? 'px-2 pt-1' : 'px-2.5')}>
-        <button
-          type="button"
-          onClick={() => { openAdd(); }}
-          title={compact ? 'Add download (Ctrl+N)' : undefined}
-          aria-keyshortcuts="Control+N"
-          className={cn(
-            'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
-            compact ? 'justify-center' : 'px-2.5',
-          )}
-        >
-          <Plus className="size-4 shrink-0" aria-hidden />
-          <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate text-left'}>Add download</span>
-        </button>
+      {/* The logo is no longer here: only on the loader, the first-run screens and the title bar (#363). The button
+          stays put while the list below it scrolls; a line marks where the scrolling starts. */}
+      <div className={cn('shrink-0 border-b border-border-strong pb-3 pt-3', compact ? 'px-2' : 'px-2.5')}>
+        {compact ? <Tooltip label="Add download" shortcut="Ctrl+N" side="right">{addButton}</Tooltip> : addButton}
       </div>
       <div className={cn('flex-1 space-y-5 overflow-y-auto overflow-x-hidden py-2', compact ? 'px-2' : 'px-2.5')}>
         <div className="space-y-0.5">
@@ -150,14 +136,13 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
           <p className={compact ? 'sr-only' : groupLabel}>Library</p>
           <NavButton compact={compact} active={view === 'history'} icon={History} label="History" onClick={() => { setView('history'); }} />
           <NavButton compact={compact} active={view === 'categories'} icon={FolderCog} label="Categories" onClick={() => { setView('categories'); }} />
-          <NavButton compact={compact} active={view === 'settings'} icon={Settings} label="Settings" onClick={() => { setView('settings'); }} />
         </div>
       </div>
-      {compact ? null : (
-        <div className="flex shrink-0 items-center border-t border-border py-2 pl-4 pr-1.5 text-[10px] text-fg-subtle">
-          <span className="min-w-0 flex-1 truncate">v{app.version}</span>
-        </div>
-      )}
+      {/* Settings is the title bar's gear (#363, option B); the footer has the version and collapse. */}
+      <div className={cn('flex shrink-0 items-center border-t border-border py-1.5 text-[10px] text-fg-subtle', compact ? 'justify-center' : 'pl-4 pr-1.5')}>
+        {compact ? null : <span className="min-w-0 flex-1 truncate">v{app.version}</span>}
+        {toggle}
+      </div>
     </nav>
   );
 }

@@ -3,7 +3,7 @@ import { DEFAULT_LAYOUT, type LayoutPrefs } from '../layout/layoutLogic';
 import type { ListView } from '../downloads/views';
 
 /** What the main area shows: a list of downloads, or a screen. */
-export type View = ListView | 'categories' | 'history' | 'settings';
+export type View = ListView | 'categories' | 'history';
 
 /** The Settings screen's sections (#30). */
 export type SettingsSection = 'general' | 'downloads' | 'performance' | 'bittorrent' | 'browser' | 'proxy' | 'notifications' | 'appearance' | 'storage' | 'advanced' | 'about';
@@ -43,6 +43,8 @@ interface UiState {
   startAtId: string | null;
   /** The Settings screen's section shown (#30). */
   settingsSection: SettingsSection;
+  /** Settings is open, in a window over the app (#364). */
+  settingsOpen: boolean;
   setView: (view: View) => void;
   setCategoryFilter: (id: string | null) => void;
   setLayout: (patch: Partial<LayoutPrefs>) => void;
@@ -57,6 +59,9 @@ interface UiState {
   openStartAt: (id: string) => void;
   closeStartAt: () => void;
   setSettingsSection: (section: SettingsSection) => void;
+  /** Opens Settings over the app, at `section` when given, else where it was left. */
+  openSettings: (section?: SettingsSection) => void;
+  closeSettings: () => void;
   closeChooseFiles: () => void;
 }
 
@@ -70,6 +75,7 @@ export const useUiStore = create<UiState>((set) => ({
   chooseFilesId: null,
   startAtId: null,
   settingsSection: 'general',
+  settingsOpen: false,
   setView: (view) => { set({ view, categoryFilter: null }); },
   setCategoryFilter: (categoryFilter) => { set({ categoryFilter, view: 'all' }); },
   setLayout: (patch) => { set((s) => ({ layout: { ...s.layout, ...patch } })); },
@@ -84,5 +90,7 @@ export const useUiStore = create<UiState>((set) => ({
   openStartAt: (startAtId) => { set({ startAtId }); },
   closeStartAt: () => { set({ startAtId: null }); },
   setSettingsSection: (settingsSection) => { set({ settingsSection }); },
+  openSettings: (section) => { set((s) => ({ settingsOpen: true, settingsSection: section ?? s.settingsSection })); },
+  closeSettings: () => { set({ settingsOpen: false }); },
   closeChooseFiles: () => { set({ chooseFilesId: null }); },
 }));

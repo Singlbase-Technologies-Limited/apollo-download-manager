@@ -4,6 +4,7 @@ import { confirmAction } from '../../components/confirmStore';
 import type { BatchResult, ConfirmKind, DownloadRecord, ErrorCode, KeptFile, KeptReason, MoveDirection } from '../../contract';
 import { displayName } from '../../downloads/list';
 import { api } from '../../lib/api';
+import { copyText } from '../../lib/clipboard';
 import { ApiError, ERROR_MESSAGES, toApiError } from '../../lib/errors';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
@@ -24,10 +25,15 @@ function reportKept(kept: readonly KeptFile[]) {
   if (first) toast.warning(`${plural(kept.length, 'file')} left in place, as ${KEPT[first.reason]}: ${first.path}`);
 }
 
-/** What a command over several downloads did (V1's report): every one, or how many and why the rest couldn't. */
-function report(r: BatchResult, verb: string) {
+/**
+ * What a command over several downloads did (V1's report): every one, or how many and why the rest couldn't.
+ * `quiet`: a routine action the list already shows, such as a pause, says nothing when it fully worked (#348 D).
+ */
+function report(r: BatchResult, verb: string, quiet = false) {
   const first = r.failed[0];
-  if (!first) toast.success(r.done.length > 1 ? `${verb} ${plural(r.done.length, 'download')}` : verb);
+  if (!first) {
+    if (!quiet) toast.success(r.done.length > 1 ? `${verb} ${plural(r.done.length, 'download')}` : verb);
+  }
   else if (r.done.length > 0) toast.warning(`${verb} ${String(r.done.length)}; ${String(r.failed.length)} couldn’t be changed: ${ERROR_MESSAGES[first.code]}`);
   else toast.error(ERROR_MESSAGES[first.code]);
   reportKept(r.kept);
@@ -42,14 +48,6 @@ const OPEN_FAILED: Partial<Record<ErrorCode, string>> = {
   IO: 'The system couldn’t start the program that opens it.',
 };
 
-async function copy(text: string, what: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast.success(`${what} copied`);
-  } catch {
-    toast.error(`Couldn’t copy the ${what.toLowerCase()}`);
-  }
-}
 
 /**
  * Everything the user does to downloads (V1's useDownloadActions): confirmations before destructive ones, a toast
@@ -77,10 +75,10 @@ export function useDownloadActions() {
       const ready = ids.filter((id) => !waiting.has(id));
       const first = ids.find((id) => waiting.has(id));
       if (first) askLogin({ id: first, then });
-      return ready.length > 0 ? send(async () => { report(await fn(ready), verb); }) : Promise.resolve();
+      return ready.length > 0 ? send(async () => { report(await fn(ready), verb, true); }) : Promise.resolve();
     }
     return {
-      pause: (ids: string[]) => send(async () => { report(await api.pauseDownloads(ids), 'Paused'); }),
+      pause: (ids: string[]) => send(async () => { report(await api.pauseDownloads(ids), 'Paused', true); }),
       resume: (ids: string[]) => withLogin(ids, 'resume', api.resumeDownloads, 'Resumed'),
       retry: (ids: string[]) => withLogin(ids, 'retry', api.retryDownloads, 'Retrying'),
       /** Allows what the download stopped at for the user's confirmation, which retries it (#67). */
@@ -153,8 +151,8 @@ export function useDownloadActions() {
         });
         return ok;
       },
-      copyLink: (d: DownloadRecord) => copy(d.sourceUrl, 'Link'),
-      copyName: (d: DownloadRecord) => copy(displayName(d), 'Name'),
+      copyLink: (d: DownloadRecord) => copyText(d.sourceUrl, 'Link'),
+      copyName: (d: DownloadRecord) => copyText(displayName(d), 'Name'),
       pauseAll: () => send(async () => { await api.pauseAll(); toast.success('Paused all downloads'); }),
       resumeAll: () => send(async () => { await api.resumeAll(); toast.success('Resumed all downloads'); }),
       retryFailed: () => send(async () => { await api.retryFailed(); toast.success('Retrying the failed downloads'); }),

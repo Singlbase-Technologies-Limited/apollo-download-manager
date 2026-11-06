@@ -114,7 +114,7 @@ fn line(ended: &RequestEnded) -> Line {
             ),
         ),
         Some(e) => {
-            let reason = fetch_failure(e.clone()).message;
+            let reason = fetch_failure(e.clone()).with_details_text();
             // With a status, the answer came and failed later; without one, it never came.
             let failed = if status.is_empty() {
                 "failed"

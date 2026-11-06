@@ -149,6 +149,8 @@ export interface ActionAvailability {
 
 /** The statuses in which an engine is working on a download now. */
 export const RUNNING: readonly DownloadStatus[] = ['connecting', 'downloading', 'verifying', 'fetchingMetadata', 'stalled'];
+/** A download that won't move again on its own: nothing to limit, connect or ask the swarm about. */
+export const FINISHED: readonly DownloadStatus[] = ['completed', 'failed', 'removed', 'unknown'];
 
 export function actionsFor(d: DownloadRecord): ActionAvailability {
   const s = d.status;

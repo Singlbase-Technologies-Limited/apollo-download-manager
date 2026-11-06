@@ -8,7 +8,7 @@ import { HostKeyPrompt } from '../features/add/HostKeyPrompt';
 import { useAddEntryPoints } from '../features/add/useAddEntryPoints';
 import { DownloadsView } from '../features/downloads/DownloadsView';
 import { HistoryView } from '../features/history/HistoryView';
-import { SettingsView } from '../features/settings/SettingsView';
+import { SettingsDialog } from '../features/settings/SettingsView';
 import { ChooseFilesDialog } from '../features/torrents/ChooseFilesDialog';
 import { commitSidebarWidth, LAYOUT, resolveLayout } from '../layout/layoutLogic';
 import { ShellLayoutContext, useLayoutPersistence, useViewportWidth, type ShellLayout } from '../layout/useLayout';
@@ -52,7 +52,7 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   const setLayout = useUiStore((s) => s.setLayout);
   const viewport = useViewportWidth();
   // The details panel belongs to the download lists (#61).
-  const detailsOpen = layout.detailsVisible && view !== 'categories' && view !== 'history' && view !== 'settings';
+  const detailsOpen = layout.detailsVisible && view !== 'categories' && view !== 'history';
   const resolved = useMemo(() => resolveLayout(layout, viewport, detailsOpen), [layout, viewport, detailsOpen]);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -71,14 +71,16 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
         return <div className={cn(PANEL, 'flex min-h-0 flex-1 flex-col bg-bg')}><CategoriesView /></div>;
       case 'history':
         return <div className={cn(PANEL, 'flex min-h-0 flex-1 flex-col bg-bg')}><HistoryView /></div>;
-      case 'settings':
-        return <div className={cn(PANEL, 'flex min-h-0 flex-1 flex-col bg-bg')}><SettingsView /></div>;
       default:
         return <DownloadsView view={view} />;
     }
   }, [view]);
   const sidebar = resolved.sidebar;
   const rail = sidebar.mode === 'rail';
+  // Collapsed by the user, a drag of its edge opens it at its own width at once (#363); a window too narrow for
+  // it keeps it collapsed.
+  const opensOnDrag = rail && !sidebar.autoCompact;
+  const openWidth = useMemo(() => resolveLayout({ ...layout, sidebarCollapsed: false }, viewport, detailsOpen).sidebar.width, [layout, viewport, detailsOpen]);
 
   return (
     // Each area is its own rounded panel on the window's frame, with the splitters in the gaps (PO, #347).
@@ -86,6 +88,7 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
       <div ref={rootRef} className="flex min-h-0 flex-1 px-1 pb-1">
         {sidebar.mode !== 'hidden' ? (
           <>
+            {/* Collapsed, it shows icons only; a drag of its edge opens it fully at once (#363). */}
             <Sidebar app={app} compact={rail} autoCompact={sidebar.autoCompact} />
             <Splitter
               label="Resize navigation"
@@ -101,6 +104,8 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
               }}
               onToggle={() => { setLayout({ sidebarCollapsed: !layout.sidebarCollapsed }); }}
               onReset={() => { setLayout({ sidebarWidth: null, sidebarCollapsed: false }); }}
+              openTo={opensOnDrag ? openWidth : undefined}
+              onDragStart={opensOnDrag ? () => { setLayout({ sidebarCollapsed: false }); } : undefined}
             />
           </>
         ) : null}
@@ -112,6 +117,7 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
       <AddDownloadDialog />
       <ChooseFilesDialog />
       <HostKeyPrompt />
+      <SettingsDialog />
     </div>
   );
 }

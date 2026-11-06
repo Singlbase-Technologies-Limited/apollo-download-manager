@@ -291,11 +291,15 @@ fn next_step(finish: Finish, finished: bool, flushed: bool) -> (Finish, Step) {
 
 /// The V2 state of one torrent from libtorrent's.
 fn snapshot_of(id: TorrentId, s: &TorrentStatus, finish: Finish, phase: &Phase) -> TorrentSnapshot {
-    let refused = match phase {
-        Phase::Refused(why) => Some(why.as_str()),
-        _ => None,
+    // A refusal is in the app's own words; libtorrent's error gets plain ones, its text behind them
+    // (#252).
+    let failure = match phase {
+        Phase::Refused(why) => Some(TransferError::new(FailureClass::Permanent, None, why)),
+        _ => (!s.error.is_empty()).then(|| {
+            TransferError::new(FailureClass::Permanent, None, torrent_failure(&s.error))
+                .with_detail(s.error.clone())
+        }),
     };
-    let failure = refused.or((!s.error.is_empty()).then_some(s.error.as_str()));
     let status = if failure.is_some() {
         DownloadStatus::Failed
     } else if let Finish::Seeding { .. } = finish {
@@ -350,8 +354,49 @@ fn snapshot_of(id: TorrentId, s: &TorrentStatus, finish: Finish, phase: &Phase) 
         uploaded_bytes: bytes(s.all_time_upload),
         seeding_secs: bytes(s.seeding_secs),
         seed_queued: failure.is_none() && matches!(finish, Finish::SeedQueued { .. }),
-        error: failure.map(|why| TransferError::new(FailureClass::Permanent, None, why)),
+        error: failure,
     }
+}
+
+/// libtorrent's error text, lower case, and what it means in plain words: the causes a user can
+/// act on, in the system's own wording on Linux and on Windows (libtorrent passes the OS's message
+/// on). Anything else gets a general sentence; the text itself is the error's detail.
+const TORRENT_FAILURES: &[(&str, &str)] = &[
+    (
+        "no space left",
+        "There is not enough disk space. Free some space, then retry.",
+    ),
+    (
+        "not enough space",
+        "There is not enough disk space. Free some space, then retry.",
+    ),
+    (
+        "permission denied",
+        "Apollo Download Manager isn't allowed to write to the torrent's folder.",
+    ),
+    (
+        "access is denied",
+        "Apollo Download Manager isn't allowed to write to the torrent's folder.",
+    ),
+    (
+        "no such file",
+        "A file or folder of the torrent is no longer there.",
+    ),
+    (
+        "cannot find the",
+        "A file or folder of the torrent is no longer there.",
+    ),
+];
+
+/// The plain words for libtorrent's error `text` (#252).
+fn torrent_failure(text: &str) -> &'static str {
+    let lower = text.to_lowercase();
+    TORRENT_FAILURES
+        .iter()
+        .find(|(words, _)| lower.contains(words))
+        .map_or("The torrent stopped because of an error.", |&(_, plain)| {
+            plain
+        })
 }
 
 /// Reads a `.torrent` file of at most [`MAX_TORRENT_BYTES`].
@@ -1668,7 +1713,9 @@ mod tests {
             &Phase::Refused("unsafe".into()),
         );
         assert_eq!(s.status, DownloadStatus::Failed);
-        assert_eq!(s.error.unwrap().message, "unsafe");
+        let refusal = s.error.unwrap();
+        assert_eq!(refusal.message, "unsafe");
+        assert_eq!(refusal.detail, None, "a refusal is in the app's own words");
         // A pause shows as such in every phase but a refusal.
         let paused = TorrentStatus {
             paused: true,
@@ -1713,16 +1760,38 @@ mod tests {
     }
 
     #[test]
-    fn an_error_fails_the_torrent_with_its_message() {
-        let failed = TorrentStatus {
-            error: "No space left on device".into(),
-            ..status(state::DOWNLOADING)
-        };
-        let s = snapshot_of(TorrentId(1), &failed, Finish::Done, &Phase::Wanted);
-        assert_eq!(s.status, DownloadStatus::Failed);
-        let error = s.error.unwrap();
-        assert_eq!(error.message, "No space left on device");
-        assert!(!error.retryable);
+    fn an_error_fails_the_torrent_in_plain_words_with_libtorrent_s_text_behind_them() {
+        // #252: known causes in plain words, in Linux's and Windows' wording; libtorrent's own
+        // text goes to the detail.
+        for (raw, plain) in [
+            ("No space left on device", "There is not enough disk space."),
+            (
+                "There is not enough space on the disk.",
+                "There is not enough disk space.",
+            ),
+            ("Permission denied", "isn't allowed to write"),
+            ("Access is denied.", "isn't allowed to write"),
+            ("No such file or directory", "is no longer there"),
+            (
+                "The system cannot find the path specified.",
+                "is no longer there",
+            ),
+            (
+                "torrent file has an unexpected bencoding",
+                "The torrent stopped because of an error.",
+            ),
+        ] {
+            let failed = TorrentStatus {
+                error: raw.into(),
+                ..status(state::DOWNLOADING)
+            };
+            let s = snapshot_of(TorrentId(1), &failed, Finish::Done, &Phase::Wanted);
+            assert_eq!(s.status, DownloadStatus::Failed, "{raw}");
+            let error = s.error.unwrap();
+            assert!(error.message.contains(plain), "{raw}: {}", error.message);
+            assert_eq!(error.detail.as_deref(), Some(raw));
+            assert!(!error.retryable, "{raw}");
+        }
     }
 
     #[test]

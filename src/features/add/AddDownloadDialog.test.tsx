@@ -10,6 +10,7 @@ import { createQueryClient } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { chooseOption } from '../../test/select';
 
 // V1's add-dialog tests (tests/unit/app.test.tsx and torrent.test.tsx), ported to V2's dialog, with
 // the SFTP host-key prompt, protocols this build lacks, and taken destinations (#60).
@@ -180,7 +181,7 @@ describe('the Add download dialog', () => {
         { source: request.links[0] ?? '', outcome: { kind: 'failed', code: 'UNSUPPORTED_SCHEME' } },
         {
           source: request.links[1] ?? '',
-          outcome: { kind: 'notFetched', error: { class: 'permanent', httpStatus: 404, message: 'Not found', retryable: false, hostKey: null, confirm: null, noNetwork: false } },
+          outcome: { kind: 'notFetched', error: { class: 'permanent', httpStatus: 404, message: 'Not found', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false } },
         },
       ],
     });
@@ -216,7 +217,7 @@ describe('the Add download dialog', () => {
     renderApp();
     const dialog = await openDialog(user);
     await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/lesson.mp4');
-    expect(await within(dialog).findByRole('option', { name: `Automatic: ${category.name}` })).toBeTruthy();
+    await waitFor(() => { expect(within(dialog).getByRole('combobox', { name: 'Category' }).textContent).toBe(`Automatic: ${category.name}`); });
     expect(await within(dialog).findByText('Saves to /home/user/Courses')).toBeTruthy();
     // An automatic folder is the settings' or the category's: not an error here.
     expect(within(dialog).queryByText(/This folder doesn’t exist/)).toBeNull();
@@ -278,7 +279,8 @@ describe('the Add download dialog', () => {
     renderApp();
     const dialog = await openDialog(user);
     await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'sftp://files.example/a.tar');
-    await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
+    // PO decision on #249: an SFTP link always needs a login, so its fields show without opening Advanced options.
+    expect(within(dialog).getByRole('button', { name: 'Advanced options' }).getAttribute('aria-expanded')).toBe('false');
     await user.type(within(dialog).getByRole('textbox', { name: 'User name' }), 'me');
     await user.click(within(dialog).getByRole('button', { name: 'Choose a key' }));
     await waitFor(() => { expect(within(dialog).getByRole<HTMLInputElement>('textbox', { name: 'SSH private key' }).value).toBe('/home/user/.ssh/id_ed25519'); });
@@ -288,6 +290,17 @@ describe('the Add download dialog', () => {
       credentials: { userName: 'me', password: '' },
       sshKey: { path: '/home/user/.ssh/id_ed25519', passphrase: null },
     });
+  });
+
+  it('keeps the login fields of other links in Advanced options', async () => {
+    const user = userEvent.setup();
+    installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/a.zip');
+    expect(within(dialog).queryByRole('textbox', { name: 'User name' })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
+    expect(within(dialog).getByRole('textbox', { name: 'User name' })).toBeTruthy();
   });
 
   // PO decision on #70: the keychain only with the user's consent, asked next to the login, unticked.
@@ -513,7 +526,9 @@ describe('torrents', () => {
     const dialog = await openDialog(user);
     const button = within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Choose Metalink files…' });
     expect(button.disabled).toBe(true);
-    expect(button.title).toBe('This version of Apollo Download Manager can’t open Metalink files yet.');
+    // The reason shows in the window's tooltip when the pointer rests on the button (#348 H).
+    await user.hover(button.parentElement ?? button);
+    expect((await screen.findByRole('tooltip')).textContent).toBe('This version of Apollo Download Manager can’t open Metalink files yet.');
   });
 
   it('accepts magnet links and .torrent links, and sends no torrent choice for ordinary links', async () => {
@@ -576,6 +591,22 @@ describe('torrents', () => {
     expect(requests(state)[0]).toMatchObject({ links: ['https://example.com/files/archive.zip'], referrer: 'https://example.com/page', fromBrowser: true });
   });
 
+  // #365 (regression): a link sent while the window holds others from the browser joins them; none is lost.
+  it('keeps every link the browser sends while the window is open, each once', async () => {
+    const state = installFakeBackend();
+    renderApp();
+    await screen.findByRole('button', { name: 'Add download' });
+    const send = (url: string) => act(() => emit('browser-request', { ...(fixture('browser-request.json') as object), url, fileName: null }));
+    await send('https://example.com/files/one.zip');
+    await send('https://example.com/files/two.zip');
+    await send('https://example.com/files/one.zip');
+    const dialog = await screen.findByRole('dialog', { name: 'Add download' });
+    expect(within(dialog).getByRole<HTMLTextAreaElement>('textbox', { name: 'Links' }).value).toBe('https://example.com/files/one.zip\nhttps://example.com/files/two.zip');
+    await userEvent.setup().click(within(dialog).getByRole('button', { name: /Start download/ }));
+    await waitFor(() => { expect(requests(state)).toHaveLength(1); });
+    expect(requests(state)[0]).toMatchObject({ links: ['https://example.com/files/one.zip', 'https://example.com/files/two.zip'], fromBrowser: true });
+  });
+
   it('a link typed in place of the browser’s isn’t from the browser (#67)', async () => {
     const state = installFakeBackend();
     const user = userEvent.setup();
@@ -623,7 +654,7 @@ describe('the SFTP host key', () => {
         retryable: false,
         hostKey: { host: 'files.example', port: 2222, fingerprint: 'SHA256:abc123', pinned },
         confirm: null,
-        noNetwork: false,
+        noNetwork: false, detail: null, loginRequired: false,
       },
     });
 
@@ -674,8 +705,8 @@ describe('a start time when adding', () => {
     expect(within(dialog).queryByLabelText('Start date')).toBeNull();
     await user.click(within(dialog).getByRole('checkbox', { name: 'Start at a chosen time' }));
     fireEvent.change(within(dialog).getByLabelText('Start date'), { target: { value: '2030-01-05' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, hour'), { target: { value: '22' } });
-    fireEvent.change(within(dialog).getByLabelText('Start time, minute'), { target: { value: '0' } });
+    await chooseOption(user, within(dialog).getByLabelText('Start time, hour'), '22');
+    await chooseOption(user, within(dialog).getByLabelText('Start time, minute'), '00');
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     await waitFor(() => { expect(requests(state)).toHaveLength(1); });
     expect(requests(state)[0]?.startAt).toBe('2030-01-05T22:00');

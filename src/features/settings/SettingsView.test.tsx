@@ -6,8 +6,10 @@ import type { Capabilities, Settings } from '../../contract';
 import { DEFAULT_LAYOUT } from '../../layout/layoutLogic';
 import { createQueryClient } from '../../lib/queries';
 import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
-import { useUiStore } from '../../stores/ui';
+import { useUiStore, type SettingsSection } from '../../stores/ui';
+import { SETTINGS_INDEX } from './settingsIndex';
 import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { chooseOption } from '../../test/select';
 
 // V1's settings tests (tests/unit/app.test.tsx, "settings") and its BitTorrent settings tests
 // (tests/unit/torrentControls.test.tsx, moved here by the PO's decision on #63), ported to V2's screen, and #30's own.
@@ -22,7 +24,7 @@ async function openSettings(section?: string) {
   const user = userEvent.setup();
   renderApp();
   await screen.findByText('No downloads yet');
-  act(() => { useUiStore.getState().setView('settings'); });
+  act(() => { useUiStore.getState().openSettings(); });
   if (section) await user.click(await screen.findByRole('button', { name: section }));
   return user;
 }
@@ -32,7 +34,7 @@ beforeEach(() => {
     configurable: true,
     value: () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }),
   });
-  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, settingsSection: 'general' });
+  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, settingsSection: 'general', settingsOpen: false });
   useDownloadsStore.setState({ snapshot: null, error: null, ...INITIAL_LIST });
 });
 
@@ -68,9 +70,9 @@ describe('settings (V1)', () => {
   it('switches every time to 12-hour, with AM and PM (#350)', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Appearance');
-    const choice = await screen.findByLabelText<HTMLSelectElement>('Time format');
-    expect(choice.value).toBe('twentyFourHour');
-    await user.selectOptions(choice, 'twelveHour');
+    const choice = await screen.findByLabelText('Time format');
+    expect(choice.textContent).toContain('24-hour (14:30)');
+    await chooseOption(user, choice, '12-hour (2:30 PM)');
     await waitFor(() => { expect(state.settings.appearance.timeFormat).toBe('twelveHour'); });
   });
 
@@ -83,9 +85,9 @@ describe('settings (V1)', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Use the schedule' }));
     await waitFor(() => { expect(state.appSettings.queue.schedule.enabled).toBe(true); });
     expect(await screen.findByText(/^Next: .*02:00 to 07:00$/)).toBeTruthy();
-    await user.selectOptions(screen.getByLabelText('Start, hour'), '3');
+    await chooseOption(user, screen.getByLabelText('Start, hour'), '03');
     await waitFor(() => { expect(state.appSettings.queue.schedule.startTime).toBe('03:00'); });
-    await user.selectOptions(screen.getByLabelText('Stop, minute'), '30');
+    await chooseOption(user, screen.getByLabelText('Stop, minute'), '30');
     await waitFor(() => { expect(state.appSettings.queue.schedule.stopTime).toBe('07:30'); });
     expect(screen.queryByRole('textbox', { name: /HH:MM/ })).toBeNull();
   });
@@ -148,9 +150,45 @@ describe('the Settings screen (#30)', () => {
     await screen.findByText('No downloads yet');
     await user.keyboard('{Control>},{/Control}');
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
-    act(() => { useUiStore.getState().setView('all'); });
-    await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: /^Settings/ }));
+    act(() => { useUiStore.getState().closeSettings(); });
+    // #363: Settings is the title bar's gear, always shown.
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' }));
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
+  });
+
+  // #364 (PO): Settings opens in a window over the app, as in VS Code, and the list stays behind it.
+  it('opens in a window over the list, which stays behind it', async () => {
+    installFakeBackend();
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    expect(within(dialog).getByRole('navigation', { name: 'Settings sections' })).toBeTruthy();
+    expect(useUiStore.getState().view).toBe('all');
+    expect(document.body.textContent).toContain('No downloads yet');
+  });
+
+  it('closes with Escape and gives focus back to the Settings button', async () => {
+    installFakeBackend();
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    const button = within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' });
+    await user.click(button);
+    await screen.findByRole('dialog', { name: 'Settings' });
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Settings' })).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it('opens at the section asked for', async () => {
+    installFakeBackend();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    act(() => { useUiStore.getState().openSettings('proxy'); });
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    expect(within(dialog).getByRole('button', { name: 'Proxy' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('says why a value was refused, and shows what is saved', async () => {
@@ -175,7 +213,7 @@ describe('the Settings screen (#30)', () => {
   it('saves the engine’s retries, timeouts and preallocation', async () => {
     const state = installFakeBackend();
     const user = await openSettings('Advanced');
-    await user.selectOptions(await screen.findByLabelText('Preallocation'), 'full');
+    await chooseOption(user, await screen.findByLabelText('Preallocation'), 'Full');
     await waitFor(() => { expect(state.appSettings.engine.preallocation).toBe('full'); });
     const failures = screen.getByLabelText<HTMLInputElement>('Failures in a row before giving up');
     await user.clear(failures);
@@ -226,7 +264,7 @@ describe('the Settings screen (#30)', () => {
     renderApp();
     await screen.findByText('No downloads yet');
     act(() => { useUiStore.getState().openAdd({ links: 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567' }); });
-    expect((await screen.findByLabelText<HTMLSelectElement>('Seeding after download')).value).toBe('unlimited');
+    expect((await screen.findByLabelText('Seeding after download')).textContent).toContain('Until I stop it');
     expect(screen.getByLabelText<HTMLInputElement>('Upload limit (KiB/s)').value).toBe('64');
     expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Choose files before downloading' }).checked).toBe(true);
   });
@@ -274,7 +312,7 @@ describe('the Proxy section (#192)', () => {
     await user.type(host, 'proxy.example.com');
     await user.tab();
     await waitFor(() => { expect(state.appSettings.proxy.host).toBe('proxy.example.com'); });
-    await user.selectOptions(screen.getByLabelText('Type'), 'socks5');
+    await chooseOption(user, screen.getByLabelText('Type'), 'SOCKS5');
     await waitFor(() => { expect(state.appSettings.proxy.kind).toBe('socks5'); });
     expect(JSON.stringify(saved(state))).not.toContain('password"');
   });
@@ -311,5 +349,37 @@ describe('the Proxy section (#192)', () => {
     expect((remember as HTMLInputElement).checked).toBe(false);
     await user.click(remember);
     await waitFor(() => { expect(state.appSettings.proxy.rememberPassword).toBe(true); });
+  });
+});
+
+// #364: the search in Settings finds a setting by its name and opens its section.
+describe('searching Settings', () => {
+  it('finds a setting by its name and opens the section it is in', async () => {
+    installFakeBackend();
+    const user = await openSettings();
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'Search settings' }), 'listening port');
+    await user.click(await within(dialog).findByRole('button', { name: /Listening port \(0 for any\)/ }));
+    expect(within(dialog).getByRole('button', { name: 'BitTorrent' }).getAttribute('aria-current')).toBe('page');
+    expect(within(dialog).getByRole<HTMLInputElement>('searchbox', { name: 'Search settings' }).value).toBe('');
+    expect(await within(dialog).findByText('Listening port (0 for any)')).toBeTruthy();
+  });
+
+  it('says so when no setting matches', async () => {
+    installFakeBackend();
+    const user = await openSettings();
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'Search settings' }), 'zzz');
+    expect(await within(dialog).findByText('No setting matches “zzz”.')).toBeTruthy();
+  });
+
+  it.each(Object.entries(SETTINGS_INDEX))('finds only settings that the %s section really shows', async (section, titles) => {
+    installFakeBackend();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    act(() => { useUiStore.getState().openSettings(section as SettingsSection); });
+    const dialog = await screen.findByRole('dialog', { name: 'Settings' });
+    await waitFor(() => { expect(within(dialog).queryByText('Loading settings…')).toBeNull(); });
+    for (const title of titles) expect(await within(dialog).findAllByText(title)).not.toHaveLength(0);
   });
 });

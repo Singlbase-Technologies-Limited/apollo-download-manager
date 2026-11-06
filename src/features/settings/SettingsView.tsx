@@ -1,11 +1,16 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { RotateCcw } from 'lucide-react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { RotateCcw, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { availability } from '../../capabilities';
 import { CapabilityOption } from '../../CapabilityOption';
 import { Button } from '../../components/Button';
+import { Checkbox } from '../../components/Checkbox';
 import { confirmAction } from '../../components/confirmStore';
+import { contentClass, overlayClass } from '../../components/dialogStyles';
+import { navItemClass } from '../../components/navStyles';
+import { useReturnFocus } from '../../components/returnFocus';
 import { Spinner } from '../../components/Spinner';
 import type { AppearanceSettings, Browser, Density, PerformanceProfile, Preallocation, ProxyKind, Settings, ShellSettings, Theme, TimeFormat } from '../../contract';
 import { api } from '../../lib/api';
@@ -18,6 +23,7 @@ import { SeedingFields } from '../torrents/SeedingFields';
 import { portMapText } from '../torrents/torrentLogic';
 import { Input } from '../../components/Input';
 import { Choice, Group, Num, Text, TimeSetting, Toggle } from './fields';
+import { searchSettings } from './settingsIndex';
 import { useDownloadsStore } from '../../stores/downloads';
 import { formatWhen, formatWindow } from '../../lib/format';
 
@@ -58,6 +64,8 @@ export function SettingsView() {
   const qc = useQueryClient();
   const settings = useSettings();
   const [state, setState] = useState<{ kind: 'idle' | 'saving' | 'saved' } | { kind: 'error'; message: string }>({ kind: 'idle' });
+  const [query, setQuery] = useState('');
+  const found = searchSettings(query);
 
   const save = async (send: () => Promise<Settings>) => {
     setState({ kind: 'saving' });
@@ -87,16 +95,36 @@ export function SettingsView() {
   };
 
   return (
+    <>
+      <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border pl-5 pr-3">
+        <DialogPrimitive.Title asChild>
+          <h1 className="text-[14px] font-semibold">Settings</h1>
+        </DialogPrimitive.Title>
+        {state.kind === 'error' ? null : (
+          <p role="status" className="text-xs text-fg-subtle">
+            {state.kind === 'saving' ? 'Saving…' : state.kind === 'saved' ? 'Saved. It applies at once.' : ''}
+          </p>
+        )}
+        <div className="flex-1" />
+        <DialogPrimitive.Close asChild>
+          <Button variant="ghost" size="icon-sm" aria-label="Close settings">
+            <X />
+          </Button>
+        </DialogPrimitive.Close>
+      </div>
+      <div className="relative shrink-0 border-b border-border px-5 py-2.5">
+        <Search className="pointer-events-none absolute left-7.5 top-1/2 size-3.5 -translate-y-1/2 text-fg-subtle" aria-hidden />
+        <Input type="search" aria-label="Search settings" placeholder="Search settings" value={query} onChange={(e) => { setQuery(e.target.value); }} className="pl-8" />
+      </div>
     <div className="flex min-h-0 flex-1">
-      <nav aria-label="Settings sections" className="w-52 shrink-0 border-r border-border bg-surface p-2">
-        <h1 className="px-2.5 pb-2 pt-1.5 text-[13px] font-semibold">Settings</h1>
+      <nav aria-label="Settings sections" className="w-44 shrink-0 space-y-0.5 overflow-y-auto border-r border-border bg-sidebar p-2.5 lg:w-52">
         {SECTIONS.map((s) => (
           <button
             key={s.id}
             type="button"
             aria-current={section === s.id ? 'page' : undefined}
             onClick={() => { setSection(s.id); }}
-            className={cn('flex h-8 w-full items-center rounded-md px-2.5 text-left text-[13px]', section === s.id ? 'bg-accent-soft font-medium text-accent' : 'text-fg-muted hover:bg-surface-3 hover:text-fg')}
+            className={navItemClass(section === s.id)}
           >
             {s.label}
           </button>
@@ -108,15 +136,34 @@ export function SettingsView() {
         </div>
       </nav>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-4 px-8 py-6">
+        <div className="mx-auto max-w-3xl space-y-4 px-5 py-5 lg:px-8 lg:py-6">
           {state.kind === 'error' ? (
             <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{`Not saved: ${state.message}`}</p>
-          ) : (
-            <p role="status" className="h-4 text-xs text-fg-subtle">
-              {state.kind === 'saving' ? 'Saving…' : state.kind === 'saved' ? 'Saved. It applies at once.' : ''}
-            </p>
-          )}
-          {section === 'about' ? (
+          ) : null}
+          {query.trim() !== '' ? (
+            // #364: the settings whose name matches, by section; choosing one opens its section.
+            found.length === 0 ? (
+              <p className="text-[13px] text-fg-muted">{`No setting matches “${query.trim()}”.`}</p>
+            ) : (
+              <ul aria-label="Settings found" className="space-y-1">
+                {found.map((r) => (
+                  <li key={`${r.section}/${r.title}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSection(r.section);
+                        setQuery('');
+                      }}
+                      className="flex w-full cursor-pointer flex-col items-start rounded-md px-3 py-2 text-left hover:bg-accent-soft"
+                    >
+                      <span className="text-[13px] font-medium text-fg">{r.title}</span>
+                      <span className="text-xs text-fg-subtle">{SECTIONS.find((x) => x.id === r.section)?.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : section === 'about' ? (
             <DiagnosticsPanel />
           ) : settings.isPending ? (
             <div className="flex items-center gap-2 text-fg-muted">
@@ -134,6 +181,28 @@ export function SettingsView() {
         </div>
       </div>
     </div>
+    </>
+  );
+}
+
+/**
+ * Settings in a window over the app (#364, PO: as in VS Code): the list stays behind it. Close, Escape or a click
+ * outside closes it, and focus goes back to what opened it. It grows and shrinks with the window, leaving the title
+ * bar and the status bar in view (PO, 2026-11-06).
+ */
+export function SettingsDialog() {
+  const open = useUiStore((s) => s.settingsOpen);
+  const close = useUiStore((s) => s.closeSettings);
+  const returnFocus = useReturnFocus(open);
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={(o) => { if (!o) close(); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className={overlayClass} />
+        <DialogPrimitive.Content className={cn(contentClass, 'h-[calc(100vh-6rem)] max-h-none w-[min(80rem,calc(100vw-4rem))] max-w-none overflow-hidden')} aria-describedby={undefined} {...returnFocus}>
+          <SettingsView />
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
@@ -412,10 +481,9 @@ function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
         <TimeSetting title="Stop" description="Before the start, it stops the next day; 00:00 is midnight." value={q.schedule.stopTime ?? '00:00'} onChange={(v) => { patch((x) => ({ ...x, queue: { ...x.queue, schedule: { ...x.queue.schedule, stopTime: v } } })); }} />
         <div className="flex flex-wrap gap-3 py-2.5 text-xs">
           {DAYS.map((d, i) => (
-            <label key={d} className="flex items-center gap-1.5">
-              <input type="checkbox" checked={q.schedule.days.includes(i)} onChange={(e) => { setDay(i, e.target.checked); }} />
+            <Checkbox key={d} checked={q.schedule.days.includes(i)} onChange={(on) => { setDay(i, on); }}>
               {d}
-            </label>
+            </Checkbox>
           ))}
         </div>
       </Group>
@@ -497,9 +565,7 @@ function AdvancedSection({ s, patch }: { s: Settings; patch: Patch }) {
     <>
       <Group title="Protocols">
         {capabilities ? (
-          <div className="py-2.5 text-[13px]">
-            <CapabilityOption label="Metalink" availability={availability(capabilities, 'metalink')} checked={s.advanced.enableMetalink} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, enableMetalink: v } })); }} />
-          </div>
+          <CapabilityOption label="Metalink" availability={availability(capabilities, 'metalink')} checked={s.advanced.enableMetalink} onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, enableMetalink: v } })); }} />
         ) : null}
         <Text title="User agent" description="What new downloads tell servers they are; empty for Apollo Download Manager’s own." value={s.advanced.userAgent} placeholder="ApolloDownloadManager/…" onChange={(v) => { patch((x) => ({ ...x, advanced: { ...x.advanced, userAgent: v } })); }} />
       </Group>

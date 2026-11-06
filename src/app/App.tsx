@@ -3,13 +3,14 @@ import { MonitorX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ConfirmHost } from '../components/ConfirmHost';
-import { Spinner } from '../components/Spinner';
+import { TooltipProvider } from '../components/Tooltip';
 import { Onboarding } from '../features/onboarding/Onboarding';
 import { api, isDesktop } from '../lib/api';
 import { toApiError } from '../lib/errors';
 import { createQueryClient, keys, useShellSettings } from '../lib/queries';
 import { FatalError } from './FatalError';
 import { Shell } from './Shell';
+import { StartupLoader } from './StartupLoader';
 import { TitleBar } from './TitleBar';
 import { useSnapshotFeed } from './useSnapshotFeed';
 import { useTheme } from './useTheme';
@@ -18,8 +19,10 @@ import { setTimeFormat } from '../lib/format';
 export function App({ client = createQueryClient() }: { client?: QueryClient }) {
   return (
     <QueryClientProvider client={client}>
-      <Root />
-      <ConfirmHost />
+      <TooltipProvider>
+        <Root />
+        <ConfirmHost />
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
@@ -39,6 +42,8 @@ function Root() {
   setTimeFormat(settings.data?.appearance.timeFormat ?? 'twentyFourHour');
 
   let content: ReactNode;
+  // The main window is set up: the title bar then offers Help and Settings (#363).
+  let ready = false;
   if (!desktop) {
     content = (
       <Centered>
@@ -56,27 +61,38 @@ function Root() {
   } else if (settings.isError) {
     content = <FatalError title="Apollo Download Manager couldn't read its settings" error={toApiError(settings.error)} onRetry={() => void settings.refetch()} />;
   } else if (!info.data || !settings.data) {
-    content = (
-      <Centered>
-        <div className="flex items-center gap-3 text-fg-muted" role="status">
-          <Spinner />
-          <span>Starting Apollo Download Manager…</span>
-        </div>
-      </Centered>
-    );
+    content = <StartupLoader />;
   } else if (!settings.data.onboardingCompleted) {
     content = <Onboarding app={info.data} defaultDirectory={settings.data.defaultDirectory ?? ''} />;
   } else {
+    ready = true;
     content = <Shell app={info.data} appearance={settings.data.appearance} />;
   }
   return (
     <>
       {/* The desktop window has no system title bar (tauri.conf.json), so it draws its own. */}
       <div className="flex h-full flex-col bg-frame">
-        {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} /> : null}
+        {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} app={ready ? info.data : undefined} /> : null}
         <div className="min-h-0 flex-1 bg-bg">{content}</div>
       </div>
-      <Toaster position="bottom-right" theme={theme} richColors closeButton duration={3500} />
+      {/* Themed with the app's tokens, and above the status bar so it never covers it (#348 D). */}
+      <Toaster
+        position="bottom-right"
+        theme={theme}
+        closeButton
+        duration={3500}
+        offset={{ bottom: 40, right: 16 }}
+        toastOptions={{
+          classNames: {
+            toast: '!border-border !bg-surface !text-fg !shadow-panel !text-[12.5px]',
+            description: '!text-fg-muted',
+            success: '[&_[data-icon]]:!text-success',
+            error: '[&_[data-icon]]:!text-danger',
+            warning: '[&_[data-icon]]:!text-warning',
+            info: '[&_[data-icon]]:!text-accent',
+          },
+        }}
+      />
     </>
   );
 }

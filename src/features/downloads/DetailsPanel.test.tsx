@@ -10,6 +10,7 @@ import { INITIAL_LIST, useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
 import { callsOf, emptySnapshot, installFakeBackend, type FakeState } from '../../test/fakeBackend';
 import { makeRecord } from '../../test/records';
+import { chooseOption } from '../../test/select';
 
 // V1's details-panel tests (tests/unit/app.test.tsx, "download list"), ported to V2's panel, and the panel's own (#61).
 
@@ -26,6 +27,11 @@ const rowFor = async (name: string) => {
 };
 const panel = () => screen.findByRole('complementary', { name: 'Download details' });
 const heading = (p: HTMLElement) => within(p).getByRole('heading', { level: 2 }).textContent;
+/** #349: a download's own settings are changed in a dialog, from the panel's footer. */
+const openEdit = async (user: ReturnType<typeof userEvent.setup>, p: HTMLElement) => {
+  await user.click(within(p).getByRole('button', { name: 'Edit…' }));
+  return screen.findByRole('dialog', { name: 'Edit download' });
+};
 
 const progress = makeRecord().progress;
 const archive = makeRecord({
@@ -44,7 +50,7 @@ const broken = makeRecord({
   fileName: 'broken.iso',
   status: 'failed',
   createdAtMs: 3,
-  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false },
+  error: { class: 'permanent', httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
 });
 const done = makeRecord({ id: 'd', fileName: 'setup.exe', status: 'completed', createdAtMs: 4, completedAtMs: 5, verification: 'notVerified' });
 const album = makeRecord({
@@ -80,12 +86,28 @@ describe('the details panel (V1)', () => {
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
     const p = await panel();
-    for (const name of ['Transfer', 'Source and destination', 'Timeline', 'Options for this download']) {
+    for (const name of ['Transfer', 'Source and destination', 'Timeline']) {
       expect(within(p).getByRole('region', { name })).toBeTruthy();
     }
+    // #349: its own settings moved from an Options section to the Edit dialog.
+    expect(within(p).queryByRole('region', { name: 'Options for this download' })).toBeNull();
+    expect(within(p).getByRole('button', { name: 'Edit…' })).toBeTruthy();
     const source = within(p).getByRole('region', { name: 'Source and destination' });
     expect(within(source).getByText('Folder')).toBeTruthy();
     expect(within(source).getByText('https://example.com/a.zip')).toBeTruthy();
+  });
+
+  it('fits a very long link in the panel, keeps it whole for screen readers, and copies all of it', async () => {
+    const long = `https://releases.example.com/2026/images/server/disk-image-amd64.iso?session=${'0123456789'.repeat(28)}`;
+    installFakeBackend({ snapshot: withDownloads([makeRecord({ id: 'l', fileName: 'disk-image-amd64.iso', sourceUrl: long, createdAtMs: 9 })]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('disk-image-amd64.iso'));
+    const source = within(await panel()).getByRole('region', { name: 'Source and destination' });
+    expect(within(source).getByText('releases.example.com/…/disk-image-amd64.iso')).toBeTruthy();
+    expect(within(source).getByText(long).className).toContain('sr-only');
+    await user.click(within(source).getByRole('button', { name: 'Copy link' }));
+    expect(await navigator.clipboard.readText()).toBe(long);
   });
 
   it('shows errors in the details panel', async () => {
@@ -104,7 +126,7 @@ describe('the details panel (V1)', () => {
       fileName: 'test-50mb.bin',
       status: 'failed',
       createdAtMs: 7,
-      error: { class: 'permanent', httpStatus: null, message: `The server's identity isn't confirmed yet. Check that its host key fingerprint is ${fingerprint}, then trust it to continue.`, retryable: false, hostKey: null, confirm: null, noNetwork: false },
+      error: { class: 'permanent', httpStatus: null, message: `The server's identity isn't confirmed yet. Check that its host key fingerprint is ${fingerprint}, then trust it to continue.`, retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
     });
     installFakeBackend({ snapshot: withDownloads([host]) });
     const user = userEvent.setup();
@@ -140,7 +162,7 @@ describe('the details panel (V1)', () => {
       fileName: 'test-50mb.bin',
       status: 'failed',
       createdAtMs: 7,
-      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null, noNetwork: false },
+      error: { class: failureClass, httpStatus: null, message: 'The server name could not be resolved.', retryable, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
     });
     installFakeBackend({ snapshot: withDownloads([failed]) });
     const user = userEvent.setup();
@@ -149,6 +171,60 @@ describe('the details panel (V1)', () => {
     const alert = within(await panel()).getByRole('alert');
     expect(alert.textContent).toContain(hint);
     expect(alert.textContent).not.toContain('usually');
+  });
+
+  // #252: plain words first; the library's own text only behind a closed toggle, ready to copy.
+  const expired = makeRecord({
+    id: 'g',
+    fileName: 'dataset.tar.gz',
+    status: 'failed',
+    createdAtMs: 8,
+    error: {
+      class: 'permanent',
+      httpStatus: null,
+      message: 'This website’s security certificate has expired.',
+      retryable: false,
+      hostKey: null,
+      confirm: null,
+      noNetwork: false,
+      detail: 'libcurl error 60: SSL certificate problem: certificate has expired',
+      loginRequired: false,
+    },
+  });
+
+  it('shows the plain message, and the technical text only behind a closed toggle', async () => {
+    installFakeBackend({ snapshot: withDownloads([expired]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('dataset.tar.gz'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(alert.textContent).toContain('This website’s security certificate has expired.');
+    expect(alert.textContent).not.toContain('libcurl');
+    const toggle = within(alert).getByRole('button', { name: 'Technical details' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    await user.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(alert.textContent).toContain('libcurl error 60: SSL certificate problem: certificate has expired');
+  });
+
+  it('copies the technical text', async () => {
+    installFakeBackend({ snapshot: withDownloads([expired]) });
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('dataset.tar.gz'));
+    const alert = within(await panel()).getByRole('alert');
+    await user.click(within(alert).getByRole('button', { name: 'Technical details' }));
+    await user.click(within(alert).getByRole('button', { name: 'Copy technical details' }));
+    // user-event gives the page a clipboard of its own; it holds what was copied.
+    expect(await navigator.clipboard.readText()).toBe('libcurl error 60: SSL certificate problem: certificate has expired');
+  });
+
+  it('offers no technical details when there are none', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.dblClick(await rowFor('broken.iso'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(within(alert).queryByRole('button', { name: 'Technical details' })).toBeNull();
   });
 
   it('keeps the open details panel on the selected download', async () => {
@@ -167,17 +243,109 @@ describe('the details panel (V1)', () => {
     expect(heading(p)).toBe('movie.mp4');
   });
 
-  it('does not carry a typed speed limit over to another download', async () => {
+  it('sends nothing on Cancel, and the next edit starts from the saved values', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken, done, album]) });
+    renderApp();
+    await user.dblClick(await rowFor('movie.mp4'));
+    let dialog = await openEdit(user, await panel());
+    const limit = within(dialog).getByLabelText<HTMLInputElement>(/Speed limit/);
+    await user.clear(limit);
+    await user.type(limit, '500');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(callsOf(state, 'set_download_speed_limit')).toHaveLength(0);
+    dialog = await openEdit(user, await panel());
+    expect(within(dialog).getByLabelText<HTMLInputElement>(/Speed limit/).value).toBe('512');
+  });
+
+  it('shows information only: no field or list to change in its sections', async () => {
     const user = userEvent.setup();
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
     const p = await panel();
-    const limit = within(p).getByLabelText<HTMLInputElement>(/Speed limit/);
-    await user.clear(limit);
-    await user.type(limit, '500');
+    for (const role of ['textbox', 'spinbutton', 'combobox'] as const) {
+      expect(within(p).queryAllByRole(role)).toEqual([]);
+    }
+  });
+});
+
+// #349: every action sits in the panel's footer, the one that fits the download's state first.
+describe('the details footer', () => {
+  let state: FakeState;
+  beforeEach(() => {
+    state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken, done, album]) });
+  });
+  const footer = async () => within(await panel()).getByRole('group', { name: 'Actions for this download' });
+  const first = async () => within(await footer()).getAllByRole('button')[0]?.textContent.trim();
+
+  it('offers the action that fits the state first', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('archive.zip'));
+    expect(await first()).toBe('Pause');
     await user.click(await rowFor('movie.mp4'));
-    expect(heading(p)).toBe('movie.mp4');
-    expect(within(p).getByLabelText<HTMLInputElement>(/Speed limit/).value).toBe('512');
+    expect(await first()).toBe('Resume');
+    await user.click(await rowFor('broken.iso'));
+    expect(await first()).toBe('Retry');
+    await user.click(await rowFor('setup.exe'));
+    expect(await first()).toBe('Open file');
+  });
+
+  it('acts on the download shown', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    await user.click(within(await footer()).getByRole('button', { name: 'Retry' }));
+    await waitFor(() => { expect(callsOf(state, 'retry_downloads')[0]?.args).toEqual({ ids: ['c'] }); });
+  });
+
+  it('keeps no action in the information above it', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    const alert = within(await panel()).getByRole('alert');
+    expect(within(alert).queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('has the rest in its menu, removing only after asking', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('movie.mp4'));
+    await user.click(within(await footer()).getByRole('button', { name: 'More actions for this download' }));
+    expect(await screen.findByRole('menuitem', { name: 'Copy link' })).toBeTruthy();
+    await user.click(screen.getByRole('menuitem', { name: 'Remove from list…' }));
+    const confirm = await screen.findByRole('alertdialog');
+    // Answered, so the question doesn't stay open for the next test (the confirm store outlives a render).
+    await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+    expect(callsOf(state, 'remove_downloads')).toHaveLength(0);
+  });
+});
+
+// #349 (PO decision): a plain click on a row opens the details panel, even when the user closed it.
+describe('a single click on a row', () => {
+  beforeEach(() => {
+    installFakeBackend({ snapshot: withDownloads([archive, movie, broken, done, album]) });
+  });
+
+  it('opens the details panel for that download', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await rowFor('movie.mp4');
+    expect(screen.queryByRole('complementary', { name: 'Download details' })).toBeNull();
+    await user.click(await rowFor('movie.mp4'));
+    expect(heading(await panel())).toBe('movie.mp4');
+  });
+
+  it('only selects with Ctrl or Shift, or on the row’s checkbox', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.keyboard('{Control>}');
+    await user.click(await rowFor('movie.mp4'));
+    await user.keyboard('{/Control}{Shift>}');
+    await user.click(await rowFor('archive.zip'));
+    await user.keyboard('{/Shift}');
+    await user.click(screen.getByRole('checkbox', { name: 'Select setup.exe' }));
+    expect(screen.queryByRole('complementary', { name: 'Download details' })).toBeNull();
   });
 });
 
@@ -245,12 +413,12 @@ describe('the details panel (#61)', () => {
     const user = userEvent.setup();
     renderApp();
     await user.dblClick(await rowFor('archive.zip'));
-    const p = await panel();
-    const input = within(p).getByLabelText<HTMLInputElement>('Connections');
+    const dialog = await openEdit(user, await panel());
+    const input = within(dialog).getByLabelText<HTMLInputElement>('Connections');
     expect(input.value).toBe('8');
     await user.clear(input);
     await user.type(input, '12');
-    await user.click(within(p).getByRole('button', { name: 'Apply' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_download_connections')[0]?.args).toEqual({ id: 'a', connections: 12 }); });
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(await screen.findByText('Connections set to 12')).toBeTruthy();
@@ -260,14 +428,15 @@ describe('the details panel (#61)', () => {
     const user = userEvent.setup();
     renderApp();
     await user.dblClick(await rowFor('movie.mp4'));
-    const p = await panel();
-    const limit = within(p).getByLabelText<HTMLInputElement>(/Speed limit/);
+    const dialog = await openEdit(user, await panel());
+    const limit = within(dialog).getByLabelText<HTMLInputElement>(/Speed limit/);
     await user.clear(limit);
     await user.type(limit, '256');
-    await user.tab();
+    await chooseOption(user, within(dialog).getByLabelText('Category'), 'None');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_download_speed_limit').at(-1)?.args).toEqual({ id: 'b', kib: 256 }); });
-    await user.selectOptions(within(p).getByLabelText('Category'), 'None');
     await waitFor(() => { expect(callsOf(state, 'set_download_category')[0]?.args).toEqual({ id: 'b', categoryId: null }); });
+    expect(screen.queryByRole('dialog', { name: 'Edit download' })).toBeNull();
   });
 
   it('shows the verification state of a completed download', async () => {

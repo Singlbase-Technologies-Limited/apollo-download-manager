@@ -1,5 +1,6 @@
-//! "Open file" and "Open folder" (#61): the manager says what to open, and the system's own
-//! program opens it, started with an argument list and never through a shell (PO decision on #61).
+//! "Open file" and "Open folder" (#61), and the feedback page (#363): the manager says what to
+//! open, or the address is fixed here, and the system's own program opens it, started with an
+//! argument list and never through a shell (PO decision on #61).
 
 use std::ffi::OsString;
 use std::path::Path;
@@ -36,6 +37,17 @@ pub async fn open_download_folder(
     }))
 }
 
+/// The feedback page (#363, PO decision): the repository's "new issue" chooser, where people pick
+/// a bug report or a feature request. Fixed here; the window can't name another address.
+const FEEDBACK_PAGE: &str =
+    "https://github.com/Singlbase-Technologies-Limited/apollo-download-manager/issues/new/choose";
+
+/// Opens the feedback page in the default browser. It sends nothing itself: no telemetry (AGENTS.md).
+#[tauri::command]
+pub async fn open_feedback_page() -> Result<(), ErrorCode> {
+    run(opener(Target::Address(FEEDBACK_PAGE)))
+}
+
 /// What the system's program is asked to do.
 #[derive(Debug, Clone, Copy)]
 enum Target<'a> {
@@ -43,6 +55,8 @@ enum Target<'a> {
     Open(&'a Path),
     /// Show the file selected in its folder.
     Select(&'a Path),
+    /// Open a fixed web address in the default browser.
+    Address(&'static str),
 }
 
 /// The program and its arguments, one argument each.
@@ -73,19 +87,25 @@ fn opener(target: Target<'_>) -> Opener {
                 raw: Some(raw),
             }
         }
+        Target::Address(address) => Opener {
+            program: "explorer.exe",
+            args: vec![address.into()],
+            raw: None,
+        },
     }
 }
 
 /// `xdg-open` has no way to select a file, so a file is shown by opening its folder.
 #[cfg(not(windows))]
 fn opener(target: Target<'_>) -> Opener {
-    let path = match target {
-        Target::Open(path) => path,
-        Target::Select(path) => path.parent().unwrap_or(path),
+    let arg = match target {
+        Target::Open(path) => path.as_os_str().to_owned(),
+        Target::Select(path) => path.parent().unwrap_or(path).as_os_str().to_owned(),
+        Target::Address(address) => address.into(),
     };
     Opener {
         program: "xdg-open",
-        args: vec![path.as_os_str().to_owned()],
+        args: vec![arg],
         raw: None,
     }
 }
@@ -146,6 +166,24 @@ mod tests {
         assert_eq!(
             opener(Target::Select(path)).args,
             vec![OsString::from("/home/me/Downloads")]
+        );
+    }
+
+    /// #363: Feedback opens one fixed page in the browser, as one argument, never a shell's.
+    #[test]
+    fn the_feedback_page_is_one_fixed_https_address_given_as_one_argument() {
+        assert!(FEEDBACK_PAGE.starts_with("https://github.com/"));
+        assert!(FEEDBACK_PAGE.ends_with("/issues/new/choose"));
+        let o = opener(Target::Address(FEEDBACK_PAGE));
+        assert_eq!(o.args, vec![OsString::from(FEEDBACK_PAGE)]);
+        assert_eq!(o.raw, None);
+        assert_eq!(
+            o.program,
+            if cfg!(windows) {
+                "explorer.exe"
+            } else {
+                "xdg-open"
+            }
         );
     }
 }

@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 29;
+export const COMMAND_API_VERSION = 30;
 
 const bytes = z.number().int().nonnegative();
 
@@ -60,6 +60,10 @@ export const TransferErrorSchema = z.strictObject({
   confirm: ConfirmSchema.nullable(),
   // No connection could be made: the download waits for the network (#318).
   noNetwork: z.boolean(),
+  /** The technical text behind `message`, shown only behind "Technical details" (#252). */
+  detail: z.string().nullable(),
+  /** The server refused the login: the window asks for another (#249). */
+  loginRequired: z.boolean(),
 });
 export type TransferError = z.infer<typeof TransferErrorSchema>;
 

@@ -1,6 +1,6 @@
 # Categories
 
-Categories sort downloads by file type, and can give each type its own folder. Open **Categories** in the navigation.
+Categories sort downloads by file type, and can give each type its own folder. Open **Categories** in the navigation's Library.
 
 ## The built-in categories
 

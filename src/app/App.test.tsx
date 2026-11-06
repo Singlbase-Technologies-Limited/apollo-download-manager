@@ -206,6 +206,21 @@ describe('the panels', () => {
     await waitFor(() => { expect(callsOf(backend, 'set_appearance').at(-1)?.args).toMatchObject({ appearance: { layout: { sidebarCollapsed: true } } }); });
   });
 
+  // #363 (PO): dragging a collapsed panel's edge opens it fully at once; releasing below its minimum collapses it again.
+  it('opens the collapsed navigation fully as soon as its edge is dragged', async () => {
+    const user = userEvent.setup();
+    installFakeBackend();
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' });
+    expect(nav().getAttribute('data-mode')).toBe('rail');
+    const edge = screen.getByRole('separator', { name: 'Resize navigation' });
+    fireEvent.pointerDown(edge, { pointerId: 1, button: 0, clientX: 60 });
+    await waitFor(() => { expect(nav().getAttribute('data-mode')).toBe('full'); });
+    fireEvent.pointerUp(edge, { pointerId: 1, clientX: 60 - 200 });
+    await waitFor(() => { expect(nav().getAttribute('data-mode')).toBe('rail'); });
+  });
+
   it('keeps the list its room in a narrow window by showing the navigation as icons', async () => {
     setViewport(LAYOUT.TABLE_MIN + LAYOUT.SIDEBAR_MIN - 1);
     installFakeBackend();
@@ -299,6 +314,20 @@ describe('the panels', () => {
     renderApp();
     await user.click(await screen.findByRole('button', { name: 'Collapse navigation' }));
     expect(await screen.findByText(ERROR_MESSAGES.DATABASE, {}, { timeout: 2000 })).toBeTruthy();
+  });
+});
+
+// #363 (PO): the full logo shows while the window starts, and only for as long as that takes.
+describe('starting', () => {
+  it('shows the full logo while it loads, and the window as soon as it is ready', async () => {
+    let release: () => void = () => undefined;
+    installFakeBackend({ hold: { get_shell_settings: new Promise<void>((r) => { release = r; }) } });
+    renderApp();
+    const loader = await screen.findByRole('status', { name: 'Starting Apollo Download Manager' });
+    expect(within(loader).getByRole('img', { name: 'Apollo Download Manager' })).toBeTruthy();
+    await act(async () => { release(); await Promise.resolve(); });
+    expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeTruthy();
+    expect(screen.queryByRole('status', { name: 'Starting Apollo Download Manager' })).toBeNull();
   });
 });
 

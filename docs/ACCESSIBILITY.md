@@ -53,7 +53,7 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 
 Run by the PO during review (PO decision on #66), on Windows, with NVDA or Narrator, in `pnpm dev` with a few downloads in the list. Record each step as PASS or FAIL with what was read, in the PR and here.
 
-1. **Start:** Tab from the window's top. The navigation is announced as "Primary", and each item by its name and count.
+1. **Start:** Tab from the window's top. The title bar's **Help** menu and **Settings** button come first, each named, with a tooltip on focus (Settings shows Ctrl+,). The navigation is announced as "Primary", and each item by its name and count.
 2. **The list:** Tab to the list. It is announced as the "Downloads" grid. ↑ and ↓ read each row's file name, status and progress; Space pauses or resumes it, and the change is read.
 3. **Details:** Enter on a row opens the details panel; it is announced as "Download details", and its sections (Transfer, Source and destination, Timeline, Options for this download) by name.
 4. **A dialog:** Ctrl+N opens "Add download". Focus is in the Links field; Tab goes through every field, each read with its label, and never leaves the dialog. Escape closes it, and focus is back where it was.

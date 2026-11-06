@@ -45,13 +45,21 @@ function spokenIcons(): string[] {
   return [...document.querySelectorAll('button svg, [role="menuitem"] svg')].filter((svg) => svg.getAttribute('aria-hidden') !== 'true').map((svg) => svg.outerHTML.slice(0, 80));
 }
 
+/**
+ * Controls with a browser tooltip (`title`): the window's own Tooltip replaces them (#348 H), since the browser's
+ * shows only on hover, never on keyboard focus, and ignores the theme. Truncated text may keep `title`.
+ */
+function browserTooltips(): string[] {
+  return [...document.querySelectorAll('button[title], a[title], input[title], [role="button"][title], [role="combobox"][title], [role="menuitem"][title]')].map((el) => el.outerHTML.slice(0, 120));
+}
+
 beforeEach(() => {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     value: () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }),
   });
   Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: 1366 });
-  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, detailsId: null, settingsSection: 'general' });
+  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, detailsId: null, settingsSection: 'general', settingsOpen: false });
   useDownloadsStore.setState({ snapshot: null, error: null, ...INITIAL_LIST });
 });
 
@@ -167,6 +175,7 @@ describe('every control has a name, and icons stay silent', () => {
     await screen.findByRole('complementary', { name: 'Download details' });
     expect(unnamed()).toEqual([]);
     expect(spokenIcons()).toEqual([]);
+    expect(browserTooltips()).toEqual([]);
   });
 
   it('with the navigation shown as icons', async () => {
@@ -176,6 +185,7 @@ describe('every control has a name, and icons stay silent', () => {
     expect((await screen.findByRole('navigation', { name: 'Primary' })).getAttribute('data-mode')).toBe('rail');
     expect(unnamed()).toEqual([]);
     expect(spokenIcons()).toEqual([]);
+    expect(browserTooltips()).toEqual([]);
   });
 
   it('in the Add dialog', async () => {
@@ -186,6 +196,7 @@ describe('every control has a name, and icons stay silent', () => {
     await screen.findByRole('dialog', { name: 'Add download' });
     expect(unnamed()).toEqual([]);
     expect(spokenIcons()).toEqual([]);
+    expect(browserTooltips()).toEqual([]);
   });
 
   it.each<View>(['categories', 'history'])('on the %s screen', async (view) => {
@@ -196,6 +207,7 @@ describe('every control has a name, and icons stay silent', () => {
     await waitFor(() => { expect(screen.queryByRole('grid', { name: 'Downloads' })).toBeNull(); });
     expect(unnamed()).toEqual([]);
     expect(spokenIcons()).toEqual([]);
+    expect(browserTooltips()).toEqual([]);
   });
 
   it.each<SettingsSection>(['general', 'downloads', 'performance', 'bittorrent', 'browser', 'notifications', 'appearance', 'storage', 'advanced', 'about'])(
@@ -205,8 +217,7 @@ describe('every control has a name, and icons stay silent', () => {
       renderApp();
       await screen.findByText('No downloads yet');
       act(() => {
-        useUiStore.getState().setView('settings');
-        useUiStore.getState().setSettingsSection(section);
+        useUiStore.getState().openSettings(section);
       });
       await screen.findByRole('navigation', { name: 'Settings sections' });
       await waitFor(() => { expect(screen.queryByText('Loading settings…')).toBeNull(); });

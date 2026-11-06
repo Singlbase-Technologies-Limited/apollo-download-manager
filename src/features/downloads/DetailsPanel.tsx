@@ -1,58 +1,32 @@
-import { Copy, FileSearch, FolderOpen, Gauge, ListChecks, RotateCcw, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
 import { ProgressBar } from '../../components/ProgressBar';
-import { Select } from '../../components/Select';
 import { ConnectionLine } from '../../ConnectionLine';
 import { PANEL } from '../../layout/panel';
 import { cn } from '../../lib/cn';
-import type { FailureClass, Verification } from '../../contract';
-import { actionsFor, averageSpeedOf, canOpenFile, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
+import type { Verification } from '../../contract';
+import { averageSpeedOf, displayName, etaSeconds, nextTry, percentOf, RUNNING, STATUS_TONE, statusLabel } from '../../downloads/list';
 import { formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferred } from '../../lib/format';
-import { useCategories } from '../../lib/queries';
+import { shortenPath, shortenUrl } from '../../lib/shorten';
 import { useDownloadsStore } from '../../stores/downloads';
-import { useUiStore } from '../../stores/ui';
 import { TorrentSection } from '../torrents/TorrentSection';
+import { EditDownloadDialog } from './EditDownloadDialog';
+import { DetailsFooter } from './DetailsFooter';
+import { CopyableValue } from './CopyableValue';
+import { DetailsGroup, Row } from './detailsParts';
+import { ErrorNotice } from './ErrorNotice';
 import type { DownloadActions } from './useDownloadActions';
 
-const NO_CATEGORY = '__none';
 /** Set by the shell from the saved width, fitted to the window. */
 const PANEL_WIDTH = { width: 'var(--details-w, 20rem)' };
-const KIB = 1024;
 
 const VERIFICATION: Record<Verification, string> = {
   verified: 'Verified: its checksum matched',
   sizeVerified: 'Every byte arrived and the size matched; no checksum was given',
   notVerified: 'Not verified: it resumed without a way to tell the server’s file hadn’t changed',
 };
-
-/** The hint under an error, by its class: what a retry may do, never a promise (#250). */
-const RETRY_HINT: Record<FailureClass, string> = {
-  transient: 'Retrying may help once the cause is fixed.',
-  throttled: 'The server asked Apollo Download Manager to slow down. Retrying later may help.',
-  permanent: 'Retrying is unlikely to help without changing the request.',
-};
-
-/** A titled group of rows, so the panel reads as sections (V1 #45). */
-function DetailsGroup({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="mt-4 border-t border-border pt-3 first-of-type:border-t-0" aria-label={title}>
-      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">{title}</h3>
-      <dl className="mt-1">{children}</dl>
-    </section>
-  );
-}
-
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-[104px_1fr] gap-2 py-1 text-xs">
-      <dt className="text-fg-subtle">{label}</dt>
-      <dd className="min-w-0 break-words text-fg">{children}</dd>
-    </div>
-  );
-}
 
 function Shell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
@@ -82,197 +56,98 @@ interface Props {
  */
 export function DetailsPanel({ id, hidden, actions, busy, needsLogin, now, onClose }: Props) {
   const d = useDownloadsStore((s) => s.snapshot?.downloads.find((x) => x.id === id));
-  const openChooseFiles = useUiStore((s) => s.openChooseFiles);
-  const { data: categories } = useCategories();
-  // A typed value belongs to the download it was typed for, never to the next one shown.
-  const [limit, setLimit] = useState<{ id: string; kib: string } | null>(null);
-  const [connections, setConnections] = useState<{ id: string; n: string } | null>(null);
+  // A download's own settings are changed in a dialog: the panel only shows them (#349).
+  const [editing, setEditing] = useState(false);
 
   if (!d) return <Shell onClose={onClose}>This download is no longer in the list.</Shell>;
 
   const torrent = d.kind === 'torrent' || d.kind === 'magnet';
-  const finished = ['completed', 'failed', 'removed', 'unknown'].includes(d.status);
   const pct = d.status === 'completed' || d.status === 'seeding' ? 100 : percentOf(d);
-  const savedKib = d.speedLimitBps === null ? 0 : Math.round(d.speedLimitBps / KIB);
-  const typedKib = limit?.id === d.id ? limit.kib : String(savedKib);
-  const typedConnections = connections?.id === d.id ? connections.n : String(d.requestedConnections ?? '');
-  const can = actionsFor(d);
 
-  const commitLimit = () => {
-    if (limit?.id !== d.id) return;
-    const kib = Number(limit.kib);
-    setLimit(null);
-    if (Number.isInteger(kib) && kib >= 0 && kib !== savedKib) void actions.setSpeedLimit(d.id, kib);
-  };
-  const wanted = Number(typedConnections);
-  const connectionsChanged = Number.isInteger(wanted) && wanted >= 1 && wanted !== d.requestedConnections;
+
+  const sized = d.status === 'choosingFiles' && d.progress.totalBytes === null;
+  const summary = [
+    // Before the choice, its size is unknown, which isn't "0 B of unknown size" (#276).
+    sized ? 'Files not chosen yet' : formatTransferred(d.progress.completedBytes, d.progress.totalBytes),
+    d.status === 'downloading' ? formatSpeed(d.progress.downloadSpeedBps) : null,
+    d.status === 'downloading' && etaSeconds(d) !== null ? `${formatDuration(etaSeconds(d))} left` : null,
+  ].filter((x) => x !== null);
 
   return (
-    <aside id="details-panel" aria-label="Download details" className={cn(PANEL, 'flex min-w-0 shrink-0 flex-col bg-surface')} style={PANEL_WIDTH}>
-      <div className="flex items-start gap-2 border-b border-border px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-semibold" title={displayName(d)}>
-            {displayName(d)}
-          </h2>
-          <div className="mt-1.5 flex items-center gap-2">
-            <Badge tone={STATUS_TONE[d.status]}>{statusLabel(d, now, { needsLogin })}</Badge>
-          </div>
+    // The panel stands apart from the list: its sections on their own ground, between a white header and footer (#349).
+    <aside id="details-panel" aria-label="Download details" className={cn(PANEL, 'flex min-w-0 shrink-0 flex-col bg-surface-2')} style={PANEL_WIDTH}>
+      <div className="border-b border-border-strong bg-surface px-4 pb-3 pt-3">
+        <div className="flex items-start gap-2">
+          <h2 className="line-clamp-2 min-w-0 flex-1 break-all text-[14px] font-semibold leading-snug">{displayName(d)}</h2>
+          <Button variant="ghost" size="icon-sm" className="-mr-1.5 -mt-0.5" aria-label="Close details" onClick={onClose}>
+            <X />
+          </Button>
         </div>
-        <Button variant="ghost" size="icon-sm" aria-label="Close details" onClick={onClose}>
-          <X />
-        </Button>
+        <div className="mt-2 flex items-center gap-2">
+          <Badge tone={STATUS_TONE[d.status]}>{statusLabel(d, now, { needsLogin })}</Badge>
+          <span className="ml-auto text-xl font-semibold tabular-nums">{formatPercent(pct)}</span>
+        </div>
+        <ProgressBar value={pct} tone={STATUS_TONE[d.status]} animated={d.status === 'downloading'} label="Progress" className="mt-2" />
+        <p className="mt-1.5 text-xs tabular-nums text-fg-muted">{summary.join(' · ')}</p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        {hidden ? (
-          <p role="status" className="mb-3 rounded-md bg-surface-2 px-3 py-2 text-xs text-fg-muted">
-            This download is hidden by the search or filter. It stays here until you choose another.
-          </p>
-        ) : null}
-        <ProgressBar value={pct} tone={STATUS_TONE[d.status]} animated={d.status === 'downloading'} label="Progress" />
-        <div className="mt-1.5 flex justify-between text-xs tabular-nums text-fg-muted">
-          {/* Before the choice, its size is unknown, which isn't "0 B of unknown size" (#276). */}
-          <span>
-            {d.status === 'choosingFiles' && d.progress.totalBytes === null
-              ? 'Files not chosen yet'
-              : formatTransferred(d.progress.completedBytes, d.progress.totalBytes)}
-          </span>
-          <span>{formatPercent(pct)}</span>
-        </div>
-
-        {d.status === 'choosingFiles' ? (
-          // At the top, where it's seen at once; it was at the end of the Torrent section (#276).
-          <Button size="sm" variant="primary" className="mt-3" onClick={() => { openChooseFiles(d.id); }}>
-            <ListChecks /> Choose files…
-          </Button>
-        ) : null}
-
-        {d.startedOver ? (
-          // The bytes it had were dropped: never silently, and with why (#257).
-          <p role="status" className="mt-3 min-w-0 break-words rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
-            {d.startedOver}
-          </p>
-        ) : null}
-
-        {d.error ? (
-          // A long word, such as a host key's fingerprint or a path, wraps inside the panel (#248), as the rows do.
-          <div role="alert" className="mt-3 min-w-0 break-words rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">
-            <p className="font-medium">{d.error.message}</p>
-            <p className="mt-1 opacity-80">
-              {d.error.httpStatus !== null ? `HTTP ${String(d.error.httpStatus)}. ` : ''}
-              {RETRY_HINT[d.error.class]}
-            </p>
-            {d.status === 'failed' && d.error.confirm ? (
-              // The user's answer, for this download only (#67): a plain retry would only stop at the same place.
-              <Button size="sm" variant="secondary" className="mt-2" disabled={busy} onClick={() => { if (d.error?.confirm) void actions.allow(d.id, d.error.confirm.kind); }}>
-                <RotateCcw /> {d.error.confirm.kind === 'insecureRedirect' ? 'Continue over http' : 'Download anyway'}
-              </Button>
-            ) : can.retry ? (
-              <Button size="sm" variant="secondary" className="mt-2" disabled={busy} onClick={() => void actions.retry([d.id])}>
-                <RotateCcw /> Retry
-              </Button>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {hidden || d.startedOver || d.error ? (
+          <div className="space-y-3 px-4 pt-3">
+            {hidden ? (
+              <p role="status" className="rounded-md bg-surface px-3 py-2 text-xs text-fg-muted">
+                This download is hidden by the search or filter. It stays here until you choose another.
+              </p>
             ) : null}
+            {d.startedOver ? (
+              // The bytes it had were dropped: never silently, and with why (#257).
+              <p role="status" className="min-w-0 break-words rounded-md bg-warning-soft px-3 py-2 text-xs text-warning">
+                {d.startedOver}
+              </p>
+            ) : null}
+            {/* Its actions (Retry, Allow) are in the footer, with the rest (#349). */}
+            {d.error ? <ErrorNotice error={d.error} /> : null}
           </div>
         ) : null}
 
-        <DetailsGroup title="Transfer">
-          <Row label="Speed">{d.status === 'downloading' ? formatSpeed(d.progress.downloadSpeedBps) : '—'}</Row>
-          <Row label="Average speed">{formatSpeed(averageSpeedOf(d))}</Row>
-          <Row label="Time left">{d.status === 'downloading' ? formatDuration(etaSeconds(d)) : '—'}</Row>
-          {torrent ? null : (
-            <Row label="Connections">
-              {/* What held its connections back while it ran says nothing once it stopped. */}
-              {RUNNING.includes(d.status) ? <ConnectionLine active={d.progress.connections} detail={d.progress.connectionDetail} /> : <ConnectionLine active={0} detail={null} />}
+        <div className="mt-3 [&>section:first-child]:border-t-0">
+          <DetailsGroup title="Transfer">
+            {d.status === 'downloading' ? <Row label="Speed">{formatSpeed(d.progress.downloadSpeedBps)}</Row> : null}
+            <Row label="Average speed">{formatSpeed(averageSpeedOf(d))}</Row>
+            {d.status === 'downloading' ? <Row label="Time left">{formatDuration(etaSeconds(d))}</Row> : null}
+            {torrent ? null : (
+              <Row label="Connections">
+                {/* What held its connections back while it ran says nothing once it stopped. */}
+                {RUNNING.includes(d.status) ? <ConnectionLine active={d.progress.connections} detail={d.progress.connectionDetail} /> : <ConnectionLine active={0} detail={null} />}
+              </Row>
+            )}
+            {nextTry(d, now) !== null ? <Row label="Next try">{nextTry(d, now)}</Row> : null}
+            {d.verification ? <Row label="Verification">{VERIFICATION[d.verification]}</Row> : null}
+          </DetailsGroup>
+
+          {torrent ? <TorrentSection d={d} actions={actions} busy={busy} /> : null}
+
+          <DetailsGroup title="Source and destination">
+            <Row label="Link">
+              <CopyableValue value={d.sourceUrl} shown={shortenUrl(d.sourceUrl)} what="Link" />
             </Row>
-          )}
-          {nextTry(d, now) !== null ? <Row label="Next try">{nextTry(d, now)}</Row> : null}
-          {d.verification ? <Row label="Verification">{VERIFICATION[d.verification]}</Row> : null}
-        </DetailsGroup>
+            <Row label="Folder">
+              <CopyableValue value={d.directory} shown={shortenPath(d.directory)} what="Folder" />
+            </Row>
+            <Row label="File">{d.fileName ?? 'Named by the server once it answers'}</Row>
+          </DetailsGroup>
 
-        {torrent ? <TorrentSection d={d} actions={actions} busy={busy} /> : null}
-
-        <DetailsGroup title="Source and destination">
-          <Row label="Link">{d.sourceUrl}</Row>
-          <Row label="Folder">{d.directory}</Row>
-          <Row label="File">{d.fileName ?? 'Named by the server once it answers'}</Row>
-        </DetailsGroup>
-
-        <DetailsGroup title="Timeline">
-          <Row label="Added">{formatShortDate(d.createdAtMs)}</Row>
-          <Row label="Started">{formatShortDate(d.startedAtMs)}</Row>
-          <Row label="Completed">{formatShortDate(d.completedAtMs)}</Row>
-        </DetailsGroup>
-
-        <section className="mt-4 space-y-3 border-t border-border pt-3" aria-label="Options for this download">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-fg-subtle">Options</h3>
-          <div className="flex items-center justify-between gap-2 text-xs">
-            <label htmlFor="details-category" className="text-fg-subtle">
-              Category
-            </label>
-            <Select id="details-category" value={d.categoryId ?? NO_CATEGORY} className="w-40" onChange={(e) => void actions.setCategory(d.id, e.target.value === NO_CATEGORY ? null : e.target.value)}>
-              <option value={NO_CATEGORY}>None</option>
-              {(categories ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-          {finished || d.status === 'seeding' ? null : (
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <label htmlFor="details-limit" className="flex items-center gap-1.5 text-fg-subtle">
-                <Gauge className="size-3.5" aria-hidden /> Speed limit (KiB/s, 0 for none)
-              </label>
-              <Input
-                id="details-limit"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                className="h-8 w-24"
-                value={typedKib}
-                onChange={(e) => { setLimit({ id: d.id, kib: e.target.value }); }}
-                onBlur={commitLimit}
-                onKeyDown={(e) => { if (e.key === 'Enter') commitLimit(); }}
-              />
-            </div>
-          )}
-          {torrent || finished ? null : (
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <label htmlFor="details-connections" className="text-fg-subtle">
-                Connections
-              </label>
-              <div className="flex items-center gap-1.5">
-                <Input id="details-connections" type="number" min={1} inputMode="numeric" className="h-8 w-16" value={typedConnections} onChange={(e) => { setConnections({ id: d.id, n: e.target.value }); }} />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busy || !connectionsChanged}
-                  onClick={() => {
-                    setConnections(null);
-                    void actions.setConnections(d.id, wanted);
-                  }}
-                >
-                  Apply
-                </Button>
-              </div>
-            </div>
-          )}
-        </section>
+          {/* Only the moments it has reached (#349): no "—" for a start that hasn't happened. */}
+          <DetailsGroup title="Timeline">
+            <Row label="Added">{formatShortDate(d.createdAtMs)}</Row>
+            {d.startedAtMs !== null ? <Row label="Started">{formatShortDate(d.startedAtMs)}</Row> : null}
+            {d.completedAtMs !== null ? <Row label="Completed">{formatShortDate(d.completedAtMs)}</Row> : null}
+          </DetailsGroup>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-border px-4 py-3">
-        {canOpenFile(d) ? (
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.openFile(d)}>
-            <FileSearch /> Open file
-          </Button>
-        ) : null}
-        <Button size="sm" variant="secondary" disabled={busy} onClick={() => void actions.openFolder(d.id)}>
-          <FolderOpen /> Open folder
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => void actions.copyLink(d)}>
-          <Copy /> Copy link
-        </Button>
-      </div>
+      <DetailsFooter d={d} actions={actions} busy={busy} onEdit={() => { setEditing(true); }} />
+      {editing ? <EditDownloadDialog key={d.id} download={d} actions={actions} onClose={() => { setEditing(false); }} /> : null}
     </aside>
   );
 }

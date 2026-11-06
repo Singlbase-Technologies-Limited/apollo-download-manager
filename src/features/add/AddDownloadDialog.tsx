@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { availability, cleartextWarning } from '../../capabilities';
 import { Button } from '../../components/Button';
+import { Tooltip } from '../../components/Tooltip';
 import { Checkbox } from '../../components/Checkbox';
 import { Dialog } from '../../components/Dialog';
 import { Field } from '../../components/Field';
@@ -27,7 +28,9 @@ import { linkKind, linkProblem, MAX_ADD, parseChecksum, parseHeaders, splitLinks
 import { StartAtFields } from '../../components/StartAtFields';
 import { nextFullHour } from '../../lib/format';
 
-const AUTOMATIC = '';
+/** The category list's "Automatic" entry; never a category id, which is a UUID. Sent to the native side as null. */
+const AUTOMATIC = '__automatic';
+const categoryOrNull = (id: string) => (id === AUTOMATIC ? null : id);
 
 const baseName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
@@ -116,7 +119,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     queryKey: ['destination', asked] as const,
     queryFn: () => {
       const [url, dir, name, category] = JSON.parse(asked) as [string, string, string, string];
-      return api.checkDestination(url, dir || null, url === '' ? null : name || null, category || null);
+      return api.checkDestination(url, dir || null, url === '' ? null : name || null, categoryOrNull(category));
     },
     retry: false,
   });
@@ -179,7 +182,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     metalinkFiles,
     directory: directory.trim() || null,
     fileName: singleDirect !== undefined && fileName.trim() !== '' ? fileName.trim() : null,
-    categoryId: categoryId || null,
+    categoryId: categoryOrNull(categoryId),
     createDirectory: missingChosen && createDirectory,
     onConflict: 'ask',
     allowDuplicate: false,
@@ -255,6 +258,45 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   );
 
   const fromBrowser = prefill?.fromBrowser;
+  // The login: up front for SFTP links, which always need one, else in Advanced options (#249).
+  const loginFields = (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="User name">{(p) => <Input {...p} value={userName} onChange={(e) => { setUserName(e.target.value); }} autoComplete="off" />}</Field>
+        <Field label="Password" hint="Kept in memory only, unless remembered below.">
+          {(p) => <Input {...p} type="password" value={password} onChange={(e) => { setPassword(e.target.value); }} autoComplete="off" />}
+        </Field>
+      </div>
+      {hasSftp ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="SSH private key" hint="For SFTP links, with the user name above.">
+            {(p) => (
+              <div className="flex gap-2">
+                <Input {...p} value={keyPath} onChange={(e) => { setKeyPath(e.target.value); }} placeholder="None: log in with the password" />
+                <Tooltip label="Choose a key">
+                  <Button aria-label="Choose a key" onClick={() => void pickKey()}>
+                    <KeyRound aria-hidden />
+                  </Button>
+                </Tooltip>
+              </div>
+            )}
+          </Field>
+          <Field label="Key passphrase" hint="Only for a key that has one.">
+            {(p) => <Input {...p} type="password" value={passphrase} onChange={(e) => { setPassphrase(e.target.value); }} autoComplete="off" />}
+          </Field>
+        </div>
+      ) : null}
+      {userName.trim() || headers.headers.length > 0 || keyPath.trim() ? (
+        <Checkbox checked={remember} onChange={setRemember}>
+          <span>
+            Remember this login in the system keychain
+            <span className="block text-fg-muted">The login, headers and key passphrase then come back after Apollo Download Manager restarts. Removing the download forgets them.</span>
+          </span>
+        </Checkbox>
+      ) : null}
+    </>
+  );
+
   return (
     <Dialog
       open
@@ -380,9 +422,18 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                 <Button size="sm" onClick={() => void pickTorrents()}>
                   <FileUp aria-hidden /> Choose .torrent files…
                 </Button>
-                <Button size="sm" disabled={!metalink.available} title={metalink.available ? undefined : (metalink.reason ?? undefined)} onClick={() => void pickMetalinks()}>
-                  <FileUp aria-hidden /> Choose Metalink files…
-                </Button>
+                {metalink.available || !metalink.reason ? (
+                  <Button size="sm" disabled={!metalink.available} onClick={() => void pickMetalinks()}>
+                    <FileUp aria-hidden /> Choose Metalink files…
+                  </Button>
+                ) : (
+                  // Unavailable for the whole dialog (the engine's capabilities): the tooltip says why.
+                  <Tooltip label={metalink.reason} canBeDisabled>
+                    <Button size="sm" disabled>
+                      <FileUp aria-hidden /> Choose Metalink files…
+                    </Button>
+                  </Tooltip>
+                )}
                 <span>or drop .torrent files on the window.</span>
               </div>
             </>
@@ -414,14 +465,15 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
             </Field>
             <Field label="Category">
               {(p) => (
-                <Select {...p} value={categoryId} onChange={(e) => { setCategoryId(e.target.value); }}>
-                  <option value={AUTOMATIC}>{autoCategory ? `Automatic: ${autoCategory.name}` : 'Automatic (by file type)'}</option>
-                  {(categories ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
+                <Select
+                  {...p}
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  options={[
+                    { value: AUTOMATIC, label: autoCategory ? `Automatic: ${autoCategory.name}` : 'Automatic (by file type)' },
+                    ...(categories ?? []).map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                />
               )}
             </Field>
           </div>
@@ -489,16 +541,25 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
             </div>
           ) : null}
 
+          {hasSftp ? (
+            // PO decision on #249: an SFTP link always needs a login, so it is asked for up front.
+            <fieldset className="space-y-3 rounded-lg border border-border bg-surface-2 p-3">
+              <legend className="px-1 text-xs font-medium text-fg">Login</legend>
+              {loginFields}
+            </fieldset>
+          ) : null}
+          {/* A full-width header with a line above it, so it reads as a section that opens (#348 F). */}
           <button
             type="button"
-            className="flex items-center gap-1 text-xs font-medium text-fg-muted hover:text-fg"
+            className="flex w-full items-center gap-1.5 border-t border-border pt-3 text-left text-[13px] font-semibold text-fg hover:text-accent"
             aria-expanded={advanced}
+            aria-controls="add-advanced"
             onClick={() => { setAdvanced((a) => !a); }}
           >
-            {advanced ? <ChevronDown className="size-3.5" aria-hidden /> : <ChevronRight className="size-3.5" aria-hidden />} Advanced options
+            {advanced ? <ChevronDown className="size-4" aria-hidden /> : <ChevronRight className="size-4" aria-hidden />} Advanced options
           </button>
           {advanced ? (
-            <div className="space-y-3 rounded-lg border border-border p-3">
+            <div id="add-advanced" className="space-y-3 rounded-lg border border-border p-3">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Connections" hint="Empty uses the performance profile.">
                   {(p) => <Input {...p} type="number" min={1} max={64} value={connections} onChange={(e) => { setConnections(e.target.value); }} />}
@@ -511,37 +572,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
               <Field label="Extra headers" error={headers.error} hint="One per line, like “Cookie: session=…”. Kept in memory only, unless remembered below.">
                 {(p) => <Textarea {...p} value={headersText} onChange={(e) => { setHeadersText(e.target.value); }} rows={2} placeholder="Name: value" />}
               </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="User name">{(p) => <Input {...p} value={userName} onChange={(e) => { setUserName(e.target.value); }} autoComplete="off" />}</Field>
-                <Field label="Password" hint="Kept in memory only, unless remembered below.">
-                  {(p) => <Input {...p} type="password" value={password} onChange={(e) => { setPassword(e.target.value); }} autoComplete="off" />}
-                </Field>
-              </div>
-              {hasSftp ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="SSH private key" hint="For SFTP links, with the user name above.">
-                    {(p) => (
-                      <div className="flex gap-2">
-                        <Input {...p} value={keyPath} onChange={(e) => { setKeyPath(e.target.value); }} placeholder="None: log in with the password" />
-                        <Button aria-label="Choose a key" title="Choose a key" onClick={() => void pickKey()}>
-                          <KeyRound aria-hidden />
-                        </Button>
-                      </div>
-                    )}
-                  </Field>
-                  <Field label="Key passphrase" hint="Only for a key that has one.">
-                    {(p) => <Input {...p} type="password" value={passphrase} onChange={(e) => { setPassphrase(e.target.value); }} autoComplete="off" />}
-                  </Field>
-                </div>
-              ) : null}
-              {userName.trim() || headers.headers.length > 0 || keyPath.trim() ? (
-                <Checkbox checked={remember} onChange={setRemember}>
-                  <span>
-                    Remember this login in the system keychain
-                    <span className="block text-fg-muted">The login, headers and key passphrase then come back after Apollo Download Manager restarts. Removing the download forgets them.</span>
-                  </span>
-                </Checkbox>
-              ) : null}
+              {hasSftp ? null : loginFields}
               <Field label="Checksum" error={checksum.error} hint="Checked when the download finishes, like “sha-256=…”.">
                 {(p) => <Input {...p} value={checksumText} onChange={(e) => { setChecksumText(e.target.value); }} placeholder="sha-256=hexadecimal digest" className="font-mono text-xs" />}
               </Field>

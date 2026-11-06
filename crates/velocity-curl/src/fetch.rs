@@ -347,8 +347,9 @@ pub enum CurlFailure {
     Interrupted,
     /// The TLS handshake failed.
     TlsHandshake,
-    /// The server's certificate wasn't trusted. Verification is never turned off (#69).
-    Certificate,
+    /// The server's certificate was refused, and why (#252). Verification is never turned off
+    /// (#69).
+    Certificate(CertificateProblem),
     /// More redirects than allowed.
     TooManyRedirects,
     /// A URL or redirect outside the protocol allowlist, or a malformed URL.
@@ -359,7 +360,11 @@ pub enum CurlFailure {
     Protocol,
     /// The server has no such file (FTP's `550`, #51).
     NotFound,
-    /// The server refused the login, or access to the file (FTP, #51).
+    /// The server refused the login: FTP's `530` (#51), or SFTP's authentication (#53). A new
+    /// user name, password or key may help, so the app asks for one (#249).
+    LoginDenied,
+    /// The login worked, or none was needed, but this user may not read the file: FTP's refused
+    /// access, SFTP's permission denied. A new password won't help.
     AccessDenied,
     /// Encryption was required, and the server can't encrypt the connection (FTP's `AUTH TLS`,
     /// #51). Nothing was sent in clear after the greeting.
@@ -371,6 +376,65 @@ pub enum CurlFailure {
     Local,
     /// Any other code.
     Other,
+}
+
+/// Why a server's certificate was refused (#252), read from what the TLS backend said: Schannel on
+/// Windows, OpenSSL on Linux, in the words each used on #69 (`tests/tls.rs`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CertificateProblem {
+    /// It expired, or isn't valid yet.
+    Expired,
+    /// It is for another host name than the link's.
+    WrongHost,
+    /// Its issuer isn't trusted on this computer: self-signed, or from an unknown authority.
+    NotTrusted,
+    /// Revoked, not for a TLS server, or a reason the backend didn't name.
+    Other,
+}
+
+/// What each backend says for each problem, lower case: OpenSSL's verify texts, Schannel's words
+/// and its HRESULTs from winerror.h.
+const CERTIFICATE_PROBLEMS: &[(&str, CertificateProblem)] = &[
+    ("certificate has expired", CertificateProblem::Expired),
+    ("certificate is not yet valid", CertificateProblem::Expired),
+    ("not time valid", CertificateProblem::Expired),
+    ("0x80090328", CertificateProblem::Expired), // SEC_E_CERT_EXPIRED
+    ("0x800b0101", CertificateProblem::Expired), // CERT_E_EXPIRED
+    (
+        "no alternative certificate subject name matches",
+        CertificateProblem::WrongHost,
+    ),
+    ("subject name does not match", CertificateProblem::WrongHost),
+    (
+        "failed to match connection hostname",
+        CertificateProblem::WrongHost,
+    ),
+    ("0x80090322", CertificateProblem::WrongHost), // SEC_E_WRONG_PRINCIPAL
+    ("0x800b010f", CertificateProblem::WrongHost), // CERT_E_CN_NO_MATCH
+    (
+        "unable to get local issuer certificate",
+        CertificateProblem::NotTrusted,
+    ),
+    ("self-signed certificate", CertificateProblem::NotTrusted),
+    ("self signed certificate", CertificateProblem::NotTrusted),
+    (
+        "certificate chain is incomplete",
+        CertificateProblem::NotTrusted,
+    ),
+    ("0x80090325", CertificateProblem::NotTrusted), // SEC_E_UNTRUSTED_ROOT
+    ("0x800b0109", CertificateProblem::NotTrusted), // CERT_E_UNTRUSTEDROOT
+];
+
+/// Why the certificate behind `e` was refused, from its detail.
+fn certificate_problem(e: &curl::Error) -> CertificateProblem {
+    let detail = e
+        .extra_description()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    CERTIFICATE_PROBLEMS
+        .iter()
+        .find(|(words, _)| detail.contains(words))
+        .map_or(CertificateProblem::Other, |&(_, problem)| problem)
 }
 
 /// Windows' certificate-trust errors (HRESULTs from winerror.h) that Schannel names in a connect
@@ -417,7 +481,7 @@ impl CurlFailure {
         } else if e.is_ssl_connect_error() && refuses_certificate(e.extra_description()) {
             // Verifying against the Windows store, Schannel reports a refused certificate as a
             // connect error, with the reason only in the detail (#69).
-            CurlFailure::Certificate
+            CurlFailure::Certificate(certificate_problem(e))
         } else if e.is_ssl_connect_error() {
             CurlFailure::TlsHandshake
         } else if e.is_peer_failed_verification()
@@ -425,14 +489,16 @@ impl CurlFailure {
             || e.is_ssl_certproblem()
             || e.is_ssl_issuer_error()
         {
-            CurlFailure::Certificate
+            CurlFailure::Certificate(certificate_problem(e))
         } else if e.is_too_many_redirects() {
             CurlFailure::TooManyRedirects
         } else if e.is_unsupported_protocol() || e.is_url_malformed() {
             CurlFailure::Refused
         } else if e.code() == curl_sys::CURLE_REMOTE_FILE_NOT_FOUND {
             CurlFailure::NotFound
-        } else if e.is_login_denied() || e.is_remote_access_denied() {
+        } else if e.is_login_denied() {
+            CurlFailure::LoginDenied
+        } else if e.is_remote_access_denied() {
             CurlFailure::AccessDenied
         } else if e.is_use_ssl_failed() {
             CurlFailure::EncryptionRefused
@@ -1577,6 +1643,44 @@ mod tests {
         CurlFailure::of(&curl::Error::new(code))
     }
 
+    /// #252: a refused certificate says why, in words a user can act on. The texts are what
+    /// Schannel and OpenSSL said for each case on #69 (`tests/tls.rs`, `tests/windows_store.rs`).
+    #[test]
+    fn a_refused_certificate_says_whether_it_expired_names_another_host_or_is_not_trusted() {
+        let with = |code, detail: &str| {
+            let mut e = curl::Error::new(code);
+            e.set_extra(detail.to_owned());
+            CurlFailure::of(&e)
+        };
+        let verify = curl_sys::CURLE_PEER_FAILED_VERIFICATION;
+        let connect = curl_sys::CURLE_SSL_CONNECT_ERROR;
+        for (code, detail, problem) in [
+            // OpenSSL, on Linux.
+            (verify, "SSL certificate problem: certificate has expired (10)", CertificateProblem::Expired),
+            (verify, "SSL: no alternative certificate subject name matches target hostname 'localhost'", CertificateProblem::WrongHost),
+            (verify, "SSL certificate problem: unable to get local issuer certificate (20)", CertificateProblem::NotTrusted),
+            (verify, "SSL certificate problem: self-signed certificate (18)", CertificateProblem::NotTrusted),
+            (verify, "SSL certificate problem: unsuitable certificate purpose (26)", CertificateProblem::Other),
+            // Schannel, on Windows, verifying against the CA it was given.
+            (verify, "schannel: SNI or certificate check failed: SEC_E_WRONG_PRINCIPAL (0x80090322) - failed to match connection hostname (localhost) against server certificate names", CertificateProblem::WrongHost),
+            (verify, "schannel: the certificate is not time valid", CertificateProblem::Expired),
+            (verify, "schannel: the certificate chain is incomplete", CertificateProblem::NotTrusted),
+            // Schannel through the Windows store: a connect error with the reason in its detail.
+            (connect, "schannel: next InitializeSecurityContext failed: SEC_E_CERT_EXPIRED (0x80090328) - The received certificate has expired.", CertificateProblem::Expired),
+            (connect, "schannel: next InitializeSecurityContext failed: SEC_E_WRONG_PRINCIPAL (0x80090322) - The target principal name is incorrect.", CertificateProblem::WrongHost),
+            (connect, "schannel: next InitializeSecurityContext failed: SEC_E_UNTRUSTED_ROOT (0x80090325) - The certificate chain was issued by an authority that is not trusted.", CertificateProblem::NotTrusted),
+            (connect, "schannel: next InitializeSecurityContext failed: CRYPT_E_REVOKED (0x80092010) - The certificate is revoked.", CertificateProblem::Other),
+            (connect, "schannel: next InitializeSecurityContext failed: Unknown error (0x800B0110)", CertificateProblem::Other),
+        ] {
+            assert_eq!(with(code, detail), CurlFailure::Certificate(problem), "{detail}");
+        }
+        // Without a reason, it is still a refused certificate.
+        assert_eq!(
+            kind(verify),
+            CurlFailure::Certificate(CertificateProblem::Other)
+        );
+    }
+
     /// Regression (#69, found by the Windows store test on CI): verifying against the Windows
     /// store, Schannel reports a certificate it refuses as CURLE_SSL_CONNECT_ERROR, with the
     /// reason only in the detail. It was taken for a transient handshake failure and retried.
@@ -1596,9 +1700,11 @@ mod tests {
             "schannel: next InitializeSecurityContext failed: CRYPT_E_NO_REVOCATION_CHECK (0x80092012) - The revocation function was unable to check revocation for the certificate.",
             "schannel: next InitializeSecurityContext failed: CRYPT_E_REVOCATION_OFFLINE (0x80092013) - The revocation function was unable to check revocation because the revocation server was offline.",
         ] {
-            assert_eq!(
-                with(curl_sys::CURLE_SSL_CONNECT_ERROR, detail),
-                CurlFailure::Certificate,
+            assert!(
+                matches!(
+                    with(curl_sys::CURLE_SSL_CONNECT_ERROR, detail),
+                    CurlFailure::Certificate(_)
+                ),
                 "{detail}"
             );
         }
@@ -1632,10 +1738,16 @@ mod tests {
             (curl_sys::CURLE_SSL_CONNECT_ERROR, CurlFailure::TlsHandshake),
             (
                 curl_sys::CURLE_PEER_FAILED_VERIFICATION,
-                CurlFailure::Certificate,
+                CurlFailure::Certificate(CertificateProblem::Other),
             ),
-            (curl_sys::CURLE_SSL_CACERT_BADFILE, CurlFailure::Certificate),
-            (curl_sys::CURLE_SSL_ISSUER_ERROR, CurlFailure::Certificate),
+            (
+                curl_sys::CURLE_SSL_CACERT_BADFILE,
+                CurlFailure::Certificate(CertificateProblem::Other),
+            ),
+            (
+                curl_sys::CURLE_SSL_ISSUER_ERROR,
+                CurlFailure::Certificate(CertificateProblem::Other),
+            ),
             (
                 curl_sys::CURLE_TOO_MANY_REDIRECTS,
                 CurlFailure::TooManyRedirects,
@@ -1648,7 +1760,8 @@ mod tests {
             ),
             (curl_sys::CURLE_BAD_CONTENT_ENCODING, CurlFailure::Protocol),
             (curl_sys::CURLE_REMOTE_FILE_NOT_FOUND, CurlFailure::NotFound),
-            (curl_sys::CURLE_LOGIN_DENIED, CurlFailure::AccessDenied),
+            // #249: a refused login opens the login window; a refused file doesn't.
+            (curl_sys::CURLE_LOGIN_DENIED, CurlFailure::LoginDenied),
             (
                 curl_sys::CURLE_REMOTE_ACCESS_DENIED,
                 CurlFailure::AccessDenied,

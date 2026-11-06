@@ -7,8 +7,10 @@
   "error": {
     "class": "throttled",
     "confirm": null,
+    "detail": null,
     "hostKey": null,
     "httpStatus": 503,
+    "loginRequired": false,
     "message": "Service unavailable",
     "noNetwork": false,
     "retryable": true

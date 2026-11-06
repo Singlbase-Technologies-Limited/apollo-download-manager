@@ -58,8 +58,10 @@
       "error": {
         "class": "permanent",
         "confirm": null,
+        "detail": null,
         "hostKey": null,
         "httpStatus": 404,
+        "loginRequired": false,
         "message": "Not found",
         "noNetwork": false,
         "retryable": false

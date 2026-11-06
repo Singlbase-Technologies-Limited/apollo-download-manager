@@ -35,20 +35,29 @@ The details panel shows the message, the server's HTTP status when there is one,
 - **"The server asked Apollo Download Manager to slow down. Retrying later may help."** The server is busy or limits how many requests it accepts.
 - **"Retrying is unlikely to help without changing the request."** For example a missing file, a refused login or a full disk: fix the cause first.
 
+The message says what happened in plain words. When the download engine has more to say, such as a library's error code, **Technical details** under the message shows it, with a button to copy it for a bug report.
+
 The most common messages:
 
 | Message | What to do |
 |---|---|
 | "The server name could not be resolved. Check the link's spelling, …" | Check the link's spelling, the proxy's address if you set one in Settings, Proxy, and your internet connection. Some servers can be reached only over IPv6: if your network has no IPv6 internet access, they can't be reached from it. Apollo Download Manager tries a few times on its own before it shows this, then waits for you to **Retry** |
 | "This computer has no network connection to the server. …" | Check that Wi-Fi or the cable is connected. Some servers can be reached only over IPv6: if your network has no IPv6 internet access, they can't be reached from it. A download that had already started keeps trying for about 5 minutes on its own, and goes on from where it stopped once the network is back. Otherwise, **Retry** once it's back |
-| "The file was not found on the server (404). The link may have expired." | Get a new link from the site |
-| "The download link expired (403). Get a fresh link from the browser." | Copy the link again from the site, and add it again |
-| "Access was denied by the server (403)." or "The server requires authentication (401)." | The link needs a login: add it again with your user name and password, or get a new link |
-| "The server's certificate isn't trusted, so the connection was refused." | Check your computer's date and time, and whether a proxy or security program intercepts connections. Otherwise the site must fix its certificate. Apollo Download Manager never skips this check |
+| "The file was not found on the server. The link may have expired." (HTTP 404) | Get a new link from the site |
+| "The download link expired. Get a fresh link from the browser." | Copy the link again from the site, and add it again |
+| "The server requires a user name and password." (HTTP 401), or "The server refused the login. Check the user name and password." | The login window opens on its own: enter the right login and choose **Log in and retry** |
+| "The server denied access to the file. …" (HTTP 403) | The link may have expired, or isn't for you: get a new link from the site |
+| "The server doesn't let this user read the file." | You're logged in, but this user may not read the file. Ask the server's owner for access; a new password won't help |
+| "The website's security certificate has expired, …" | The site's owner must renew its certificate. If it is your own server, also check this computer's date and time. Apollo Download Manager never skips this check |
+| "The website's security certificate is for another website, …" | Check the link's address: a mistyped name, or a link to a server under another name, can cause this. Apollo Download Manager never skips this check |
+| "The website's security certificate isn't trusted on this computer, …" | The certificate is self-signed or from an authority your computer doesn't know. Check whether a proxy or security program intercepts connections. For your own server, add its certificate authority to the system's trusted certificates. Apollo Download Manager never skips this check |
+| "The website's security certificate was refused, …" | The certificate may have been revoked, or isn't meant for a website. Only the site's owner can fix it. Apollo Download Manager never skips this check |
 | "The server's host key changed …" (SFTP) | Ask the server's owner whether the key changed, and why. Apollo Download Manager never trusts a changed key: after checking, remove the old entry from the `known_hosts` file in Apollo Download Manager's data folder by hand |
 | "The downloaded file doesn't match its SHA-256 checksum …" | Check that the checksum is the one the site gives for this exact file. The unfinished file is kept as `<name>.vdmpart` |
 | "There is not enough disk space." | Free some space, then **Retry**: the download goes on from where it stopped |
 | "Apollo Download Manager isn't allowed to write to that location." | The folder stopped accepting writes (its permissions changed, or the drive became read-only). Give your user write access again, then **Retry** |
+| "A file or folder of the torrent is no longer there." | A torrent's file or its folder was moved or deleted while it downloaded or seeded. Put it back, or remove the torrent and add it again |
+| "The torrent stopped because of an error." | The torrent engine reported a problem Apollo Download Manager has no plain words for. **Technical details** shows its own message; include it when you report the problem |
 | "The proxy refused the connection. Check its user name and password in Settings, Proxy." | Check the proxy's login, then retry. Ask the proxy's administrator whether it allows that site |
 | "The server can't encrypt the connection, and this download requires encryption." | The FTP server doesn't offer FTPS. Ask for an `ftps://` or `https://` link |
 | "The destination file already exists; it is never replaced" | A file appeared at the download's name while it downloaded. Apollo Download Manager kept it. Move or rename that file, or add the download again with another name |

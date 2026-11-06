@@ -4,6 +4,7 @@ import { AlertTriangle, Check, Columns3, Download as DownloadIcon, Inbox, MoreHo
 import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../components/Button';
+import { Tooltip } from '../../components/Tooltip';
 import { EmptyState } from '../../components/EmptyState';
 import { DropdownMenu, menuContent, menuItem } from '../../components/Menu';
 import { Input } from '../../components/Input';
@@ -24,6 +25,7 @@ import { ALL_COLUMNS, columnsFor } from './columns';
 import { DetailsPanel } from './DetailsPanel';
 import { DownloadTable } from './DownloadTable';
 import { LoginDialog } from './LoginDialog';
+import { useLoginPrompt } from './useLoginPrompt';
 import { StartAtDialog } from './StartAtDialog';
 import { useDownloadActions } from './useDownloadActions';
 
@@ -112,6 +114,7 @@ export function DownloadsView({ view }: { view: ListView }) {
   const { data: categories } = useCategories();
   const { data: settings } = useShellSettings();
   const { actions, busy } = useDownloadActions();
+  useLoginPrompt();
   const saveColumns = useSaveColumns();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -170,34 +173,50 @@ export function DownloadsView({ view }: { view: ListView }) {
       {/* The list and its toolbar are one panel, and the details panel another beside it. */}
       <div className={cn(PANEL, '@container flex min-h-0 min-w-0 flex-1 flex-col bg-bg')}>
       <div className="flex h-12 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-3" role="toolbar" aria-label="Download actions">
-        <Button variant="ghost" size="icon" aria-label="Resume selected" title="Resume selected" disabled={busy || !can.resume} onClick={() => void actions.resume(ids)}>
-          <Play />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label="Pause selected" title="Pause selected" disabled={busy || !can.pause} onClick={() => void actions.pause(ids)}>
-          <Pause />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label="Cancel selected" title="Cancel selected (keeps what was downloaded for a retry)" disabled={busy || !can.cancel} onClick={() => void actions.cancel(ids)}>
-          <Square />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label="Retry selected" title="Retry selected" disabled={busy || !can.retry} onClick={() => void actions.retry(ids)}>
-          <RotateCcw />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label="Remove selected from list" title="Remove selected from list" disabled={busy || !can.remove} onClick={() => void actions.remove(selected)}>
-          <X />
-        </Button>
+        <Tooltip label="Resume selected" canBeDisabled>
+          <Button variant="ghost" size="icon" aria-label="Resume selected" disabled={busy || !can.resume} onClick={() => void actions.resume(ids)}>
+            <Play />
+          </Button>
+        </Tooltip>
+        <Tooltip label="Pause selected" canBeDisabled>
+          <Button variant="ghost" size="icon" aria-label="Pause selected" disabled={busy || !can.pause} onClick={() => void actions.pause(ids)}>
+            <Pause />
+          </Button>
+        </Tooltip>
+        <Tooltip label="Cancel selected: keeps what was downloaded for a retry" canBeDisabled>
+          <Button variant="ghost" size="icon" aria-label="Cancel selected" disabled={busy || !can.cancel} onClick={() => void actions.cancel(ids)}>
+            <Square />
+          </Button>
+        </Tooltip>
+        <Tooltip label="Retry selected" canBeDisabled>
+          <Button variant="ghost" size="icon" aria-label="Retry selected" disabled={busy || !can.retry} onClick={() => void actions.retry(ids)}>
+            <RotateCcw />
+          </Button>
+        </Tooltip>
+        <Tooltip label="Remove selected from list" canBeDisabled>
+          <Button variant="ghost" size="icon" aria-label="Remove selected from list" disabled={busy || !can.remove} onClick={() => void actions.remove(selected)}>
+            <X />
+          </Button>
+        </Tooltip>
         <div className="mx-1.5 h-5 w-px bg-border" />
         {/* Labels give way to icons when the list is narrow; the names stay for assistive technology. */}
-        <Button variant="ghost" size="sm" disabled={busy} onClick={() => void actions.resumeAll()} title="Resume all">
-          <Play /> <span className="@max-4xl:sr-only">Resume all</span>
-        </Button>
-        <Button variant="ghost" size="sm" disabled={busy} onClick={() => void actions.pauseAll()} title="Pause all">
-          <Pause /> <span className="@max-4xl:sr-only">Pause all</span>
-        </Button>
+        <Tooltip label="Resume all" canBeDisabled>
+          <Button variant="ghost" size="sm" disabled={busy} onClick={() => void actions.resumeAll()}>
+            <Play /> <span className="@max-4xl:sr-only">Resume all</span>
+          </Button>
+        </Tooltip>
+        <Tooltip label="Pause all" canBeDisabled>
+          <Button variant="ghost" size="sm" disabled={busy} onClick={() => void actions.pauseAll()}>
+            <Pause /> <span className="@max-4xl:sr-only">Pause all</span>
+          </Button>
+        </Tooltip>
         <DropdownMenu
           trigger={
-            <Button variant="ghost" size="icon" aria-label="More actions" title="More actions">
-              <MoreHorizontal />
-            </Button>
+            <Tooltip label="More actions">
+              <Button variant="ghost" size="icon" aria-label="More actions">
+                <MoreHorizontal />
+              </Button>
+            </Tooltip>
           }
           items={[
             { label: 'Retry all failed', icon: <RotateCcw />, disabled: busy, onSelect: () => void actions.retryFailed() },
@@ -213,9 +232,11 @@ export function DownloadsView({ view }: { view: ListView }) {
         </div>
         <DropdownPrimitive.Root>
           <DropdownPrimitive.Trigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Choose columns" title="Choose columns">
-              <Columns3 />
-            </Button>
+            <Tooltip label="Choose columns">
+              <Button variant="ghost" size="icon" aria-label="Choose columns">
+                <Columns3 />
+              </Button>
+            </Tooltip>
           </DropdownPrimitive.Trigger>
           <DropdownPrimitive.Portal>
             <DropdownPrimitive.Content align="end" sideOffset={4} className={menuContent}>
@@ -244,17 +265,18 @@ export function DownloadsView({ view }: { view: ListView }) {
             </DropdownPrimitive.Content>
           </DropdownPrimitive.Portal>
         </DropdownPrimitive.Root>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Toggle details panel"
-          title={detailsTarget ? 'Hide details' : 'Show details for the focused download'}
-          aria-pressed={detailsTarget !== null}
-          aria-controls={detailsTarget ? 'details-panel' : undefined}
-          onClick={() => { showDetails(detailsTarget ? null : (selected[0]?.id ?? rows[0]?.id ?? null)); }}
-        >
-          <PanelRight />
-        </Button>
+        <Tooltip label={detailsTarget ? 'Hide details' : 'Show details for the focused download'}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle details panel"
+            aria-pressed={detailsTarget !== null}
+            aria-controls={detailsTarget ? 'details-panel' : undefined}
+            onClick={() => { showDetails(detailsTarget ? null : (selected[0]?.id ?? rows[0]?.id ?? null)); }}
+          >
+            <PanelRight />
+          </Button>
+        </Tooltip>
       </div>
 
       <div className="flex h-9 shrink-0 items-center gap-3 border-b border-border px-4">

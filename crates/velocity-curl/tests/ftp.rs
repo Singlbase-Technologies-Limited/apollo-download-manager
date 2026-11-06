@@ -7,8 +7,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use velocity_curl::{
-    CurlFailure, CurlLoop, Fetch, FetchError, FetchEvent, FetchRequest, Gate, Libcurl, LoopOptions,
-    RequestOptions, ResponseHead,
+    CertificateProblem, CurlFailure, CurlLoop, Fetch, FetchError, FetchEvent, FetchRequest, Gate,
+    Libcurl, LoopOptions, RequestOptions, ResponseHead,
 };
 use velocity_test_http::ftp::{FtpOptions, FtpServer, FtpTls};
 use velocity_test_http::seeded_bytes;
@@ -313,7 +313,7 @@ fn a_refused_login_fails_as_access_denied() {
             login("alice", "wrong"),
         ),
     );
-    assert_eq!(failure(&o.done), CurlFailure::AccessDenied, "{:?}", o.done);
+    assert_eq!(failure(&o.done), CurlFailure::LoginDenied, "{:?}", o.done);
 }
 
 #[test]
@@ -408,7 +408,12 @@ fn an_untrusted_ftps_certificate_is_refused_before_the_login() {
         &server,
         with(FetchRequest::get(server.url("pub/f.bin")), options),
     );
-    assert_eq!(failure(&o.done), CurlFailure::Certificate, "{:?}", o.done);
+    assert_eq!(
+        failure(&o.done),
+        CurlFailure::Certificate(CertificateProblem::NotTrusted),
+        "{:?}",
+        o.done
+    );
     assert!(server.record().logins.is_empty());
 }
 

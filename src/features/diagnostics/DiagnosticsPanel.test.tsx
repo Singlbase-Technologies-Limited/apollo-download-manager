@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Toaster } from 'sonner';
 import { describe, expect, it } from 'vitest';
 import { ConfirmHost } from '../../components/ConfirmHost';
+import { TooltipProvider } from '../../components/Tooltip';
 import type { DiagnosticReport } from '../../contract';
 import { ERROR_MESSAGES } from '../../lib/errors';
 import { createQueryClient } from '../../lib/queries';
@@ -18,9 +19,11 @@ const sample = fixture('diagnostics.json') as DiagnosticReport;
 function renderPanel() {
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <DiagnosticsPanel />
-      <ConfirmHost />
-      <Toaster />
+      <TooltipProvider>
+        <DiagnosticsPanel />
+        <ConfirmHost />
+        <Toaster />
+      </TooltipProvider>
     </QueryClientProvider>,
   );
 }
