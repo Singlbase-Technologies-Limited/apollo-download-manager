@@ -2,6 +2,7 @@ import { createBackground, isContentMessage, isPageMessage, type ExtApi, type Pe
 import { ext } from './shared/ext';
 import { sanitizeSettings } from './shared/settings';
 import { EXTENSION_NAME } from './shared/branding';
+import { RECENT_KEY } from './shared/recent';
 
 const MENU_ID = 'velocity-v2-download-link';
 
@@ -42,6 +43,9 @@ const api: ExtApi = {
     else memory.delete(key);
   },
   sessionAll: async () => (session ? await session.get<Record<string, PendingPrompt>>(null) : Object.fromEntries(memory)),
+  getRecent: async () => (await ext.storage.local.get(RECENT_KEY))[RECENT_KEY],
+  setRecent: (list) => ext.storage.local.set({ [RECENT_KEY]: list }),
+  now: () => Date.now(),
 };
 
 const bg = createBackground(api);
