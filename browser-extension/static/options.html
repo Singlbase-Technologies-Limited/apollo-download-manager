@@ -1,28 +1,69 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Apollo Download Manager extension settings</title><link rel="stylesheet" href="style.css"><style>body{max-width:560px;padding:20px}</style></head>
+<html lang="en"><head><meta charset="utf-8"><title>Apollo Download Manager extension settings</title><link rel="stylesheet" href="style.css"></head>
 <body>
-<h1><img src="icons/icon-32.png" alt="">Apollo Download Manager extension settings</h1>
-<p class="hint">Links are passed to the Apollo Download Manager desktop application through the browser's native messaging. Cookies and logins from the browser are not sent; downloads that need them may fail in Apollo Download Manager, and then you can download them in the browser.</p>
-<form id="form">
-  <label for="mode">When the browser starts a download</label>
-  <select id="mode">
-    <option value="auto">Send matching downloads to Apollo Download Manager</option>
-    <option value="ask">Ask me first</option>
-    <option value="off">Let the browser download</option>
-  </select>
-  <label for="fileTypes">File types to send <span class="hint">(extensions, separated by spaces)</span></label>
-  <textarea id="fileTypes"></textarea>
-  <label for="minSizeMib">Also send downloads of at least <span class="hint">(MiB, 0 disables; only when the browser knows the size)</span></label>
-  <input id="minSizeMib" type="number" min="0" max="100000">
-  <label for="allowDomains">Only these sites <span class="hint">(one domain per line; empty means all)</span></label>
-  <textarea id="allowDomains"></textarea>
-  <label for="denyDomains">Never these sites <span class="hint">(one domain per line, subdomains included)</span></label>
-  <textarea id="denyDomains"></textarea>
-  <label class="check"><input id="includePrivate" type="checkbox"> Also handle downloads in private windows</label>
-  <label class="check"><input id="contextMenu" type="checkbox"> Show “Download with Apollo Download Manager” in the right-click menu</label>
-  <label class="check"><input id="captureTorrents" type="checkbox"> Send magnet links and .torrent downloads to Apollo Download Manager <span class="hint">(off by default; magnet clicks need access to pages, which the browser asks for; Apollo Download Manager always asks before adding a torrent)</span></label>
-  <p id="torrentAccess" class="hint" role="status"></p>
-  <p class="row"><button class="primary" type="submit">Save</button><button id="reset" type="button">Restore defaults</button><span id="saved" class="ok" role="status"></span></p>
-</form>
+<main class="page">
+  <header class="page-header">
+    <img class="mark" src="icons/icon-32.png" alt="">
+    <div>
+      <h1>Apollo Download Manager extension</h1>
+      <p class="hint">Links go to the desktop app through the browser's native messaging. Cookies and logins from the browser are not sent, so a download that needs them may fail in the app; then download it in the browser.</p>
+    </div>
+  </header>
+
+  <form id="form" class="stack" style="padding:0">
+    <section class="card section" aria-labelledby="captureTitle">
+      <h2 id="captureTitle">Capture</h2>
+      <fieldset class="choices">
+        <legend class="hint">When the browser starts a download</legend>
+        <label class="choice"><input type="radio" name="mode" value="auto"> Send matching downloads to Apollo Download Manager</label>
+        <label class="choice"><input type="radio" name="mode" value="ask"> Ask me first</label>
+        <label class="choice"><input type="radio" name="mode" value="off"> Let the browser download</label>
+      </fieldset>
+      <label class="toggle">Show “Download with Apollo Download Manager” in the right-click menu <input id="contextMenu" type="checkbox"></label>
+      <label class="toggle">Also handle downloads in private windows <input id="includePrivate" type="checkbox"></label>
+    </section>
+
+    <section class="card section" aria-labelledby="filtersTitle">
+      <h2 id="filtersTitle">Filters</h2>
+      <div class="field">
+        <label for="fileTypes">File types to send <span class="hint">(extensions, separated by spaces)</span></label>
+        <textarea id="fileTypes"></textarea>
+      </div>
+      <div class="field">
+        <label for="minSizeMib">Also send downloads of at least <span class="hint">(MiB; 0 turns it off; only when the browser knows the size)</span></label>
+        <input id="minSizeMib" type="number" min="0" max="100000" style="max-width:140px">
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="allowDomains">Only these sites <span class="hint">(one per line; empty means all)</span></label>
+          <textarea id="allowDomains"></textarea>
+        </div>
+        <div class="field">
+          <label for="denyDomains">Never these sites <span class="hint">(one per line, subdomains too)</span></label>
+          <textarea id="denyDomains"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="card section" aria-labelledby="torrentsTitle">
+      <h2 id="torrentsTitle">Torrents</h2>
+      <label class="toggle" style="border-top:0;padding-top:0">Send magnet links and .torrent downloads to Apollo Download Manager <input id="captureTorrents" type="checkbox"></label>
+      <p class="hint">Off by default. Magnet clicks need access to pages, which the browser asks you for. The app always asks before adding a torrent.</p>
+      <p id="torrentAccess" class="hint warn" role="status"></p>
+    </section>
+
+    <section class="card section" aria-labelledby="privacyTitle">
+      <h2 id="privacyTitle">Privacy</h2>
+      <p class="text">The popup keeps your last 5 sends, the site and file name only, in this browser. Nothing leaves your computer except the links you send to the app.</p>
+      <div class="row"><button id="clearRecent" type="button">Clear recent sends</button><span id="cleared" class="hint ok" role="status"></span></div>
+    </section>
+
+    <div class="actions">
+      <button class="primary" type="submit">Save</button>
+      <button id="reset" type="button">Restore defaults</button>
+      <span id="saved" class="ok" role="status"></span>
+    </div>
+  </form>
+</main>
 <script src="options.js"></script>
 </body></html>

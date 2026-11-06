@@ -35,6 +35,17 @@ pub struct Branding {
     /// The extension IDs the native host allows: the one derived from `chrome_extension_key`
     /// (checked by `scripts/extension-lib.test.mjs`).
     pub chrome_extension_ids: Vec<String>,
+    /// The extension's store pages (#241), each `None` until it is published there (#240).
+    pub extension_store_urls: StoreUrls,
+}
+
+/// The extension's page in each store. Chromium and Brave use the Chrome Web Store.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct StoreUrls {
+    pub chrome: Option<String>,
+    pub edge: Option<String>,
+    pub firefox: Option<String>,
 }
 
 impl Branding {
@@ -114,6 +125,23 @@ mod tests {
             && !s.contains("..")
             && s.chars()
                 .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '.')
+    }
+
+    /// #241: a store link, once #240 sets it, is an https page on that store's own site, so
+    /// "Get the extension" can never open anything else.
+    #[test]
+    fn store_links_are_https_pages_on_their_stores() {
+        let s = &branding().extension_store_urls;
+        for (url, host) in [
+            (&s.chrome, "chromewebstore.google.com"),
+            (&s.edge, "microsoftedge.microsoft.com"),
+            (&s.firefox, "addons.mozilla.org"),
+        ] {
+            if let Some(u) = url {
+                assert!(u.starts_with(&format!("https://{host}/")), "{u}");
+                assert!(!u.contains(char::is_whitespace), "{u}");
+            }
+        }
     }
 
     #[test]

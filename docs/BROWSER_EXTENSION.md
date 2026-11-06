@@ -9,7 +9,8 @@ The browser extension offers the browser's downloads to V2, and lets the browser
 - **Rules:** file types (archives, disk images, installers, video, audio, PDF and e-books by default), a size threshold (20 MiB by default; only when the browser knows the size), allow and deny lists of domains with their subdomains, and private windows (off by default).
 - **Never intercepted:** `blob:`, `data:`, `file:` and other browser-only links; downloads the extension started itself as a fallback; and the same link twice within 5 seconds.
 - **Context menu:** "Download with Apollo Download Manager" on links, images, video and audio. If V2 can't take the link, the browser downloads it.
-- **Popup:** shows whether V2 is reachable, switches the mode, and sends a typed link.
+- **Popup:** shows whether V2 is reachable (checking; connected, with the app's version; connected but the engine isn't running; connected but browser requests are off; not connected, with the reason and **Try again**), switches the mode, sends a typed link, and lists the last 5 sends (#356).
+- **Recent sends:** each keeps only the file name, the host, sent or failed, the error code and the time, in `storage.local` under `recentSends`. Never the link itself, whose path or query can hold a token, and never the error message, which can repeat it. The list is checked on every read (`src/shared/recent.ts`) and cleared with **Clear recent sends** on the settings page.
 - **Magnet links and `.torrent` downloads:** off by default. Turning them on asks for access to pages, which magnet clicks need; `.torrent` downloads work without it. V2 always asks before adding a torrent.
 - **Failures:** the toolbar badge turns red with "!", and its tooltip says what went wrong, for example that the connection isn't set up or that V2 didn't answer within 10 seconds.
 - **What it never sends:** cookies, page content or logins. A download that needs them may fail in V2, and the browser can then download it.
@@ -35,7 +36,18 @@ The extension speaks V1's native messaging protocol, version 1, unchanged: it ca
 
 ## Permissions
 
-The same as V1's: `downloads`, `nativeMessaging`, `storage`, `contextMenus` and `scripting`. Access to pages (`<all_urls>`) is optional, and asked for only when magnet capture is turned on. The extension's pages run only the extension's own scripts (`script-src 'self'`).
+The same as V1's, each in use (checked on #356). These reasons are also the store listings' permission justifications:
+
+| Permission | Why the extension needs it |
+|---|---|
+| `downloads` | To see a download the browser starts, pause it while the app takes it, then cancel and erase the browser's copy, or resume it when the app can't take it. |
+| `nativeMessaging` | To pass links to the Apollo Download Manager desktop app through its native host. It is the only channel to the app. |
+| `storage` | To keep the extension's settings and the popup's last 5 sends (file name and host only), and pending ask-first prompts. |
+| `contextMenus` | For "Download with Apollo Download Manager" on a link, image, video or audio. It can be turned off. |
+| `scripting` | To register the magnet-link script, only while torrent capture is on and page access was granted. |
+| `<all_urls>` (optional) | Asked for only when you turn on magnet capture, so a magnet link click on a page reaches the app. Without it, only `.torrent` downloads are sent. |
+
+The windows, toolbar button and permissions APIs the extension also calls need no permission of their own. The extension's pages run only the extension's own scripts (`script-src 'self'`).
 
 ## Building
 
@@ -47,6 +59,14 @@ pnpm build:extension -- --release # release build: talks to the release app
 Both write `browser-extension/dist/chrome` (Chrome, Edge and Brave, Manifest V3 with a service worker; Chrome 116 or later) and `browser-extension/dist/firefox` (Manifest V3 with a background script; Firefox 115 or later). Each script is bundled by Vite as a classic script, and the icons are the desktop app's own (`src-tauri/icons`).
 
 To try a build: in Chrome, open `chrome://extensions`, turn on developer mode and load `browser-extension/dist/chrome` unpacked; in Firefox, open `about:debugging`, This Firefox, and load `browser-extension/dist/firefox/manifest.json` as a temporary add-on. It reaches V2 once the native host is registered with that browser ([below](#registering-with-each-browser)).
+
+### Store packages
+
+```sh
+pnpm package:extension   # a release build, zipped for the stores
+```
+
+It writes `browser-extension/dist/packages/apollo-download-manager-chrome-<version>.zip` (for the Chrome Web Store and Microsoft Edge Add-ons) and `apollo-download-manager-firefox-<version>.zip` (for addons.mozilla.org), with the manifest at the archive's root. The zip writer (`scripts/zip-lib.mjs`) uses Node's own zlib, sorts the files and dates them 1980-01-01, so the same build gives the same bytes. Uploading is a manual step for the PO (#240). The listing text and the permission reasons are in [`browser-extension/store/`](../browser-extension/store/README.md), and each package is checked by hand with the [release test](BROWSER_EXTENSION_RELEASE_TEST.md) before it is uploaded.
 
 ## Tests
 
@@ -81,7 +101,7 @@ To try a build: in Chrome, open `chrome://extensions`, turn on developer mode an
 
 ## Registering with each browser
 
-Settings, Browser lists Chrome, Chromium, Edge, Brave and Firefox, each with Register or Unregister (`register_browser`, `unregister_browser`). Registering is for this user only: nothing system-wide, no elevation.
+Settings, Browser, and step 3 of Get started, list each of Chrome, Chromium, Edge, Brave and Firefox that is installed here, or still registered, with Register or Unregister (`register_browser`, `unregister_browser`) and **Get the extension** (`open_extension_page`, #241). Installed browsers are found in each browser's App Paths registry entry on Windows (for this user, then for every user; Chromium has none, so it isn't listed unless registered), and on Linux by their usual program names on `PATH`, then as a Snap (`/snap/bin`) or Flatpak. A Snap or Flatpak browser is listed with a note that it may not reach the native host; that hasn't been tried on a real system yet. **Get the extension** opens the store page from `branding.json`'s `extensionStoreUrls` in that browser; all three are `null` until #240 publishes the extension, so the button is off and says why. Registering is for this user only: nothing system-wide, no elevation.
 
 - **The manifest** names V2's host, the host program beside the app, and the extensions allowed to start it: V2's Chrome extension (`allowed_origins`) or Firefox add-on (`allowed_extensions`).
 - **Where:** on Linux, each browser's own folder (for example `~/.config/google-chrome/NativeMessagingHosts`, `~/.mozilla/native-messaging-hosts`); on Windows, `<data folder>/native-messaging/<host>.<browser>.json`, with each browser's `HKEY_CURRENT_USER\Software\…\NativeMessagingHosts\<host>` key pointing to it (`windows-sys`, PO decision on #65). The macOS places are V1's, untested (#83).

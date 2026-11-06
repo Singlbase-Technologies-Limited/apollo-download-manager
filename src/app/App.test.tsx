@@ -74,45 +74,73 @@ describe('starting', () => {
 });
 
 describe('the first-run setup', () => {
+  /** Goes from the folder step to the summary, skipping the browser step. */
+  async function toSummary(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await user.click(await screen.findByRole('button', { name: 'Skip' }));
+    return screen.findByRole('heading', { name: 'You’re ready' });
+  }
+
   it('offers the default folder, and finishing it saves the chosen one and opens the window', async () => {
     const user = userEvent.setup();
     const backend = installFakeBackend({ settings: firstRun(), chosenDirectory: '/data/Apollo Download Manager' });
     renderApp();
+    expect(await screen.findByText('Step 1 of 3')).toBeTruthy();
     const folder = await screen.findByRole('textbox', { name: 'Download folder' });
     expect((folder as HTMLInputElement).value).toBe('/home/user/Downloads');
-    await user.click(screen.getByRole('button', { name: 'Browse' }));
+    await user.click(screen.getByRole('button', { name: 'Browse…' }));
     await waitFor(() => { expect((folder as HTMLInputElement).value).toBe('/data/Apollo Download Manager'); });
     expect(callsOf(backend, 'choose_directory')[0]?.args).toEqual({ initial: '/home/user/Downloads' });
+    await toSummary(user);
+    expect(screen.getByText('/data/Apollo Download Manager')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Get started' }));
     expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeTruthy();
     expect(callsOf(backend, 'complete_onboarding').map((c) => c.args)).toEqual([{ directory: '/data/Apollo Download Manager' }]);
   });
 
-  it('points to the Browser settings for the extension, as an optional step (#65)', async () => {
+  it('sets up the browsers found here as an optional step, and Back keeps the folder (#65, #241, #372)', async () => {
+    const user = userEvent.setup();
     installFakeBackend({ settings: firstRun() });
     renderApp();
-    expect(await screen.findByRole('heading', { name: '3. Optional: the browser extension' })).toBeTruthy();
-    expect(screen.getByText(/register Chrome, Edge, Brave or Firefox in Settings, Browser/)).toBeTruthy();
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('heading', { name: 'Send downloads from your browser?' })).toBeTruthy();
+    expect(screen.getByText('Step 2 of 3 · optional')).toBeTruthy();
+    expect(screen.getByText(/You can skip this and do it later in Settings, Browser/)).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Unregister from Google Chrome' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Google Chrome')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Download folder' }).value).toBe('/home/user/Downloads');
+  });
+
+  it('moves focus to each step’s heading', async () => {
+    const user = userEvent.setup();
+    installFakeBackend({ settings: firstRun() });
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    await waitFor(() => { expect(document.activeElement?.textContent).toBe('Send downloads from your browser?'); });
   });
 
   it('shows why the folder was refused and stays open', async () => {
     const user = userEvent.setup();
     installFakeBackend({ settings: firstRun(), failures: { complete_onboarding: 'DESTINATION_MISSING' } });
     renderApp();
-    await user.click(await screen.findByRole('button', { name: 'Get started' }));
+    await toSummary(user);
+    await user.click(screen.getByRole('button', { name: 'Get started' }));
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe(ERROR_MESSAGES.DESTINATION_MISSING);
     expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
   });
 
-  it('can’t be finished without a folder', async () => {
+  it('can’t go on without a folder', async () => {
     const user = userEvent.setup();
     installFakeBackend({ settings: { ...firstRun(), defaultDirectory: null } });
     renderApp();
-    const start = await screen.findByRole('button', { name: 'Get started' });
-    expect((start as HTMLButtonElement).disabled).toBe(true);
+    const next = await screen.findByRole('button', { name: 'Next' });
+    expect((next as HTMLButtonElement).disabled).toBe(true);
     await user.type(screen.getByRole('textbox', { name: 'Download folder' }), '/srv/files');
-    expect((start as HTMLButtonElement).disabled).toBe(false);
+    expect((next as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('shows whether the transfer engine is running', async () => {

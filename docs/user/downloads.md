@@ -4,7 +4,7 @@ How to add downloads, follow them in the list, and find them again later. Torren
 
 ## Adding downloads
 
-Open the Add dialog with **Add download** at the top of the navigation, or **Ctrl+N** (**⌘N** on macOS). Dropping `.torrent` files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or `.torrent` link anywhere outside a text field also opens it, with the link filled in.
+Open the Add dialog with **Add download** at the top of the navigation, or **Ctrl+N**. Dropping `.torrent` files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or `.torrent` link anywhere outside a text field also opens it, with the link filled in.
 
 **What you can add:**
 
@@ -59,7 +59,7 @@ The first download from an SFTP server stops before logging in and asks **Trust 
 
 **Columns:** click a column's name to sort by it, and again to reverse. **Choose columns** shows or hides any of the 13 columns; Name is always shown, and **Reset to default columns** brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; **Home** or a double-click restores its width. Widths are kept.
 
-**Selecting:** click, **Ctrl+click** (**⌘** on macOS) and **Shift+click**, or the checkboxes; the top checkbox selects every download shown.
+**Selecting:** click, **Ctrl+click** and **Shift+click**, or the checkboxes; the top checkbox selects every download shown.
 
 **Acting:** the toolbar and the right-click menu offer what the selected downloads allow: Resume, Pause, Cancel, Retry, Stop seeding, Move to top, up, down or bottom of the queue, Copy link, Copy name, Open file, Open folder, Details, Remove from list and Delete files.
 
@@ -123,7 +123,7 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 
 Passwords, custom header values (such as cookies or tokens) and SSH key passphrases are secrets. Apollo Download Manager never writes them to its database, its saved progress or its log.
 
-- **Remember this login in the system keychain,** in the Add dialog and the login window, is off by default. Ticked, the download's login is kept in Windows Credential Manager, the Secret Service on Linux (GNOME Keyring, KWallet) or the macOS Keychain, and removing the download deletes it there.
+- **Remember this login in the system keychain,** in the Add dialog and the login window, is off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there.
 - **When the server refuses the login:** the window **Log in to download** opens, says the server refused it, and asks for the user name and password (and, for SFTP, the key). **Log in and retry** tries again with them; **Not now** leaves the download Failed. It opens for a refused login only (HTTP's 401, FTP's or SFTP's refused login), never when the server lets you in but not to the file, and never for the proxy's login, which is in Settings, Proxy.
 - **After a restart:** a download whose login was remembered carries on. Otherwise it comes back paused, as "Needs its login", and asks for it again when you resume it, as V1 did.
 - **No keychain** (for example a minimal Linux without a Secret Service): Apollo Download Manager says "The system keychain isn't available, so the login wasn't saved." The download still works until Apollo Download Manager closes.

@@ -17,7 +17,9 @@ if (r.status !== 0) {
   console.error(`git ls-files failed:\n${r.stderr}`);
   process.exit(2);
 }
-const files = r.stdout.split('\0').filter(Boolean);
+// The website's own pages (site/content/) link to the site's addresses, such as `/guide/`, not to files here;
+// scripts/site-lib.test.mjs checks every link of the built site, so they aren't checked twice with this rule.
+const files = r.stdout.split('\0').filter((p) => p && !p.startsWith('site/content/'));
 const read = (p) => {
   const abs = join(root, p);
   return existsSync(abs) && statSync(abs).isFile() ? readFileSync(abs, 'utf8') : undefined;

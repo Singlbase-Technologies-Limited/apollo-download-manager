@@ -1,10 +1,10 @@
 # Browser integration
 
-V2's browser extension sends downloads from your browser to V2. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later).
+Apollo Download Manager's browser extension sends downloads from your browser to Apollo Download Manager. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later).
 
 ## Beside V1
 
-V2's extension is its own: it is named **Apollo Download Manager** (**Apollo DM** for short), its menu item is **Download with Apollo Download Manager**, and it talks only to V2. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering V2 never touches V1's.
+Apollo Download Manager's extension is its own: it is named **Apollo Download Manager** (**Apollo DM** for short), its menu item is **Download with Apollo Download Manager**, and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering Apollo Download Manager never touches V1's.
 
 ## Installing the extension
 
@@ -15,36 +15,36 @@ V2's extension is its own: it is named **Apollo Download Manager** (**Apollo DM*
 
 How to build the extension is in the [developer documents](../BROWSER_EXTENSION.md#building).
 
-## Connecting it to V2
+## Connecting it to Apollo Download Manager
 
-In V2, open **Settings, Browser**. Each browser (Chrome, Chromium, Edge, Brave, Firefox) has **Register** or **Unregister**. Registering is for your user only and needs no administrator rights. The first-run setup offers the same.
+In Apollo Download Manager, open **Settings, Browser**. Each browser (Chrome, Chromium, Edge, Brave, Firefox) has **Register** or **Unregister**. Registering is for your user only and needs no administrator rights. The first-run setup offers the same.
 
-"Registered for another copy" means the registration points to a V2 that was moved or reinstalled elsewhere: **Register** again fixes it.
+"Registered for another copy" means the registration points to a copy of Apollo Download Manager that was moved or reinstalled elsewhere: **Register** again fixes it.
 
-**Before removing V2 on Linux,** unregister the browsers: a package can't remove registrations from your home folder ([Installing](installing.md#removing-v2)).
+**Before removing Apollo Download Manager on Linux,** unregister the browsers: a package can't remove registrations from your home folder ([Installing](installing.md#removing-apollo-download-manager)).
 
 ## What the extension does
 
-- **It takes over matching downloads:** by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once V2 has the link.
-- **Modes,** in the extension's popup: send matching downloads to V2 (the default), ask first, or leave every download to the browser.
+- **It takes over matching downloads:** by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link.
+- **Modes,** in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser.
 - **Rules,** in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default).
 - **The right-click menu** on links, images, video and audio: **Download with Apollo Download Manager**.
-- **Magnet links and `.torrent` downloads:** off by default. Turning magnet links on asks for access to pages. V2 always asks before adding a torrent.
-- **What it never sends:** cookies, page content or logins. A download that needs them may fail in V2; the browser can then download it.
+- **Magnet links and `.torrent` downloads:** off by default. Turning magnet links on asks for access to pages. Apollo Download Manager always asks before adding a torrent.
+- **What it never sends:** cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it.
 
-## What V2 does with a link
+## What Apollo Download Manager does with a link
 
 Settings, Browser has two switches, both on by default:
 
-- **Ask before adding:** the Add dialog opens, filled in, and V2's window comes forward. Off, the link is added at once to the automatic folder. A taken name, a link added before, a torrent or a magnet link still opens the dialog.
-- **Take links from the browser:** off, V2 refuses every link, and the browser downloads it itself.
+- **Ask before adding:** the Add dialog opens, filled in, and Apollo Download Manager's window comes forward. Off, the link is added at once to the automatic folder. A taken name, a link added before, a torrent or a magnet link still opens the dialog.
+- **Take links from the browser:** off, Apollo Download Manager refuses every link, and the browser downloads it itself.
 
 **A link to this computer or your local network** (such as `127.0.0.1`, `192.168.x.x` or `10.x.x.x`) waits in the list before anything is sent: **Download anyway** in its details panel goes on. A link you type or paste yourself isn't held.
 
-## When V2 can't take a link
+## When Apollo Download Manager can't take a link
 
-If V2 isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with "!", and its popup says why:
+If Apollo Download Manager isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with "!", and its popup says why:
 
 - **"Apollo Download Manager is not running":** Apollo Download Manager starts by itself in the tray when a link arrives. If it couldn't, start it yourself.
 - **"Apollo Download Manager was started but didn't answer in time":** it took longer than 10 seconds to start. Try the link again.
-- **"The connection to Apollo DM is not set up":** register that browser in V2's Settings, Browser, then reload the extension.
+- **"The connection to Apollo DM is not set up":** register that browser in Apollo Download Manager's Settings, Browser, then reload the extension.

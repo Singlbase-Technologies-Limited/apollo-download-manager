@@ -63,6 +63,15 @@ Source: [managing GitHub Actions settings for a repository](https://docs.github.
 
 Check: `gh api $R/environments/release --jq '{can_admins_bypass, rules: [.protection_rules[].type]}'` → `false`, `["required_reviewers","branch_policy"]`.
 
+## GitHub Pages
+
+| Setting | Value | State | Why |
+|---|---|---|---|
+| Pages | Source: GitHub Actions | **Not on yet**: the PO turns it on before the website's first deploy | The *Website* workflow deploys the product website ([WEBSITE.md](WEBSITE.md)) |
+| Environment `github-pages` | Deployments from `main` and from `v*` tags | Created by GitHub when Pages is turned on; the PO adds the `v*` tag rule | A published release rebuilds the site from a run that starts on its tag |
+
+Check: `gh api $R/pages --jq .build_type` → `workflow`.
+
 ## Security
 
 | Setting | Value | Plan | State | Check (*Admin*) |

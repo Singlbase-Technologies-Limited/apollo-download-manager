@@ -1,11 +1,21 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Download with Apollo Download Manager?</title><link rel="stylesheet" href="style.css"><style>body{padding:18px}#name{font-weight:600;word-break:break-all;margin:6px 0 2px}</style></head>
+<html lang="en"><head><meta charset="utf-8"><title>Download with Apollo Download Manager?</title><link rel="stylesheet" href="style.css"></head>
 <body>
-<h1><img src="icons/icon-32.png" alt="">Download with Apollo Download Manager?</h1>
-<p id="name"></p>
-<p id="meta" class="hint"></p>
-<p id="error" class="err" role="alert"></p>
-<p class="row"><button id="velocity" class="primary" type="button">Download with Apollo Download Manager</button><button id="browser" type="button">Download in browser</button></p>
-<p class="hint">Closing this window lets the browser continue the download.</p>
+<main class="prompt">
+  <header class="page-header">
+    <img class="mark" src="icons/icon-32.png" alt="">
+    <h1>Download with Apollo Download Manager?</h1>
+  </header>
+  <div class="file">
+    <span class="glyph"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span>
+    <div style="min-width:0">
+      <p id="name" class="name"></p>
+      <p id="meta" class="hint"></p>
+    </div>
+  </div>
+  <p id="error" class="err" role="alert"></p>
+  <div class="row"><button id="velocity" class="primary" type="button">Download with Apollo DM</button><button id="browser" type="button">Download in browser</button></div>
+  <p class="hint">Closing this window lets the browser carry on with the download.</p>
+</main>
 <script src="prompt.js"></script>
 </body></html>

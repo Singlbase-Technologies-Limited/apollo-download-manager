@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+use super::detect::{Finder, Found};
 use crate::branding::branding;
 use crate::domain::ErrorCode;
 use crate::paths::Paths;
@@ -52,6 +53,17 @@ impl Browser {
 
     /// Where the browser looks for hosts in the registry, under `HKEY_CURRENT_USER\Software`.
     /// The Windows uninstaller removes V2's key there too (#81).
+    /// The extension's store page for this browser, once published (#240): Chromium and Brave use
+    /// the Chrome Web Store.
+    pub fn store_url(self) -> Option<&'static str> {
+        let s = &branding().extension_store_urls;
+        match self {
+            Self::Chrome | Self::Chromium | Self::Brave => s.chrome.as_deref(),
+            Self::Edge => s.edge.as_deref(),
+            Self::Firefox => s.firefox.as_deref(),
+        }
+    }
+
     pub fn registry_path(self) -> &'static str {
         match self {
             Self::Chrome => r"Google\Chrome\NativeMessagingHosts",
@@ -75,6 +87,11 @@ pub struct Registration {
     /// The registered manifest starts this build's host; false when it names another copy, such
     /// as one moved or reinstalled since, which registering again fixes.
     pub host_matches: bool,
+    /// The browser installed here, or `None` (#241). The screen lists a browser that is found or
+    /// still registered.
+    pub found: Option<Found>,
+    /// The extension's store page for this browser, or `None` until it is published (#240).
+    pub store_url: Option<String>,
 }
 
 /// What the Settings screen's Browser section shows (#65): the host, V2's names, and where the
@@ -92,15 +109,24 @@ pub struct BrowserIntegration {
 }
 
 impl BrowserIntegration {
-    /// The integration as `locations` show it, with the host at `host`.
-    pub fn of(locations: &Locations, host: Option<&Path>) -> Self {
+    /// The integration as `locations` show it, with the host at `host` and the browsers `finder`
+    /// finds.
+    pub fn of(locations: &Locations, host: Option<&Path>, finder: &Finder) -> Self {
         let b = branding();
         Self {
             host_path: host.map(|h| h.to_string_lossy().into_owned()),
             native_host_name: b.app_native_host_name().to_owned(),
             chrome_extension_ids: b.chrome_extension_ids.clone(),
             firefox_extension_id: b.firefox_extension_id.clone(),
-            registrations: locations.status(host),
+            registrations: locations
+                .status(host)
+                .into_iter()
+                .map(|r| Registration {
+                    found: finder.find(r.browser),
+                    store_url: r.browser.store_url().map(str::to_owned),
+                    ..r
+                })
+                .collect(),
         }
     }
 
@@ -123,6 +149,11 @@ impl BrowserIntegration {
                         b.native_host_name
                     ),
                     host_matches: browser == Browser::Chrome,
+                    found: (browser == Browser::Chrome).then(|| Found {
+                        program: "/usr/bin/google-chrome-stable".to_owned(),
+                        sandboxed: false,
+                    }),
+                    store_url: None,
                 })
                 .collect(),
         }
@@ -332,6 +363,8 @@ impl Locations {
                     registered,
                     manifest_path: path.to_string_lossy().into_owned(),
                     host_matches,
+                    found: None,
+                    store_url: None,
                 }
             })
             .collect()
@@ -347,8 +380,8 @@ pub(crate) mod registry {
     use windows_sys::Win32::Foundation::{ERROR_FILE_NOT_FOUND, ERROR_SUCCESS};
     use windows_sys::Win32::System::Registry::{
         RegCloseKey, RegCreateKeyExW, RegDeleteKeyValueW, RegDeleteKeyW, RegGetValueW,
-        RegSetValueExW, HKEY, HKEY_CURRENT_USER, KEY_WRITE, REG_OPTION_NON_VOLATILE, REG_SZ,
-        RRF_RT_REG_SZ,
+        RegSetValueExW, HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_WRITE,
+        REG_OPTION_NON_VOLATILE, REG_SZ, RRF_RT_REG_SZ,
     };
 
     use crate::domain::ErrorCode;
@@ -423,13 +456,23 @@ pub(crate) mod registry {
 
     /// The value `name` of `key` (`None`: its default value), if it exists and is a string.
     pub(crate) fn get_value(key: &str, name: Option<&str>) -> Option<String> {
+        get_value_in(HKEY_CURRENT_USER, key, name)
+    }
+
+    /// The default value of `key` under `HKEY_LOCAL_MACHINE`, read only: where browsers installed
+    /// for every user record their program (#241).
+    pub(crate) fn get_machine_default(key: &str) -> Option<String> {
+        get_value_in(HKEY_LOCAL_MACHINE, key, None)
+    }
+
+    fn get_value_in(root: HKEY, key: &str, name: Option<&str>) -> Option<String> {
         let (key, name) = (wide(key), wide_name(name));
         let mut size = 0u32;
         // SAFETY: `key` is NUL-terminated, the name NUL-terminated or null; a null buffer asks
         // for the size only.
         let sized = unsafe {
             RegGetValueW(
-                HKEY_CURRENT_USER,
+                root,
                 key.as_ptr(),
                 name_ptr(&name),
                 RRF_RT_REG_SZ,
@@ -445,7 +488,7 @@ pub(crate) mod registry {
         // SAFETY: `buffer` holds `size` bytes, and RegGetValueW writes at most that many.
         let read = unsafe {
             RegGetValueW(
-                HKEY_CURRENT_USER,
+                root,
                 key.as_ptr(),
                 name_ptr(&name),
                 RRF_RT_REG_SZ,
@@ -765,5 +808,37 @@ mod tests {
                 f.dir.join(dir).join(&name)
             );
         }
+    }
+
+    /// #241: each row says whether the browser is installed here, and has no store link until
+    /// the extension is published (#240).
+    #[test]
+    fn the_integration_shows_which_browsers_are_installed() {
+        let f = Fixture::new("found");
+        let finder = crate::browser::detect::Finder::new(
+            vec![f.dir.join("bin")],
+            f.dir.join("snap"),
+            vec![],
+            &format!(r"{}\AppPaths", f.registry_root),
+        );
+        f.locations.register(Browser::Edge, &f.host).unwrap();
+        let i = BrowserIntegration::of(&f.locations, Some(&f.host), &finder);
+        for r in &i.registrations {
+            assert_eq!(
+                r.found, None,
+                "{:?}: nothing is installed in the fixture",
+                r.browser
+            );
+            assert_eq!(r.store_url, None, "{:?}", r.browser);
+        }
+        let edge = i
+            .registrations
+            .iter()
+            .find(|r| r.browser == Browser::Edge)
+            .unwrap();
+        assert!(
+            edge.registered,
+            "a registered browser is still listed, to unregister it"
+        );
     }
 }
