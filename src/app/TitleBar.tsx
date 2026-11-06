@@ -1,27 +1,30 @@
 import { BookOpen, Copy, HelpCircle, Info, MessageSquare, Minus, ScrollText, Settings, Square, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
 import { DropdownMenu } from '../components/Menu';
 import { Tooltip } from '../components/Tooltip';
-import type { AppInfo } from '../contract';
+import type { AppInfo, MaximizeButtonState } from '../contract';
 import { api } from '../lib/api';
 import { toApiError } from '../lib/errors';
+import { onMaximizeButton } from '../lib/events';
 import { useUiStore } from '../stores/ui';
 import { WhatsNewDialog } from './WhatsNewDialog';
 import { cn } from '../lib/cn';
 import { closeWindow, minimizeWindow, toggleMaximizeWindow, watchMaximized } from '../lib/window';
 
-function WindowButton({ label, onClick, danger, children }: { label: string; onClick: () => Promise<void>; danger?: boolean; children: ReactNode }) {
+function WindowButton({ label, onClick, danger, children, ref, native }: { label: string; onClick: () => Promise<void>; danger?: boolean; children: ReactNode; ref?: Ref<HTMLButtonElement>; native?: MaximizeButtonState }) {
   return (
     <Tooltip label={label} side="bottom">
       <button
+        ref={ref}
         type="button"
         aria-label={label}
+        data-native={native}
         onClick={() => void onClick()}
         className={cn(
           'flex h-full w-11 cursor-pointer items-center justify-center text-fg-muted transition-colors',
-          danger ? 'hover:bg-[#c42b1c] hover:text-white' : 'hover:bg-fg/10 hover:text-fg',
+          danger ? 'hover:bg-[#c42b1c] hover:text-white' : 'hover:bg-fg/10 hover:text-fg data-[native=hover]:bg-fg/10 data-[native=hover]:text-fg data-[native=pressed]:bg-fg/20 data-[native=pressed]:text-fg',
         )}
       >
         {children}
@@ -74,9 +77,43 @@ function AppButtons({ app }: { app: AppInfo }) {
   );
 }
 
+/**
+ * On Windows 11 a native window covers the maximise button so the system offers its snap layouts (#359). It needs to
+ * know where the button is, and it says what the mouse is doing there, since the button itself no longer hears it.
+ */
+function useMaximizeButton() {
+  const button = useRef<HTMLButtonElement>(null);
+  const [native, setNative] = useState<MaximizeButtonState>('idle');
+  useEffect(() => {
+    const report = () => {
+      const r = button.current?.getBoundingClientRect();
+      if (!r || r.width === 0) return;
+      // Only the snap layouts depend on it; the button works either way.
+      api.setMaximizeButtonRect({ x: r.x, y: r.y, width: r.width, height: r.height }).catch((e: unknown) => { console.warn('The maximise button could not be placed:', e); });
+    };
+    report();
+    window.addEventListener('resize', report);
+    let disposed = false;
+    let stop: (() => void) | undefined;
+    onMaximizeButton(setNative)
+      .then((s) => {
+        if (disposed) s();
+        else stop = s;
+      })
+      .catch((e: unknown) => { console.warn('The maximise button will not show the mouse:', e); });
+    return () => {
+      disposed = true;
+      stop?.();
+      window.removeEventListener('resize', report);
+    };
+  }, []);
+  return { button, native };
+}
+
 /** `app` once the main window is set up: then its Help and Settings buttons show (#363). */
 export function TitleBar({ title, app }: { title: string; app?: AppInfo }) {
   const [maximized, setMaximized] = useState(false);
+  const { button, native } = useMaximizeButton();
   useEffect(() => {
     let disposed = false;
     let stop: (() => void) | undefined;
@@ -106,7 +143,7 @@ export function TitleBar({ title, app }: { title: string; app?: AppInfo }) {
         <WindowButton label="Minimize" onClick={minimizeWindow}>
           <Minus className="size-4" aria-hidden />
         </WindowButton>
-        <WindowButton label={maximized ? 'Restore' : 'Maximize'} onClick={toggleMaximizeWindow}>
+        <WindowButton ref={button} native={native} label={maximized ? 'Restore' : 'Maximize'} onClick={toggleMaximizeWindow}>
           {maximized ? <Copy className="size-3.5 -scale-x-100" aria-hidden /> : <Square className="size-3.5" aria-hidden />}
         </WindowButton>
         <WindowButton label="Close" onClick={closeWindow} danger>

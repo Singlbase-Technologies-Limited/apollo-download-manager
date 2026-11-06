@@ -6097,6 +6097,7 @@ dependencies = [
  "velocity-core",
  "velocity-torrent",
  "velocity-transfer",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

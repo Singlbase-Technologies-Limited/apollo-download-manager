@@ -76,6 +76,8 @@ export const api = {
     }
   },
   shellSettings: () => call('get_shell_settings', undefined, ShellSettingsSchema),
+  /** Where the maximise button is, for Windows 11's snap layouts (#359); nothing happens on Linux. */
+  setMaximizeButtonRect: (rect: { x: number; y: number; width: number; height: number }) => call('set_maximize_button_rect', { rect }, nothing),
   setAppearance: (appearance: AppearanceSettings) => call('set_appearance', { appearance }, AppearanceSettingsSchema),
   // The Settings screen (#30).
   settings: () => call('get_settings', undefined, SettingsSchema),

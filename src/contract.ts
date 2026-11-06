@@ -514,6 +514,10 @@ export type ShellSettings = z.infer<typeof ShellSettingsSchema>;
 
 /** The `quit-requested` event (#29): quitting would stop this many downloads, so the window asks first. */
 export const QuitRequestSchema = z.strictObject({ active: z.number().int().nonnegative() });
+
+/** What the native side says the mouse is doing to the title bar's maximise button (#359). */
+export const MaximizeButtonStateSchema = z.enum(['idle', 'hover', 'pressed']);
+export type MaximizeButtonState = z.infer<typeof MaximizeButtonStateSchema>;
 export type QuitRequest = z.infer<typeof QuitRequestSchema>;
 
 export const AppInfoSchema = z.strictObject({

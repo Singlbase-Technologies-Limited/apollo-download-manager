@@ -36,3 +36,7 @@ velocity-core = { path = "../crates/velocity-core" }
 velocity-transfer = { path = "../crates/velocity-transfer" }
 # The torrent helper's client and supervisor only, without libtorrent (PO decision on #58).
 velocity-torrent = { path = "../crates/velocity-torrent", default-features = false }
+
+# Snap layouts on the title bar (#359).
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_LibraryLoader"] }

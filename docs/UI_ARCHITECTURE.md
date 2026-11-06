@@ -158,6 +158,8 @@ These are in [`src-tauri/src/shell.rs`](../src-tauri/src/shell.rs) and [`tray.rs
 
   Each follows its setting ([SETTINGS.md](SETTINGS.md#the-window)). The first snapshot after starting notifies nothing.
 
+**Snap layouts (#359):** Windows 11 offers its layouts over a window that answers `HTMAXBUTTON`, and the web view covers the whole window. So `src-tauri/src/snap_layouts.rs` puts a small native child window over the maximise button. `TitleBar.tsx` tells it where the button is with `set_maximize_button_rect`. It takes the mouse there, so it does the click itself and sends `maximize-button` so the button still shows hover and press. Keyboard and screen-reader users use the page's button, under it. If the overlay can't be made, the page's button keeps working, without the layouts. Windows closes the layouts when a simulated pointer moves, on a plain window too, so choosing a layout can only be tested by hand.
+
 ## Testing
 
 - **UI tests run in jsdom** (`vite.config.ts`, the `ui` project) with Testing Library. Only the Tauri boundary is mocked:

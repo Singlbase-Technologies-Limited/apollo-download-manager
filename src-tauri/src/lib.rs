@@ -7,6 +7,7 @@ mod diagnostics;
 mod downloads;
 mod opening;
 mod shell;
+mod snap_layouts;
 mod tray;
 
 use tauri::Manager;
@@ -138,6 +139,7 @@ pub fn run() {
             categories::delete_category,
             categories::set_download_category,
             categories::check_destination,
+            snap_layouts::set_maximize_button_rect,
             shell::get_shell_settings,
             shell::set_appearance,
             shell::complete_onboarding,
