@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../app/App';
 import { DEFAULT_LAYOUT } from '../../layout/layoutLogic';
 import { createQueryClient } from '../../lib/queries';
@@ -34,6 +34,17 @@ describe('the in-app user guide (#354)', () => {
     const contents = within(guide).getByRole('navigation', { name: 'Guide contents' });
     expect(within(contents).getByRole('button', { name: 'Downloads' })).toBeTruthy();
     expect(within(guide).getByRole('heading', { level: 1, name: 'Apollo Download Manager: user guide' })).toBeTruthy();
+  });
+
+  it('opens a page at its very top, not at its heading, which sits below the page’s margin', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    const user = await renderApp();
+    await user.click(screen.getByRole('button', { name: 'Help' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'User guide' }));
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Apollo Download Manager: user guide' });
+    await waitFor(() => { expect(document.activeElement).toBe(heading); });
+    expect(scroll).not.toHaveBeenCalled();
+    scroll.mockRestore();
   });
 
   it('goes to a page from the contents, and on with previous and next', async () => {

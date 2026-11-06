@@ -21,7 +21,7 @@
   "guide": {
     "downloads": { "adding-downloads": "add", "the-download-list": "downloads", "the-details-panel": "details" },
     "categories": { "the-built-in-categories": "categories" },
-    "browser": { "connecting-it-to-v2": "browser" },
+    "browser": { "connecting-it-to-apollo-download-manager": "browser" },
     "settings": { "queue-and-performance": "schedule" }
   }
 }

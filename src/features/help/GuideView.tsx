@@ -186,12 +186,9 @@ export function GuideView() {
     if (!at) return;
     const timer = setTimeout(() => {
       const target = at.anchor ? document.getElementById(domId(at.anchor)) : main.current?.querySelector<HTMLElement>('h1');
-      if (target) {
-        target.scrollIntoView({ block: 'start' });
-        target.focus({ preventScroll: true });
-      } else if (main.current) {
-        main.current.scrollTop = 0;
-      }
+      if (at.anchor && target) target.scrollIntoView({ block: 'start' });
+      else if (main.current) main.current.scrollTop = 0;
+      target?.focus({ preventScroll: true });
     }, 0);
     return () => { clearTimeout(timer); };
   }, [at]);
