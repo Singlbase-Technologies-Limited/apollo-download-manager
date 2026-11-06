@@ -23,6 +23,7 @@ export default defineConfig({
     sourcemap: false,
   },
   test: {
+    reporters: ['verbose'], // TEMPORARY #371: per-test times on CI
     projects: [
       // The UI's tests run in jsdom, with Tauri's IPC mocked (src/test/setup.ts, #29).
       {
