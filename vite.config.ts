@@ -23,7 +23,21 @@ export default defineConfig({
     sourcemap: false,
   },
   test: {
-    slowTestThreshold: 1000, // TEMPORARY #371: per-test times on CI
+    // TEMPORARY #371: per-test times on CI
+    reporters: ['default', (() => {
+      const t: [number, string][] = [];
+      return {
+        onTestCaseResult(c: { project: { name: string }; fullName: string; diagnostic(): { duration: number } | undefined }) {
+          if (c.project.name === 'ui') t.push([Math.round(c.diagnostic()?.duration ?? 0), c.fullName.slice(0, 70)]);
+        },
+        onTestRunEnd() {
+          t.sort((a, b) => b[0] - a[0]);
+          const over = (ms: number) => t.filter(([d]) => d > ms).length;
+          console.log('TIMES ui=' + t.length + ' median=' + t[t.length >> 1]?.[0] + ' over1s=' + over(1000) + ' over2s=' + over(2000) + ' over3s=' + over(3000));
+          t.slice(0, 15).forEach(([d, n]) => console.log('TIMES ' + d + ' ' + n));
+        },
+      };
+    })()],
     projects: [
       // The UI's tests run in jsdom, with Tauri's IPC mocked (src/test/setup.ts, #29).
       {
