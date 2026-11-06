@@ -15,6 +15,9 @@ on:
       - scripts/build-site.mjs
       - scripts/site-lib.mjs
       - scripts/dev-site-lib.mjs
+      - scripts/site-layout.mjs
+      - src/components/BrandLogo.tsx
+      - assets/brand/apollo-social-preview.png
       - scripts/guide-lib.mjs
       - scripts/links-lib.mjs
       - src-tauri/icons/128x128.png
@@ -29,6 +32,9 @@ on:
       - scripts/build-site.mjs
       - scripts/site-lib.mjs
       - scripts/dev-site-lib.mjs
+      - scripts/site-layout.mjs
+      - src/components/BrandLogo.tsx
+      - assets/brand/apollo-social-preview.png
       - scripts/guide-lib.mjs
       - scripts/links-lib.mjs
       - src-tauri/icons/128x128.png
