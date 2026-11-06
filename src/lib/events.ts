@@ -3,10 +3,12 @@ import {
   BrowserRequestSchema,
   DownloadsSnapshotSchema,
   DroppedTorrentsSchema,
+  MaximizeButtonStateSchema,
   QuitRequestSchema,
   type BrowserRequest,
   type DownloadsSnapshot,
   type DroppedTorrents,
+  type MaximizeButtonState,
   type QuitRequest,
 } from '../contract';
 
@@ -24,6 +26,14 @@ export function onSnapshot(handler: (snapshot: DownloadsSnapshot) => void): Prom
 export function onQuitRequested(handler: (request: QuitRequest) => void): Promise<UnlistenFn> {
   return listen('quit-requested', (e) => {
     const parsed = QuitRequestSchema.safeParse(e.payload);
+    if (parsed.success) handler(parsed.data);
+  });
+}
+
+/** On Windows a native window has the mouse over the maximise button, so it says what to draw (#359). */
+export function onMaximizeButton(handler: (state: MaximizeButtonState) => void): Promise<UnlistenFn> {
+  return listen('maximize-button', (e) => {
+    const parsed = MaximizeButtonStateSchema.safeParse(e.payload);
     if (parsed.success) handler(parsed.data);
   });
 }

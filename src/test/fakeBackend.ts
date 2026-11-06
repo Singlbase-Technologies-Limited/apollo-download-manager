@@ -301,6 +301,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'plugin:window|minimize':
         case 'plugin:window|toggle_maximize':
         case 'plugin:window|close':
+        case 'set_maximize_button_rect':
           return null;
         default:
           throw new Error(`the fake backend has no command ${cmd}`);
