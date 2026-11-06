@@ -51,9 +51,24 @@ fn read_frames(mut bytes: &[u8]) -> Vec<Value> {
     out
 }
 
+/// A copy of the host in a folder of its own under `dir`: the host starts the app it finds beside
+/// itself (#322), and beside the built host there may be a real app build.
+fn host_in(dir: &Path) -> PathBuf {
+    let bin = dir.join("bin");
+    std::fs::create_dir_all(&bin).unwrap();
+    let host = bin.join(format!(
+        "velocity-native-host-v2{}",
+        std::env::consts::EXE_SUFFIX
+    ));
+    if !host.exists() {
+        std::fs::copy(env!("CARGO_BIN_EXE_velocity-native-host-v2"), &host).unwrap();
+    }
+    host
+}
+
 /// Runs the host as the browser would, with `args` and the framed `input`; its framed answers.
 fn run_host(data_dir: &Path, args: &[String], input: Vec<u8>) -> Vec<Value> {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_velocity-native-host-v2"))
+    let mut child = Command::new(host_in(data_dir))
         .args(args)
         .env(DATA_DIR_ENV, data_dir)
         .stdin(Stdio::piped())
@@ -96,6 +111,34 @@ fn says_the_app_isnt_running_when_there_is_no_token() {
     assert_eq!(answers.len(), 1);
     assert_eq!(answers[0]["ok"], false);
     assert_eq!(answers[0]["error"]["code"], "DESKTOP_NOT_RUNNING");
+}
+
+/// #322: with the app beside the host but not running, the host starts it and waits for it; one
+/// that never answers (here a stand-in that exits at once) is given up on after the wait, and the
+/// browser keeps the download.
+#[test]
+fn starts_the_app_beside_it_and_gives_up_when_it_never_answers() {
+    let dir = Dir::new("start");
+    let host = host_in(&dir.0);
+    let stand_in = host.with_file_name(format!(
+        "velocity-desktop-v2{}",
+        std::env::consts::EXE_SUFFIX
+    ));
+    // The host itself, which refuses a caller it doesn't know and exits: an app that never answers.
+    std::fs::copy(&host, &stand_in).unwrap();
+    let started = std::time::Instant::now();
+    let answers = run_host(
+        &dir.0,
+        &chrome(),
+        frame(&json!({"v":1,"id":"p1","type":"ping"})),
+    );
+    assert_eq!(answers[0]["error"]["code"], "DESKTOP_NOT_RUNNING");
+    let message = answers[0]["error"]["message"].as_str().unwrap();
+    assert!(message.contains("didn't answer in time"), "{message}");
+    assert!(
+        started.elapsed() >= velocity_core::browser::launch::WAIT,
+        "it waited"
+    );
 }
 
 #[test]

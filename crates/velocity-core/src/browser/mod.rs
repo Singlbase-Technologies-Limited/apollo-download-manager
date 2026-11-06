@@ -6,6 +6,7 @@
 
 pub mod bridge;
 pub mod ipc;
+pub mod launch;
 pub mod protocol;
 pub mod registration;
 

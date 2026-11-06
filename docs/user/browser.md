@@ -45,5 +45,6 @@ Settings, Browser has two switches, both on by default:
 
 If V2 isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with "!", and its popup says why:
 
-- **"Apollo Download Manager is not running":** start it.
+- **"Apollo Download Manager is not running":** Apollo Download Manager starts by itself in the tray when a link arrives. If it couldn't, start it yourself.
+- **"Apollo Download Manager was started but didn't answer in time":** it took longer than 10 seconds to start. Try the link again.
 - **"The connection to Apollo DM is not set up":** register that browser in V2's Settings, Browser, then reload the extension.

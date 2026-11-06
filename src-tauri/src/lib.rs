@@ -31,8 +31,11 @@ pub fn run() {
     tauri::Builder::default()
         // Registered first, as the plugin requires. It is keyed on the app identifier, so a
         // second launch of V2 focuses this window, and never interferes with V1 (ADR-0003).
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            shell::show_main_window(app);
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            // The browser helper starting it for a link (#322) leaves the window as it is.
+            if !velocity_core::browser::launch::started_in_background(&argv) {
+                shell::show_main_window(app);
+            }
         }))
         // Used by native code only: the web layer is granted neither (capabilities/default.json).
         .plugin(tauri_plugin_dialog::init())
@@ -60,7 +63,11 @@ pub fn run() {
                 .tray
                 .store(has_tray, std::sync::atomic::Ordering::Relaxed);
             // The window starts hidden (tauri.conf.json), so starting minimised never flashes it.
-            if !(has_tray && shell.general().start_minimized) {
+            // Started by the browser helper for a link (#322), it stays in the tray too.
+            let args: Vec<String> = std::env::args().skip(1).collect();
+            let hidden = shell.general().start_minimized
+                || velocity_core::browser::launch::started_in_background(&args);
+            if !(has_tray && hidden) {
                 shell::show_main_window(app.handle());
             }
             Ok(())

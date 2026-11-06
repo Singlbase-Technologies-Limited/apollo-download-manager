@@ -5,12 +5,14 @@
 //! who called (V2's Chrome extension origin or Firefox add-on ID, from its arguments), checks
 //! each message ([`parse_message`]), and passes the valid ones to the running app over the
 //! authenticated local connection, with the app's per-launch token. It never touches files beyond
-//! reading the token, never runs anything, and has no other way into the app.
+//! reading the token, and has no other way into the app. When the app isn't running, it starts the
+//! app installed beside it in the tray, and nothing else, ever (#322, PO decision).
 
 use std::io::{Read, Write};
 
 use velocity_core::branding::branding;
 use velocity_core::browser::ipc::{self, IpcClientError};
+use velocity_core::browser::launch::{app_beside, deliver, Delivery, BACKGROUND_ARG, WAIT};
 use velocity_core::browser::protocol::{
     parse_message, BrowserResponse, IpcEnvelope, MAX_MESSAGE_BYTES,
 };
@@ -22,6 +24,69 @@ const MAX_OUTGOING: usize = 1024 * 1024;
 
 /// What the browser sends while the app isn't running.
 const NOT_RUNNING: &str = "Apollo Download Manager is not running. Start it and try again.";
+
+/// What the browser sends when the app was started for the link but didn't answer in time.
+const NO_ANSWER: &str =
+    "Apollo Download Manager was started but didn't answer in time. Try the link again.";
+
+/// Starts the app beside the host for a link, once per host process (#322).
+struct Launcher {
+    /// The app beside the host, if there is one.
+    app: Option<std::path::PathBuf>,
+    started: bool,
+}
+
+impl Launcher {
+    fn new() -> Self {
+        Launcher {
+            app: std::env::current_exe()
+                .ok()
+                .and_then(|host| app_beside(&host)),
+            started: false,
+        }
+    }
+
+    /// Starts the app in the tray: no shell, an argument list, and none of the host's stdio, which
+    /// is the browser's channel. Whether it started; never twice.
+    fn start(&mut self) -> bool {
+        let Some(app) = self.app.as_ref().filter(|_| !self.started) else {
+            return false;
+        };
+        self.started = true;
+        let mut command = std::process::Command::new(app);
+        command
+            .arg(BACKGROUND_ARG)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        detach(&mut command)
+    }
+}
+
+/// Starts `command` apart from the host, so it outlives it: on Windows detached and out of the
+/// browser's job, which Chrome allows its hosts; where a job forbids that, without leaving it.
+#[cfg(windows)]
+fn detach(command: &mut std::process::Command) -> bool {
+    use std::os::windows::process::CommandExt;
+    const DETACHED_PROCESS: u32 = 0x0000_0008;
+    const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
+    const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x0100_0000;
+    let apart = DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
+    command.creation_flags(apart | CREATE_BREAKAWAY_FROM_JOB);
+    if command.spawn().is_ok() {
+        return true;
+    }
+    command.creation_flags(apart);
+    command.spawn().is_ok()
+}
+
+/// On Unix, in a process group of its own, so a signal to the browser's group doesn't reach it.
+#[cfg(unix)]
+fn detach(command: &mut std::process::Command) -> bool {
+    use std::os::unix::process::CommandExt;
+    command.process_group(0);
+    command.spawn().is_ok()
+}
 
 /// The next message, or `None` once the browser closed stdin. A length over the limit is refused
 /// before anything is allocated for it.
@@ -81,32 +146,45 @@ fn handle(
     caller: &str,
     paths: &Paths,
     rt: &tokio::runtime::Runtime,
+    launcher: &mut Launcher,
 ) -> BrowserResponse {
     let message = match parse_message(raw) {
         Ok(m) => m,
         Err(answer) => return answer,
     };
-    let Ok(token) = ipc::read_token(paths) else {
-        return BrowserResponse::err(&message.id, "DESKTOP_NOT_RUNNING", NOT_RUNNING);
-    };
-    let Ok(value) = serde_json::from_slice(raw) else {
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(raw) else {
         return BrowserResponse::err(
             &message.id,
             "INVALID_MESSAGE",
             "The message could not be read.",
         );
     };
-    let envelope = IpcEnvelope {
-        token: token.as_str().to_owned(),
-        caller: caller.to_owned(),
-        message: value,
+    // `None` while the app isn't running. Its token is read on every try: a new launch writes a
+    // new one.
+    let send = || {
+        let token = ipc::read_token(paths).ok()?;
+        let envelope = IpcEnvelope {
+            token: token.as_str().to_owned(),
+            caller: caller.to_owned(),
+            message: value.clone(),
+        };
+        match rt.block_on(ipc::send(paths, &envelope)) {
+            Err(IpcClientError::NotRunning) => None,
+            other => Some(other),
+        }
     };
-    match rt.block_on(ipc::send(paths, &envelope)) {
-        Ok(answer) => answer,
-        Err(IpcClientError::NotRunning) => {
+    let started = !launcher.started && launcher.app.is_some();
+    match deliver(send, || launcher.start(), WAIT, std::thread::sleep) {
+        Delivery::Answered(Ok(answer)) => answer,
+        Delivery::Answered(Err(e)) => {
+            BrowserResponse::err(&message.id, "DESKTOP_ERROR", &e.to_string())
+        }
+        Delivery::NotRunning if started && launcher.started => {
+            BrowserResponse::err(&message.id, "DESKTOP_NOT_RUNNING", NO_ANSWER)
+        }
+        Delivery::NotRunning => {
             BrowserResponse::err(&message.id, "DESKTOP_NOT_RUNNING", NOT_RUNNING)
         }
-        Err(e) => BrowserResponse::err(&message.id, "DESKTOP_ERROR", &e.to_string()),
     }
 }
 
@@ -144,11 +222,12 @@ fn main() {
         std::process::exit(1);
     };
 
+    let mut launcher = Launcher::new();
     // Messages until the browser closes stdin: one for sendNativeMessage, several for connectNative.
     loop {
         match read_message(&mut input) {
             Ok(Some(raw)) => {
-                let answer = handle(&raw, &caller, &paths, &rt);
+                let answer = handle(&raw, &caller, &paths, &rt, &mut launcher);
                 if write_message(&mut output, &answer).is_err() {
                     break;
                 }
