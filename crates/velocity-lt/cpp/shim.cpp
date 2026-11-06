@@ -348,6 +348,11 @@ void Session::request_resume_data(std::uint64_t id) const {
     handle(id).save_resume_data(lt::torrent_handle::save_info_dict);
 }
 
+void Session::move_storage(std::uint64_t id, rust::Str save_path) const {
+    // Never over an existing file: a taken name fails the move, and nothing is replaced.
+    handle(id).move_storage(std::string(save_path), lt::move_flags_t::fail_if_exist);
+}
+
 rust::Vec<std::uint8_t> Session::metadata(std::uint64_t id) const {
     auto ti = handle(id).torrent_file();
     if (!ti) throw std::runtime_error("metadata is not available yet");
@@ -423,6 +428,14 @@ rust::Vec<AlertEntry> Session::pop_alerts() const {
             for (char c : buf) e.data.push_back(static_cast<std::uint8_t>(c));
         } else if (auto* x = lt::alert_cast<lt::save_resume_data_failed_alert>(a)) {
             e.kind = "save_resume_data_failed";
+            e.id = id_of(x->handle);
+            e.message = rstr(x->error.message());
+        } else if (auto* x = lt::alert_cast<lt::storage_moved_alert>(a)) {
+            e.kind = "storage_moved";
+            e.id = id_of(x->handle);
+            e.message = rstr(x->storage_path());
+        } else if (auto* x = lt::alert_cast<lt::storage_moved_failed_alert>(a)) {
+            e.kind = "storage_moved_failed";
             e.id = id_of(x->handle);
             e.message = rstr(x->error.message());
         } else if (lt::alert_cast<lt::torrent_removed_alert>(a)) {

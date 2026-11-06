@@ -40,6 +40,7 @@ public:
     void force_recheck(std::uint64_t id) const;
     void flush(std::uint64_t id) const;
     void request_resume_data(std::uint64_t id) const;
+    void move_storage(std::uint64_t id, rust::Str save_path) const;
     rust::Vec<std::uint8_t> metadata(std::uint64_t id) const;
     rust::Vec<AlertEntry> pop_alerts() const;
     void connect_peer(std::uint64_t id, rust::Str ip, std::uint16_t port) const;

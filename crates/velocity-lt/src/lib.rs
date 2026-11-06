@@ -137,7 +137,8 @@ pub mod ffi {
         /// One of: listen_succeeded, listen_failed, portmap, portmap_error,
         /// metadata_received, torrent_finished, torrent_error, file_error,
         /// tracker_reply, tracker_error, tracker_warning, save_resume_data,
-        /// save_resume_data_failed, torrent_removed, cache_flushed.
+        /// save_resume_data_failed, torrent_removed, cache_flushed, storage_moved,
+        /// storage_moved_failed.
         pub kind: String,
         /// The torrent the alert is about, 0 for session alerts.
         pub id: u64,
@@ -180,6 +181,10 @@ pub mod ffi {
         /// a `cache_flushed` alert follows.
         fn flush(self: &Session, id: u64) -> Result<()>;
         fn request_resume_data(self: &Session, id: u64) -> Result<()>;
+        /// Moves the torrent's files to `save_path` (#366), never replacing anything there: a
+        /// taken name fails the move and leaves the files where they were. A `storage_moved`
+        /// alert (its `message` the new folder) or a `storage_moved_failed` alert follows.
+        fn move_storage(self: &Session, id: u64, save_path: &str) -> Result<()>;
         /// The info dictionary as `d4:info<info>e`, once metadata is known.
         fn metadata(self: &Session, id: u64) -> Result<Vec<u8>>;
         fn pop_alerts(self: &Session) -> Vec<AlertEntry>;
