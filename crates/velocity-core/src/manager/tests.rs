@@ -4695,6 +4695,31 @@ mod categories {
     }
 
     #[test]
+    fn a_finished_file_from_a_metalink_moves_like_any_other() {
+        let (_, _, db, dir) = in_folder("move-metalink");
+        let fake = FakeTransfer::with_capabilities(Capabilities {
+            metalink: true,
+            ..Capabilities::sample()
+        });
+        let control = fake.control();
+        let mut m = Manager::open(Box::new(fake), Arc::clone(&db)).unwrap();
+        m.set_metalink_enabled(true);
+        let spec = TransferSpec {
+            directory: dir.clone(),
+            ..spec()
+        };
+        let id = m.add(DownloadKind::Metalink, spec, T0).unwrap();
+        control.progress(TransferId(1), 4096, Some(4096));
+        control.complete(TransferId(1));
+        m.pump(T0 + 1);
+        fs::write(dir.join("a.zip"), vec![7u8; 4096]).unwrap();
+        let moved = m.set_download_category(&id, Some("documents")).unwrap();
+        assert!(matches!(moved, CategoryMove::Moved { .. }), "{moved:?}");
+        assert!(dir.join("Documents").join("a.zip").is_file());
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
     fn a_moved_download_takes_the_next_free_name_and_replaces_nothing() {
         let (mut m, control, db, dir) = in_folder("move-taken");
         let id = finished_in(&mut m, &control, &dir);

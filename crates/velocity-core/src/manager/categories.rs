@@ -404,12 +404,12 @@ impl Manager {
     }
 }
 
-/// A download that saves one file under its own name: a torrent's or a Metalink's files are moved
-/// as a whole by their own engine.
+/// A download the transfer engine saves as one file under a plain name: each file a Metalink
+/// lists is one (#54). A torrent's files are moved by the torrent engine.
 fn single_file(kind: DownloadKind) -> bool {
     matches!(
         kind,
-        DownloadKind::Http | DownloadKind::Ftp | DownloadKind::Sftp
+        DownloadKind::Http | DownloadKind::Ftp | DownloadKind::Sftp | DownloadKind::Metalink
     )
 }
 
