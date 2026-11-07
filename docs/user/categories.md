@@ -13,7 +13,7 @@ Categories sort downloads by file type, and can give each type its own folder. O
 | Programs | exe, msi, msix, appx, dmg, pkg, deb, rpm, appimage, apk, flatpak, snap |
 | Disk images | iso, img, vhd, vhdx, vmdk, qcow2 |
 
-Built-in categories can be edited but not deleted.
+Built-in categories can be changed with **Edit**, but not deleted.
 
 ## Your own categories
 
@@ -25,8 +25,8 @@ Built-in categories can be edited but not deleted.
 
 When you add a download, Apollo Download Manager chooses:
 
-1. **The category:** the one you choose. Otherwise, with **automatic categories** on, the one for the file's extension; a torrent takes the category of its largest file.
-2. **The folder:** the one you choose. Otherwise the category's own folder. Otherwise the default download folder, in a subfolder named after the category when **category subfolders** are on.
+1. **The category:** the one you choose. Otherwise, with **Sort into categories by file type** on, the one for the file's extension; a torrent takes the category of its largest file.
+2. **The folder:** the one you choose. Otherwise the category's own folder. Otherwise the default download folder, in a subfolder named after the category when **A folder for each category** is on.
 
 Both switches are in Settings, Downloads, and both are on by default. A missing category subfolder is created when you add the download; any other missing folder is offered in the Add dialog as **Create this folder**.
 

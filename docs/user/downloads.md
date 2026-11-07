@@ -22,7 +22,7 @@ A link Apollo Download Manager can't download is refused in the dialog, with the
 - **A folder that doesn't exist yet:** **Create this folder** makes it.
 - **A name already taken** in that folder, as a warning.
 
-**Options for the download:**
+**Options for the download,** under **Advanced options**:
 
 | Option | What it does |
 |---|---|
@@ -34,9 +34,10 @@ A link Apollo Download Manager can't download is refused in the dialog, with the
 | Checksum | Written like `sha-256=…` (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it |
 | Require encryption (FTPS) | For a plain `ftp://` link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network |
 | Remember this login in the system keychain | Off by default. See [Logins](#logins-headers-and-keys) |
-| Add paused | Adds the download without starting it |
 
-**After you choose Add:**
+**Start download** adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; **Add paused** adds it without starting it.
+
+**After you choose Start download or Add paused:**
 
 - **A name already taken:** choose **Keep both (rename)** or **Skip**. Apollo Download Manager never replaces a file that is already there.
 - **A link added before:** **Add anyway** starts a separate download, and **Show download** selects the one already in the list.
@@ -55,7 +56,7 @@ The first download from an SFTP server stops before logging in and asks **Trust 
 
 ## The download list
 
-**The lists** in the navigation are All, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. **Search** (**Ctrl+F**) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again.
+**The lists** in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. **Search** (**Ctrl+F**) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again.
 
 **Columns:** click a column's name to sort by it, and again to reverse. **Choose columns** shows or hides any of the 13 columns; Name is always shown, and **Reset to default columns** brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; **Home** or a double-click restores its width. Widths are kept.
 

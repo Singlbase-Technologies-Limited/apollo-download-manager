@@ -64,9 +64,9 @@ A profile sets the most a download may use. Within it, Apollo Download Manager s
 | DHT bootstrap nodes | libtorrent's own |
 | Listening port (0 for any) | 6890 |
 | Ask the router to forward the port (UPnP, NAT-PMP) | Off |
-| New torrents: choose files of magnet links before downloading | Off |
-| New torrents: seeding | Never |
-| New torrents: upload limit for each | None |
+| New torrents: Choose files of magnet links before downloading | Off |
+| New torrents: Seeding after download | Don’t seed |
+| New torrents: Upload limit for each new torrent (KiB/s, 0 for none) | 0: none |
 
 If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded.
 
@@ -118,6 +118,7 @@ The theme (follow the system, light or dark), the list's density (compact or com
   | Connect timeout | 30 s |
 
 - **Disk:** **Preallocation** (sparse by default; full reserves the whole file at the start, so a disk too small fails at once) and the **write buffer per connection** (2 MiB).
+- **Servers:** Apollo Download Manager remembers how many connections each server allowed, so later downloads from it start at the right pace. It keeps this on your computer for 7 days and never exports it. **Forget servers** clears it at once.
 
 ## About and diagnostics
 
