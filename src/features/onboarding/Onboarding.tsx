@@ -68,6 +68,7 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
   const [directory, setDirectory] = useState(defaultDirectory);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [checking, setChecking] = useState(false);
   const registered = useRegisteredNames();
   const heading = useRef<HTMLHeadingElement>(null);
   const moved = useRef(false);
@@ -103,6 +104,21 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
   const go = (to: Step) => {
     setError(null);
     setStep(to);
+  };
+
+  // A missing folder is said here, where it can be changed, not only by Get started (#403).
+  const leaveFolder = async () => {
+    setError(null);
+    setChecking(true);
+    try {
+      const check = await api.checkDestination('', directory.trim(), null, null);
+      if (check.directoryExists) go('browser');
+      else setError(ERROR_MESSAGES.DESTINATION_MISSING);
+    } catch (e) {
+      setError(toApiError(e).message);
+    } finally {
+      setChecking(false);
+    }
   };
   const headingClass = 'text-lg font-semibold outline-none';
 
@@ -200,7 +216,7 @@ export function Onboarding({ app, defaultDirectory }: { app: AppInfo; defaultDir
               Get started
             </Button>
           ) : (
-            <Button variant="primary" disabled={!directory.trim()} onClick={() => { go(step === 'folder' ? 'browser' : 'ready'); }}>
+            <Button variant="primary" busy={checking} disabled={!directory.trim()} onClick={() => { if (step === 'folder') void leaveFolder(); else go('ready'); }}>
               Next
             </Button>
           )}
