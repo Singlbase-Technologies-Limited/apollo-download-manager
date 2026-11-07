@@ -19,18 +19,18 @@ A torrent in **Choose files** waits for you: double-click it, or use its menu or
 
 ## Seeding
 
-Seeding is off by default: a torrent stops once it is complete. Each torrent can instead:
+Seeding is off by default: a torrent stops once it is complete. **Seeding after download** offers, for each torrent:
 
 | Choice | Seeds until |
 |---|---|
-| Never | It completes (the default) |
-| For a time | 1 minute to 365 days |
-| To a ratio | It has uploaded 0.1 to 100 times what it downloaded |
-| Time or ratio | Whichever comes first |
-| Without limit | You stop it |
+| Don’t seed | It completes (the default) |
+| For a time | 1 minute to 365 days (**Seed time** in minutes) |
+| Until a share ratio | It has uploaded 0.1 to 100 times what it downloaded (**Share ratio**) |
+| Time or ratio, whichever first | Whichever comes first |
+| Until I stop it | You stop it |
 
 - **Seeding torrents** are listed under **Seeding**. **Stop seeding** stops one.
-- **The seeding limit** in Settings, BitTorrent caps how many seed at once (no limit by default). The others wait in a queue, longest-waiting first; **Leave seeding queue** takes one out.
+- **The seeding limit,** **Torrents seeding at once** in Settings, BitTorrent, caps how many seed at once (0, no limit, by default). The others wait in a queue, longest-waiting first; **Leave seeding queue** takes one out.
 - **The time and ratio** count over the torrent's whole life, so a restart doesn't reset them.
 
 ## In the details panel

@@ -1571,13 +1571,26 @@
        "content": [
         {
          "type": "text",
-         "text": "Options for the download:"
+         "text": "Options for the download,"
         }
        ]
       },
       {
        "type": "text",
-       "text": ""
+       "text": " under "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Advanced options"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ":"
       }
      ]
     },
@@ -1746,20 +1759,6 @@
          }
         }
        ]
-      ],
-      [
-       [
-        {
-         "type": "text",
-         "text": "Add paused"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Adds the download without starting it"
-        }
-       ]
       ]
      ]
     },
@@ -1775,7 +1774,42 @@
        "content": [
         {
          "type": "text",
-         "text": "After you choose Add:"
+         "text": "Start download"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Add paused"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " adds it without starting it."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": ""
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "After you choose Start download or Add paused:"
         }
        ]
       },
@@ -2162,7 +2196,7 @@
       },
       {
        "type": "text",
-       "text": " in the navigation are All, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. "
+       "text": " in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. "
       },
       {
        "type": "strong",
@@ -3307,7 +3341,20 @@
          },
          {
           "type": "text",
-          "text": " in the Add dialog and the login window, is off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there."
+          "text": " in the Add dialog, and "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Remember this login, in the system’s password store"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the login window, are off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there."
          }
         ]
        }
@@ -3455,7 +3502,7 @@
     {
      "anchor": "adding-downloads",
      "heading": "Adding downloads",
-     "text": "Open the Add dialog with Add download at the top of the navigation, or Ctrl+N. Dropping .torrent files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or .torrent link anywhere outside a text field also opens it, with the link filled in. What you can add: Links, one per line, up to 500 at once: http://, https://, ftp://, ftps:// and sftp:// (Protocols and limits). Magnet links, and links to .torrent files: Apollo Download Manager downloads the .torrent file first, for up to 60 seconds, then adds the torrent. .torrent files on your computer, with Choose .torrent files…. Metalink files (.metalink, .meta4) on your computer, with Choose Metalink files…: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason (Protocols and limits). A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example \"Only http, https, ftp, ftps, sftp and magnet links are supported.\" Links with spaces or control characters are refused too. Before you add, the dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Logins Add paused Adds the download without starting it After you choose Add: A name already taken: choose Keep both (rename) or Skip. Apollo Download Manager never replaces a file that is already there. A link added before: Add anyway starts a separate download, and Show download selects the one already in the list. Links that failed are listed, each with the reason."
+     "text": "Open the Add dialog with Add download at the top of the navigation, or Ctrl+N. Dropping .torrent files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or .torrent link anywhere outside a text field also opens it, with the link filled in. What you can add: Links, one per line, up to 500 at once: http://, https://, ftp://, ftps:// and sftp:// (Protocols and limits). Magnet links, and links to .torrent files: Apollo Download Manager downloads the .torrent file first, for up to 60 seconds, then adds the torrent. .torrent files on your computer, with Choose .torrent files…. Metalink files (.metalink, .meta4) on your computer, with Choose Metalink files…: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason (Protocols and limits). A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example \"Only http, https, ftp, ftps, sftp and magnet links are supported.\" Links with spaces or control characters are refused too. Before you add, the dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Logins Start download adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; Add paused adds it without starting it. After you choose Start download or Add paused: A name already taken: choose Keep both (rename) or Skip. Apollo Download Manager never replaces a file that is already there. A link added before: Add anyway starts a separate download, and Show download selects the one already in the list. Links that failed are listed, each with the reason."
     },
     {
      "anchor": "a-start-time-of-its-own",
@@ -3470,7 +3517,7 @@
     {
      "anchor": "the-download-list",
      "heading": "The download list",
-     "text": "The lists in the navigation are All, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. Search (Ctrl+F) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again. Columns: click a column's name to sort by it, and again to reverse. Choose columns shows or hides any of the 13 columns; Name is always shown, and Reset to default columns brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; Home or a double-click restores its width. Widths are kept. Selecting: click, Ctrl+click and Shift+click, or the checkboxes; the top checkbox selects every download shown. Acting: the toolbar and the right-click menu offer what the selected downloads allow: Resume, Pause, Cancel, Retry, Stop seeding, Move to top, up, down or bottom of the queue, Copy link, Copy name, Open file, Open folder, Details, Remove from list and Delete files. Removing a download still in progress, and deleting files, ask first. When an action can't apply to every selected download, a message says how many it changed and why the rest weren't. Keys in the list: Key Does ↑, ↓, Home, End Move; with Shift, extend the selection Ctrl+A, Escape Select all, select none Space Pause or resume Enter Open the details Delete Remove from the list (asks first for a running download) Shift+Delete Delete the files (asks first) The right-click menu needs a pointer, as in V1. Its actions are also on the toolbar, in the details panel and on the keys above. What the statuses mean: Status Meaning Retrying in 1m 30s The download failed in a way worth retrying; Apollo Download Manager tries again by itself at that time. Waiting to retry when the time isn't known. A server that asks Apollo Download Manager to slow down for 30 s or less isn't shown here: the download stays Downloading, and the details' Connections line says the server asked Apollo Download Manager to slow down No data received The server stopped sending. Apollo Download Manager resets the connection and tries again Waiting for peers A torrent with no one to download from yet Needs its login After Apollo Download Manager restarts, a download that had a login, headers or a key it didn't remember waits for them. Resume or Retry asks for them again Choose files A torrent waiting for you to choose its files (Torrents) Waiting for network It failed because there was no network: the server's name didn't resolve, or no connection could be made. It keeps its bytes, takes no place among the downloads running at once, and starts again by itself when the network comes back, however long that takes. Retry starts it now; Cancel stops it. Listed under Queued. Turn this off in Settings, Queue and performance Speed and time left show only while data arrives. Avg. speed is the average while the download ran, shown once data has arrived, and Started is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones."
+     "text": "The lists in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. Search (Ctrl+F) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again. Columns: click a column's name to sort by it, and again to reverse. Choose columns shows or hides any of the 13 columns; Name is always shown, and Reset to default columns brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; Home or a double-click restores its width. Widths are kept. Selecting: click, Ctrl+click and Shift+click, or the checkboxes; the top checkbox selects every download shown. Acting: the toolbar and the right-click menu offer what the selected downloads allow: Resume, Pause, Cancel, Retry, Stop seeding, Move to top, up, down or bottom of the queue, Copy link, Copy name, Open file, Open folder, Details, Remove from list and Delete files. Removing a download still in progress, and deleting files, ask first. When an action can't apply to every selected download, a message says how many it changed and why the rest weren't. Keys in the list: Key Does ↑, ↓, Home, End Move; with Shift, extend the selection Ctrl+A, Escape Select all, select none Space Pause or resume Enter Open the details Delete Remove from the list (asks first for a running download) Shift+Delete Delete the files (asks first) The right-click menu needs a pointer, as in V1. Its actions are also on the toolbar, in the details panel and on the keys above. What the statuses mean: Status Meaning Retrying in 1m 30s The download failed in a way worth retrying; Apollo Download Manager tries again by itself at that time. Waiting to retry when the time isn't known. A server that asks Apollo Download Manager to slow down for 30 s or less isn't shown here: the download stays Downloading, and the details' Connections line says the server asked Apollo Download Manager to slow down No data received The server stopped sending. Apollo Download Manager resets the connection and tries again Waiting for peers A torrent with no one to download from yet Needs its login After Apollo Download Manager restarts, a download that had a login, headers or a key it didn't remember waits for them. Resume or Retry asks for them again Choose files A torrent waiting for you to choose its files (Torrents) Waiting for network It failed because there was no network: the server's name didn't resolve, or no connection could be made. It keeps its bytes, takes no place among the downloads running at once, and starts again by itself when the network comes back, however long that takes. Retry starts it now; Cancel stops it. Listed under Queued. Turn this off in Settings, Queue and performance Speed and time left show only while data arrives. Avg. speed is the average while the download ran, shown once data has arrived, and Started is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones."
     },
     {
      "anchor": "the-details-panel",
@@ -3490,7 +3537,7 @@
     {
      "anchor": "logins-headers-and-keys",
      "heading": "Logins, headers and keys",
-     "text": "Passwords, custom header values (such as cookies or tokens) and SSH key passphrases are secrets. Apollo Download Manager never writes them to its database, its saved progress or its log. Remember this login in the system keychain, in the Add dialog and the login window, is off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there. When the server refuses the login: the window Log in to download opens, says the server refused it, and asks for the user name and password (and, for SFTP, the key). Log in and retry tries again with them; Not now leaves the download Failed. It opens for a refused login only (HTTP's 401, FTP's or SFTP's refused login), never when the server lets you in but not to the file, and never for the proxy's login, which is in Settings, Proxy. After a restart: a download whose login was remembered carries on. Otherwise it comes back paused, as \"Needs its login\", and asks for it again when you resume it, as V1 did. No keychain (for example a minimal Linux without a Secret Service): Apollo Download Manager says \"The system keychain isn't available, so the login wasn't saved.\" The download still works until Apollo Download Manager closes."
+     "text": "Passwords, custom header values (such as cookies or tokens) and SSH key passphrases are secrets. Apollo Download Manager never writes them to its database, its saved progress or its log. Remember this login in the system keychain, in the Add dialog, and Remember this login, in the system’s password store in the login window, are off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there. When the server refuses the login: the window Log in to download opens, says the server refused it, and asks for the user name and password (and, for SFTP, the key). Log in and retry tries again with them; Not now leaves the download Failed. It opens for a refused login only (HTTP's 401, FTP's or SFTP's refused login), never when the server lets you in but not to the file, and never for the proxy's login, which is in Settings, Proxy. After a restart: a download whose login was remembered carries on. Otherwise it comes back paused, as \"Needs its login\", and asks for it again when you resume it, as V1 did. No keychain (for example a minimal Linux without a Secret Service): Apollo Download Manager says \"The system keychain isn't available, so the login wasn't saved.\" The download still works until Apollo Download Manager closes."
     },
     {
      "anchor": "if-apollo-download-manager-closes-suddenly",
@@ -4898,7 +4945,20 @@
      "content": [
       {
        "type": "text",
-       "text": "Seeding is off by default: a torrent stops once it is complete. Each torrent can instead:"
+       "text": "Seeding is off by default: a torrent stops once it is complete. "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Seeding after download"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " offers, for each torrent:"
       }
      ]
     },
@@ -4923,7 +4983,7 @@
        [
         {
          "type": "text",
-         "text": "Never"
+         "text": "Don’t seed"
         }
        ],
        [
@@ -4943,7 +5003,20 @@
        [
         {
          "type": "text",
-         "text": "1 minute to 365 days"
+         "text": "1 minute to 365 days ("
+        },
+        {
+         "type": "strong",
+         "content": [
+          {
+           "type": "text",
+           "text": "Seed time"
+          }
+         ]
+        },
+        {
+         "type": "text",
+         "text": " in minutes)"
         }
        ]
       ],
@@ -4951,13 +5024,26 @@
        [
         {
          "type": "text",
-         "text": "To a ratio"
+         "text": "Until a share ratio"
         }
        ],
        [
         {
          "type": "text",
-         "text": "It has uploaded 0.1 to 100 times what it downloaded"
+         "text": "It has uploaded 0.1 to 100 times what it downloaded ("
+        },
+        {
+         "type": "strong",
+         "content": [
+          {
+           "type": "text",
+           "text": "Share ratio"
+          }
+         ]
+        },
+        {
+         "type": "text",
+         "text": ")"
         }
        ]
       ],
@@ -4965,7 +5051,7 @@
        [
         {
          "type": "text",
-         "text": "Time or ratio"
+         "text": "Time or ratio, whichever first"
         }
        ],
        [
@@ -4979,7 +5065,7 @@
        [
         {
          "type": "text",
-         "text": "Without limit"
+         "text": "Until I stop it"
         }
        ],
        [
@@ -5058,13 +5144,26 @@
           "content": [
            {
             "type": "text",
-            "text": "The seeding limit"
+            "text": "The seeding limit,"
            }
           ]
          },
          {
           "type": "text",
-          "text": " in Settings, BitTorrent caps how many seed at once (no limit by default). The others wait in a queue, longest-waiting first; "
+          "text": " "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Torrents seeding at once"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in Settings, BitTorrent, caps how many seed at once (0, no limit, by default). The others wait in a queue, longest-waiting first; "
          },
          {
           "type": "strong",
@@ -5334,7 +5433,7 @@
     {
      "anchor": "seeding",
      "heading": "Seeding",
-     "text": "Seeding is off by default: a torrent stops once it is complete. Each torrent can instead: Choice Seeds until Never It completes (the default) For a time 1 minute to 365 days To a ratio It has uploaded 0.1 to 100 times what it downloaded Time or ratio Whichever comes first Without limit You stop it Seeding torrents are listed under Seeding. Stop seeding stops one. The seeding limit in Settings, BitTorrent caps how many seed at once (no limit by default). The others wait in a queue, longest-waiting first; Leave seeding queue takes one out. The time and ratio count over the torrent's whole life, so a restart doesn't reset them."
+     "text": "Seeding is off by default: a torrent stops once it is complete. Seeding after download offers, for each torrent: Choice Seeds until Don’t seed It completes (the default) For a time 1 minute to 365 days (Seed time in minutes) Until a share ratio It has uploaded 0.1 to 100 times what it downloaded (Share ratio) Time or ratio, whichever first Whichever comes first Until I stop it You stop it Seeding torrents are listed under Seeding. Stop seeding stops one. The seeding limit, Torrents seeding at once in Settings, BitTorrent, caps how many seed at once (0, no limit, by default). The others wait in a queue, longest-waiting first; Leave seeding queue takes one out. The time and ratio count over the torrent's whole life, so a restart doesn't reset them."
     },
     {
      "anchor": "in-the-details-panel",
@@ -5532,7 +5631,20 @@
      "content": [
       {
        "type": "text",
-       "text": "Built-in categories can be edited but not deleted."
+       "text": "Built-in categories can be changed with "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Edit"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ", but not deleted."
       }
      ]
     },
@@ -5649,7 +5761,7 @@
           "content": [
            {
             "type": "text",
-            "text": "automatic categories"
+            "text": "Sort into categories by file type"
            }
           ]
          },
@@ -5686,13 +5798,13 @@
           "content": [
            {
             "type": "text",
-            "text": "category subfolders"
+            "text": "A folder for each category"
            }
           ]
          },
          {
           "type": "text",
-          "text": " are on."
+          "text": " is on."
          }
         ]
        }
@@ -5935,7 +6047,7 @@
     {
      "anchor": "the-built-in-categories",
      "heading": "The built-in categories",
-     "text": "Category File types Compressed zip, rar, 7z, tar, gz, tgz, bz2, xz, zst, cab, arj, lzh Documents pdf, doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp, txt, rtf, epub, csv Music mp3, flac, wav, aac, ogg, opus, m4a, wma, aiff Video mp4, mkv, avi, mov, wmv, webm, m4v, flv, mpg, mpeg, ts Programs exe, msi, msix, appx, dmg, pkg, deb, rpm, appimage, apk, flatpak, snap Disk images iso, img, vhd, vhdx, vmdk, qcow2 Built-in categories can be edited but not deleted."
+     "text": "Category File types Compressed zip, rar, 7z, tar, gz, tgz, bz2, xz, zst, cab, arj, lzh Documents pdf, doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp, txt, rtf, epub, csv Music mp3, flac, wav, aac, ogg, opus, m4a, wma, aiff Video mp4, mkv, avi, mov, wmv, webm, m4v, flv, mpg, mpeg, ts Programs exe, msi, msix, appx, dmg, pkg, deb, rpm, appimage, apk, flatpak, snap Disk images iso, img, vhd, vhdx, vmdk, qcow2 Built-in categories can be changed with Edit, but not deleted."
     },
     {
      "anchor": "your-own-categories",
@@ -5945,7 +6057,7 @@
     {
      "anchor": "where-a-download-goes",
      "heading": "Where a download goes",
-     "text": "When you add a download, Apollo Download Manager chooses: The category: the one you choose. Otherwise, with automatic categories on, the one for the file's extension; a torrent takes the category of its largest file. The folder: the one you choose. Otherwise the category's own folder. Otherwise the default download folder, in a subfolder named after the category when category subfolders are on. Both switches are in Settings, Downloads, and both are on by default. A missing category subfolder is created when you add the download; any other missing folder is offered in the Add dialog as Create this folder. You can change a download's category later, with Edit… in its details panel. Its file then moves to the folder a new download of that category would get, and a message says where it went: A finished download moves at once. An unfinished one, paused, waiting or failed, moves its partial file and carries on from where it was, in the new folder. A running one is paused, moved, and carries on by itself. A name already taken in the new folder is never replaced: the moved file gets the next free name, such as report (1).pdf. Moving to another drive copies the file first, and removes the original only once the copy is complete. A torrent moves too, and keeps seeding from its new folder. If a file or folder with its name is already there, the torrent stays where it is, and the message says so. A file that can't move, because it was deleted or its drive is gone, stays where it is. The category still changes, and the message says why."
+     "text": "When you add a download, Apollo Download Manager chooses: The category: the one you choose. Otherwise, with Sort into categories by file type on, the one for the file's extension; a torrent takes the category of its largest file. The folder: the one you choose. Otherwise the category's own folder. Otherwise the default download folder, in a subfolder named after the category when A folder for each category is on. Both switches are in Settings, Downloads, and both are on by default. A missing category subfolder is created when you add the download; any other missing folder is offered in the Add dialog as Create this folder. You can change a download's category later, with Edit… in its details panel. Its file then moves to the folder a new download of that category would get, and a message says where it went: A finished download moves at once. An unfinished one, paused, waiting or failed, moves its partial file and carries on from where it was, in the new folder. A running one is paused, moved, and carries on by itself. A name already taken in the new folder is never replaced: the moved file gets the next free name, such as report (1).pdf. Moving to another drive copies the file first, and removes the original only once the copy is complete. A torrent moves too, and keeps seeding from its new folder. If a file or folder with its name is already there, the torrent stays where it is, and the message says so. A file that can't move, because it was deleted or its drive is gone, stays where it is. The category still changes, and the message says why."
     }
    ],
    "file": "categories.md"
@@ -7015,7 +7127,7 @@
        [
         {
          "type": "text",
-         "text": "New torrents: choose files of magnet links before downloading"
+         "text": "New torrents: Choose files of magnet links before downloading"
         }
        ],
        [
@@ -7029,13 +7141,13 @@
        [
         {
          "type": "text",
-         "text": "New torrents: seeding"
+         "text": "New torrents: Seeding after download"
         }
        ],
        [
         {
          "type": "text",
-         "text": "Never"
+         "text": "Don’t seed"
         }
        ]
       ],
@@ -7043,13 +7155,13 @@
        [
         {
          "type": "text",
-         "text": "New torrents: upload limit for each"
+         "text": "New torrents: Upload limit for each new torrent (KiB/s, 0 for none)"
         }
        ],
        [
         {
          "type": "text",
-         "text": "None"
+         "text": "0: none"
         }
        ]
       ]
@@ -7798,6 +7910,43 @@
          }
         ]
        }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Servers:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " Apollo Download Manager remembers how many connections each server allowed, so later downloads from it start at the right pace. It keeps this on your computer for 7 days and never exports it. "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Forget servers"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " clears it at once."
+         }
+        ]
+       }
       ]
      ]
     },
@@ -7876,7 +8025,7 @@
     {
      "anchor": "bittorrent",
      "heading": "BitTorrent",
-     "text": "Setting Default BitTorrent: off refuses torrents and magnet links On DHT, Peer exchange On Local peer discovery Off Peers per torrent 55 Torrents seeding at once 0: no limit Upload and download limits for all torrents None Extra trackers, added to every new torrent except private ones None DHT bootstrap nodes libtorrent's own Listening port (0 for any) 6890 Ask the router to forward the port (UPnP, NAT-PMP) Off New torrents: choose files of magnet links before downloading Off New torrents: seeding Never New torrents: upload limit for each None If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded."
+     "text": "Setting Default BitTorrent: off refuses torrents and magnet links On DHT, Peer exchange On Local peer discovery Off Peers per torrent 55 Torrents seeding at once 0: no limit Upload and download limits for all torrents None Extra trackers, added to every new torrent except private ones None DHT bootstrap nodes libtorrent's own Listening port (0 for any) 6890 Ask the router to forward the port (UPnP, NAT-PMP) Off New torrents: Choose files of magnet links before downloading Off New torrents: Seeding after download Don’t seed New torrents: Upload limit for each new torrent (KiB/s, 0 for none) 0: none If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded."
     },
     {
      "anchor": "browser",
@@ -7906,7 +8055,7 @@
     {
      "anchor": "advanced",
      "heading": "Advanced",
-     "text": "Metalink: off by default, as in V1. On, links to Metalink files add the files they describe (Protocols and limits). User agent: what Apollo Download Manager tells servers it is, ApolloDownloadManager/<version> by default. For downloads added after a change. Retries and timeouts, for downloads that start or retry after a change: Setting Default Failures in a row before giving up 5 Longest wait before a retry 60 s Times a failed download starts again 2; after a lost network connection, Apollo Download Manager keeps trying for up to 5 minutes, keeping what it downloaded Shown as stalled after 15 s without data, or with less than 1 KiB/s A request starts again after 30 s without data, or with less than 1 KiB/s; never while a speed limit slows it Connect timeout 30 s Disk: Preallocation (sparse by default; full reserves the whole file at the start, so a disk too small fails at once) and the write buffer per connection (2 MiB)."
+     "text": "Metalink: off by default, as in V1. On, links to Metalink files add the files they describe (Protocols and limits). User agent: what Apollo Download Manager tells servers it is, ApolloDownloadManager/<version> by default. For downloads added after a change. Retries and timeouts, for downloads that start or retry after a change: Setting Default Failures in a row before giving up 5 Longest wait before a retry 60 s Times a failed download starts again 2; after a lost network connection, Apollo Download Manager keeps trying for up to 5 minutes, keeping what it downloaded Shown as stalled after 15 s without data, or with less than 1 KiB/s A request starts again after 30 s without data, or with less than 1 KiB/s; never while a speed limit slows it Connect timeout 30 s Disk: Preallocation (sparse by default; full reserves the whole file at the start, so a disk too small fails at once) and the write buffer per connection (2 MiB). Servers: Apollo Download Manager remembers how many connections each server allowed, so later downloads from it start at the right pace. It keeps this on your computer for 7 days and never exports it. Forget servers clears it at once."
     },
     {
      "anchor": "about-and-diagnostics",
@@ -8065,7 +8214,20 @@
       },
       {
        "type": "text",
-       "text": " the extension isn't in the Chrome Web Store or on addons.mozilla.org, and the installers don't set it up for you. For now it is loaded by hand from a build:"
+       "text": " the extension isn't in the Chrome Web Store or on addons.mozilla.org, and the installers don't set it up for you. "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Get the extension"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " in Settings, Browser stays off until the store pages are live, and a note there says so. For now the extension is loaded by hand from a build:"
       }
      ]
     },
@@ -8775,7 +8937,7 @@
     {
      "anchor": "installing-the-extension",
      "heading": "Installing the extension",
-     "text": "Not in the stores yet: the extension isn't in the Chrome Web Store or on addons.mozilla.org, and the installers don't set it up for you. For now it is loaded by hand from a build: Chrome, Edge, Brave: open chrome://extensions (or edge://extensions, brave://extensions), turn on developer mode, choose Load unpacked, and pick the extension's chrome folder. Firefox: open about:debugging, This Firefox, Load Temporary Add-on, and pick the manifest.json in the extension's firefox folder. Firefox removes a temporary add-on when it closes. How to build the extension is in the developer documents."
+     "text": "Not in the stores yet: the extension isn't in the Chrome Web Store or on addons.mozilla.org, and the installers don't set it up for you. Get the extension in Settings, Browser stays off until the store pages are live, and a note there says so. For now the extension is loaded by hand from a build: Chrome, Edge, Brave: open chrome://extensions (or edge://extensions, brave://extensions), turn on developer mode, choose Load unpacked, and pick the extension's chrome folder. Firefox: open about:debugging, This Firefox, Load Temporary Add-on, and pick the manifest.json in the extension's firefox folder. Firefox removes a temporary add-on when it closes. How to build the extension is in the developer documents."
     },
     {
      "anchor": "connecting-it-to-apollo-download-manager",

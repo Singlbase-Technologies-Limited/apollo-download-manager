@@ -8,7 +8,7 @@ Apollo Download Manager's extension is its own: it is named **Apollo Download Ma
 
 ## Installing the extension
 
-**Not in the stores yet:** the extension isn't in the Chrome Web Store or on addons.mozilla.org, and the installers don't set it up for you. For now it is loaded by hand from a build:
+**Not in the stores yet:** the extension isn't in the Chrome Web Store or on addons.mozilla.org, and the installers don't set it up for you. **Get the extension** in Settings, Browser stays off until the store pages are live, and a note there says so. For now the extension is loaded by hand from a build:
 
 - **Chrome, Edge, Brave:** open `chrome://extensions` (or `edge://extensions`, `brave://extensions`), turn on developer mode, choose **Load unpacked**, and pick the extension's `chrome` folder.
 - **Firefox:** open `about:debugging`, **This Firefox**, **Load Temporary Add-on**, and pick the `manifest.json` in the extension's `firefox` folder. Firefox removes a temporary add-on when it closes.
