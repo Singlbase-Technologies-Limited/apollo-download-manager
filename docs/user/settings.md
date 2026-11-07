@@ -60,7 +60,7 @@ A profile sets the most a download may use. Within it, Apollo Download Manager s
 | Peers per torrent | 55 |
 | Torrents seeding at once | 0: no limit |
 | Upload and download limits for all torrents | None |
-| Extra trackers, added to every new torrent | None |
+| Extra trackers, added to every new torrent except private ones | None |
 | DHT bootstrap nodes | libtorrent's own |
 | Listening port (0 for any) | 6890 |
 | Ask the router to forward the port (UPnP, NAT-PMP) | Off |
