@@ -130,7 +130,7 @@ function LoginForm({ request, onClose }: { request: LoginRequest; onClose: () =>
           </Field>
         )}
         <Checkbox checked={remember} onChange={setRemember}>
-          Remember this login, in the system’s password store
+          Remember this login in the system keychain
         </Checkbox>
         {error ? (
           <p role="alert" className="text-xs text-danger">

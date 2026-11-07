@@ -395,7 +395,8 @@ describe('a refused login', () => {
     await act(() => emit('downloads-snapshot', withDownloads([refused])));
     const dialog = await screen.findByRole('dialog', { name: 'Log in to download' });
     await user.type(within(dialog).getByLabelText('User name'), 'alice');
-    await user.click(within(dialog).getByRole('checkbox', { name: /Remember this login/ }));
+    // #398: the same wording as the Add dialog's checkbox.
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Remember this login in the system keychain' }));
     await user.click(within(dialog).getByRole('button', { name: 'Log in and retry' }));
     await waitFor(() => { expect(callsOf(state, 'remember_login').map((c) => c.args)).toEqual([{ id: 'r' }]); });
   });
