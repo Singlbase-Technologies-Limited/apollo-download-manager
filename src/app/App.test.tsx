@@ -111,6 +111,36 @@ describe('the first-run setup', () => {
     expect(callsOf(backend, 'complete_onboarding').map((c) => c.args)).toEqual([{ directory: '/data/Apollo Download Manager' }]);
   });
 
+  // #403: a missing folder went through to the last step, and only Get started said so.
+  it('says at the first step that the folder doesn’t exist, and stays there', async () => {
+    const user = userEvent.setup();
+    const backend = installFakeBackend({
+      settings: firstRun(),
+      destination: ({ directory, fileName, categoryId }) => ({
+        directory: directory ?? '/home/user/Downloads',
+        directoryExists: directory !== '/home/user/Downloads',
+        automaticDirectory: false,
+        categoryId,
+        fileName,
+        path: null,
+        fileExists: false,
+        partialDownloadExists: false,
+        suggestedName: null,
+      }),
+    });
+    renderApp();
+    await user.click(await screen.findByRole('button', { name: 'Next' }));
+    expect((await screen.findByRole('alert')).textContent).toBe("The download folder doesn't exist.");
+    expect(screen.getByText('Step 1 of 3')).toBeTruthy();
+    expect(callsOf(backend, 'check_destination').map((c) => c.args)).toEqual([{ url: '', directory: '/home/user/Downloads', fileName: null, categoryId: null }]);
+    const folder = screen.getByRole('textbox', { name: 'Download folder' });
+    await user.clear(folder);
+    await user.type(folder, '/data');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Step 2 of 3 · optional')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   // #354: the guide lived only in the main window, so the setup's link opened nothing.
   it('opens the user guide over the setup, and closing it returns to the setup', async () => {
     const user = userEvent.setup();
