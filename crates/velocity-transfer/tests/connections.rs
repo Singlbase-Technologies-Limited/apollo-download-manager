@@ -3,6 +3,7 @@
 //! server.
 
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
@@ -86,6 +87,29 @@ fn ramp_timeline(control: &Arc<Control>) -> Timeline {
     Timeline::start(Duration::from_millis(500), move || {
         let now = control.connections_now();
         format!("{} running, tuned {:?}", now.active, now.tuned)
+    })
+}
+
+/// [`ramp_timeline`], with the speed written to disk since the line before, from `written`, the
+/// bytes written so far (#390): a failure shows whether a count the ramp judged slower really was.
+fn ramp_timeline_with_speed(control: &Arc<Control>, written: &Arc<AtomicU64>) -> Timeline {
+    let (control, written) = (Arc::clone(control), Arc::clone(written));
+    let last = Mutex::new((Instant::now(), 0u64));
+    Timeline::start(Duration::from_millis(500), move || {
+        let now = control.connections_now();
+        let bytes = written.load(Ordering::Acquire);
+        let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
+        let elapsed = last.0.elapsed().as_secs_f64();
+        let speed = if elapsed > 0.0 {
+            bytes.saturating_sub(last.1) as f64 / elapsed / MIB as f64
+        } else {
+            0.0
+        };
+        *last = (Instant::now(), bytes);
+        format!(
+            "{} running, tuned {:?}, {speed:.2} MiB/s",
+            now.active, now.tuned
+        )
     })
 }
 
@@ -449,14 +473,17 @@ fn under_a_speed_limit_a_download_keeps_only_the_connections_the_limit_needs() {
         ServerOptions::default(),
     );
     let dir = Dir::new("limited");
+    let written = Arc::new(AtomicU64::new(0));
+    let progress = Arc::clone(&written);
     let control = Arc::new(
-        Control::default().with_limits(vec![velocity_curl::RateLimit::new(Some(2 * MIB as u64))]),
+        Control::with_progress(move |bytes, _| progress.store(bytes, Ordering::Release))
+            .with_limits(vec![velocity_curl::RateLimit::new(Some(2 * MIB as u64))]),
     );
     let four = DownloadOptions {
         connections: 4,
         ..ADAPTIVE
     };
-    let timeline = ramp_timeline(&control);
+    let timeline = ramp_timeline_with_speed(&control, &written);
     let download = run(&server, &dir, four, &control);
     wait_until_showing(
         Duration::from_secs(40),
