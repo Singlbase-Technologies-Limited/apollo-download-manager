@@ -8,5 +8,6 @@ This folder keeps the research that V2's decisions were based on, so a decision 
 | 2026-10-22 | [Engine prototype results](engine-prototype-results.md) | Evidence for #38 | V2's own findings from the #37 prototype: correctness in both modes on Windows and Linux. Performance not measured. |
 | 2026-10-22 | [Engine mode costs](engine-mode-costs.md) | Evidence for #38 | What the child process costs against in-process: throughput, CPU, memory, latency, startup, shutdown and crash detection, on Windows and Linux (loopback). |
 | 2026-11-05 | [Product name shortlist](2026-11-05-product-name-shortlist.md) | Input for #346 | Six candidate "<Name> Download Manager" names, checked for existing download managers, other software and trademark aggregator records. The official trademark databases were not searched; Singlbase does the legal clearance. |
+| 2026-11-06 | [Torrent peer discovery, trackers and performance](2026-11-06-torrent-performance.md) | Input for #352 | What the torrent engine sets and leaves to libtorrent, a measured baseline on Windows, the public tracker options for the PO, and the follow-ups in order |
 
 Copies of outside research here are verbatim exports. Corrections go into a new revision with its own date, never into an old copy.
