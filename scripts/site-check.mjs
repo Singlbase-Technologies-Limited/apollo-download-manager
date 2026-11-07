@@ -9,7 +9,7 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
-/* global document, getComputedStyle -- the callbacks given to page.evaluate run in the page */
+/* global document, getComputedStyle, NodeFilter, scrollY -- the callbacks given to page.evaluate run in the page */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'site-out');
 const BASE = '/apollo-download-manager/';
