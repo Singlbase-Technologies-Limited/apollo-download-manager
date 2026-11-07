@@ -9,7 +9,7 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
-/* global document, getComputedStyle -- the callbacks given to page.evaluate run in the page */
+/* global document, getComputedStyle, NodeFilter, scrollY -- the callbacks given to page.evaluate run in the page */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'site-out');
 const BASE = '/apollo-download-manager/';
@@ -181,6 +181,74 @@ await check.close();
   if (shots) await page.screenshot({ path: join(shots, 'phone-menus-open.png') });
   await page.close();
   await phone.close();
+}
+
+// Contrast (#353, docs/ACCESSIBILITY.md): every visible piece of text reaches 4.5:1 on what's behind it, or 3:1 when
+// large, on every page in both themes.
+for (const theme of ['light', 'dark']) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  if (theme === 'dark') await context.addInitScript(() => localStorage.setItem('theme', 'dark'));
+  for (const route of routes) {
+    const page = await open(context, route, `contrast ${theme} /${route}`);
+    const low = await page.evaluate(() => {
+      const rgb = (c) => (c.match(/[\d.]+/g) ?? []).map(Number);
+      const lum = ([r, g, b]) => {
+        const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+      };
+      const behind = (el) => {
+        for (let e = el; e; e = e.parentElement) {
+          const c = rgb(getComputedStyle(e).backgroundColor);
+          if (c.length === 3 || (c.length === 4 && c[3] > 0.5)) return c.slice(0, 3);
+        }
+        return [255, 255, 255];
+      };
+      const out = [];
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        const el = n.parentElement;
+        if (!el || !n.textContent.trim() || el.closest('.skip, [hidden], svg')) continue;
+        const box = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        if (box.width === 0 || style.visibility === 'hidden' || style.display === 'none') continue;
+        const a = lum(rgb(style.color).slice(0, 3));
+        const b = lum(behind(el));
+        const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        const size = parseFloat(style.fontSize);
+        const large = size >= 24 || (size >= 18.66 && Number(style.fontWeight) >= 700);
+        if (ratio < (large ? 3 : 4.5)) out.push(`${ratio.toFixed(2)}: ${n.textContent.trim().slice(0, 40)}`);
+      }
+      return [...new Set(out)].slice(0, 3);
+    });
+    for (const l of low) problem(`contrast ${theme} /${route}`, l);
+    await page.close();
+  }
+  await context.close();
+}
+
+// The keyboard (#353): Tab starts at the skip link, reaches every link and button on the home page, and shows where it is.
+{
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await open(context, '', 'keyboard');
+  const wanted = await page.evaluate(() => [...document.querySelectorAll('a[href], button:not([hidden]), input')].filter((e) => e.getBoundingClientRect().width > 0 || e.matches('input[type=radio]')).length);
+  const seen = new Set();
+  for (let i = 0; i < wanted + 10; i++) {
+    await page.keyboard.press('Tab');
+    const at = await page.evaluate(() => {
+      const e = document.activeElement;
+      if (!e || e === document.body) return null;
+      const s = getComputedStyle(e);
+      const shown = s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0;
+      const box = e.getBoundingClientRect();
+      return { key: `${e.tagName}${e.id}${e.getAttribute('href') ?? ''}${e.className}${Math.round(box.top + scrollY)}`, shown, skip: e.classList.contains('skip'), radio: e.matches('input[type=radio]') };
+    });
+    if (!at) continue;
+    if (i === 0 && !at.skip) problem('keyboard', 'Tab doesn’t start at the skip link');
+    if (!at.shown && !at.radio) problem('keyboard', `no focus outline on ${at.key.slice(0, 60)}`);
+    seen.add(at.key);
+  }
+  if (seen.size < 20) problem('keyboard', `Tab reached only ${String(seen.size)} things`);
+  await context.close();
 }
 
 // A page that doesn't exist.

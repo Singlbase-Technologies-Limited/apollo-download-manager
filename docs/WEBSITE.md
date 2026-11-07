@@ -69,6 +69,8 @@ pnpm site -- --releases releases.json      # with the download page made from a 
 `pnpm site:check` (#379) opens the built site in Microsoft Edge with Playwright, served as GitHub Pages serves it, and checks every page in the sitemap at phone, tablet and desktop widths, with the system set to dark:
 
 - that each page opens light, shows the logo and has one `h1`;
+- text contrast on every page in both themes: at least 4.5:1, or 3:1 for large text (#353, [ACCESSIBILITY.md](ACCESSIBILITY.md));
+- the keyboard: Tab starts at the skip link, reaches the home page's links and buttons, and every one shows its focus outline;
 - no sideways scroll, broken image, image without `alt`, console error or failed request;
 - every internal link;
 - the menus, the theme switch and that it's remembered, the screen switcher, the FAQ, the search, and previous and next.
