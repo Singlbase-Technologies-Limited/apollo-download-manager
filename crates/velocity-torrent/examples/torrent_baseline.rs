@@ -9,6 +9,9 @@
 //! Each run starts a new helper with the app's default settings, in a new folder, so no peers or
 //! DHT nodes are remembered. It prints one line of JSON and deletes what it downloaded. Only the
 //! listening port differs from the default, so it can't clash with a running app.
+//!
+//! Each run also saves every half-second sample to `<work folder>/run-<n>.tsv`, and its line names
+//! the slowest 30 seconds: when they began, how far the download was, and the fewest peers (#386).
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -24,6 +27,8 @@ const RUN_LIMIT: Duration = Duration::from_secs(45 * 60);
 /// The peak speed is the best this long, so one burst isn't called a speed.
 const PEAK_WINDOW_SECS: f64 = 5.0;
 const MIB: f64 = 1_048_576.0;
+/// The slow stretch is the slowest this long: long enough that one stalled request isn't it.
+const STRETCH_SECS: f64 = 30.0;
 
 /// One look at the torrent.
 #[derive(Debug, Clone, Copy)]
@@ -83,6 +88,62 @@ fn summarise(samples: &[Sample]) -> Summary {
         max_peers: samples.iter().map(|s| s.peers).max().unwrap_or(0),
         max_seeds: samples.iter().map(|s| s.seeds).max().unwrap_or(0),
     }
+}
+
+/// The slow stretch #386 looks for.
+#[derive(Debug, Clone, PartialEq)]
+struct Stretch {
+    from_secs: f64,
+    mib_s: f64,
+    /// The fewest peers seen during it.
+    fewest_peers: u32,
+    /// How much of the download was done when it started, from 0 to 1.
+    share_done: f64,
+}
+
+/// The slowest `secs` of a run, from one sample to the first at least `secs` later; `None` for a
+/// run shorter than that.
+fn slowest_stretch(samples: &[Sample], secs: f64) -> Option<Stretch> {
+    let total = samples.last()?.bytes.max(1) as f64;
+    let mut slowest: Option<Stretch> = None;
+    for (i, from) in samples.iter().enumerate() {
+        let Some(j) = samples[i..]
+            .iter()
+            .position(|to| to.secs >= from.secs + secs)
+        else {
+            break;
+        };
+        let to = &samples[i + j];
+        let mib_s = to.bytes.saturating_sub(from.bytes) as f64 / MIB / (to.secs - from.secs);
+        if slowest.as_ref().is_none_or(|s| mib_s < s.mib_s) {
+            slowest = Some(Stretch {
+                from_secs: from.secs,
+                mib_s,
+                fewest_peers: samples[i..=i + j]
+                    .iter()
+                    .map(|s| s.peers)
+                    .min()
+                    .unwrap_or(0),
+                share_done: from.bytes as f64 / total,
+            });
+        }
+    }
+    slowest
+}
+
+/// Every sample, one per line, for a spreadsheet or a chart (#386).
+fn samples_tsv(samples: &[Sample]) -> String {
+    let mut text = String::from("secs\tmib\tpeers\tseeds\n");
+    for s in samples {
+        text.push_str(&format!(
+            "{:.1}\t{:.2}\t{}\t{}\n",
+            s.secs,
+            s.bytes as f64 / MIB,
+            s.peers,
+            s.seeds
+        ));
+    }
+    text
 }
 
 /// Follows one torrent to its end, or to the limit; how it ended, and the samples.
@@ -161,10 +222,19 @@ fn main() {
         let line = match run(Path::new(helper), source, &folder) {
             Ok((outcome, samples)) => {
                 let s = summarise(&samples);
+                let series = Path::new(work).join(format!("run-{n}.tsv"));
+                if let Err(e) = std::fs::write(&series, samples_tsv(&samples)) {
+                    eprintln!("run {n}: the samples weren't saved: {e}");
+                }
+                let slow = slowest_stretch(&samples, STRETCH_SECS);
                 serde_json::json!({
                     "run": n, "outcome": outcome, "metadataSecs": s.metadata_secs, "firstPeerSecs": s.first_peer_secs,
                     "firstByteSecs": s.first_byte_secs, "endSecs": s.last_secs, "bytes": s.bytes, "meanMiBs": s.mean_mib_s,
                     "peakMiBs": s.peak_mib_s, "maxPeers": s.max_peers, "maxSeeds": s.max_seeds,
+                    "slowest": slow.map(|x| serde_json::json!({
+                        "fromSecs": x.from_secs, "MiBs": x.mib_s, "fewestPeers": x.fewest_peers, "shareDone": x.share_done,
+                    })),
+                    "samples": series.display().to_string(),
                 })
             }
             Err(why) => serde_json::json!({ "run": n, "outcome": "error", "why": why }),
@@ -247,5 +317,43 @@ mod tests {
             (None, None, None)
         );
         assert_eq!((s.mean_mib_s, s.peak_mib_s), (None, None));
+    }
+
+    #[test]
+    fn writes_every_sample_as_a_line() {
+        let text = samples_tsv(&[at(0.0, 0, 0), at(1.5, 3_145_728, 4)]);
+        assert_eq!(
+            text,
+            "secs\tmib\tpeers\tseeds\n0.0\t0.00\t0\t0\n1.5\t3.00\t4\t2\n"
+        );
+    }
+
+    #[test]
+    fn finds_the_slowest_stretch_and_who_was_there() {
+        // 10 MiB/s, then 30 s at 1 MiB/s with 2 peers, then fast again.
+        let mut samples = Vec::new();
+        let mut bytes = 0;
+        for i in 0..=80 {
+            let secs = f64::from(i);
+            let slow = (20..50).contains(&i);
+            if i > 0 {
+                bytes += if slow { 1_048_576 } else { 10_485_760 };
+            }
+            samples.push(at(secs, bytes, if slow { 2 } else { 40 }));
+        }
+        // From 19 s to 49 s every second brought 1 MiB; 190 of 530 MiB were done by then.
+        let s = slowest_stretch(&samples, 30.0).unwrap();
+        assert_eq!(s.from_secs, 19.0);
+        assert_eq!(s.mib_s, 1.0);
+        assert_eq!(s.fewest_peers, 2);
+        assert_eq!(s.share_done, 190.0 / 530.0);
+    }
+
+    #[test]
+    fn has_no_slowest_stretch_in_a_run_shorter_than_it() {
+        assert_eq!(
+            slowest_stretch(&[at(0.0, 0, 1), at(10.0, 5, 1)], 30.0),
+            None
+        );
     }
 }
