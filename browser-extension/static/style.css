@@ -81,7 +81,10 @@ button:disabled { opacity: .55; cursor: default; }
 .list li:last-child { border-bottom: 0; }
 .list .what { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .list .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pill { border-radius: 999px; padding: 2px var(--s2); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.list .where { display: flex; min-width: 0; white-space: nowrap; }
+.list .where > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.list .where > * + * { flex-shrink: 0; white-space: pre; }
+.pill { flex-shrink: 0; border-radius: 999px; padding: 2px var(--s2); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .pill.ok { background: var(--success-soft); color: var(--success); }
 .pill.err { background: var(--danger-soft); color: var(--danger); }
 .empty { color: var(--fg-subtle); text-align: center; padding: var(--s3) 0; }
