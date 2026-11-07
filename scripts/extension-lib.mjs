@@ -65,6 +65,41 @@ export function manifest(target, { release, version, branding }) {
   return {
     ...m,
     background: { scripts: ['background.js'] },
-    browser_specific_settings: { gecko: { id: String(branding.firefoxExtensionId), strict_min_version: MINIMUM_FIREFOX_VERSION } },
+    browser_specific_settings: {
+      gecko: {
+        id: String(branding.firefoxExtensionId),
+        strict_min_version: MINIMUM_FIREFOX_VERSION,
+        // AMO needs this for new add-ons (since 2025-11-03): the add-on collects nothing; links go only to the app on
+        // this computer. Firefox 140 and later show it at install (#240).
+        data_collection_permissions: { required: ['none'] },
+      },
+    },
   };
+}
+
+/**
+ * The manifest that goes into a store package (#240). The Chrome Web Store gives the item its own key, so ours stays
+ * only in builds loaded by hand; the Firefox manifest is the same.
+ * @param {'chrome' | 'firefox'} target
+ * @param {Record<string, unknown>} m a manifest from {@link manifest}
+ */
+export function storeManifest(target, m) {
+  if (target !== 'chrome') return m;
+  const { key: _key, ...rest } = m;
+  return rest;
+}
+
+/**
+ * A store package's files: the build's, with its `manifest.json` replaced by {@link storeManifest}. The stores need
+ * the manifest at the zip's root, so a build without one there is refused.
+ * @param {'chrome' | 'firefox'} target
+ * @param {{ name: string, data: Buffer }[]} entries
+ */
+export function storePackageEntries(target, entries) {
+  if (!entries.some((e) => e.name === 'manifest.json')) throw new Error(`The ${target} build has no manifest.json at its root`);
+  return entries.map((e) =>
+    e.name === 'manifest.json'
+      ? { name: e.name, data: Buffer.from(`${JSON.stringify(storeManifest(target, JSON.parse(e.data.toString('utf8'))), null, 2)}\n`) }
+      : e,
+  );
 }

@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TARGETS } from './extension-lib.mjs';
+import { storePackageEntries, TARGETS } from './extension-lib.mjs';
 import { zip } from './zip-lib.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -28,7 +28,7 @@ const out = join(dist, 'packages');
 mkdirSync(out, { recursive: true });
 for (const target of TARGETS) {
   const dir = join(dist, target);
-  const entries = files(dir).map((p) => ({ name: relative(dir, p).split(sep).join('/'), data: readFileSync(p) }));
+  const entries = storePackageEntries(target, files(dir).map((p) => ({ name: relative(dir, p).split(sep).join('/'), data: readFileSync(p) })));
   const file = join(out, `apollo-download-manager-${target}-${version}.zip`);
   writeFileSync(file, zip(entries));
   console.log(`packaged ${target}: ${relative(root, file)} (${String(entries.length)} files)`);

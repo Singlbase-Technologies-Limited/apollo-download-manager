@@ -318,21 +318,34 @@ impl Locations {
         (value["name"].as_str() == Some(branding().app_native_host_name())).then_some(value)
     }
 
-    /// Points V2's registrations whose host no longer exists at `host`, and returns the browsers
-    /// it re-registered. An install that moved, such as the upgrade from 0.1.x to a new install
-    /// folder (#347), would otherwise leave the browsers starting a program that's gone. A
-    /// registration that starts another copy still there is the user's choice and stays.
+    /// Points V2's registrations whose host no longer exists at `host`, and rewrites those of
+    /// `host` that allow other extension IDs than this build's; returns the browsers it
+    /// re-registered. An install that moved, such as the upgrade from 0.1.x to a new install
+    /// folder (#347), would otherwise leave the browsers starting a program that's gone, and an
+    /// extension ID that changed for the stores (#240) would leave the published extension
+    /// refused. A registration that starts another copy still there is the user's choice and
+    /// stays.
     pub fn repair_moved_host(&self, host: &Path) -> Result<Vec<Browser>, ErrorCode> {
         let mut repaired = Vec::new();
         for registration in self.status(Some(host)) {
-            if !registration.registered || registration.host_matches {
+            if !registration.registered {
                 continue;
             }
-            let gone = self
-                .manifest(registration.browser)
-                .and_then(|m| m["path"].as_str().map(PathBuf::from))
-                .is_some_and(|old| !old.is_file());
-            if gone {
+            let written = self.manifest(registration.browser);
+            let stale = if registration.host_matches {
+                // This host, but other extension IDs than this build allows (#240).
+                let wanted = manifest(registration.browser, host);
+                written.is_some_and(|m| {
+                    m["allowed_origins"] != wanted["allowed_origins"]
+                        || m["allowed_extensions"] != wanted["allowed_extensions"]
+                })
+            } else {
+                // A host that no longer exists, as after the upgrade from 0.1.x (#347).
+                written
+                    .and_then(|m| m["path"].as_str().map(PathBuf::from))
+                    .is_some_and(|old| !old.is_file())
+            };
+            if stale {
                 self.register(registration.browser, host)?;
                 repaired.push(registration.browser);
             }
@@ -774,6 +787,28 @@ mod tests {
         assert!(of(Browser::Edge).registered && !of(Browser::Edge).host_matches);
         // Nothing is registered that wasn't before.
         assert!(!of(Browser::Chromium).registered && !of(Browser::Brave).registered);
+        assert_eq!(f.locations.repair_moved_host(&f.host), Ok(vec![]));
+    }
+
+    /// The Firefox add-on's ID changed for the stores (#240): a registration of this host that
+    /// allows other extension IDs than this build's is rewritten, so the published add-on reaches
+    /// the app. The old placeholder ID is no longer allowed: nobody owns it on AMO.
+    #[test]
+    fn a_registration_allowing_old_extension_ids_is_rewritten() {
+        let f = Fixture::new("repair-ids");
+        f.locations.register(Browser::Firefox, &f.host).unwrap();
+        f.locations.register(Browser::Chrome, &f.host).unwrap();
+        let path = PathBuf::from(&f.locations.status(None)[4].manifest_path);
+        let mut stale = manifest(Browser::Firefox, &f.host);
+        stale["allowed_extensions"] = json!(["an-earlier-id@example.invalid"]);
+        std::fs::write(&path, serde_json::to_vec(&stale).unwrap()).unwrap();
+
+        assert_eq!(
+            f.locations.repair_moved_host(&f.host),
+            Ok(vec![Browser::Firefox])
+        );
+        let now: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        assert_eq!(now, manifest(Browser::Firefox, &f.host));
         assert_eq!(f.locations.repair_moved_host(&f.host), Ok(vec![]));
     }
 

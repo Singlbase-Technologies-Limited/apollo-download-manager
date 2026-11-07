@@ -24,7 +24,7 @@ V2's extension uses none of V1's names or IDs ([ADR-0003](decisions/0003-v2-app-
 | Name | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
 | Native host it talks to | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 | Chrome extension ID | `adhefdmekgeafmopfbiappajaolcbhkc` | the same | `eecopkgfiffjgmngfmjmdaejbkbbippo` |
-| Firefox add-on ID | `velocity-download-manager-v2@velocity.local` | the same | `velocity-download-manager@velocity.local` |
+| Firefox add-on ID | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |
 
 - **Telling them apart:** V2's name, toolbar title and context-menu item say "Apollo Download Manager", and its short name and messages "Apollo DM" (the short form, docs/BRANDING.md).
 - **The Chrome key:** the manifest's `key` is the public half of a key pair generated for V2 in #64, and it pins the Chrome extension ID. The private half is held by the Product Owner, outside the repository; the repository ignores `*.pem` and `*.key` files. A test derives the ID from the key and checks it against `branding.json` (`scripts/extension-lib.test.mjs`).
@@ -66,7 +66,19 @@ To try a build: in Chrome, open `chrome://extensions`, turn on developer mode an
 pnpm package:extension   # a release build, zipped for the stores
 ```
 
-It writes `browser-extension/dist/packages/apollo-download-manager-chrome-<version>.zip` (for the Chrome Web Store and Microsoft Edge Add-ons) and `apollo-download-manager-firefox-<version>.zip` (for addons.mozilla.org), with the manifest at the archive's root. The zip writer (`scripts/zip-lib.mjs`) uses Node's own zlib, sorts the files and dates them 1980-01-01, so the same build gives the same bytes. Uploading is a manual step for the PO (#240). The listing text and the permission reasons are in [`browser-extension/store/`](../browser-extension/store/README.md), and each package is checked by hand with the [release test](BROWSER_EXTENSION_RELEASE_TEST.md) before it is uploaded.
+It writes `browser-extension/dist/packages/apollo-download-manager-chrome-<version>.zip` (for the Chrome Web Store and Microsoft Edge Add-ons) and `apollo-download-manager-firefox-<version>.zip` (for addons.mozilla.org), with the manifest at the archive's root. The zip writer (`scripts/zip-lib.mjs`) uses Node's own zlib, sorts the files and dates them 1980-01-01, so the same build gives the same bytes. The Chrome package leaves out the manifest's `key`, since the Chrome Web Store gives the item its own; the Firefox package declares that the add-on collects no data ([ADR-0020](decisions/0020-extension-store-distribution.md)). `scripts/extension-lib.test.mjs` checks both. Uploading is a manual step for the PO (#240). The listing text and the permission reasons are in [`browser-extension/store/`](../browser-extension/store/README.md), and each package is checked by hand with the [release test](BROWSER_EXTENSION_RELEASE_TEST.md) before it is uploaded.
+
+### Publishing in the stores
+
+The PO holds the Singlbase store accounts and submits each package; the agent has no store access ([ADR-0020](decisions/0020-extension-store-distribution.md)). For each release whose extension changed:
+
+1. **Build and check:** `pnpm package:extension`, then the [release test](BROWSER_EXTENSION_RELEASE_TEST.md) with those packages.
+2. **Chrome Web Store** ([developer dashboard](https://chrome.google.com/webstore/devconsole)): upload `apollo-download-manager-chrome-<version>.zip`. Fill in the listing from [`browser-extension/store/`](../browser-extension/store/README.md): descriptions, single purpose, a reason for each permission, the privacy answers and link, the icon and screenshots. Submit for review.
+   - **The first upload only:** the store gives the item its ID and key. Copy the item ID and, from the Package tab's **View public key**, the key as one line, into the issue ([Chrome: manifest key](https://developer.chrome.com/docs/extensions/reference/manifest/key)). They go into `branding.json` (`chromeExtensionIds`, `chromeExtensionKey`) in a release, so the native host allows the store's extension.
+3. **Microsoft Edge Add-ons** ([Partner Center](https://partner.microsoft.com/dashboard/microsoftedge)): upload the same Chrome zip, with the same listing. **The first upload only:** copy the ID Edge assigns into the issue; it joins `chromeExtensionIds`.
+4. **Firefox Add-ons** ([developer hub](https://addons.mozilla.org/developers/)): upload `apollo-download-manager-firefox-<version>.zip`, listed on AMO, with the same listing. The ID is in the package (`apollo-download-manager@singlbase.com`) and can't change once published.
+5. **Store links:** once each listing is public, its address goes into `branding.json`'s `extensionStoreUrls`, which turns on the app's **Get the extension** buttons (#241).
+6. **Check:** install the extension from each store and confirm it reaches the installed app (the popup says "Connected"), and record it in the issue.
 
 ## Tests
 

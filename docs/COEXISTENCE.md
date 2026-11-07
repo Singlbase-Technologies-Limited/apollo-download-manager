@@ -12,7 +12,7 @@ V2 and the original Velocity Download Manager (V1) can be installed and run at t
 | Identifier: data folder, single-instance key, pipe name | `dev.velocity.downloadmanager.v2` | `com.velocity.downloadmanager.v2` | `com.velocity.downloadmanager` |
 | Native-messaging host (#65) | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 | Native host program and its registration (#65) | `velocity-native-host-v2`; manifests and, on Windows, `HKCU` keys named after V2's host ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#registering-with-each-browser)) | the same | `velocity-native-host`, named after V1's host |
-| Firefox extension ID (#64) | `velocity-download-manager-v2@velocity.local` | the same | `velocity-download-manager@velocity.local` |
+| Firefox extension ID (#64, #240) | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |
 | Chrome extension IDs (#64) | `adhefdmekgeafmopfbiappajaolcbhkc`, pinned by V2's own key ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#identity)) | the same | `eecopkg…` |
 | Browser extension name (#64) | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
 

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { chromeExtensionId, manifest, OPTIONAL_HOST_PERMISSIONS, PERMISSIONS } from './extension-lib.mjs';
+import { chromeExtensionId, manifest, OPTIONAL_HOST_PERMISSIONS, PERMISSIONS, storeManifest, storePackageEntries } from './extension-lib.mjs';
 
 const branding = JSON.parse(readFileSync(new URL('../branding.json', import.meta.url), 'utf8'));
 /** V1's Chrome key and the ID it pins (V1 `branding.json` at e9d717a8). */
@@ -43,6 +43,43 @@ describe('manifest', () => {
     expect(m.browser_specific_settings.gecko.id).toBe(branding.firefoxExtensionId);
     expect(m.background).toEqual({ scripts: ['background.js'] });
     expect(m).not.toHaveProperty('key');
+  });
+
+  // #240: the ID is permanent once on AMO; the PO chose it (2026-11-07). V1's stays apart.
+  it('uses the Firefox ID chosen for the stores', () => {
+    expect(branding.firefoxExtensionId).toBe('apollo-download-manager@singlbase.com');
+    expect(branding.firefoxExtensionId).not.toBe('velocity-download-manager@velocity.local');
+  });
+
+  // #240: AMO needs the data the add-on collects declared for new add-ons (since 2025-11-03). It collects none:
+  // links go only to the app on this computer.
+  it('declares to Firefox that it collects no data', () => {
+    expect(dev('firefox').browser_specific_settings.gecko.data_collection_permissions).toEqual({ required: ['none'] });
+  });
+
+  // #240: what the zip for a store holds: the build's files, with the store's manifest at the root.
+  it('puts the store manifest into the package, and refuses one without a manifest at its root', () => {
+    const release = manifest('chrome', { release: true, version: '0.1.0', branding });
+    const entries = [
+      { name: 'manifest.json', data: Buffer.from(JSON.stringify(release)) },
+      { name: 'popup.js', data: Buffer.from('x') },
+    ];
+    const out = storePackageEntries('chrome', entries);
+    expect(out.map((e) => e.name)).toEqual(['manifest.json', 'popup.js']);
+    expect(JSON.parse(out[0].data.toString('utf8'))).toEqual(storeManifest('chrome', release));
+    expect(out[1].data).toBe(entries[1].data);
+    expect(() => storePackageEntries('chrome', [{ name: 'chrome/manifest.json', data: Buffer.from('{}') }])).toThrow(/manifest.json/);
+  });
+
+  // #240: the Chrome Web Store gives the item its own key; ours stays in builds loaded by hand.
+  it('leaves the key out of the Chrome store package only', () => {
+    const release = manifest('chrome', { release: true, version: '0.1.0', branding });
+    expect(release.key).toBe(branding.chromeExtensionKey);
+    const store = storeManifest('chrome', release);
+    expect(store).not.toHaveProperty('key');
+    expect({ ...store, key: release.key }).toEqual(release);
+    const firefox = manifest('firefox', { release: true, version: '0.1.0', branding });
+    expect(storeManifest('firefox', firefox)).toEqual(firefox);
   });
 
   // ADR-0018 replaced ADR-0016's "… V2" names: both builds carry the full product name, and never V1's.
