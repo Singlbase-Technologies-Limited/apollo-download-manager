@@ -85,7 +85,8 @@ export function manifest(target, { release, version, branding }) {
  */
 export function storeManifest(target, m) {
   if (target !== 'chrome') return m;
-  const { key: _key, ...rest } = m;
+  const rest = { ...m };
+  delete rest.key;
   return rest;
 }
 
