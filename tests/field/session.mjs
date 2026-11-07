@@ -24,7 +24,7 @@ import { appendFileSync, existsSync, mkdirSync, statSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { afterStart, findings, hideLinks, parseArgs, question, sample, shotPath } from './field-lib.mjs';
+import { afterStart, ELEVATION_COMMAND, elevationCheck, findings, hideLinks, parseArgs, question, sample, shotPath } from './field-lib.mjs';
 
 const PROCESSES = { app: 'velocity-desktop-v2', engine: 'velocity-transfer', torrent: 'velocity-torrent' };
 const TERMINAL = new Set(['completed', 'failed', 'removed', 'seeding']);
@@ -57,6 +57,9 @@ async function start() {
   // The app runs one instance: a second start only shows the first, without the port.
   if (running(PROCESSES.app)) throw new Error('The app is running without the debugging port. Quit it from the tray first.');
   if (!existsSync(exe)) throw new Error(`${exe} isn't installed (see tests/field/README.md).`);
+  const elevation = elevationCheck(spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ELEVATION_COMMAND], { encoding: 'utf8' }));
+  if (elevation.refuse) throw new Error(elevation.message);
+  if (elevation.message) console.log(elevation.message);
   const env = { ...process.env, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-debugging-address=127.0.0.1` };
   spawn(exe, [], { env, detached: true, stdio: 'ignore' }).unref();
   for (let i = 0; i < 60; i++) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { afterStart, findings, hideLinks, hostOf, parseArgs, sample, shotPath } from './field-lib.mjs';
+import { afterStart, elevationCheck, findings, hideLinks, hostOf, parseArgs, sample, shotPath } from './field-lib.mjs';
 
 const record = (over = {}) => ({
   id: 'd-0001',
@@ -204,5 +204,27 @@ describe('shotPath', () => {
     const elsewhere = resolve(tmpdir(), 'shots', 'panel.png');
     expect(shotPath(session, 'panel.png')).toBe(join(session, 'panel.png'));
     expect(shotPath(session, elsewhere)).toBe(elsewhere);
+  });
+});
+
+describe('elevationCheck', () => {
+  // #397: elevated, WebView2 ignores the debugging port, and start only timed out.
+  it('refuses an elevated session and says how to fix it', () => {
+    const r = elevationCheck({ status: 0, stdout: 'True\r\n' });
+    expect(r.refuse).toBe(true);
+    expect(r.message).toMatch(/administrator/);
+    expect(r.message).toMatch(/without administrator rights/);
+  });
+
+  it('lets a normal session start, with nothing to say', () => {
+    expect(elevationCheck({ status: 0, stdout: 'False\r\n' })).toEqual({ refuse: false, message: null });
+  });
+
+  it('carries on with a warning when the check itself fails', () => {
+    for (const result of [{ status: 1, stdout: '' }, { status: null, stdout: '', error: new Error('ENOENT') }, { status: 0, stdout: 'odd' }]) {
+      const r = elevationCheck(result);
+      expect(r.refuse).toBe(false);
+      expect(r.message).toMatch(/couldn't tell/i);
+    }
   });
 });

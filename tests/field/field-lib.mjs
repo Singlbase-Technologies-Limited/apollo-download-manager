@@ -175,3 +175,24 @@ export function afterStart(open, answered = []) {
   const stop = /[.?!]$/.test(text) ? '' : '.';
   return { added: false, final: false, message: `Not added yet. The app asks: ${text}${stop} Answer with ${answers}.` };
 }
+
+/** The PowerShell line whose output `elevationCheck` reads: True when this session runs as administrator. */
+export const ELEVATION_COMMAND = "[Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole('Administrator')";
+
+/**
+ * Whether `start` may go on (#397). Elevated, WebView2 ignores the debugging port by design
+ * (WebView2Feedback #5640, #5645), so the window would never answer.
+ * @param {{status: number|null, stdout: string, error?: Error}} result the check's spawnSync result
+ * @returns {{refuse: boolean, message: string|null}}
+ */
+export function elevationCheck(result) {
+  const answer = result.error || result.status !== 0 ? '' : result.stdout.trim();
+  if (answer === 'True') {
+    return {
+      refuse: true,
+      message: 'This session runs as administrator, and WebView2 then ignores the debugging port, so the window would never answer. Start the terminal or VS Code without administrator rights, then run pnpm field start again.',
+    };
+  }
+  if (answer === 'False') return { refuse: false, message: null };
+  return { refuse: false, message: "Couldn't tell whether this session runs as administrator; carrying on. If the window never answers, check that first." };
+}
