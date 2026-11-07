@@ -11,14 +11,17 @@
 //! listening port differs from the default, so it can't clash with a running app.
 //!
 //! Each run also saves every half-second sample to `<work folder>/run-<n>.tsv`, and its line names
-//! the slowest 30 seconds: when they began, how far the download was, and the fewest peers (#386).
+//! the slowest 30 seconds: when they began, how far the download was, and the fewest peers. The
+//! trackers' states go to `run-<n>-trackers.tsv`, often at the start and then every 30 s (#386).
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use velocity_core::domain::DownloadStatus;
 use velocity_core::seeding::SeedPolicy;
-use velocity_core::torrent_engine::{TorrentEngine, TorrentSettings, TorrentSource, TorrentSpec};
+use velocity_core::torrent_engine::{
+    TorrentEngine, TorrentSettings, TorrentSource, TorrentSpec, TrackerStatus,
+};
 use velocity_torrent::supervisor::{SupervisedTorrentEngine, SupervisorOptions};
 
 const LISTEN_PORT: u16 = 6891;
@@ -146,8 +149,39 @@ fn samples_tsv(samples: &[Sample]) -> String {
     text
 }
 
+/// Each tracker's state at `secs`, one per line: where a run's first peers come from (#386). The
+/// URLs are already redacted by the helper.
+fn tracker_lines(secs: f64, trackers: &[TrackerStatus]) -> String {
+    let opt = |n: Option<u64>| n.map(|n| n.to_string()).unwrap_or_default();
+    trackers
+        .iter()
+        .map(|t| {
+            format!(
+                "{secs:.1}\t{}\t{:?}\t{}\t{}\t{}\t{}\t{}\n",
+                t.url,
+                t.state,
+                t.fails,
+                opt(t.next_announce_secs),
+                opt(t.seeds.map(u64::from)),
+                opt(t.peers.map(u64::from)),
+                t.message.as_deref().unwrap_or("")
+            )
+        })
+        .collect()
+}
+
+/// When to note the trackers: often at the start, where the slow runs stall, then every 30 s.
+fn note_trackers(sample: usize) -> bool {
+    matches!(sample, 2 | 6 | 10 | 20 | 40) || sample.is_multiple_of(60)
+}
+
 /// Follows one torrent to its end, or to the limit; how it ended, and the samples.
-fn run(helper: &Path, source: &str, folder: &Path) -> Result<(&'static str, Vec<Sample>), String> {
+fn run(
+    helper: &Path,
+    source: &str,
+    folder: &Path,
+    trackers: &mut String,
+) -> Result<(&'static str, Vec<Sample>), String> {
     let settings = TorrentSettings {
         listen_port: LISTEN_PORT,
         ..TorrentSettings::default()
@@ -190,8 +224,14 @@ fn run(helper: &Path, source: &str, folder: &Path) -> Result<(&'static str, Vec<
         let Some(t) = all.into_iter().find(|t| t.id == id) else {
             return Err("the torrent went away".to_owned());
         };
+        let secs = started.elapsed().as_secs_f64();
+        if note_trackers(samples.len()) {
+            if let Ok(list) = engine.trackers(id) {
+                trackers.push_str(&tracker_lines(secs, &list));
+            }
+        }
         samples.push(Sample {
-            secs: started.elapsed().as_secs_f64(),
+            secs,
             bytes: t.progress.completed_bytes,
             peers: t.peers,
             seeds: t.seeds,
@@ -219,7 +259,16 @@ fn main() {
         let folder = Path::new(work).join(format!("run-{n}"));
         std::fs::create_dir_all(&folder).expect("the work folder can be made");
         let folder = folder.canonicalize().expect("the work folder exists");
-        let line = match run(Path::new(helper), source, &folder) {
+        let mut trackers = String::from(
+            "secs	url	state	fails	next	seeds	peers	message
+",
+        );
+        let result = run(Path::new(helper), source, &folder, &mut trackers);
+        let log = Path::new(work).join(format!("run-{n}-trackers.tsv"));
+        if let Err(e) = std::fs::write(&log, &trackers) {
+            eprintln!("run {n}: the trackers weren't saved: {e}");
+        }
+        let line = match result {
             Ok((outcome, samples)) => {
                 let s = summarise(&samples);
                 let series = Path::new(work).join(format!("run-{n}.tsv"));
@@ -251,6 +300,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use velocity_core::torrent_engine::TrackerState;
 
     fn at(secs: f64, bytes: u64, peers: u32) -> Sample {
         Sample {
@@ -347,6 +397,35 @@ mod tests {
         assert_eq!(s.mib_s, 1.0);
         assert_eq!(s.fewest_peers, 2);
         assert_eq!(s.share_done, 190.0 / 530.0);
+    }
+
+    #[test]
+    fn writes_each_trackers_state_with_the_time() {
+        let working = TrackerStatus {
+            url: "https://torrent.test/…".into(),
+            tier: 0,
+            state: TrackerState::Working,
+            message: None,
+            fails: 0,
+            next_announce_secs: Some(1800),
+            seeds: Some(900),
+            peers: Some(40),
+        };
+        let failing = TrackerStatus {
+            url: "https://ipv6.torrent.test/…".into(),
+            tier: 1,
+            state: TrackerState::Error,
+            message: Some("host not found".into()),
+            fails: 2,
+            next_announce_secs: None,
+            seeds: None,
+            peers: None,
+        };
+        assert_eq!(
+            tracker_lines(30.0, &[working, failing]),
+            "30.0\thttps://torrent.test/…\tWorking\t0\t1800\t900\t40\t\n\
+             30.0\thttps://ipv6.torrent.test/…\tError\t2\t\t\t\thost not found\n"
+        );
     }
 
     #[test]
