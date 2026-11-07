@@ -137,6 +137,20 @@ export function createBackground(api: ExtApi) {
     }
   }
 
+  /**
+   * Gives a paused download back to the browser. Firefox cancels one paused before any data arrived and then refuses
+   * to resume it (#408): the dead item goes, and the browser downloads the link again, which this extension then
+   * leaves alone (`decide`: started by this extension).
+   */
+  async function continueInBrowser(downloadId: number, url: string) {
+    try {
+      await api.resumeDownload(downloadId);
+    } catch {
+      await api.eraseDownload(downloadId).catch(() => undefined);
+      if (browserCanDownload(url)) await api.startBrowserDownload(url).catch(() => undefined);
+    }
+  }
+
   /** Hand the download to Apollo Download Manager; on any failure let the browser continue it. */
   async function transfer(downloadId: number, payload: AddPayload): Promise<Response> {
     const r = await handOff(payload);
@@ -144,7 +158,7 @@ export function createBackground(api: ExtApi) {
       await api.cancelDownload(downloadId).catch(() => undefined);
       await api.eraseDownload(downloadId).catch(() => undefined);
     } else {
-      await api.resumeDownload(downloadId).catch(() => undefined);
+      await continueInBrowser(downloadId, payload.url);
     }
     return r;
   }
@@ -172,7 +186,7 @@ export function createBackground(api: ExtApi) {
         const windowId = await api.openPromptWindow(promptId).catch(() => undefined);
         if (windowId === undefined) {
           await api.sessionRemove(PROMPT_PREFIX + promptId);
-          await api.resumeDownload(item.id).catch(() => undefined);
+          await continueInBrowser(item.id, payload.url);
           return 'fallback';
         }
         await api.sessionSet(PROMPT_PREFIX + promptId, { ...pending, windowId });
@@ -188,7 +202,7 @@ export function createBackground(api: ExtApi) {
       for (const [key, p] of Object.entries(all)) {
         if (key.startsWith(PROMPT_PREFIX) && p.windowId === windowId) {
           await api.sessionRemove(key);
-          await api.resumeDownload(p.downloadId).catch(() => undefined);
+          await continueInBrowser(p.downloadId, p.payload.url);
         }
       }
     },
@@ -234,7 +248,7 @@ export function createBackground(api: ExtApi) {
           if (!p) return { ok: false, error: { code: 'EXPIRED', message: 'This download request is no longer pending.' } };
           if (msg.choice === 'browser') {
             await api.sessionRemove(key);
-            await api.resumeDownload(p.downloadId).catch(() => undefined);
+            await continueInBrowser(p.downloadId, p.payload.url);
             if (p.windowId !== undefined) await api.closeWindow(p.windowId).catch(() => undefined);
             return { ok: true };
           }

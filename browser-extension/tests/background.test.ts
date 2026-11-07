@@ -119,6 +119,49 @@ describe('background interception', () => {
     expect(f.log.slice(-2)).toEqual(['resume:7', 'close:100']);
   });
 
+  // #408: Firefox cancels a download paused before any data arrived, and then refuses to resume it.
+  describe('when the browser can’t resume the paused download', () => {
+    const cannotResume = (api: ExtApi) => { api.resumeDownload = (id) => Promise.reject(new Error(`Download ${String(id)} cannot be resumed`)); };
+
+    it('starts it again in the browser when the app is unavailable', async () => {
+      f = fakeApi(notRunning);
+      cannotResume(f.api);
+      expect(await createBackground(f.api).onDownloadCreated(item())).toBe('fallback');
+      expect(f.log.slice(-2)).toEqual(['erase:7', 'browser:https://cdn.test/big.iso']);
+    });
+
+    it('starts it again in the browser when the prompt is closed', async () => {
+      f = fakeApi(ok, { ...DEFAULT_SETTINGS, mode: 'ask' });
+      cannotResume(f.api);
+      const bg = createBackground(f.api);
+      await bg.onDownloadCreated(item());
+      await bg.onWindowRemoved(100);
+      expect(f.log).toEqual(['pause:7', 'erase:7', 'browser:https://cdn.test/big.iso']);
+    });
+
+    it('starts it again in the browser when the user chooses the browser', async () => {
+      f = fakeApi(ok, { ...DEFAULT_SETTINGS, mode: 'ask' });
+      cannotResume(f.api);
+      const bg = createBackground(f.api);
+      await bg.onDownloadCreated(item());
+      const id = ([...f.session.keys()][0] ?? '').slice('prompt:'.length);
+      await bg.onPageMessage({ type: 'prompt.decide', id, choice: 'browser' });
+      expect(f.log).toEqual(['pause:7', 'erase:7', 'browser:https://cdn.test/big.iso', 'close:100']);
+    });
+
+    it('starts it again in the browser when the prompt window can’t open', async () => {
+      f = fakeApi(ok, { ...DEFAULT_SETTINGS, mode: 'ask' });
+      cannotResume(f.api);
+      f.api.openPromptWindow = () => Promise.reject(new Error('no window'));
+      expect(await createBackground(f.api).onDownloadCreated(item())).toBe('fallback');
+      expect(f.log).toEqual(['pause:7', 'erase:7', 'browser:https://cdn.test/big.iso']);
+    });
+
+    it('doesn’t take the restarted download again', async () => {
+      expect(await createBackground(f.api).onDownloadCreated(item({ byExtensionId: 'self' }))).toBe('ignored');
+    });
+  });
+
   it('context menu sends the link and falls back to a browser download on failure', async () => {
     let bg = createBackground(f.api);
     expect(await bg.onContextMenu({ linkUrl: 'https://cdn.test/a.zip', pageUrl: 'https://site.test/p' })).toMatchObject({ ok: true });
