@@ -18,6 +18,36 @@ export function hostMatches(host: string, domains: readonly string[]): boolean {
   return domains.some((d) => h === d || h.endsWith(`.${d}`));
 }
 
+/**
+ * The extension a download's type stands for, for downloads whose name says nothing when they start, such as
+ * GitHub's archive links (#406). Generic types (`application/octet-stream`) aren't here: they decide nothing.
+ */
+const TYPE_EXTENSIONS: Readonly<Record<string, string>> = {
+  'application/zip': 'zip', 'application/x-zip-compressed': 'zip',
+  'application/x-7z-compressed': '7z',
+  'application/vnd.rar': 'rar', 'application/x-rar-compressed': 'rar',
+  'application/x-tar': 'tar',
+  'application/gzip': 'gz', 'application/x-gzip': 'gz',
+  'application/x-xz': 'xz',
+  'application/x-bzip2': 'bz2',
+  'application/x-iso9660-image': 'iso',
+  'application/x-apple-diskimage': 'dmg',
+  'application/x-msdownload': 'exe', 'application/vnd.microsoft.portable-executable': 'exe',
+  'application/x-msi': 'msi',
+  'application/vnd.debian.binary-package': 'deb',
+  'application/x-rpm': 'rpm',
+  'application/vnd.android.package-archive': 'apk',
+  'video/mp4': 'mp4', 'video/x-matroska': 'mkv', 'video/x-msvideo': 'avi', 'video/quicktime': 'mov', 'video/webm': 'webm',
+  'audio/mpeg': 'mp3', 'audio/flac': 'flac', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/mp4': 'm4a',
+  'application/pdf': 'pdf',
+  'application/epub+zip': 'epub',
+};
+
+/** The extension for a MIME type such as `Video/MP4; codecs=avc1`, or `''`. */
+export function extensionOfType(mime: string | undefined): string {
+  return TYPE_EXTENSIONS[(mime ?? '').split(';')[0]?.trim().toLowerCase() ?? ''] ?? '';
+}
+
 export function extensionOf(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? '';
   const i = base.lastIndexOf('.');
@@ -53,6 +83,8 @@ export function decide(c: DownloadCandidate, s: ExtensionSettings, selfId: strin
   const ext = extensionOf(candidateName(c));
   if (s.captureTorrents && (ext === 'torrent' || c.mime?.toLowerCase() === 'application/x-bittorrent')) return { intercept: true };
   if (ext && s.fileTypes.includes(ext)) return { intercept: true };
+  const byType = extensionOfType(c.mime);
+  if (byType && s.fileTypes.includes(byType)) return { intercept: true };
   if (s.minSizeMib > 0 && typeof c.fileSize === 'number' && c.fileSize >= s.minSizeMib * 1024 * 1024) return { intercept: true };
   return { intercept: false, reason: 'file type and size do not match the rules' };
 }
