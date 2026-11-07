@@ -92,6 +92,32 @@ pub struct BrowserPrompt {
     pub source: RequestSource,
 }
 
+/// Links from the browser waiting for the window's Add dialog (#415). The `browser-request` event
+/// only says one is waiting: the window takes them all with `take_browser_requests`, so a link that
+/// arrives while the window is still starting, before it listens, isn't lost, and none is shown
+/// twice. Bounded: past [`PromptInbox::MAX_WAITING`] the oldest gives way.
+#[derive(Debug, Default)]
+pub struct PromptInbox(std::sync::Mutex<VecDeque<BrowserPrompt>>);
+
+impl PromptInbox {
+    /// More links than the dialog sensibly holds; the browser's own rate limit comes first.
+    pub const MAX_WAITING: usize = 64;
+
+    pub fn push(&self, prompt: BrowserPrompt) {
+        let mut waiting = self.0.lock().unwrap_or_else(|p| p.into_inner());
+        if waiting.len() == Self::MAX_WAITING {
+            waiting.pop_front();
+        }
+        waiting.push_back(prompt);
+    }
+
+    /// Every waiting link, oldest first; afterwards none waits.
+    pub fn take(&self) -> Vec<BrowserPrompt> {
+        let mut waiting = self.0.lock().unwrap_or_else(|p| p.into_inner());
+        waiting.drain(..).collect()
+    }
+}
+
 impl BrowserPrompt {
     /// A fixed example for the contract fixtures.
     pub fn sample() -> Self {
@@ -493,5 +519,41 @@ mod tests {
         };
         assert_eq!(answer_added("a1", result(conflict)), None);
         assert_eq!(prompted("a1").result.unwrap(), json!({"action":"prompted"}));
+    }
+
+    fn prompt(url: &str) -> BrowserPrompt {
+        BrowserPrompt {
+            url: url.to_owned(),
+            ..BrowserPrompt::sample()
+        }
+    }
+
+    // #415: a link that arrives while the window is still starting waits for it.
+    #[test]
+    fn a_waiting_link_is_kept_until_the_window_takes_it_once() {
+        let inbox = PromptInbox::default();
+        inbox.push(prompt("https://a.example/1.zip"));
+        inbox.push(prompt("https://a.example/2.zip"));
+        let taken: Vec<String> = inbox.take().into_iter().map(|p| p.url).collect();
+        assert_eq!(
+            taken,
+            ["https://a.example/1.zip", "https://a.example/2.zip"]
+        );
+        assert!(inbox.take().is_empty(), "a link is shown once");
+    }
+
+    #[test]
+    fn the_waiting_links_are_bounded_keeping_the_newest() {
+        let inbox = PromptInbox::default();
+        for i in 0..PromptInbox::MAX_WAITING + 3 {
+            inbox.push(prompt(&format!("https://a.example/{i}.zip")));
+        }
+        let taken = inbox.take();
+        assert_eq!(taken.len(), PromptInbox::MAX_WAITING);
+        assert_eq!(taken[0].url, "https://a.example/3.zip");
+        assert_eq!(
+            taken.last().unwrap().url,
+            format!("https://a.example/{}.zip", PromptInbox::MAX_WAITING + 2)
+        );
     }
 }

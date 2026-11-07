@@ -42,6 +42,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .manage(shell::ShellState::default())
+        .manage(velocity_core::browser::bridge::PromptInbox::default())
         .manage(log)
         .setup(|app| {
             // V2's own data directory (velocity_core::paths). Failing to create it stops the
@@ -108,6 +109,7 @@ pub fn run() {
             browser::register_browser,
             browser::unregister_browser,
             browser::open_extension_page,
+            browser::take_browser_requests,
             downloads::remember_login,
             downloads::choose_torrent_files,
             downloads::set_torrent_seeding,

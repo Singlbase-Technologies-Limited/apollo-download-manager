@@ -6,9 +6,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use velocity_core::browser::bridge::{
-    answer_added, prompted, route, AppStatus, BrowserPrompt, RateLimiter, Route,
+    answer_added, prompted, route, AppStatus, BrowserPrompt, PromptInbox, RateLimiter, Route,
 };
 use velocity_core::browser::detect::{store_page_launch, Finder};
 use velocity_core::browser::ipc::{self, Token};
@@ -22,7 +22,7 @@ use velocity_core::paths::Paths;
 use crate::downloads::{on_manager, program_beside, Downloads};
 use crate::shell;
 
-/// The event a link from the browser is sent to the window as, to open the Add dialog.
+/// The event that tells the window a link from the browser waits for the Add dialog (#65, #415).
 pub const BROWSER_REQUEST_EVENT: &str = "browser-request";
 
 /// The native host's program name: V2's own, beside the app (V1's is `velocity-native-host`).
@@ -116,11 +116,20 @@ async fn handle(
     }
 }
 
-/// Shows the window, with the Add dialog for `prompt`.
+/// Shows the window, with the Add dialog for `prompt`. The link waits in the [`PromptInbox`] until
+/// the window takes it (#415): the event only says one is waiting, since a window still starting
+/// isn't listening yet and would miss it.
 fn ask(app: &AppHandle, prompt: &BrowserPrompt) {
+    app.state::<PromptInbox>().push(prompt.clone());
     shell::show_main_window(app);
-    // Emitting fails only once the app is closing.
-    let _ = app.emit(BROWSER_REQUEST_EVENT, prompt);
+    // Emitting fails only once the app is closing; the link still waits for the window.
+    let _ = app.emit(BROWSER_REQUEST_EVENT, ());
+}
+
+/// The links from the browser waiting for the Add dialog, oldest first; afterwards none waits.
+#[tauri::command]
+pub fn take_browser_requests(inbox: tauri::State<'_, PromptInbox>) -> Vec<BrowserPrompt> {
+    inbox.take()
 }
 
 /// The native host beside the app, if it is there.

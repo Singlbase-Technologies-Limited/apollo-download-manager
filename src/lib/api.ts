@@ -8,6 +8,7 @@ import {
   BatchResultSchema,
   CategoryMoveSchema,
   BrowserIntegrationSchema,
+  BrowserRequestSchema,
   CapabilitiesSchema,
   CategorySchema,
   DestinationCheckSchema,
@@ -27,6 +28,7 @@ import {
   TrackerStatusSchema,
   type AddRequest,
   type Browser,
+  type BrowserRequest,
   type ConfirmKind,
   type AppearanceSettings,
   type Category,
@@ -119,6 +121,13 @@ export const api = {
   registerBrowser: (browser: Browser) => call('register_browser', { browser }, BrowserIntegrationSchema),
   unregisterBrowser: (browser: Browser) => call('unregister_browser', { browser }, BrowserIntegrationSchema),
   openExtensionPage: (browser: Browser) => call('open_extension_page', { browser }, nothing),
+  // The links from the browser waiting for the Add dialog (#415), oldest first. One that doesn't match the contract is
+  // left out, as the event's payload was before.
+  takeBrowserRequests: async (): Promise<BrowserRequest[]> =>
+    (await call('take_browser_requests', undefined, z.array(z.unknown())))
+      .map((r) => BrowserRequestSchema.safeParse(r))
+      .filter((r) => r.success)
+      .map((r) => r.data),
   /** Allows what a download stopped at for the user's confirmation (#67), and retries it. */
   allowDownload: (id: string, kind: ConfirmKind) => call('allow_download', { id, kind }, nothing),
   /** Saves a download's login in the system keychain, at the user's request (#70). */

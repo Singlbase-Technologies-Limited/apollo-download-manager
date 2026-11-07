@@ -79,7 +79,9 @@ use serde::Serialize;
 /// Version 32 (#325) added `forget_learned_servers`.
 /// Version 33 (#241): each browser's registration says whether it is installed and gives its
 /// store page; `open_extension_page`.
-pub const COMMAND_API_VERSION: u32 = 33;
+/// Version 34 (#415): the `browser-request` event only says a link waits; the window takes the
+/// waiting links with `take_browser_requests`.
+pub const COMMAND_API_VERSION: u32 = 34;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
