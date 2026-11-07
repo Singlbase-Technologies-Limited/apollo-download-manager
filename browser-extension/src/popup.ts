@@ -36,9 +36,18 @@ async function renderRecent() {
       name.className = 'name';
       name.textContent = e.name;
       name.title = e.name;
+      // The site shortens with "…" when the row is narrow; the time stays whole (#412).
+      const parts = [e.host, ago(e.at, now)].filter(Boolean);
       const where = document.createElement('span');
-      where.className = 'hint';
-      where.textContent = [e.host, ago(e.at, now)].filter(Boolean).join(' · ');
+      where.className = 'hint where';
+      where.title = parts.join(' · ');
+      where.append(
+        ...parts.map((p, i) => {
+          const s = document.createElement('span');
+          s.textContent = i === 0 ? p : ` · ${p}`;
+          return s;
+        }),
+      );
       what.append(name, where);
       const pill = document.createElement('span');
       pill.className = `pill ${e.ok ? 'ok' : 'err'}`;
