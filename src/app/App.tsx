@@ -1,6 +1,6 @@
 import { QueryClientProvider, useQuery, type QueryClient } from '@tanstack/react-query';
 import { MonitorX } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ConfirmHost } from '../components/ConfirmHost';
 import { TooltipProvider } from '../components/Tooltip';
@@ -35,6 +35,9 @@ function Root() {
   const desktop = isDesktop();
   const info = useQuery({ queryKey: keys.appInfo, queryFn: api.appInfo, retry: false, enabled: desktop });
   const settings = useShellSettings(desktop && info.isSuccess);
+  // The build's own name, "(dev)" only in a development build: screen readers read the page's title (#401).
+  const name = info.data?.name;
+  useEffect(() => { if (name) document.title = name; }, [name]);
   useSnapshotFeed(desktop && info.isSuccess);
   const theme = settings.data?.appearance.theme ?? 'system';
   useTheme(theme);
