@@ -2,7 +2,7 @@ import { emit } from '@tauri-apps/api/event';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Category, DownloadRecord, ShellSettings } from '../contract';
+import { COMMAND_API_VERSION, type Category, type DownloadRecord, type ShellSettings } from '../contract';
 import { DEFAULT_LAYOUT, LAYOUT } from '../layout/layoutLogic';
 import { ERROR_MESSAGES } from '../lib/errors';
 import { createQueryClient } from '../lib/queries';
@@ -70,6 +70,19 @@ describe('starting', () => {
     renderApp();
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Error code: DATABASE');
+  });
+
+  // #401: index.html's "(dev)" title stayed in release builds, where screen readers read it.
+  it('titles the page with the build’s own name', async () => {
+    const base = { version: '0.1.0', commandApiVersion: COMMAND_API_VERSION };
+    installFakeBackend({ appInfo: { ...base, name: 'Apollo Download Manager' } });
+    const { unmount } = renderApp();
+    await screen.findByRole('navigation', { name: 'Primary' });
+    expect(document.title).toBe('Apollo Download Manager');
+    unmount();
+    installFakeBackend({ appInfo: { ...base, name: 'Apollo Download Manager (dev)' } });
+    renderApp();
+    await waitFor(() => { expect(document.title).toBe('Apollo Download Manager (dev)'); });
   });
 });
 
