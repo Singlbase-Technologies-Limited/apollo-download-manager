@@ -10,6 +10,19 @@ describe('interception rules', () => {
     expect(decide({ url: 'https://cdn.test/dl?id=1', filename: '/home/u/Downloads/setup.exe' }, s(), 'me').intercept).toBe(true);
   });
 
+  // #406: GitHub's archive links end in /zip/refs/tags/…, and the name isn't known yet when the download starts.
+  it('intercepts a file whose name says nothing, by its type, when that type is in the list', () => {
+    const github = { url: 'https://github.com/curl/curl/archive/refs/tags/curl-8_11_0.zip', finalUrl: 'https://codeload.github.com/curl/curl/zip/refs/tags/curl-8_11_0', filename: '' };
+    expect(decide({ ...github, mime: 'application/zip' }, s(), 'me')).toEqual({ intercept: true });
+    expect(decide({ url: 'https://cdn.test/get?id=2', mime: 'application/x-iso9660-image' }, s(), 'me').intercept).toBe(true);
+    expect(decide({ url: 'https://cdn.test/get?id=3', mime: 'Video/MP4; codecs=avc1' }, s(), 'me').intercept).toBe(true);
+    // Only types whose extension is in "File types to send".
+    expect(decide({ ...github, mime: 'application/zip' }, s({ fileTypes: ['iso'] }), 'me').intercept).toBe(false);
+    // Unknown or generic types decide nothing.
+    expect(decide({ url: 'https://cdn.test/get?id=4', mime: 'application/octet-stream' }, s(), 'me').intercept).toBe(false);
+    expect(decide({ url: 'https://cdn.test/get?id=5', mime: 'text/html' }, s(), 'me').intercept).toBe(false);
+  });
+
   it('intercepts large files by size when the type is unknown', () => {
     expect(decide({ url: 'https://cdn.test/blob', fileSize: 25 * 1024 * 1024 }, s(), 'me').intercept).toBe(true);
     expect(decide({ url: 'https://cdn.test/blob', fileSize: 5 * 1024 * 1024 }, s(), 'me').intercept).toBe(false);
