@@ -124,7 +124,7 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 
 Passwords, custom header values (such as cookies or tokens) and SSH key passphrases are secrets. Apollo Download Manager never writes them to its database, its saved progress or its log.
 
-- **Remember this login in the system keychain,** in the Add dialog, and **Remember this login, in the system’s password store** in the login window, are off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there.
+- **Remember this login in the system keychain,** in the Add dialog and the login window, is off by default. Ticked, the download's login is kept in Windows Credential Manager or the Secret Service on Linux (GNOME Keyring, KWallet), and removing the download deletes it there.
 - **When the server refuses the login:** the window **Log in to download** opens, says the server refused it, and asks for the user name and password (and, for SFTP, the key). **Log in and retry** tries again with them; **Not now** leaves the download Failed. It opens for a refused login only (HTTP's 401, FTP's or SFTP's refused login), never when the server lets you in but not to the file, and never for the proxy's login, which is in Settings, Proxy.
 - **After a restart:** a download whose login was remembered carries on. Otherwise it comes back paused, as "Needs its login", and asks for it again when you resume it, as V1 did.
 - **No keychain** (for example a minimal Linux without a Secret Service): Apollo Download Manager says "The system keychain isn't available, so the login wasn't saved." The download still works until Apollo Download Manager closes.
