@@ -3,6 +3,7 @@ import { ext } from './shared/ext';
 import { sanitizeSettings } from './shared/settings';
 import { EXTENSION_NAME } from './shared/branding';
 import { RECENT_KEY } from './shared/recent';
+import { syncMagnetCapture as syncMagnetCaptureWith, type MagnetCaptureApi } from './shared/magnet-capture';
 
 const MENU_ID = 'velocity-v2-download-link';
 
@@ -61,21 +62,22 @@ async function syncContextMenu() {
 const MAGNET_SCRIPT = 'velocity-v2-magnet-links';
 const PAGES = { origins: ['<all_urls>'] };
 
-/** Register the magnet click script only while capture is on and page access was granted. */
-async function syncMagnetCapture() {
-  const s = sanitizeSettings((await ext.storage.local.get('settings')).settings);
-  const granted = await ext.permissions.contains(PAGES).catch(() => false);
-  const registered = await ext.scripting.getRegisteredContentScripts({ ids: [MAGNET_SCRIPT] }).catch(() => []);
-  if (s.captureTorrents && s.mode !== 'off' && granted) {
-    if (registered.length === 0) {
-      await ext.scripting
-        .registerContentScripts([{ id: MAGNET_SCRIPT, js: ['magnet.js'], matches: ['<all_urls>'], runAt: 'document_start', allFrames: false, persistAcrossSessions: true }])
-        .catch(() => undefined);
-    }
-  } else if (registered.length > 0) {
-    await ext.scripting.unregisterContentScripts({ ids: [MAGNET_SCRIPT] }).catch(() => undefined);
-  }
-}
+/** The magnet click script's rules are in shared/magnet-capture.ts; this is the browser's side of them. */
+const magnetApi: MagnetCaptureApi = {
+  getSettings: async () => sanitizeSettings((await ext.storage.local.get('settings')).settings),
+  hasPageAccess: () => ext.permissions.contains(PAGES),
+  isRegistered: async () => (await ext.scripting.getRegisteredContentScripts({ ids: [MAGNET_SCRIPT] })).length > 0,
+  register: () =>
+    ext.scripting
+      .registerContentScripts([{ id: MAGNET_SCRIPT, js: ['magnet.js'], matches: ['<all_urls>'], runAt: 'document_start', allFrames: false, persistAcrossSessions: true }])
+      .catch(() => undefined),
+  unregister: () => ext.scripting.unregisterContentScripts({ ids: [MAGNET_SCRIPT] }).catch(() => undefined),
+  openTabs: () => ext.tabs.query({}),
+  inject: async (tabId) => {
+    await ext.scripting.executeScript({ target: { tabId }, files: ['magnet.js'] });
+  },
+};
+const syncMagnetCapture = () => syncMagnetCaptureWith(magnetApi);
 
 const syncAll = () => {
   void syncContextMenu();

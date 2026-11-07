@@ -29,7 +29,7 @@ In Apollo Download Manager, open **Settings, Browser**. Each browser (Chrome, Ch
 - **Modes,** in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser.
 - **Rules,** in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default).
 - **The right-click menu** on links, images, video and audio: **Download with Apollo Download Manager**.
-- **Magnet links and `.torrent` downloads:** off by default. Turning magnet links on asks for access to pages. Apollo Download Manager always asks before adding a torrent.
+- **Magnet links and `.torrent` downloads:** off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent.
 - **What it never sends:** cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it.
 
 ## What Apollo Download Manager does with a link

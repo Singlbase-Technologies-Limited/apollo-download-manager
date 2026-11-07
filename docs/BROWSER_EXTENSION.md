@@ -44,7 +44,7 @@ The same as V1's, each in use (checked on #356). These reasons are also the stor
 | `nativeMessaging` | To pass links to the Apollo Download Manager desktop app through its native host. It is the only channel to the app. |
 | `storage` | To keep the extension's settings and the popup's last 5 sends (file name and host only), and pending ask-first prompts. |
 | `contextMenus` | For "Download with Apollo Download Manager" on a link, image, video or audio. It can be turned off. |
-| `scripting` | To register the magnet-link script, only while torrent capture is on and page access was granted. |
+| `scripting` | To register the magnet-link script, only while torrent capture is on and page access was granted, and to put it into the web pages already open when capture starts, so their magnet links work without a reload (#416). |
 | `<all_urls>` (optional) | Asked for only when you turn on magnet capture, so a magnet link click on a page reaches the app. Without it, only `.torrent` downloads are sent. |
 
 The windows, toolbar button and permissions APIs the extension also calls need no permission of their own. The extension's pages run only the extension's own scripts (`script-src 'self'`).
