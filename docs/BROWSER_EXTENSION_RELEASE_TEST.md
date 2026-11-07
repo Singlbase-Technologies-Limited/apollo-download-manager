@@ -24,13 +24,13 @@ A hand check of the extension's store packages before they are uploaded (#356, #
 | # | Check | Expected |
 |---|---|---|
 | 1 | Open the popup with the app running | `Connected · app <version>`, in green |
-| 2 | Quit the app, open the popup | "Not connected", the reason, and **Try again**; with the app started again, **Try again** shows Connected |
+| 2 | Quit the app, open the popup | The app starts itself in the tray, and the popup shows Connected ([browser.md](user/browser.md#when-apollo-download-manager-cant-take-a-link)). Only when it can't start: "Not connected", the reason, and **Try again** |
 | 3 | Turn off "Take links from the browser" in the app | The popup says browser requests are off, and a download stays in the browser |
-| 4 | Start a large `.iso` or `.zip` download in **Send** mode | It appears in the app, and the browser's copy is removed |
+| 4 | Start a large `.iso` or `.zip` download in **Send** mode | It appears in the app (with **Ask before adding** on, the default, in its Add dialog), and the browser's copy is removed |
 | 5 | Switch to **Ask first**, start one | The prompt shows the name, size and site; both buttons do what they say; closing it lets the browser carry on |
 | 6 | Right-click a link, **Download with Apollo Download Manager** | It appears in the app |
 | 7 | Paste a link in the popup, **Send** | "Sent", and the link is in the app and in Recent sends with its file name and site only |
-| 8 | Send while the app is closed | Recent sends shows it as "App not running" |
+| 8 | Quit the app, then send a link from the popup | The app starts itself and takes the link: "Sent". Only when it can't start does Recent sends show "App not running" |
 | 9 | Settings, **Clear recent sends** | The popup shows "Nothing sent yet" |
 | 10 | Turn on torrent capture, allow page access, click a magnet link | The app asks before adding the torrent |
 | 11 | Turn on torrent capture, refuse page access | The settings page says magnet clicks stay with the browser |
