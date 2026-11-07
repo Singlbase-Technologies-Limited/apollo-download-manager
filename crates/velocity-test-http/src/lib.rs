@@ -355,6 +355,13 @@ impl TestServer {
     pub fn counters(&self) -> Counters {
         self.counters.lock().unwrap().clone()
     }
+
+    /// Reads [`Counters::body_bytes_sent`] from any thread, even after the server is dropped: what
+    /// a test's timeline samples, beside the bytes the client wrote (#390, #394).
+    pub fn sent_bytes(&self) -> impl Fn() -> u64 + Send + 'static {
+        let counters = Arc::clone(&self.counters);
+        move || counters.lock().unwrap().body_bytes_sent
+    }
 }
 
 impl Drop for TestServer {
