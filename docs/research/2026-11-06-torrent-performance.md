@@ -16,7 +16,8 @@ This is research, not a decision. It changes no engine behaviour. Each proposed 
 ## Short answer
 
 - **Small torrents are fast and steady.** Debian's 0.8 GB image finished in 88 to 95 s in all six runs, at 8.3 to 8.8 MiB/s.
-- **Large ones are not.** Ubuntu's 2.9 GB image took 323 and 346 s in two runs of six, and 764 to 1321 s in the other four, at both times of day. The peak speed was the same each time, so something slows a long download down. The measuring tool only kept a summary, so it can't say when. That is the first thing to find out.
+- **Large ones are not.** Ubuntu's 2.9 GB image took 323 and 346 s in two runs of six, and 764 to 1321 s in the other four, at both times of day.
+- **The slow runs wait for peers at the start** (#386): one peer for about 15 minutes, then the whole swarm at once. Why is #387's question.
 - **Peers are found quickly.** The first peer came within 0.5 to 5 s, and the metadata within 0.5 s, in all twelve runs.
 - **Most of the engine runs on libtorrent's defaults.** The app sets discovery, ports, limits and the proxy; choking, piece picking, uTP and the disk are libtorrent's choices.
 - **One privacy bug was found and fixed:** the Extra trackers setting reached private torrents (#377).
@@ -82,7 +83,7 @@ Each item is a hypothesis with a way to test it.
 
 | Area | What might help | How to test |
 |---|---|---|
-| **Long downloads slowing down** | Find where Ubuntu's slow runs lost speed: at the end (end-game), mid-way (peers lost), or on the disk | Record a time series per run (#386) |
+| **Long downloads slowing down** | Found by #386: at the start, waiting about 15 minutes for peers | Why, and how to get peers sooner (#387) |
 | **Peers per torrent** | Above 55, if a torrent is limited by peers | Runs at 55 and at 100 on the same torrent; every run here already reached 51 to 55 peers |
 | **Incoming connections** | Port mapping on, so peers behind other NATs can connect in | Runs with port mapping on and off, counting incoming peers |
 | **Local peer discovery** | Peers on the same network | Only matters on a LAN with other clients; not worth measuring now |
@@ -146,14 +147,37 @@ target/release/examples/torrent_baseline target/release/velocity-torrent <.torre
 - **Not for Ubuntu:** the fast runs match Debian's speed, and the slow ones reached the same peak. It happened at both times of day, so it isn't only the hour. While watching run 1, its download was at 2.79 of 2.93 GB and gaining about 0.6 MB/s, so at least part of the time went at the end. That is one observation, not a measurement.
 - **Against direct downloads:** single HTTP downloads of the same Ubuntu file took 286 s in V1 and 294 to 319 s in the app on this connection (2026-10-30, one run each). Ubuntu run 3, at 323 s, is close to that. The two slow runs are not.
 
+### Where the slow runs lose their time (#386, 2026-11-07)
+
+The tool now saves every half-second sample (`<work>/run-<n>.tsv`), the slowest 30 seconds of each run, and the trackers' states (`run-<n>-trackers.tsv`). Five more Ubuntu runs, built from `main` at `8c7280e` (measured):
+
+| Run | Started (about) | Done | Mean | Slowest 30 s | Peers then |
+|---|---|---|---|---|---|
+| 1 | 03:30 | 1177 s | 2.39 MiB/s | from 155 s, 0.01 MiB/s, 0.3 % done | 1 |
+| 2 | 03:50 | 1199 s | 2.36 MiB/s | from 782 s, 0.00 MiB/s, 1.3 % done | 1 |
+| 3 | 04:10 | 459 s | 6.19 MiB/s | from 210 s, 1.13 MiB/s, 41.8 % done | 3 |
+| 4 | 04:23 | 295 s | 9.60 MiB/s | at the start, 8.20 MiB/s | 0 |
+| 5 | 04:28 | 311 s | 9.20 MiB/s | from 281 s, 6.95 MiB/s, 92.5 % done | 0 |
+
+**What the samples show** (measured):
+
+- **The slow runs lose their time at the start, not the end.** Runs 1 and 2 had **one peer, not a seed,** for 900 s, and gained about 2 MB a minute: 33.8 and 40.3 MiB done at 900.6 s.
+- **Then the swarm arrives at once.** By 910.6 s they had 16 to 20 peers, by 930 s over 30, and the rest of the file took about 4 minutes at full speed.
+- **Run 3 waited too, for less:** 2 to 5 peers for its first 6 minutes, then 48 by 420 s.
+- **The fast runs had 27 to 32 peers within 30 s.**
+- **The trackers, in the fast runs:** `torrent.ubuntu.com` answered over IPv4 within 1.5 s, reporting about 1,120 seeds. The IPv6 tracker always failed ("unreachable"): this connection has no working IPv6.
+- **Not yet captured:** the trackers' answers in a slow run. The tracker log was added after runs 1 to 3.
+
+**The lead** (assumed, not proven): 900 s is libtorrent's `dht_announce_interval` (part A). A run whose first announce gives it almost no peers waits for the next DHT round. Why the tracker gave so few in those runs is what #387 has to find, with the tracker log now in place.
+
 ## E. The plan
 
 In the order recommended, each its own issue. Which release each goes in is the PO's choice.
 
 | Issue | Change | Expected benefit | Risk | Size | How it's measured |
 |---|---|---|---|---|---|
-| #386 | The measuring tool records a time series: speed, peers, seeds and pieces every half second | Shows where long downloads lose speed | None: a tool only | Small | It finds the slow stretch in a repeat of the Ubuntu runs |
-| #387 | Then, depending on what #386 finds: end-game settings, peer turnover, or request timeouts | Long downloads as steady as short ones | Medium: libtorrent settings change for everyone | Medium | Ubuntu runs before and after, at least 3 each, at two times of day |
+| #386 | The measuring tool records a time series, the slowest stretch and the trackers | Showed the slow runs wait about 15 minutes for peers at the start | None: a tool only | Small | Done: see "Where the slow runs lose their time" |
+| #387 | Then, from #386's finding: why the first announce gives so few peers, and what gets them sooner (for example the DHT's first announce, or announcing to every tracker) | Long downloads as steady as short ones | Medium: libtorrent settings change for everyone | Medium | Ubuntu runs before and after, at least 3 each, at two times of day |
 | #384 | Port mapping: decide its default (PO) | More peers can connect in | Opens a port on the router | Small | Incoming peer counts with it on and off |
 | #385 | Public tracker list: decide among part B's options (PO) | More peers for poorly tracked torrents | Privacy, legal | Depends on the option | Peers found on a poorly tracked torrent with and without |
 | #388 | Linux: repeat the method there | Shows whether the slow stretch is the same on Linux | None | Small | The same tool |
