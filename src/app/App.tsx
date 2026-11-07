@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ConfirmHost } from '../components/ConfirmHost';
 import { TooltipProvider } from '../components/Tooltip';
+import { GuideDialog } from '../features/help/GuideView';
 import { Onboarding } from '../features/onboarding/Onboarding';
 import { api, isDesktop } from '../lib/api';
 import { toApiError } from '../lib/errors';
@@ -75,6 +76,8 @@ function Root() {
         {desktop ? <TitleBar title={info.data?.name ?? 'Apollo Download Manager'} app={ready ? info.data : undefined} /> : null}
         <div className="min-h-0 flex-1 bg-bg">{content}</div>
       </div>
+      {/* Here, not in the Shell, so the first-run setup's link opens it too (#354). */}
+      <GuideDialog />
       {/* Themed with the app's tokens, and above the status bar so it never covers it (#348 D). */}
       <Toaster
         position="bottom-right"

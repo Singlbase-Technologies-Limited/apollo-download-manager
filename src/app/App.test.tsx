@@ -98,6 +98,20 @@ describe('the first-run setup', () => {
     expect(callsOf(backend, 'complete_onboarding').map((c) => c.args)).toEqual([{ directory: '/data/Apollo Download Manager' }]);
   });
 
+  // #354: the guide lived only in the main window, so the setup's link opened nothing.
+  it('opens the user guide over the setup, and closing it returns to the setup', async () => {
+    const user = userEvent.setup();
+    installFakeBackend({ settings: firstRun() });
+    renderApp();
+    await toSummary(user);
+    await user.click(screen.getByRole('button', { name: 'Open the user guide' }));
+    const guide = await screen.findByRole('dialog', { name: 'User guide' });
+    expect(within(guide).getByRole('navigation', { name: 'Guide contents' })).toBeTruthy();
+    await user.keyboard('{Escape}');
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'User guide' })).toBeNull(); });
+    expect(screen.getByRole('heading', { name: 'You’re ready' })).toBeTruthy();
+  });
+
   it('sets up the browsers found here as an optional step, and Back keeps the folder (#65, #241, #372)', async () => {
     const user = userEvent.setup();
     installFakeBackend({ settings: firstRun() });
