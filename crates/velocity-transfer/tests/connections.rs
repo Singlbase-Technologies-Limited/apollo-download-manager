@@ -90,24 +90,27 @@ fn ramp_timeline(control: &Arc<Control>) -> Timeline {
     })
 }
 
-/// [`ramp_timeline`], with the speed written to disk since the line before, from `written`, the
-/// bytes written so far (#390): a failure shows whether a count the ramp judged slower really was.
-fn ramp_timeline_with_speed(control: &Arc<Control>, written: &Arc<AtomicU64>) -> Timeline {
+/// [`ramp_timeline`], with the speeds since the line before: written to disk, from `written`, the
+/// bytes written so far, and sent by the server, from `sent` (#390, #394). A failure shows
+/// whether a count the ramp judged slower really was, and whether the disk or the whole run
+/// stalled.
+fn ramp_timeline_with_speed(
+    control: &Arc<Control>,
+    written: &Arc<AtomicU64>,
+    sent: impl Fn() -> u64 + Send + 'static,
+) -> Timeline {
     let (control, written) = (Arc::clone(control), Arc::clone(written));
-    let last = Mutex::new((Instant::now(), 0u64));
+    let last = Mutex::new((Instant::now(), 0u64, 0u64));
     Timeline::start(Duration::from_millis(500), move || {
         let now = control.connections_now();
-        let bytes = written.load(Ordering::Acquire);
+        let (bytes, out) = (written.load(Ordering::Acquire), sent());
         let mut last = last.lock().unwrap_or_else(|e| e.into_inner());
-        let elapsed = last.0.elapsed().as_secs_f64();
-        let speed = if elapsed > 0.0 {
-            bytes.saturating_sub(last.1) as f64 / elapsed / MIB as f64
-        } else {
-            0.0
-        };
-        *last = (Instant::now(), bytes);
+        let elapsed = last.0.elapsed().as_secs_f64().max(f64::EPSILON);
+        let speed = |to: u64, from: u64| to.saturating_sub(from) as f64 / elapsed / MIB as f64;
+        let (wrote, served) = (speed(bytes, last.1), speed(out, last.2));
+        *last = (Instant::now(), bytes, out);
         format!(
-            "{} running, tuned {:?}, {speed:.2} MiB/s",
+            "{} running, tuned {:?}, written {wrote:.2} MiB/s, sent {served:.2} MiB/s",
             now.active, now.tuned
         )
     })
@@ -483,7 +486,7 @@ fn under_a_speed_limit_a_download_keeps_only_the_connections_the_limit_needs() {
         connections: 4,
         ..ADAPTIVE
     };
-    let timeline = ramp_timeline_with_speed(&control, &written);
+    let timeline = ramp_timeline_with_speed(&control, &written, server.sent_bytes());
     let download = run(&server, &dir, four, &control);
     wait_until_showing(
         Duration::from_secs(40),

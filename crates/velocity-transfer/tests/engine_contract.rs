@@ -1099,11 +1099,32 @@ fn downloads_from_one_host_share_its_cap_fairly() {
             .iter()
             .map(|id| latest[id].progress.completed_bytes)
             .collect();
-        latest_until(
-            &events,
-            &mut latest,
-            Instant::now() + Duration::from_secs(2),
-        );
+        // In half seconds, each with the bytes written and the bytes the server sent: a failure
+        // shows whether the disk or the whole run stalled (#394).
+        let sent = server.sent_bytes();
+        let started = Instant::now();
+        let mut steps = vec![format!(
+            " 0.00 s  written {}, sent {}",
+            before.iter().sum::<u64>(),
+            sent()
+        )];
+        for step in 1..=4 {
+            latest_until(
+                &events,
+                &mut latest,
+                started + Duration::from_millis(500 * step),
+            );
+            let written: u64 = ids
+                .iter()
+                .map(|id| latest[id].progress.completed_bytes)
+                .sum();
+            steps.push(format!(
+                "{:5.2} s  written {written}, sent {}",
+                started.elapsed().as_secs_f64(),
+                sent()
+            ));
+        }
+        let steps = steps.join("\n");
         let rates: Vec<f64> = ids
             .iter()
             .zip(&before)
@@ -1113,7 +1134,7 @@ fn downloads_from_one_host_share_its_cap_fairly() {
         eprintln!("{mode}: bytes in 2 s {rates:?}, Jain's index {index:.3}");
         assert!(
             index >= 0.9,
-            "{mode}: Jain's index {index:.3} for {rates:?}"
+            "{mode}: Jain's index {index:.3} for {rates:?}:\n{steps}"
         );
 
         all_completed(&events, &mut latest, &ids, mode);

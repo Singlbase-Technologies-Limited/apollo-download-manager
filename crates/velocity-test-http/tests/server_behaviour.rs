@@ -103,6 +103,16 @@ fn serves_the_whole_file_without_a_range() {
 }
 
 #[test]
+fn the_bytes_sent_can_be_read_from_another_thread() {
+    // A test's timeline samples them on a thread of its own (#390, #394).
+    let (s, _) = server(RangeMode::Honour);
+    let sent = s.sent_bytes();
+    request(&mut connect(&s), "GET", "/file.bin", &[]);
+    let read = std::thread::spawn(sent).join().unwrap();
+    assert_eq!(read, SIZE as u64);
+}
+
+#[test]
 fn honours_a_closed_and_an_open_range() {
     let (s, data) = server(RangeMode::Honour);
     let mut c = connect(&s);
