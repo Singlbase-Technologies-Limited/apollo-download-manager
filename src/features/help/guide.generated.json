@@ -8647,7 +8647,7 @@
          },
          {
           "type": "text",
-          "text": " off by default. Turning magnet links on asks for access to pages. Apollo Download Manager always asks before adding a torrent."
+          "text": " off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent."
          }
         ]
        }
@@ -8934,7 +8934,7 @@
     {
      "anchor": "what-the-extension-does",
      "heading": "What the extension does",
-     "text": "It takes over matching downloads: by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link. Modes, in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser. Rules, in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default). The right-click menu on links, images, video and audio: Download with Apollo Download Manager. Magnet links and .torrent downloads: off by default. Turning magnet links on asks for access to pages. Apollo Download Manager always asks before adding a torrent. What it never sends: cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
+     "text": "It takes over matching downloads: by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link. Modes, in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser. Rules, in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default). The right-click menu on links, images, video and audio: Download with Apollo Download Manager. Magnet links and .torrent downloads: off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent. What it never sends: cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
     },
     {
      "anchor": "what-apollo-download-manager-does-with-a-link",
