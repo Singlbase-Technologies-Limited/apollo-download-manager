@@ -61,8 +61,8 @@ Unless a scenario says otherwise:
 | Id | Scenario | What to check |
 |---|---|---|
 | B1 | Register Chrome or Edge in Settings, then load V2's extension | The extension shows as connected ([browser.md](../../docs/user/browser.md)) |
-| B2 | Click a download link in the browser | V2 takes it, with its name; the browser doesn't download it as well |
-| B3 | A link V2 can't take, and the app not running | The browser keeps the download, and the reason is shown |
+| B2 | Click a download link in the browser | V2 takes it, with its name (in its Add dialog while **Ask before adding** is on); the browser doesn't download it as well |
+| B3 | A link V2 can't take, such as a `blob:` download; then, with the app quit, a link it can take | The browser keeps the first. For the second, the app starts itself in the tray and takes the link ([browser.md](../../docs/user/browser.md#when-apollo-download-manager-cant-take-a-link)) |
 
 ## Settings
 
