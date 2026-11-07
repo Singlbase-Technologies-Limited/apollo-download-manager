@@ -8,7 +8,6 @@ import { HostKeyPrompt } from '../features/add/HostKeyPrompt';
 import { useAddEntryPoints } from '../features/add/useAddEntryPoints';
 import { DownloadsView } from '../features/downloads/DownloadsView';
 import { HistoryView } from '../features/history/HistoryView';
-import { GuideDialog } from '../features/help/GuideView';
 import { SettingsDialog } from '../features/settings/SettingsView';
 import { ChooseFilesDialog } from '../features/torrents/ChooseFilesDialog';
 import { commitSidebarWidth, LAYOUT, resolveLayout } from '../layout/layoutLogic';
@@ -119,7 +118,6 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
       <ChooseFilesDialog />
       <HostKeyPrompt />
       <SettingsDialog />
-      <GuideDialog />
     </div>
   );
 }
