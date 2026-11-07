@@ -1,11 +1,9 @@
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import {
-  BrowserRequestSchema,
   DownloadsSnapshotSchema,
   DroppedTorrentsSchema,
   MaximizeButtonStateSchema,
   QuitRequestSchema,
-  type BrowserRequest,
   type DownloadsSnapshot,
   type DroppedTorrents,
   type MaximizeButtonState,
@@ -38,11 +36,13 @@ export function onMaximizeButton(handler: (state: MaximizeButtonState) => void):
   });
 }
 
-/** The browser sent a link for the user to check: the window opens the Add dialog with it (#65). */
-export function onBrowserRequest(handler: (request: BrowserRequest) => void): Promise<UnlistenFn> {
-  return listen('browser-request', (e) => {
-    const parsed = BrowserRequestSchema.safeParse(e.payload);
-    if (parsed.success) handler(parsed.data);
+/**
+ * The browser sent a link for the user to check (#65): it waits in the app until the window takes it with
+ * `api.takeBrowserRequests` (#415), so the event carries nothing.
+ */
+export function onBrowserRequestWaiting(handler: () => void): Promise<UnlistenFn> {
+  return listen('browser-request', () => {
+    handler();
   });
 }
 

@@ -1,8 +1,36 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { onBrowserRequest, onTorrentsDropped } from '../../lib/events';
+import type { BrowserRequest } from '../../contract';
+import { api } from '../../lib/api';
+import { toApiError } from '../../lib/errors';
+import { onBrowserRequestWaiting, onTorrentsDropped } from '../../lib/events';
 import { torrentLinksInPaste } from '../torrents/torrentLogic';
 import { useUiStore } from '../../stores/ui';
+
+/** Opens the Add dialog with a link the browser sent for the user to check (#65). */
+function showBrowserRequest(r: BrowserRequest) {
+  const { addDialog, openAdd } = useUiStore.getState();
+  const waiting = addDialog.open ? addDialog.prefill : null;
+  // #365: a link sent while the window holds others from the browser joins them, once each, instead of replacing
+  // them. A file name, size or type fits one link only; a referrer stays while every link shares it.
+  if (waiting?.fromBrowser && waiting.links) {
+    const links = waiting.links.split('\n');
+    if (links.includes(r.url)) return;
+    const referrer = waiting.referrer && waiting.referrer === r.referrer ? waiting.referrer : undefined;
+    openAdd({
+      links: [...links, r.url].join('\n'),
+      ...(referrer ? { referrer } : {}),
+      fromBrowser: { referrer: referrer ?? null, fileSize: null, mime: null },
+    });
+    return;
+  }
+  openAdd({
+    links: r.url,
+    ...(r.fileName ? { fileName: r.fileName } : {}),
+    ...(r.referrer ? { referrer: r.referrer } : {}),
+    fromBrowser: { referrer: r.referrer, fileSize: r.fileSize, mime: r.mime },
+  });
+}
 
 /**
  * Where the Add dialog opens from besides the navigation (#60): Ctrl+N (⌘N on macOS), as in V1, `.torrent` files
@@ -42,34 +70,24 @@ export function useAddEntryPoints() {
     return () => { document.removeEventListener('paste', onPaste); };
   }, []);
 
+  // Links from the browser wait in the app until the window takes them (#415): once the window listens, and on each
+  // event after that, so one that started the app before the window was ready isn't lost.
   useEffect(() => {
     let disposed = false;
     let unlisten: (() => void) | undefined;
-    void onBrowserRequest((r) => {
-      const { addDialog, openAdd } = useUiStore.getState();
-      const waiting = addDialog.open ? addDialog.prefill : null;
-      // #365: a link sent while the window holds others from the browser joins them, once each, instead of replacing
-      // them. A file name, size or type fits one link only; a referrer stays while every link shares it.
-      if (waiting?.fromBrowser && waiting.links) {
-        const links = waiting.links.split('\n');
-        if (links.includes(r.url)) return;
-        const referrer = waiting.referrer && waiting.referrer === r.referrer ? waiting.referrer : undefined;
-        openAdd({
-          links: [...links, r.url].join('\n'),
-          ...(referrer ? { referrer } : {}),
-          fromBrowser: { referrer: referrer ?? null, fileSize: null, mime: null },
-        });
+    const takeWaiting = () => {
+      api.takeBrowserRequests().then(
+        (waiting) => { if (!disposed) waiting.forEach(showBrowserRequest); },
+        (e: unknown) => { toast.error(`A link from the browser couldn’t be shown: ${toApiError(e).message}`); },
+      );
+    };
+    void onBrowserRequestWaiting(takeWaiting).then((u) => {
+      if (disposed) {
+        u();
         return;
       }
-      openAdd({
-        links: r.url,
-        ...(r.fileName ? { fileName: r.fileName } : {}),
-        ...(r.referrer ? { referrer: r.referrer } : {}),
-        fromBrowser: { referrer: r.referrer, fileSize: r.fileSize, mime: r.mime },
-      });
-    }).then((u) => {
-      if (disposed) u();
-      else unlisten = u;
+      unlisten = u;
+      takeWaiting();
     });
     return () => {
       disposed = true;

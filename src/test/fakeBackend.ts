@@ -1,5 +1,6 @@
 // A fake native side for the window's tests (#29): the commands of docs/CONTRACTS.md over Tauri's
 // IPC mock, answering with the generated contract fixtures, and recording every call.
+import { emit } from '@tauri-apps/api/event';
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -63,6 +64,8 @@ export interface FakeState {
   /** The proxy's password, as `set_proxy_password` set it (#192). */
   proxyPassword: string | null;
   browser: BrowserIntegration;
+  /** Links from the browser waiting for the window, as `take_browser_requests` hands them over (#415). */
+  browserRequests: unknown[];
   network: NetworkStatus;
   /** What `set_download_category` answers (#366); by default, nothing moved. */
   categoryMove: (args: { id: string; categoryId: string | null }) => CategoryMove;
@@ -139,6 +142,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
     appSettings: fixture('settings.json') as Settings,
     proxyPassword: null,
     browser: fixture('browser-integration.json') as BrowserIntegration,
+    browserRequests: [],
     network: { listenPort: 6890, listenError: null, portMapping: { state: 'off' } },
     categoryMove: () => ({ kind: 'unchanged' }),
     failures: {},
@@ -216,6 +220,11 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           return state.browser;
         case 'open_extension_page':
           return null;
+        case 'take_browser_requests': {
+          const waiting = state.browserRequests;
+          state.browserRequests = [];
+          return waiting;
+        }
         case 'register_browser':
         case 'unregister_browser':
           state.browser = {
@@ -317,6 +326,12 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
 export function withSftp(capabilities: Capabilities): Capabilities {
   const http = capabilities.protocols[0];
   return http ? { ...capabilities, protocols: [...capabilities.protocols, { ...http, kind: 'sftp' }] } : capabilities;
+}
+
+/** A link from the browser, as the app hands it over (#415): it waits, and the event says so. */
+export async function sendFromBrowser(state: FakeState, request: unknown): Promise<void> {
+  state.browserRequests = [...state.browserRequests, request];
+  await emit('browser-request', null);
 }
 
 /** The calls of one command, in order. */

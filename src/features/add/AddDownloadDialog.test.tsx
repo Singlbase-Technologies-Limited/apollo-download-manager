@@ -9,7 +9,7 @@ import { ERROR_MESSAGES } from '../../lib/errors';
 import { createQueryClient } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
-import { callsOf, emptySnapshot, fixture, installFakeBackend, type FakeState } from '../../test/fakeBackend';
+import { callsOf, emptySnapshot, fixture, installFakeBackend, sendFromBrowser, type FakeState } from '../../test/fakeBackend';
 import { chooseOption } from '../../test/select';
 
 // V1's add-dialog tests (tests/unit/app.test.tsx and torrent.test.tsx), ported to V2's dialog, with
@@ -581,7 +581,7 @@ describe('torrents', () => {
     const state = installFakeBackend();
     renderApp();
     await screen.findByRole('button', { name: 'Add download' });
-    await act(() => emit('browser-request', fixture('browser-request.json')));
+    await act(() => sendFromBrowser(state, fixture('browser-request.json')));
     const dialog = await screen.findByRole('dialog', { name: 'Add download' });
     expect(within(dialog).getByRole<HTMLTextAreaElement>('textbox', { name: 'Links' }).value).toBe('https://example.com/files/archive.zip');
     expect(within(dialog).getByRole<HTMLInputElement>('textbox', { name: 'File name' }).value).toBe('archive.zip');
@@ -596,7 +596,7 @@ describe('torrents', () => {
     const state = installFakeBackend();
     renderApp();
     await screen.findByRole('button', { name: 'Add download' });
-    const send = (url: string) => act(() => emit('browser-request', { ...(fixture('browser-request.json') as object), url, fileName: null }));
+    const send = (url: string) => act(() => sendFromBrowser(state, { ...(fixture('browser-request.json') as object), url, fileName: null }));
     await send('https://example.com/files/one.zip');
     await send('https://example.com/files/two.zip');
     await send('https://example.com/files/one.zip');
@@ -612,7 +612,7 @@ describe('torrents', () => {
     const user = userEvent.setup();
     renderApp();
     await screen.findByRole('button', { name: 'Add download' });
-    await act(() => emit('browser-request', fixture('browser-request.json')));
+    await act(() => sendFromBrowser(state, fixture('browser-request.json')));
     const dialog = await screen.findByRole('dialog', { name: 'Add download' });
     const links = within(dialog).getByRole('textbox', { name: 'Links' });
     await user.clear(links);
@@ -623,11 +623,21 @@ describe('torrents', () => {
   });
 
   it('ignores a browser request that isn’t one', async () => {
-    installFakeBackend();
+    const state = installFakeBackend();
     renderApp();
     await screen.findByRole('button', { name: 'Add download' });
-    await act(() => emit('browser-request', { url: '', source: 'elsewhere' }));
+    await act(() => sendFromBrowser(state, { url: '', source: 'elsewhere' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  // #415 (regression): a link that started the app arrives before the window listens; it waits, and the window opens
+  // the Add dialog with it once it's ready, without an event.
+  it('opens with a link the browser sent while the window was still starting', async () => {
+    const state = installFakeBackend({ browserRequests: [fixture('browser-request.json')] });
+    renderApp();
+    const dialog = await screen.findByRole('dialog', { name: 'Add download' });
+    expect(within(dialog).getByRole<HTMLTextAreaElement>('textbox', { name: 'Links' }).value).toBe('https://example.com/files/archive.zip');
+    expect(state.browserRequests).toEqual([]);
   });
 
   it('says so when nothing dropped was a .torrent file', async () => {
