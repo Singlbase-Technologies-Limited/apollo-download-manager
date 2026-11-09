@@ -17,6 +17,8 @@ export interface CellContext {
   needsLogin: boolean;
   /** Settings' number of simultaneous downloads, when known, for the status help. */
   maxConcurrent?: number;
+  /** The keyboard has moved to this row: its cut-off values show in full without a hover (#424). */
+  keyboardFocus?: boolean;
 }
 
 /** The id of the hidden status help that describes a download's row (#424). */
@@ -47,7 +49,7 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
     width: 'minmax(160px, 3fr)',
     minWidth: 160,
     sort: 'name',
-    render: (d, { category }) => (
+    render: (d, { category, keyboardFocus }) => (
       <span className="flex min-w-0 items-center gap-2">
         {category ? (
           <CategoryGlyph icon={category.icon} color={category.color} className="size-4 shrink-0" />
@@ -57,7 +59,7 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
         ) : (
           <FileIcon className="size-4 shrink-0" aria-hidden />
         )}
-        <CutOffText text={displayName(d)} className="font-medium text-fg" />
+        <CutOffText text={displayName(d)} className="font-medium text-fg" showNow={keyboardFocus} />
         {torrent(d) ? (
           <Tooltip label="Torrent">
             <span className="flex shrink-0 items-center text-fg-subtle">
@@ -130,13 +132,13 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
       );
     },
   },
-  { id: 'category', label: 'Category', width: '104px', minWidth: 104, sort: 'category', render: (_d, { category }) => <CutOffText text={category?.name ?? '—'} /> },
+  { id: 'category', label: 'Category', width: '104px', minWidth: 104, sort: 'category', render: (_d, { category, keyboardFocus }) => <CutOffText text={category?.name ?? '—'} showNow={keyboardFocus} /> },
   {
     id: 'destination',
     label: 'Destination',
     width: 'minmax(140px, 1.5fr)',
     minWidth: 140,
-    render: (d) => <CutOffText text={d.directory} />,
+    render: (d, { keyboardFocus }) => <CutOffText text={d.directory} showNow={keyboardFocus} />,
   },
   { id: 'added', label: 'Added', width: '132px', minWidth: 132, sort: 'added', render: (d) => formatShortDate(d.createdAtMs) },
   { id: 'started', label: 'Started', width: '132px', minWidth: 132, render: (d) => formatShortDate(d.startedAtMs) },

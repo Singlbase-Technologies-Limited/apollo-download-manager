@@ -453,6 +453,23 @@ describe('hover help on the download list', () => {
     expect((await screen.findByRole('tooltip')).textContent).toBe(long.fileName);
   });
 
+  it('shows a cut-off name in full when the keyboard reaches its row, and nothing for one that fits', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const g = await grid();
+    g.focus();
+    // Newest first: the long name, then broken.iso, then archive.zip.
+    await user.keyboard('{Home}');
+    expect((await screen.findByRole('tooltip')).textContent).toBe(long.fileName);
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => { expect(screen.queryByRole('tooltip')).toBeNull(); });
+    // Escape closes it, as it closes any tooltip.
+    await user.keyboard('{ArrowUp}');
+    await screen.findByRole('tooltip');
+    await user.keyboard('{Escape}');
+    await waitFor(() => { expect(screen.queryByRole('tooltip')).toBeNull(); });
+  });
+
   it('says what a status means and what to do', async () => {
     const user = userEvent.setup();
     renderApp();

@@ -104,6 +104,14 @@ async function hoverHelp() {
       const said = (await status.textContent().catch(() => '')) ?? '';
       check(`hover ${label} ${theme}: a failed status says what to do`, said.includes('Retry'), said.slice(0, 60));
       await shot(page, `${label}-${theme}-hover-status`);
+      // By keyboard: Home reaches the long name's row, and its cut-off name shows without a hover.
+      await page.mouse.move(0, 0, { steps: 5 });
+      await page.getByRole('grid', { name: 'Downloads' }).focus();
+      await page.keyboard.press('Home');
+      const byKey = page.getByRole('tooltip').filter({ hasText: 'beyond-the-column-width.iso' }).first();
+      const keyShown = await byKey.waitFor({ timeout: 3000 }).then(() => true, () => false);
+      check(`keyboard ${label} ${theme}: a cut-off name shows in full on its row`, keyShown);
+      await shot(page, `${label}-${theme}-keyboard-name`);
       await ctx.close();
     }
   }
