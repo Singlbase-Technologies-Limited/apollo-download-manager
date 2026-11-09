@@ -9,7 +9,7 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
-/* global document, getComputedStyle, NodeFilter, scrollY -- the callbacks given to page.evaluate run in the page */
+/* global document, getComputedStyle, NodeFilter, scrollY, window -- the callbacks given to page.evaluate run in the page */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'site-out');
 const BASE = '/apollo-download-manager/';
@@ -156,6 +156,86 @@ for (const link of links) {
   if (shots) await page.screenshot({ path: join(shots, 'desktop-dark-home.png'), fullPage: true });
   await page.click('[data-theme-toggle]');
   await page.close();
+}
+
+// The home page's screenshot on a slow line (#423): a placeholder in its frame while it loads, never an empty frame
+// when the theme switches, and the dark one once it has arrived. Throttled to about 1.6 Mbit/s with 150 ms latency.
+{
+  const where = 'slow line';
+  const slow = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await slow.newPage();
+  page.on('pageerror', (e) => problem(where, `script: ${e.message}`));
+  const cdp = await slow.newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 200_000, uploadThroughput: 90_000 });
+  await page.goto(`${origin}${BASE}`, { waitUntil: 'domcontentloaded' });
+  const hero = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('.stage img')]
+        .filter((i) => i.getBoundingClientRect().height > 0)
+        .map((i) => ({ loaded: i.complete && i.naturalWidth > 0, dark: i.classList.contains('dark-only'), placeholder: getComputedStyle(i).backgroundColor !== 'rgba(0, 0, 0, 0)' })),
+    );
+  const first = await hero();
+  if (first.length !== 1) problem(where, `${String(first.length)} screenshots shown at the top`);
+  else if (!first[0].loaded && !first[0].placeholder) problem(where, 'the screenshot frame is empty while the image loads');
+  await page.waitForLoadState('load');
+  await page.click('[data-theme-toggle]');
+  await page.waitForTimeout(100);
+  const switched = await hero();
+  if (switched.length !== 1 || !switched[0].loaded) problem(where, 'the screenshot frame is empty just after the theme switch');
+  try {
+    await page.waitForFunction(() => [...document.querySelectorAll('.stage img.dark-only')].some((i) => i.getBoundingClientRect().height > 0 && i.naturalWidth > 0), null, { timeout: 15_000 });
+  } catch {
+    problem(where, 'the dark screenshot never replaced the light one');
+  }
+  if (shots) await page.screenshot({ path: join(shots, 'desktop-slow-dark-home.png') });
+  await slow.close();
+}
+
+// On a fast line the dark screenshot is there at once (#423): it is fetched when the switch is pointed at.
+{
+  const page = await open(check, '', 'theme speed');
+  await page.hover('[data-theme-toggle]');
+  await page.waitForLoadState('networkidle');
+  await page.click('[data-theme-toggle]');
+  await page.waitForTimeout(100);
+  const dark = await page.evaluate(() => [...document.querySelectorAll('.stage img.dark-only')].some((i) => i.getBoundingClientRect().height > 0 && i.naturalWidth > 0));
+  if (!dark) problem('theme speed', 'the dark screenshot wasn’t shown within 100 ms of the switch');
+  await page.click('[data-theme-toggle]');
+  await page.close();
+}
+
+// The home page holds still while it loads on a phone on a slow line (#423): its layout shift (CLS) stays under 0.01,
+// so a late font or the theme switch's arrival doesn't move the text under the reader.
+{
+  const where = 'phone layout shift';
+  const phone = await browser.newContext({ viewport: { width: 375, height: 720 } });
+  const page = await phone.newPage();
+  const cdp = await phone.newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 200_000, uploadThroughput: 90_000 });
+  await page.addInitScript(() => {
+    window.__shift = 0;
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) if (!e.hadRecentInput) window.__shift += e.value;
+    }).observe({ type: 'layout-shift', buffered: true });
+  });
+  await page.goto(`${origin}${BASE}`, { waitUntil: 'load' });
+  await page.waitForTimeout(1500);
+  const shift = await page.evaluate(() => window.__shift);
+  if (shift >= 0.01) problem(where, `the page shifted by ${shift.toFixed(3)} while loading`);
+  await phone.close();
+}
+
+// A phone fetches a smaller screenshot than a desktop (#423).
+{
+  const phone = await browser.newContext({ viewport: { width: 375, height: 720 } });
+  const page = await open(phone, '', 'phone screenshot');
+  const src = await page.evaluate(() => [...document.querySelectorAll('.stage img')].find((i) => i.getBoundingClientRect().height > 0)?.currentSrc ?? '');
+  if (!/-720\.webp$/.test(src)) problem('phone screenshot', `a phone fetched ${src.split('/').pop() ?? 'nothing'}, not the 720 px one`);
+  await phone.close();
 }
 
 // The screens on the home page, and an answer in the FAQ.

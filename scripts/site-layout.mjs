@@ -156,6 +156,7 @@ ${canonical}<meta property="og:title" content="${esc(full)}">
 <meta property="og:image" content="${SITE_URL}social-preview.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="${up}icon.png">
+<link rel="preload" href="${up}fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${up}style.css">
 <script src="${up}theme.js"></script>
 ${head}</head>

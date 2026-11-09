@@ -16,6 +16,8 @@ const root = new URL('../', import.meta.url);
 const read = (rel) => readFileSync(new URL(rel, root), 'utf8').replace(/\r\n/g, '\n');
 
 const content = JSON.parse(read('site/content/screens.json'));
+/** The smaller copies of each screenshot, made by `pnpm site:screens` (scripts/site-screens.mjs, SMALLER). */
+const SCREEN_WIDTHS = [720, 1440];
 const SCREEN_CAPTION = 'The real app, with example downloads.';
 
 /** The user guide's sidebar, in reading order. */
@@ -35,7 +37,7 @@ export function siteFiles() {
     { from: at('assets/brand/apollo-social-preview.png'), to: 'social-preview.png' },
     { from: at(`${font}files/inter-latin-wght-normal.woff2`), to: 'fonts/inter-latin-wght-normal.woff2' },
     { from: at(`${font}LICENSE`), to: 'fonts/LICENSE.txt' },
-    ...content.screens.map((s) => ({ from: at(`site/screens/${s.id}.webp`), to: `screens/${s.id}.webp` })),
+    ...content.screens.flatMap((s) => ['', ...SCREEN_WIDTHS.map((w) => `-${String(w)}`)].map((suffix) => ({ from: at(`site/screens/${s.id}${suffix}.webp`), to: `screens/${s.id}${suffix}.webp` }))),
     ...readdirSync(new URL('docs/images/', root)).map((f) => ({ from: at(`docs/images/${f}`), to: `developers/images/${f}` })),
   ];
 }
@@ -180,11 +182,16 @@ ${rows}
 </section>`;
 }
 
-/** One screen of the app, at its real proportions; the browser fetches it when it comes into view, unless `eager`. */
+/**
+ * One screen of the app, at its real proportions; the browser fetches it when it comes into view, unless `eager`.
+ * It picks the smallest width that is sharp at the screen's size (#423): 720 and 1440 px copies beside the full 2880.
+ */
 function screenImage(id, up, eager = false, className = '') {
   const s = content.screens.find((x) => x.id === id);
   if (!s) throw new Error(`site/content/screens.json has no screen ${id}`);
-  return `<img${className ? ` class="${className}"` : ''} src="${up}screens/${s.id}.webp" alt="${esc(s.alt)}" width="1440" height="780"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>`;
+  const file = (suffix) => `${up}screens/${s.id}${suffix}.webp`;
+  const srcset = [...SCREEN_WIDTHS.map((w) => `${file(`-${String(w)}`)} ${String(w)}w`), `${file('')} 2880w`].join(', ');
+  return `<img${className ? ` class="${className}"` : ''} src="${file('')}" srcset="${srcset}" sizes="(max-width: 1208px) 100vw, 1160px" alt="${esc(s.alt)}" width="1440" height="780"${eager ? ' fetchpriority="high"' : ' loading="lazy"'}>`;
 }
 
 const screenFigure = (id, up, eager) => `<figure class="shot">${screenImage(id, up, eager)}<figcaption>${SCREEN_CAPTION}</figcaption></figure>`;
