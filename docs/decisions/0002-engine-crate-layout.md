@@ -7,7 +7,7 @@
 
 ## Context
 
-V2's own direct-download engine ([ADR-0001](0001-v2-direction.md)) may run inside the app or as a supervised child process; that choice is still open in #38. A child process must build into a small binary of its own. V1's rule was that `velocity-core` owns domain logic *and* engine integration. If the engine lived there, the child binary would link the whole core: SQLite, settings, the manager and its types.
+Apollo Download Manager's own direct-download engine ([ADR-0001](0001-v2-direction.md)) may run inside the app or as a supervised child process; that choice is still open in #38. A child process must build into a small binary of its own. V1's rule was that `velocity-core` owns domain logic *and* engine integration. If the engine lived there, the child binary would link the whole core: SQLite, settings, the manager and its types.
 
 The research report (section 4.2, decision 4 in section 10) proposes two crates. One is a pure-Rust engine that can be tested against a simulated transport. The other is a thin layer that is the only code touching libcurl. V1 already set a precedent for a separate native-bridge crate (`velocity-lt` for libtorrent).
 

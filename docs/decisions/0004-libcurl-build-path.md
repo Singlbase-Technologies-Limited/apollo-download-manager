@@ -7,7 +7,7 @@
 
 ## Context
 
-V2's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the Rust `curl` and `curl-sys` crates, behind `crates/velocity-curl` ([ADR-0002](0002-engine-crate-layout.md)). The research report sets a version floor of **libcurl 8.23.0** (section 8.1). The latest `curl-sys` doesn't meet it. These facts were re-checked at decision time:
+Apollo Download Manager's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the Rust `curl` and `curl-sys` crates, behind `crates/velocity-curl` ([ADR-0002](0002-engine-crate-layout.md)). The research report sets a version floor of **libcurl 8.23.0** (section 8.1). The latest `curl-sys` doesn't meet it. These facts were re-checked at decision time:
 
 | Fact (2026-10-22) | Source |
 |---|---|
@@ -23,7 +23,7 @@ V2's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the
 1. **Prototype (#37): option C.** A `[patch.crates-io]` git pin of `curl` and `curl-sys` to one **reviewed** curl-rust commit that bundles curl 8.23.0 or later and has the `poll()` fix.
    - The commit, its diff review and the bundled curl version (checked at runtime with `curl_version_info`) are recorded in the PR that adds the pin.
    - The pin is for the prototype only; no release is built with it.
-2. **Releases: option A.** V2 builds libcurl itself from the official `curl-<version>.tar.xz`, verified by SHA-256 and the release signature, and `curl-sys` links that build.
+2. **Releases: option A.** Apollo Download Manager builds libcurl itself from the official `curl-<version>.tar.xz`, verified by SHA-256 and the release signature, and `curl-sys` links that build.
    - It's recorded in the native lock file and `build-info.json` ([DEPENDENCIES.md](../DEPENDENCIES.md#native-libraries)).
    - The build options decide the TLS backend (Schannel on Windows, static OpenSSL on Linux and macOS), nghttp2, zlib and, if #52 chooses it, libssh2.
 
@@ -31,7 +31,7 @@ V2's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the
 
 | Option | For | Against |
 |---|---|---|
-| **A. V2 builds libcurl itself** (chosen for releases) | A provable identity; independent of upstream release timing; allows SFTP through libssh2 and, later, HTTP/3 | Build work on every platform (Windows: MSVC with CMake or vcpkg) |
+| **A. Apollo DM builds libcurl itself** (chosen for releases) | A provable identity; independent of upstream release timing; allows SFTP through libssh2 and, later, HTTP/3 | Build work on every platform (Windows: MSVC with CMake or vcpkg) |
 | B. Wait for an upgraded `curl-sys` release | Simplest | No date for the upgrade; still no SFTP; the prototype waits |
 | **C. A git pin to a reviewed curl-rust commit** (chosen for the prototype) | Fast; gets 8.23.0 and the fixes now | Not a release; a git dependency must be reviewed and replaced |
 

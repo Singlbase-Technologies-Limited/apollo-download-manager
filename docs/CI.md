@@ -1,12 +1,12 @@
 # CI design
 
-V2's CI runs on GitHub Actions. Since 2026-10-31 the repository is public, owned by Singlbase Technologies Limited, and GitHub's standard runners are free for public repositories ([billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). It was designed for a private repository with a monthly quota of minutes, so every design choice below still keeps runs short: the checks that matter run on every change, and nothing runs twice. The cost figures below are from those private months.
+Apollo Download Manager's CI runs on GitHub Actions. Since 2026-10-31 the repository is public, owned by Singlbase Technologies Limited, and GitHub's standard runners are free for public repositories ([billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). It was designed for a private repository with a monthly quota of minutes, so every design choice below still keeps runs short: the checks that matter run on every change, and nothing runs twice. The cost figures below are from those private months.
 
 This page is the design. The workflows are written in #13, #14, #16 to #19 and #91. Every figure below is labelled as **measured** or **assumed**. Assumed CI times get replaced by measured ones as the jobs start running (#14).
 
 ## History: CI by hand only (2026-10-24 to 2026-10-31)
 
-To save Actions minutes while the repository was private, CI was paused (2026-10-24, #173), then run only by hand, once per batch of five issues on a `batch/` branch, with no tests on the developer's machine (2026-10-30, #204), then not at all while V2 was made ready to publish (2026-10-31). On 2026-10-31 the repository went public, so its minutes are free, and the triggers below came back (#236). The batch runs are cited in some PRs and code comments by their run numbers.
+To save Actions minutes while the repository was private, CI was paused (2026-10-24, #173), then run only by hand, once per batch of five issues on a `batch/` branch, with no tests on the developer's machine (2026-10-30, #204), then not at all while Apollo Download Manager was made ready to publish (2026-10-31). On 2026-10-31 the repository went public, so its minutes are free, and the triggers below came back (#236). The batch runs are cited in some PRs and code comments by their run numbers.
 
 ## Tiers
 
@@ -37,7 +37,7 @@ Selection extends the rules `pnpm check:pr` already uses, in [`scripts/checks-li
   - **native lock files anywhere**, even inside a crate (`*.lock`, `vcpkg.json`);
   - shared configuration (`Cargo.toml`, `package.json`, `rust-toolchain.toml`…);
   - the check scripts (`scripts/`), `.github/` and `.claude/`;
-  - **any path no rule knows**, such as a `package-lock.json`, which V2 doesn't use.
+  - **any path no rule knows**, such as a `package-lock.json`, which Apollo Download Manager doesn't use.
 - **Crates:** a change inside a crate selects that crate and every crate that depends on it.
 - **Frontend:** frontend paths select `tsc`, ESLint and Vitest.
 - **Docs only:** `docs/` and root `*.md` select only the docs job (`pnpm check:links`: relative links and heading anchors).
@@ -60,6 +60,7 @@ The PR tier is implemented in [`.github/workflows/pr.yml`](../.github/workflows/
 | Job | Runs when | What it does |
 |---|---|---|
 | `select` | Always | `node scripts/ci-select.mjs --base <PR base>` writes `rust`, `frontend`, `docs` and `native` flags to its outputs. It adds a table to the **run summary** with every job, *runs* or *skipped*, the reason for each, and the reason for each changed path. When docs are selected, the same job runs `node scripts/check-links.mjs` as a step |
+| `select`: product-name step | Always | `node scripts/check-product-name.mjs` (#421, [TESTING.md](TESTING.md)): no `V2` for the product in what people read. Under a second, and a source change counts as much as a document, so it isn't selected by path |
 | `select`: guidance step | Always | `node scripts/check-guidance.mjs` ([AGENT_GUIDANCE.md](AGENT_GUIDANCE.md)). Under a second, and any path can change its result (a deleted folder kills a rule's glob), so it isn't selected by path |
 | `code` | Rust or frontend selected | `pnpm check:pr`, the same command as locally. With Rust, `scripts/ci-sftp-server.sh` first installs OpenSSH if needed and starts the password-login SFTP server the SFTP tests use (#53). Tauri system packages and the pinned toolchain are installed only when Rust is selected. With Rust, `check:pr` builds the native libraries first (reused from the `target/` cache that `main` saves), and the job uploads `build-info-linux` |
 | `native-windows` | Native inputs, CI files or unknown paths changed | On `windows-latest`: `node scripts/native/build.mjs` (verifies every source, builds, checks `curl -V` against the lock file), uploads `build-info-windows` (7 days), then `cargo test -p velocity-curl`, which links the build and runs the start check and the TLS tests, and then the Windows certificate-store test (`--test windows_store -- --ignored`), which needs the runner's administrator rights ([SECURITY.md](SECURITY.md#the-windows-certificate-store), #69). No cache |
@@ -99,7 +100,7 @@ The repository gets **10 GB of Actions cache**, separate from artifact storage. 
 - **Release candidates use no cache (#233):** their packaging runs restore no Rust or native cache and save none (the setup action's `cold` input), so nothing an earlier run saved can reach an installer. CodeQL's cache-poisoning rules flagged the warm build. A candidate takes longer, about 30 to 60 minutes instead of 10 to 20 (an estimate from the cold native build of #205; not measured yet), and candidates are rare (PO decision, 2026-10-31). A packaging run started by hand still uses and saves the caches.
 - **No incremental compilation in CI:** `CARGO_INCREMENTAL=0` keeps the cache smaller and CI builds faster.
 
-**Runner disk.** A hosted Linux runner has about 14 GB free. A cold build of Boost and libtorrent plus `check:fast`'s debug build filled it twice (#76), so the Linux jobs that build Rust first delete toolchains V2 never uses (.NET, the Android SDK, GHC and CodeQL), about 20 GB.
+**Runner disk.** A hosted Linux runner has about 14 GB free. A cold build of Boost and libtorrent plus `check:fast`'s debug build filled it twice (#76), so the Linux jobs that build Rust first delete toolchains Apollo Download Manager never uses (.NET, the Android SDK, GHC and CodeQL), about 20 GB.
 
 ### The post-merge tier
 
@@ -107,7 +108,7 @@ The repository gets **10 GB of Actions cache**, separate from artifact storage. 
 
 | Job | Runs when | What it does |
 |---|---|---|
-| `select` | Always | `node scripts/ci-select.mjs --base <github.event.before>`: the same selection as a pull request, for what the merge changed. Also `check:links` and `check:guidance` |
+| `select` | Always | `node scripts/ci-select.mjs --base <github.event.before>`: the same selection as a pull request, for what the merge changed. Also `check:links`, `check:product-name` and `check:guidance` |
 | `linux` | Rust or frontend selected | With Rust, the SFTP test servers (`scripts/ci-sftp-server.sh`, #53). `check:pr --base <before>`, which runs the native build before any Rust check, then saves the Linux Rust cache when Rust ran and its key is new |
 | `windows` | Windows-relevant paths changed (Rust, `scripts/`, CI files, unknown paths) | The OpenSSH Server feature if the image lacks it (#53), then `check:fast` on `windows-latest`, with its own Rust cache (key `rust-v1-Windows-<hash>`). It doesn't depend on `linux`, so a Linux-only failure doesn't stop it (scenario B of #91) |
 | `summary` | Unless the run was cancelled | Combines the job reports into the run summary and `ci-diagnostics`, then opens, comments on or closes the tracking issue. It's the only job allowed to write issues |
@@ -156,7 +157,7 @@ GitHub's guidance is in [secure use](https://docs.github.com/en/actions/referenc
 
 Every run completes every check that can still run, and reports all failures in one place (#91). The details are in [CI_DIAGNOSTICS.md](CI_DIAGNOSTICS.md).
 
-**The quick checks come first** (PO decision on #76, 2026-10-30). The docs, guidance and notices checks run in the `select` job and take about a minute. When one fails, the Linux and Windows jobs don't start, and the summary reports them BLOCKED by `select`. The run ends in about a minute instead of 30 to 40, so a broken link costs a minute to find, not a whole run. Fix it and run again; the code checks then run. Until #76, the code jobs ran even after a failed docs check, so that one broken link wouldn't hide every code failure (#91).
+**The quick checks come first** (PO decision on #76, 2026-10-30). The docs, product-name, guidance and notices checks run in the `select` job and take about a minute. When one fails, the Linux and Windows jobs don't start, and the summary reports them BLOCKED by `select`. The run ends in about a minute instead of 30 to 40, so a broken link costs a minute to find, not a whole run. Fix it and run again; the code checks then run. Until #76, the code jobs ran even after a failed docs check, so that one broken link wouldn't hide every code failure (#91).
 
 - **Checks run to completion:**
   - The check runner runs every check even after one fails.

@@ -65,6 +65,13 @@ jobs:
         name: Docs (check:links)
         if: steps.select.outputs.docs == 'true'
         run: node scripts/check-links.mjs
+      # The product name (#421): no "V2" in the documents, the website's content, the extension's
+      # pages or the window's source. Under a second, and source changes count too, so it runs on
+      # every pull request, here.
+      - id: product-name
+        name: Product name (check:product-name)
+        if: ${{ !cancelled() && steps.checkout.outcome == 'success' }}
+        run: node scripts/check-product-name.mjs
       # The agent guidance check (#88) takes under a second, and any path can change its result (a
       # rule's glob dies when its folder goes), so it runs on every pull request, here.
       - id: guidance

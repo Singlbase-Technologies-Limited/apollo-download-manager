@@ -2,7 +2,7 @@
 
 Apollo Download Manager is a desktop download manager for Windows and Linux. These pages are for people who build it. If you only want to use it, read the [user guide](user/README.md).
 
-The app has a Tauri 2 shell, a React and TypeScript window, and Rust crates. Its own direct-download engine runs on libcurl and russh, and torrents run on libtorrent. Older documents call the app V2, its working name.
+The app has a Tauri 2 shell, a React and TypeScript window, and Rust crates. Its own direct-download engine runs on libcurl and russh, and torrents run on libtorrent.
 
 ## Your first hour
 

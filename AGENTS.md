@@ -98,6 +98,7 @@ pnpm check:fast                # L1 checks: fmt, clippy, cargo test, tsc, ESLint
 pnpm check:pr                  # L3: the checks this branch's changes need
 pnpm check:full                # L4 locally: L1 + production web build + Rust release build
 pnpm check:links               # relative links and anchors in all Markdown files
+pnpm check:product-name        # no "V2" for the product in docs, the website, the extension or the window
 pnpm guide                     # rebuild the in-app user guide from docs/user/ after editing a guide
 pnpm check:guidance            # AGENTS.md, CLAUDE.md, rules and skills (docs/AGENT_GUIDANCE.md)
 pnpm check:pr-body <file> --title "…"  # a PR description and title against the PR template

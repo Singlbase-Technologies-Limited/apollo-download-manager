@@ -1,41 +1,41 @@
-# Running V2 beside V1
+# Running Apollo Download Manager beside V1
 
-V2 and the original Velocity Download Manager (V1) can be installed and run at the same time without sharing anything. Each has its own data, database, single-instance lock, IPC endpoint and browser registration (#27, [ADR-0003](decisions/0003-v2-app-identity.md)).
+Apollo Download Manager and the original Velocity Download Manager (V1) can be installed and run at the same time without sharing anything. Each has its own data, database, single-instance lock, IPC endpoint and browser registration (#27, [ADR-0003](decisions/0003-v2-app-identity.md)).
 
 ## One source of identity
 
-`branding.json` at the repository root holds V2's identity. The core reads it (`velocity_core::branding`), and `src-tauri/tauri.conf.json` must carry the same identifier and product name, which a test checks. A build runs as the development identity unless it is built with the `release-identity` feature, as packaging does; then the app, the engine, the torrent helper and the native host all run as the release identity, and `src-tauri/tauri.release.conf.json` carries it ([PACKAGING.md](PACKAGING.md), #81).
+`branding.json` at the repository root holds Apollo Download Manager's identity. The core reads it (`velocity_core::branding`), and `src-tauri/tauri.conf.json` must carry the same identifier and product name, which a test checks. A build runs as the development identity unless it is built with the `release-identity` feature, as packaging does; then the app, the engine, the torrent helper and the native host all run as the release identity, and `src-tauri/tauri.release.conf.json` carries it ([PACKAGING.md](PACKAGING.md), #81).
 
 | Field | Development builds | Release builds (packaging: Windows since #81, Linux since #82; macOS is #83) | V1, for comparison |
 |---|---|---|---|
 | Product name: window title, install folder, Apps & features entry | Apollo Download Manager (dev) | Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md); "Velocity Download Manager V2" until 0.2.0) | Velocity Download Manager |
 | Identifier: data folder, single-instance key, pipe name | `dev.velocity.downloadmanager.v2` | `com.velocity.downloadmanager.v2` | `com.velocity.downloadmanager` |
 | Native-messaging host (#65) | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
-| Native host program and its registration (#65) | `velocity-native-host-v2`; manifests and, on Windows, `HKCU` keys named after V2's host ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#registering-with-each-browser)) | the same | `velocity-native-host`, named after V1's host |
+| Native host program and its registration (#65) | `velocity-native-host-v2`; manifests and, on Windows, `HKCU` keys named after Apollo DM's host ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#registering-with-each-browser)) | the same | `velocity-native-host`, named after V1's host |
 | Firefox extension ID (#64, #240) | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |
-| Chrome extension IDs (#64) | `adhefdmekgeafmopfbiappajaolcbhkc`, pinned by V2's own key ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#identity)) | the same | `eecopkg…` |
+| Chrome extension IDs (#64) | `adhefdmekgeafmopfbiappajaolcbhkc`, pinned by Apollo DM's own key ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#identity)) | the same | `eecopkg…` |
 | Browser extension name (#64) | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
 
 ## What derives from the identifier
 
-| Resource | V2 | Where |
+| Resource | Apollo DM | Where |
 |---|---|---|
 | Data folder | `<platform data dir>/<identifier>`. On Windows: `%APPDATA%\dev.velocity.downloadmanager.v2` | `velocity_core::paths::Paths` (it uses `dirs`, so the native host, which has no Tauri, finds the same folder) |
-| Override for tests and portable setups | `VELOCITY_V2_DATA_DIR`, an absolute path. V1's `VELOCITY_DATA_DIR` never affects V2 | `paths::DATA_DIR_ENV` |
+| Override for tests and portable setups | `VELOCITY_V2_DATA_DIR`, an absolute path. V1's `VELOCITY_DATA_DIR` never affects Apollo DM | `paths::DATA_DIR_ENV` |
 | Database, checkpoints | `velocity.sqlite3` and `checkpoints/` inside the data folder (#26, #43) | `Paths::database`, `Paths::checkpoints_dir` |
-| Single instance | Starting V2 again focuses the running window | `tauri-plugin-single-instance`, keyed on the identifier |
+| Single instance | Starting Apollo DM again focuses the running window | `tauri-plugin-single-instance`, keyed on the identifier |
 | IPC endpoint | Windows: `\\.\pipe\<identifier>.ipc.<user>.<hash of the data folder>`. Unix: `<data folder>/ipc.sock`. The browser bridge listens on it (#65), and the native host finds this launch's token in `<data folder>/ipc.token` | `Paths::ipc_endpoint` |
 
-The release identifier starts with V1's identifier (`com.velocity.downloadmanager` + `.v2`). That's safe, because V1 uses its identifier exactly, never as a prefix: V2's data folder sits next to V1's, never inside it, and the pipe names differ (PO decision on #27). Tests check every derived resource for exact non-collision.
+The release identifier starts with V1's identifier (`com.velocity.downloadmanager` + `.v2`). That's safe, because V1 uses its identifier exactly, never as a prefix: Apollo Download Manager's data folder sits next to V1's, never inside it, and the pipe names differ (PO decision on #27). Tests check every derived resource for exact non-collision.
 
 ## Verified side by side (Windows, 2026-10-22)
 
-The installed V1 0.1.0 and the V2 dev build ran at the same time on the PO's PC:
+The installed V1 0.1.0 and the Apollo Download Manager dev build ran at the same time on the PO's PC:
 
-- **Separate data folders:** V1 used `%APPDATA%\com.velocity.downloadmanager` (its database and engine files). V2 created `%APPDATA%\dev.velocity.downloadmanager.v2` at startup. V2's folder isn't inside V1's.
-- **IPC:** V1's pipe `\\.\pipe\com.velocity.downloadmanager.ipc.…` was present. V2 had no IPC server yet; #65 added it, on V2's own pipe.
-- **Single instance:** a second V2 launch exited by itself with code 0, and one V2 process remained.
-- **Closing:** closing V2 through its window left V1 and its engine running and responding, with its pipe still present.
-- **Not checked:** closing V1 while V2 runs. V1 was in use on the PO's PC.
+- **Separate data folders:** V1 used `%APPDATA%\com.velocity.downloadmanager` (its database and engine files). Apollo Download Manager created `%APPDATA%\dev.velocity.downloadmanager.v2` at startup. Apollo Download Manager's folder isn't inside V1's.
+- **IPC:** V1's pipe `\\.\pipe\com.velocity.downloadmanager.ipc.…` was present. Apollo Download Manager had no IPC server yet; #65 added it, on Apollo Download Manager's own pipe.
+- **Single instance:** a second Apollo Download Manager launch exited by itself with code 0, and one Apollo Download Manager process remained.
+- **Closing:** closing Apollo Download Manager through its window left V1 and its engine running and responding, with its pipe still present.
+- **Not checked:** closing V1 while Apollo Download Manager runs. V1 was in use on the PO's PC.
 
 Linux and macOS side-by-side runs: NOT RUN.

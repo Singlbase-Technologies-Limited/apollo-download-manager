@@ -15,15 +15,15 @@ Some networks, such as companies and schools, only allow internet access through
 
 - **Proxy types:** HTTP, HTTPS and SOCKS, with SOCKS5 required, and SOCKS4 if libcurl handles it cleanly. Each with an optional username and password.
 - **Secrets:** proxy passwords are kept in the **operating system's keychain** (Windows Credential Manager, macOS Keychain, Linux Secret Service), never in the database, settings file, logs, checkpoints or process arguments.
-- **No ambient proxies:** V2 always ignores proxy environment variables (`http_proxy`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`). The proxy is set explicitly from V2's settings, and "no proxy" is set explicitly too.
+- **No ambient proxies:** Apollo Download Manager always ignores proxy environment variables (`http_proxy`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`). The proxy is set explicitly from Apollo Download Manager's settings, and "no proxy" is set explicitly too.
 - **Version floor:** libcurl 8.23.0 or later ([ADR-0004](0004-libcurl-build-path.md)), for the CVE-2026-86414 fix.
 
 ## Options considered
 
 | Option | For | Against |
 |---|---|---|
-| **Full proxy settings now (chosen)** | Users behind a proxy can use V2 from the start | More work and testing before the first release; a keychain dependency |
-| None in the first release, add later (research recommendation) | Less up-front work; same as V1 | Users behind a proxy can't use V2 until later |
+| **Full proxy settings now (chosen)** | Users behind a proxy can use Apollo DM from the start | More work and testing before the first release; a keychain dependency |
+| None in the first release, add later (research recommendation) | Less up-front work; same as V1 | Users behind a proxy can't use Apollo DM until later |
 | Follow the system proxy only | No settings screen | Platform differences; PAC files; less control |
 
 ## Consequences
@@ -32,4 +32,4 @@ Some networks, such as companies and schools, only allow internet access through
 - **Engine** (#40): every transfer sets the proxy explicitly. Credentials are scoped so they're never sent to the wrong host.
 - **Secrets** (#70): a **keychain library is a new dependency that needs PO approval** ([DEPENDENCIES.md](../DEPENDENCIES.md)) before #70 adds it. Without a keychain, a password is held in memory only, for the session.
 - **Tests:** local HTTP and SOCKS5 proxy fixtures, checking that credentials are never logged ([TESTING.md](../TESTING.md)).
-- **Parity map:** this is a **V2 addition**, not a V1 feature. It's listed below the parity tables, not as a parity row.
+- **Parity map:** this is a **Apollo Download Manager addition**, not a V1 feature. It's listed below the parity tables, not as a parity row.

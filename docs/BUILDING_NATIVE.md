@@ -1,6 +1,6 @@
 # Building the native libraries
 
-V2's direct-download engine uses libcurl ([ADR-0001](decisions/0001-v2-direction.md)). Release builds link a libcurl that V2 builds itself, from verified sources ([ADR-0004](decisions/0004-libcurl-build-path.md)), so the shipped version can be proven. This page covers how that build works, how to run it, and how to update a pin. The approval and pinning rules are in [DEPENDENCIES.md](DEPENDENCIES.md#native-libraries).
+Apollo Download Manager's direct-download engine uses libcurl ([ADR-0001](decisions/0001-v2-direction.md)). Release builds link a libcurl that Apollo Download Manager builds itself, from verified sources ([ADR-0004](decisions/0004-libcurl-build-path.md)), so the shipped version can be proven. This page covers how that build works, how to run it, and how to update a pin. The approval and pinning rules are in [DEPENDENCIES.md](DEPENDENCIES.md#native-libraries).
 
 The torrent bridge uses libtorrent, with Boost and OpenSSL, built with vcpkg for now: see [libtorrent](#libtorrent).
 
@@ -14,7 +14,7 @@ The torrent bridge uses libtorrent, with Boost and OpenSSL, built with vcpkg for
 
 The versions, sources and signing keys are in [`scripts/native/deps.lock`](../scripts/native/deps.lock). Every library is built static, so nothing from the build host's own libcurl is linked or bundled ([DEPENDENCIES.md](DEPENDENCIES.md#distribution-packages)).
 
-**libcurl keeps only what V2 uses.** The build disables DICT, FILE, Gopher, IMAP, IPFS, LDAP and LDAPS, MQTT, POP3, RTSP, SMTP, Telnet, TFTP, WebSockets and the `.netrc` parser. Libraries V2 doesn't use stay out too: libpsl, libidn2, Brotli, zstd, libssh2, libssh, librtmp and GSS-API. A protocol that isn't compiled in can't be reached by any URL or redirect. The engine's own allowlists (#67) still apply on top. SFTP comes later, once its backend is decided (#52, #53).
+**libcurl keeps only what Apollo Download Manager uses.** The build disables DICT, FILE, Gopher, IMAP, IPFS, LDAP and LDAPS, MQTT, POP3, RTSP, SMTP, Telnet, TFTP, WebSockets and the `.netrc` parser. Libraries Apollo Download Manager doesn't use stay out too: libpsl, libidn2, Brotli, zstd, libssh2, libssh, librtmp and GSS-API. A protocol that isn't compiled in can't be reached by any URL or redirect. The engine's own allowlists (#67) still apply on top. SFTP comes later, once its backend is decided (#52, #53).
 
 ## Running it
 
@@ -49,7 +49,7 @@ Both work on the Rust host target. The output goes to `target/native/` (ignored 
 |---|---|---|
 | Windows | Visual Studio 2022 (or Build Tools) with "Desktop development with C++"; gpg | CMake comes with Visual Studio. gpg comes with Git for Windows (`C:\Program Files\Git\usr\bin\gpg.exe`), which the fetch script finds without it being on `PATH` |
 | Linux | A C compiler, `make`, `perl` (for OpenSSL), `tar` with xz support, gpg | On Debian or Ubuntu: `sudo apt install build-essential perl xz-utils gnupg` |
-| Both | Node.js and Rust, as for the rest of V2 ([DEVELOPMENT.md](DEVELOPMENT.md#prerequisites)) | `rustc -vV` gives the host target |
+| Both | Node.js and Rust, as for the rest of Apollo DM ([DEVELOPMENT.md](DEVELOPMENT.md#prerequisites)) | `rustc -vV` gives the host target |
 
 ## How each source is proven
 
@@ -119,7 +119,7 @@ One record per build, schema 1. It is written only after every check passes. `ch
 |---|---|
 | `schema` | `1` |
 | `target` | The Rust target triple |
-| `v2` | The V2 commit and whether the working tree had uncommitted changes (`dirty`) |
+| `v2` | The Apollo DM commit and whether the working tree had uncommitted changes (`dirty`) |
 | `toolchains` | `rustc -V`, the Node.js version, and the C compiler; also CMake (Windows) or `make` (Linux) |
 | `cacheKey` | A SHA-256 over the target, the lock file and the build scripts |
 | `libraries` | For each library: name, version, source URL, source SHA-256, signature result, licence, and the exact configure or CMake options |
@@ -144,7 +144,7 @@ The torrent bridge (`crates/velocity-lt`) links libtorrent-rasterbar 2.0.15, Boo
 - **The pins:**
   - **The registry:** [`scripts/native/vcpkg/vcpkg.json`](../scripts/native/vcpkg/vcpkg.json) pins the vcpkg registry by its `builtin-baseline` commit, `9e593bb` (2026-07-29). Boost and vcpkg's own helpers come from that commit.
   - **Overlay ports:** the registry offers libtorrent 2.0.11 and then 2.1.x, and OpenSSL 3.5 only up to 3.5.4. So libtorrent 2.0.15 and OpenSSL 3.5.9 come from overlay ports in [`scripts/native/vcpkg/ports`](../scripts/native/vcpkg/ports). Each is vcpkg's own recipe (libtorrent 2.0.11's, OpenSSL 3.5.4's) with only the version and the SHA-512 changed, and libtorrent's licence field corrected to its `LICENSE` file. The repository stores two of the OpenSSL port's files with LF where vcpkg has CRLF; its patches are byte for byte vcpkg's.
-  - **Checksums:** vcpkg checks each source's SHA-512 on every download. Those archives are GitHub's archives of the release tags. V2 hasn't checked them against release signatures, as it does for libcurl's sources.
+  - **Checksums:** vcpkg checks each source's SHA-512 on every download. Those archives are GitHub's archives of the release tags. Apollo Download Manager hasn't checked them against release signatures, as it does for libcurl's sources.
 - **Release only:** the triplets are `x64-windows-static-md-release` and `x64-linux-release`, so only release libraries are built; cargo links those in every profile. libtorrent is built without iconv (`"default-features": false`).
 - **The record:** the build writes `target/native/<target>/libtorrent-info.json`:
   - libtorrent's version and the vcpkg baseline;
@@ -167,11 +167,11 @@ The torrent bridge (`crates/velocity-lt`) links libtorrent-rasterbar 2.0.15, Boo
   | Linux, Ubuntu 24.04 in WSL2 | 8 vCPUs, 6 GB, `VCPKG_MAX_CONCURRENCY=4`; release only | 1939 s |
 
   A clean Windows time for the release-only triplet wasn't measured: that run shared the CPU with other builds.
-- **Not yet V2's own build:** releases are meant to link libraries V2 builds from verified sources, as for libcurl. Building libtorrent and Boost that way is a release blocker ([DEPENDENCIES.md](DEPENDENCIES.md#release-blockers-related-to-provenance)).
+- **Not yet Apollo Download Manager's own build:** releases are meant to link libraries Apollo Download Manager builds from verified sources, as for libcurl. Building libtorrent and Boost that way is a release blocker ([DEPENDENCIES.md](DEPENDENCIES.md#release-blockers-related-to-provenance)).
 
 ## Known limitations
 
 - **Linux trust store:** the Linux build looks for CA certificates at `/etc/ssl/certs/ca-certificates.crt` and `/etc/ssl/certs`, where Debian, Ubuntu and Arch keep them. Fedora and openSUSE keep them elsewhere. How each TLS backend finds and checks certificates is tested in #69.
-- **No IDN in libcurl:** libcurl doesn't convert international domain names (libidn2 is LGPL, and WinIDN would exist on Windows only). How V2 handles them is part of URL validation in #67.
+- **No IDN in libcurl:** libcurl doesn't convert international domain names (libidn2 is LGPL, and WinIDN would exist on Windows only). How Apollo Download Manager handles them is part of URL validation in #67.
 - **Not in the app yet:** only `velocity-curl` links this build. The desktop app starts using it with the engine prototype (#37).
 - **macOS:** not established (#83), for libcurl and libtorrent alike. Recorded as NOT RUN.

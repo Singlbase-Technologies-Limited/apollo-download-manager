@@ -1,6 +1,6 @@
 # Development setup
 
-This page takes you from a fresh clone of the V2 repository to a running Apollo Download Manager development window on Windows, Linux or macOS. If something fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+This page takes you from a fresh clone of the Apollo Download Manager repository to a running development window on Windows, Linux or macOS. If something fails, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Quick start
 
@@ -100,15 +100,15 @@ Run `pnpm check:fast` before every pull request. [TESTING.md](TESTING.md) descri
 
 ## Running beside the original Velocity Download Manager
 
-V2 is named Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md)), and runs beside V1, during development and after release:
+The app is named Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md)), and runs beside V1, during development and after release:
 
-| | V1 | V2 development build |
+| | V1 | Apollo DM development build |
 |---|---|---|
 | Product name | Velocity Download Manager | Apollo Download Manager (dev) |
 | Bundle identifier | `com.velocity.downloadmanager` | `dev.velocity.downloadmanager.v2` (release builds will use `com.velocity.downloadmanager.v2`; [ADR-0003](decisions/0003-v2-app-identity.md)) |
 | Dev server port | 1420 | 1430 |
 
-The bundle identifier, not the name, keeps the apps apart: it decides the data directory and the single-instance lock. Tests in `velocity-core` and `src-tauri` fail if V2's identifier, data folder, pipe name, native host name or dev port ever matches V1's. The identity lives in `branding.json`; [COEXISTENCE.md](COEXISTENCE.md) has the details. V2 keeps its own identity after release too ([ADR-0003](decisions/0003-v2-app-identity.md)): the installer offers to remove V1 (#81), and importing V1 data is a separate decision (#24).
+The bundle identifier, not the name, keeps the apps apart: it decides the data directory and the single-instance lock. Tests in `velocity-core` and `src-tauri` fail if Apollo Download Manager's identifier, data folder, pipe name, native host name or dev port ever matches V1's. The identity lives in `branding.json`; [COEXISTENCE.md](COEXISTENCE.md) has the details. Apollo Download Manager keeps its own identity after release too ([ADR-0003](decisions/0003-v2-app-identity.md)): the installer offers to remove V1 (#81), and importing V1 data is a separate decision (#24).
 
 ## Build times
 

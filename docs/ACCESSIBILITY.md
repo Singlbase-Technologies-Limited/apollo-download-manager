@@ -1,6 +1,6 @@
 # Accessibility
 
-What V2 does for keyboard and screen-reader users, and how each behaviour is checked. It is the audit of #66: V1's keyboard and accessibility behaviours (V1's `tests/unit` and `.claude/rules/frontend.md` at `e9d717a8`), each with an automated test in V2 or a manual check. The rule for new UI work is in `.claude/rules/frontend.md`.
+What Apollo Download Manager does for keyboard and screen-reader users, and how each behaviour is checked. It is the audit of #66: V1's keyboard and accessibility behaviours (V1's `tests/unit` and `.claude/rules/frontend.md` at `e9d717a8`), each with an automated test in Apollo Download Manager or a manual check. The rule for new UI work is in `.claude/rules/frontend.md`.
 
 ## The audit
 

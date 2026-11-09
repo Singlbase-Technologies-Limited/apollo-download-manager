@@ -31,6 +31,7 @@
     "check:pr": "node scripts/check-pr.mjs",
     "check:full": "node scripts/check-full.mjs",
     "check:links": "node scripts/check-links.mjs",
+    "check:product-name": "node scripts/check-product-name.mjs",
     "guide": "node scripts/guide.mjs",
     "site": "node scripts/build-site.mjs",
     "site:screens": "node scripts/site-screens.mjs",

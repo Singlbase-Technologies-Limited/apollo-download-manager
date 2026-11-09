@@ -1,6 +1,6 @@
 # Product name shortlist (#346)
 
-**Date:** 2026-11-05. **Question it answers:** which new product names are worth choosing between for V2, and what a first check of each one found.
+**Date:** 2026-11-05. **Question it answers:** which new product names are worth choosing between for the app, and what a first check of each one found.
 
 **The PO's direction** (on #346, refined the same day):
 
@@ -11,7 +11,7 @@
 
 This is research, not a decision. **Outcome:** the PO chose "Apollo Download Manager" on 2026-11-05, recorded in [ADR-0018](../decisions/0018-product-name-apollo.md). **These checks aren't legal advice.** An empty search doesn't make a name safe to use; Singlbase Technologies Limited arranges the legal trademark clearance.
 
-**Short answer:** with "Download Manager" at the end, the first word is what tells V2 apart, so the checks that matter are: does a download manager with that name already exist, and is the first word a software trademark? Six candidates pass the first check. No download manager or download app was found under any of them: **Peregrine**, **Kestrel**, **Jetstream**, **Spry**, **Pullwing** and **Arrowdrop**. The real words (Peregrine, Kestrel, Jetstream) read best, but each already has several live US trademarks in class 9, held by companies outside downloads. The invented compounds (Pullwing, Arrowdrop) had no trademark record at all in the sources searched. A [second round](#second-round-plain-adjectives-and-short-invented-words) of plain adjectives and short invented words adds **Sleek**, **Nippy**, **Deft**, **Dashi** and **Zyvo**. Sleek and Nippy had no live software trademark on the word in the sources searched.
+**Short answer:** with "Download Manager" at the end, the first word is what tells the app apart, so the checks that matter are: does a download manager with that name already exist, and is the first word a software trademark? Six candidates pass the first check. No download manager or download app was found under any of them: **Peregrine**, **Kestrel**, **Jetstream**, **Spry**, **Pullwing** and **Arrowdrop**. The real words (Peregrine, Kestrel, Jetstream) read best, but each already has several live US trademarks in class 9, held by companies outside downloads. The invented compounds (Pullwing, Arrowdrop) had no trademark record at all in the sources searched. A [second round](#second-round-plain-adjectives-and-short-invented-words) of plain adjectives and short invented words adds **Sleek**, **Nippy**, **Deft**, **Dashi** and **Zyvo**. Sleek and Nippy had no live software trademark on the word in the sources searched.
 
 ## How it was checked
 
@@ -170,7 +170,7 @@ The PO asked for these three to be checked before choosing between them and Astr
 | **Other software with the name** | Kagi's Orion web browser, which has its own built-in download manager; 20,836 GitHub repositories | ChatGPT Atlas (OpenAI's browser), MongoDB Atlas, Atlas OS (22,024 GitHub stars); 102,996 repositories | Apollo GraphQL, Apollo.io, an Android music player called Apollo, Apollo Auto (26,889 stars); 41,266 repositories |
 | **Domains and GitHub for the full phrase (information only)** | `oriondownloadmanager` .com, .app, .io, .dev and GitHub all unregistered | `atlasdownloadmanager` all unregistered | `apollodownloadmanager` all unregistered |
 
-**Reading:** Atlas clashes directly with an existing download manager of the same name. Orion clashes with a torrent client, which is close to what V2 does, and with a browser that manages downloads. Apollo is the only one of the three with no download app nearby, though the word itself is heavily used in software, much like Astra.
+**Reading:** Atlas clashes directly with an existing download manager of the same name. Orion clashes with a torrent client, which is close to what Apollo Download Manager does, and with a browser that manages downloads. Apollo is the only one of the three with no download app nearby, though the word itself is heavily used in software, much like Astra.
 
 ## Names set aside, and why
 

@@ -18,7 +18,7 @@ Before adding libssh2 to the native build, #53 checked it against OSV (`api.osv.
 The full list is on #53. The options put to the PO were:
 - build a pinned main-branch commit, with releases blocked;
 - pause #53 and do #54 first;
-- build 1.11.1 with V2's own patch files;
+- build 1.11.1 with Apollo Download Manager's own patch files;
 - russh.
 
 ## Decision
@@ -30,7 +30,7 @@ The full list is on #53. The options put to the PO were:
 5. **The SFTP security rules of ADR-0011 stand:**
    - an unknown host key is refused until the user confirms its fingerprint;
    - a changed key is always refused;
-   - V2's own known_hosts file is unhashed, with a SHA-256 pin per host.
+   - Apollo Download Manager's own known_hosts file is unhashed, with a SHA-256 pin per host.
 
    All three are proven against a local OpenSSH server (PO decision on #53). The libcurl version floor of ADR-0011 no longer concerns SFTP.
 
@@ -40,13 +40,13 @@ The full list is on #53. The options put to the PO were:
 |---|---|---|
 | A. A pinned libssh2 main-branch commit, releases blocked until a fixed release | Keeps ADR-0011's single C stack; #53 could go ahead | Ships unreleased C code with no signature; no date for a fixed release |
 | B. Pause #53, do #54 first | No unreleased code in the build | SFTP has no date |
-| **C. russh (chosen)** | Memory-safe Rust, released fixes for every russh advisory OSV lists (all fixed in 0.64.1); no native build change | A second transport stack (made one interface by decision 4); 93 crates new to V2; three release candidates pinned by russh; one open advisory in `rsa` (below) |
-| D. libssh2 1.11.1 plus V2's own patch files | Keeps a signed base | V2 maintains security backports itself, and could miss one |
+| **C. russh (chosen)** | Memory-safe Rust, released fixes for every russh advisory OSV lists (all fixed in 0.64.1); no native build change | A second transport stack (made one interface by decision 4); 93 crates new to Apollo DM; three release candidates pinned by russh; one open advisory in `rsa` (below) |
+| D. libssh2 1.11.1 plus Apollo DM's own patch files | Keeps a signed base | Apollo DM maintains security backports itself, and could miss one |
 
 ## Consequences
 
 - **SFTP shares the engine.** It gets the same probe, checkpoints, retries, speed limits and completion gate as HTTP and FTP, through the transport interface. Like FTP, it uses one connection and one stream until #77 measures whether more help.
-- **Dependencies:** 93 crates new to V2, all MIT, Apache-2.0 or BSD-3-Clause, recorded in [DEPENDENCIES.md](../DEPENDENCIES.md).
+- **Dependencies:** 93 crates new to Apollo Download Manager, all MIT, Apache-2.0 or BSD-3-Clause, recorded in [DEPENDENCIES.md](../DEPENDENCIES.md).
   - **Release candidates russh pins:** `ssh-key 0.7.0-rc.11`, `rsa 0.10.0-rc.18` and `pkcs1 0.8.0-rc.4`.
   - **One open advisory, accepted by the PO:** RUSTSEC-2023-0071 ("Marvin", CVE-2023-49092), a timing side channel in `rsa`'s private-key operations, with no fix. An SFTP client signs once per login with the user's own RSA key, and host-key checks use only public keys. To be revisited when `rsa` ships a fix.
 - **Version:** an approval covers the exact versions above. An update is its own reviewed change, with OSV checked again.

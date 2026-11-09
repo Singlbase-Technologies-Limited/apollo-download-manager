@@ -19,7 +19,7 @@ The extension needs an identity each store accepts:
 
 PO decisions:
 
-- **2026-10-31:** publish in the Chrome Web Store, Edge Add-ons and AMO, with a setup step in the app that opens each browser's store page (#241). Not installed by V2's installers: Firefox hasn't allowed that since Firefox 74, and Chrome and Edge on Windows need machine-wide keys and still ask the user.
+- **2026-10-31:** publish in the Chrome Web Store, Edge Add-ons and AMO, with a setup step in the app that opens each browser's store page (#241). Not installed by Apollo Download Manager's installers: Firefox hasn't allowed that since Firefox 74, and Chrome and Edge on Windows need machine-wide keys and still ask the user.
 - **2026-11-07:** the Firefox ID is `apollo-download-manager@singlbase.com`. The Chrome Web Store package carries no `key`: the store's ID becomes the extension's ID, and its public key goes into `branding.json` afterwards, as Google documents. The work lands in two PRs: what needs no store account first, then the store IDs and links after the uploads.
 
 ## Decision
@@ -38,7 +38,7 @@ PO decisions:
 |---|---|---|
 | **The three stores (chosen)** | Ordinary users can install it; the stores update it | Store accounts and reviews, which take days or weeks |
 | Loading by hand only, as until v0.2.0 | Nothing to set up | Firefox removes it on close; developer mode in Chromium browsers |
-| Installed by V2's installers | One step | Not possible for Firefox; Chrome and Edge still ask, and need machine-wide keys |
+| Installed by Apollo DM's installers | One step | Not possible for Firefox; Chrome and Edge still ask, and need machine-wide keys |
 | Files hosted by Singlbase | No store review | Chrome and Edge don't install extensions from elsewhere on Windows and macOS; Firefox needs AMO signing anyway |
 
 ## Consequences

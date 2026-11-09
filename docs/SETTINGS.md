@@ -1,6 +1,6 @@
 # Settings
 
-Every V2 setting, what it does, and its bounds. They are sections of one settings document in the database, each read and saved through `Database::section` and `Database::save_section`, and checked first (the `Section` trait). Each setting is checked in Rust before it applies, whatever the screen allows.
+Every Apollo Download Manager setting, what it does, and its bounds. They are sections of one settings document in the database, each read and saved through `Database::section` and `Database::save_section`, and checked first (the `Section` trait). Each setting is checked in Rust before it applies, whatever the screen allows.
 
 ## The Settings screen
 
@@ -8,7 +8,7 @@ The screen (#30, `src/features/settings/SettingsView.tsx`) edits every section b
 
 - **Saved whole:** `set_settings` checks every section first and saves none when one is refused (`INVALID_INPUT`); then it writes them all in one go, and applies them at once (`velocity_core::settings::Settings`, `Manager::set_settings`). The screen says "Saving…", then "Saved", or why it wasn't, and shows what is saved.
 - **When each applies:** at once, all of them. The engine's retries, timeouts, preallocation and write buffer apply to downloads that start or retry after the change; the connection budget, the queue, the limits and the torrent helper's settings apply to running ones too. None needs a restart.
-- **Read with defaults:** a section is read merged over its defaults, so settings an older V2 saved get the newer fields' defaults (V1's `migrate_settings_json`). A field this build doesn't know is refused, never dropped.
+- **Read with defaults:** a section is read merged over its defaults, so settings an older Apollo Download Manager saved get the newer fields' defaults (V1's `migrate_settings_json`). A field this build doesn't know is refused, never dropped.
 - **When the app starts:** the saved settings are applied (`Manager::apply_saved_settings`), and the torrent helper starts with its own. A failure is logged, and the defaults hold for what couldn't be read.
 - **Reset to defaults** asks first, and keeps the download folder (V1's).
 - **What the build can't do** is disabled with the reason ([below](#what-a-build-can-do)). Today's engine does everything the screen offers, Metalink included (#54).
@@ -86,13 +86,13 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 | Conservative | 2 | 20 MiB | V1's values, for servers or networks that dislike many connections |
 | **Balanced**, the default | 8 | 1 MiB | The engine's values before profiles existed, so nothing changed without a measurement |
 | Maximum | 16 | 1 MiB | V1's connections. More than 8 only helps a server that gives each connection its own speed |
-| Custom | The user's: 1 to 16 | The user's: 1 to 1024 MiB | V1's `max_connection_per_server` and `min_split_size_mib`. aria2's `split` count is gone, as V2 splits by itself |
+| Custom | The user's: 1 to 16 | The user's: 1 to 1024 MiB | V1's `max_connection_per_server` and `min_split_size_mib`. aria2's `split` count is gone, as Apollo DM splits by itself |
 
 - **All profiles keep a connection at the same 10% loss** for now: one whose loss would slow the download by 10% or more stays (#221; #57 set one threshold for every profile). Whether Conservative and Maximum should use other thresholds is for #77's measurements.
 - **The smallest piece** applies to downloads that start after the profile changes. The connection cap applies at once: a lower one holds running downloads back, which their details then say ("the performance profile allows no more to one server").
 - **The shared budget** for all downloads together stays 48 connections, V1's `connection_budget` (#47).
 - **In code:** `PerformanceSettings` in [`crates/velocity-core/src/performance.rs`](../crates/velocity-core/src/performance.rs) maps a profile to `EngineLimits`. `Manager::set_performance` applies it, and new downloads ask for at most its connections (`Manager::connections_for_new_downloads`). The engine takes the limits through `set_engine_limits` ([ENGINE_CONTRACT.md](ENGINE_CONTRACT.md)).
-- **Removed,** as ADR-0005 decided: "allow mid-download tuning" (V2 changes connections without restarting a download), and the aria2 optimizer.
+- **Removed,** as ADR-0005 decided: "allow mid-download tuning" (Apollo Download Manager changes connections without restarting a download), and the aria2 optimizer.
 
 ## Queue
 
@@ -109,7 +109,7 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 
 How the queue applies them is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#the-managers-side).
 
-**Updating from 0.1.x** (#351, option B, PO decision): a saved `maxConcurrentDownloads` of 3, the old default, becomes 2 once, through migration 8 ([DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md)). V2 can't tell a chosen 3 from the old default, since the queue section is saved whole. Every other value is kept, and a 3 chosen after the update stays.
+**Updating from 0.1.x** (#351, option B, PO decision): a saved `maxConcurrentDownloads` of 3, the old default, becomes 2 once, through migration 8 ([DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md)). Apollo Download Manager can't tell a chosen 3 from the old default, since the queue section is saved whole. Every other value is kept, and a 3 chosen after the update stays.
 
 ## Folders
 

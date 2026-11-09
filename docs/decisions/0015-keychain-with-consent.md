@@ -7,17 +7,17 @@
 
 ## Context
 
-V1 kept logins, custom headers and SSH keys in memory only, so a download that needed them came back after a restart without them, and the user typed them again (V1's `docs/ARIA2_INTEGRATION.md`; V2 does the same since #58). #70 asked whether V2 should offer the operating system's keychain instead, with explicit consent, and noted that a keychain crate is a new dependency.
+V1 kept logins, custom headers and SSH keys in memory only, so a download that needed them came back after a restart without them, and the user typed them again (V1's `docs/ARIA2_INTEGRATION.md`; Apollo Download Manager does the same since #58). #70 asked whether Apollo Download Manager should offer the operating system's keychain instead, with explicit consent, and noted that a keychain crate is a new dependency.
 
 - **What is checked:** the `keyring` crate, 4.2.0 (MIT OR Apache-2.0, maintained by the open-source-cooperative project), with its default `v1` feature: Windows Credential Manager on Windows, the Secret Service (GNOME Keyring, KWallet) on Linux through `zbus`, and Keychain Services on macOS. No advisories in OSV for it or the 11 crates it brings (checked 2026-10-29; [DEPENDENCIES.md](../DEPENDENCIES.md)).
-- **Not everywhere:** a Linux session without a Secret Service, such as WSL or a minimal desktop, has no keychain. The crate then reports an error, which V2 shows.
+- **Not everywhere:** a Linux session without a Secret Service, such as WSL or a minimal desktop, has no keychain. The crate then reports an error, which Apollo Download Manager shows.
 
 ## Decision
 
 **Save a login in the keychain only when the user asks, for that download.**
 
-- **Consent:** "Remember this login in the system keychain", next to the login fields in the Add dialog, unticked by default. Ticked, V2 saves that download's login, custom headers and SSH key passphrase after adding it (`remember_login`).
-- **One entry per download**, under V2's own service name (`<identifier>.logins`), never V1's. Removing the download deletes it.
+- **Consent:** "Remember this login in the system keychain", next to the login fields in the Add dialog, unticked by default. Ticked, Apollo Download Manager saves that download's login, custom headers and SSH key passphrase after adding it (`remember_login`).
+- **One entry per download**, under Apollo Download Manager's own service name (`<identifier>.logins`), never V1's. Removing the download deletes it.
 - **After a restart** the download gets its login back from the keychain and carries on as it was. Without one (not remembered, deleted from the keychain, or the keychain unavailable), it waits for the login as before, with a note saying why.
 - **Everything else stays as it was:** nothing secret goes to the database, checkpoints, logs or a process's arguments, and secrets in memory are wiped when dropped (`zeroize`).
 

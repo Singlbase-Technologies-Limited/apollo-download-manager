@@ -1,12 +1,12 @@
 # Data and migrations
 
-V2 keeps its download records, settings and categories in one SQLite database (#26). This document describes the file, the schema and how it is upgraded. Checked against the code at commit `9a4f484` (2026-10-30, #80). The rules behind it are in [`.claude/rules/persistence.md`](../.claude/rules/persistence.md).
+Apollo Download Manager keeps its download records, settings and categories in one SQLite database (#26). This document describes the file, the schema and how it is upgraded. Checked against the code at commit `9a4f484` (2026-10-30, #80). The rules behind it are in [`.claude/rules/persistence.md`](../.claude/rules/persistence.md).
 
 The code is in [`crates/velocity-core/src/database/`](../crates/velocity-core/src/database/mod.rs), and the migrations are in [`crates/velocity-core/migrations/`](../crates/velocity-core/migrations/). The app opens it when it starts, and the manager saves its downloads there (#58, [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md#saving-and-starting-again-58)).
 
 ## The file
 
-- **Where:** `Paths::database()` gives the location, in V2's own per-user data folder, separate from V1's ([COEXISTENCE.md](COEXISTENCE.md)).
+- **Where:** `Paths::database()` gives the location, in Apollo Download Manager's own per-user data folder, separate from V1's ([COEXISTENCE.md](COEXISTENCE.md)).
 - **Permissions:** a new database is created owner-only (`0600` on Unix) before SQLite opens it, and SQLite's `-wal` and `-shm` files take its mode. On Windows the per-user data folder's permissions apply.
 - **No links:** a link, or anything else that isn't a plain file, in place of the database is refused (`INVALID_PATH`); it is never followed.
 - **How SQLite runs:**
@@ -15,11 +15,11 @@ The code is in [`crates/velocity-core/src/database/`](../crates/velocity-core/sr
   - foreign keys on;
   - a 5-second busy timeout;
   - *defensive* mode, which refuses SQL that could corrupt the file. Both SQLite CVEs fixed in 3.53.2 needed defensive mode off.
-- **SQLite:** 3.53.2, compiled into V2 from the source inside `libsqlite3-sys` ([DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies)).
+- **SQLite:** 3.53.2, compiled into Apollo Download Manager from the source inside `libsqlite3-sys` ([DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies)).
 
 ## Schema
 
-The schema version is `PRAGMA user_version`. Version 1 ([`0001_initial.sql`](../crates/velocity-core/migrations/0001_initial.sql)) is V2's clean baseline, version 2 adds checkpoints, version 3 the download queue, version 4 the verification, version 5 torrents, version 6 the built-in categories, and version 7 each download's activity. V1's data isn't imported ([ADR-0007](decisions/0007-no-v1-import-at-first.md)).
+The schema version is `PRAGMA user_version`. Version 1 ([`0001_initial.sql`](../crates/velocity-core/migrations/0001_initial.sql)) is Apollo Download Manager's clean baseline, version 2 adds checkpoints, version 3 the download queue, version 4 the verification, version 5 torrents, version 6 the built-in categories, and version 7 each download's activity. V1's data isn't imported ([ADR-0007](decisions/0007-no-v1-import-at-first.md)).
 
 | Table | Holds |
 |---|---|
@@ -54,7 +54,7 @@ A value this build doesn't know, read back from the database, is kept as `Stored
 
 When the app opens the database:
 
-1. **A newer database is refused unmodified.** The version is read from the file's header before SQLite opens it, so nothing is written. A database from a later V2 is `DATABASE_MIGRATION`, and the file and its folder are left exactly as they were. Downgrading needs the backup that the later version made.
+1. **A newer database is refused unmodified.** The version is read from the file's header before SQLite opens it, so nothing is written. A database from a later Apollo Download Manager is `DATABASE_MIGRATION`, and the file and its folder are left exactly as they were. Downgrading needs the backup that the later version made.
 2. **Before an upgrade, a backup.** An existing database at an older version is copied next to itself with `VACUUM INTO`, as `<file>.bak-v<old version>-<ms>`, owner-only.
 3. **The migrations run in one transaction** ([`rusqlite_migration`](DEPENDENCIES.md#approved-direct-dependencies)), and `user_version` is set to the new version.
 4. **A failed upgrade changes nothing.** The transaction rolls back, and the database stays at its old version with its data. The error is `DATABASE_MIGRATION`, and the backup stays. User data is never deleted or recreated to repair a migration.

@@ -1,6 +1,6 @@
 # Torrents
 
-V2 downloads BitTorrent v1, v2 and hybrid torrents with libtorrent 2.0.15 ([ADR-0001](decisions/0001-v2-direction.md), [ADR-0005](decisions/0005-v1-features-without-aria2.md)). This document describes how torrents work in V2 today. #62 delivered the port in four parts: the bridge and helper, magnets and file choice, the lifecycle and seeding, and trackers and port mapping.
+Apollo Download Manager downloads BitTorrent v1, v2 and hybrid torrents with libtorrent 2.0.15 ([ADR-0001](decisions/0001-v2-direction.md), [ADR-0005](decisions/0005-v1-features-without-aria2.md)). This document describes how torrents work in Apollo Download Manager today. #62 delivered the port in four parts: the bridge and helper, magnets and file choice, the lifecycle and seeding, and trackers and port mapping.
 
 ## Where the code is
 
@@ -32,7 +32,7 @@ Torrent metadata and magnet links are untrusted input. `velocity_core::torrent` 
   - **v2 piece layers:** each must match its file's Merkle root.
   - **Hybrids:** a hybrid's v1 and v2 file lists must describe the same files.
 - **Names:**
-  - **The rule:** every file and folder name follows `naming::check_file_name_in_folder`. That is V2's file-name rule, except that a name may start with a dot, such as `.gitignore`, `.nfo` or a hybrid's `.pad` entries (PO decision on #62).
+  - **The rule:** every file and folder name follows `naming::check_file_name_in_folder`. That is Apollo Download Manager's file-name rule, except that a name may start with a dot, such as `.gitignore`, `.nfo` or a hybrid's `.pad` entries (PO decision on #62).
   - **What it refuses:** `.` and `..`, separators, control characters, Windows device names, and names Windows can't store (`? * < > |`, a trailing dot). Refusing them means the names on disk are always the torrent's own. V1 refused fewer names.
   - **Duplicates:** two paths that differ only in case, or one name used for both a file and a folder, are refused.
 - **Magnets:**
@@ -98,14 +98,14 @@ Torrent metadata and magnet links are untrusted input. `velocity_core::torrent` 
 
 The helper reads libtorrent's state every 250 ms (a starting value) and sends `changed` when a torrent's snapshot changes.
 
-| libtorrent | V2 status |
+| libtorrent | Apollo DM status |
 |---|---|
 | An error | Failed, with libtorrent's message (not retryable) |
 | Paused | Paused |
 | Checking files or resume data | Verifying |
 | A magnet whose metadata isn't known and checked yet | Fetching metadata |
 | Files known, none chosen yet | Choosing files |
-| Metadata that failed V2's check | Failed, with the reason (not retryable) |
+| Metadata that failed Apollo DM's check | Failed, with the reason (not retryable) |
 | Downloading | Downloading |
 | Finished, being flushed | Verifying |
 | Flushed and stopped | Completed |
@@ -140,7 +140,7 @@ Seeding is off by default (ADR-0005). The policies and their limits are V1's (PO
 
 ## Resume data and recovery
 
-Resume data is libtorrent's own record of a torrent: its metadata, which pieces it has, its file choice, its trackers and its seeding totals. It isn't a [checkpoint](GLOSSARY.md); the direct-download engine's checkpoints are V2's own format.
+Resume data is libtorrent's own record of a torrent: its metadata, which pieces it has, its file choice, its trackers and its seeding totals. It isn't a [checkpoint](GLOSSARY.md); the direct-download engine's checkpoints are Apollo Download Manager's own format.
 
 - **When the helper sends it:** as `resumeData` events in chunks of at most 1 MiB, in order:
   - when libtorrent says it changed, at most every 10 s (a starting value: a crash loses at most that much of the record);
@@ -153,9 +153,9 @@ Resume data is libtorrent's own record of a torrent: its metadata, which pieces 
     - the metadata inside it passes `parse_metadata`, and its info hashes must match that metadata;
     - trackers and web seeds pass the tracker checks, and web seeds must be `http` or `https`;
     - the per-file priorities must match the files;
-    - modes V2 never sets are refused: seed mode, share mode, super-seeding and I2P;
+    - modes Apollo Download Manager never sets are refused: seed mode, share mode, super-seeding and I2P;
     - at most 32 MiB.
-  - **What libtorrent gets:** the metadata V2 checked, not the copy inside the resume data.
+  - **What libtorrent gets:** the metadata Apollo Download Manager checked, not the copy inside the resume data.
   - **What libtorrent trusts:** the resume data's record of which pieces are done. libtorrent doesn't check the files again, as with V1.
   - **What the spec sets:** its folder, trackers, pause and policy apply. Its `files` changes the choice; without it, the resume data's choice stands. A torrent whose resume data chose nothing waits in Choosing files.
 - **Where it is kept:** the supervisor keeps each torrent's latest resume data in memory, and the manager stores it in the database without its trackers ([In the app](#in-the-app-58)).
@@ -221,7 +221,7 @@ The Settings screen's BitTorrent section edits them ([SETTINGS.md](SETTINGS.md#a
   - **`listen_port` and `dht_listen_port`:** these were aria2's two ports. libtorrent uses `listenPort` for TCP, uTP and DHT alike.
   - **`enable_dht6`:** aria2's too. libtorrent runs DHT on every listening socket, IPv4 and IPv6 together, under `dht`, as V1's libtorrent engine did.
 - **Not kept from V1:** `request_peer_speed_limit_kib` (aria2's "look for more peers while slower than this") is dropped, as ADR-0005 planned for a setting libtorrent can't do. libtorrent 2.0.15 has no such setting; it finds peers on its own within its connection limits.
-- **Through the user's proxy** (#192, PO decision): peers, trackers and the names they use go through it (libtorrent's `proxy_peer_connections`, `proxy_tracker_connections`, `proxy_hostnames`), with its login. Nothing V2 starts goes around it: local peer discovery and port mapping are off while it is set, and the DHT is on only through a SOCKS5 proxy, which carries it. The supervisor gives every helper the proxy before its settings, and the app gives the first helper the saved one, with a remembered password, so no connection is made before it. libtorrent can't use an HTTPS proxy: then every kind of discovery is off, and the app starts no torrent (`PROXY_UNSUPPORTED`). The helper still listens on its port, so a peer can connect to it; listening on loopback only would also keep libtorrent from reaching a remote proxy. Tested through a local SOCKS5 proxy with a login (`tests/network.rs`).
+- **Through the user's proxy** (#192, PO decision): peers, trackers and the names they use go through it (libtorrent's `proxy_peer_connections`, `proxy_tracker_connections`, `proxy_hostnames`), with its login. Nothing Apollo Download Manager starts goes around it: local peer discovery and port mapping are off while it is set, and the DHT is on only through a SOCKS5 proxy, which carries it. The supervisor gives every helper the proxy before its settings, and the app gives the first helper the saved one, with a remembered password, so no connection is made before it. libtorrent can't use an HTTPS proxy: then every kind of discovery is off, and the app starts no torrent (`PROXY_UNSUPPORTED`). The helper still listens on its port, so a peer can connect to it; listening on loopback only would also keep libtorrent from reaching a remote proxy. Tested through a local SOCKS5 proxy with a login (`tests/network.rs`).
 - **Identity:** peers see the peer-id prefix `-VD0100-` (`-VD` and the version digits), and trackers see `Apollo Download Manager/0.2.0 libtorrent/2.0.15.0` (PO decision on #62; named `Velocity/…` until 0.2.0, #347). V1's `-VL` prefix isn't reused.
 
 ## In the app (#58)
@@ -255,7 +255,7 @@ The manager runs torrents beside direct downloads, through the `TorrentEngine` c
 |---|---|
 | Real transfers between two libtorrent sessions on loopback, for v1, v2-only and hybrid, single and multi-file; a v2 magnet's metadata; bad input and duplicates | `velocity-lt` `tests/transfer.rs` (V1's 5 bridge tests) |
 | Parsing, hashes, piece layers, names, limits, magnets, trackers, against hand-built torrents and the corpus | `velocity-core` `torrent.rs` unit tests |
-| How libtorrent states map to V2 statuses; the folder and file checks; the peer-id prefix | `velocity-torrent` `engine.rs` unit tests |
+| How libtorrent states map to Apollo DM statuses; the folder and file checks; the peer-id prefix | `velocity-torrent` `engine.rs` unit tests |
 | The helper as a child process: a v1, a v2-only and a hybrid torrent and a v2 magnet downloaded from a seeder found through a loopback tracker; refused input; pause, resume and remove; a crash and its restart | `velocity-torrent` `tests/helper.rs` |
 | File choice through the helper: a magnet waiting in Choosing files without writing anything, its metadata in chunks, only the chosen files downloaded and one more after completing; a `.torrent` file's first choice; unsafe metadata from a peer failing the torrent before any write; every refused choice | `velocity-torrent` `tests/helper.rs` |
 | A crashed helper's torrents failing, then coming back under their ids | `velocity-torrent` `tests/helper.rs` |

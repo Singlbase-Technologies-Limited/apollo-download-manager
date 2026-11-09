@@ -76,7 +76,7 @@ jobs:
             node scripts/ci-select.mjs --base "$base"
           fi
           echo "base=$base" >> "$GITHUB_OUTPUT"
-      # Both take about a second, so they run on every merge, here (each job costs a billed minute).
+      # Each takes about a second, so they run on every merge, here (each job costs a billed minute).
       - id: links
         name: Docs (check:links)
         if: ${{ !cancelled() && steps.node.outcome == 'success' }}
@@ -85,6 +85,10 @@ jobs:
         name: Agent guidance (check:guidance)
         if: ${{ !cancelled() && steps.node.outcome == 'success' }}
         run: node scripts/check-guidance.mjs
+      - id: product-name
+        name: Product name (check:product-name)
+        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
+        run: node scripts/check-product-name.mjs
       # The third-party notices and the licence check (#76, docs/LICENSING.md): every shipped
       # component's licence is allowed, and THIRD_PARTY_NOTICES.md matches the dependency graphs.
       # Here, on a fresh runner and in about a minute: in the Linux job, after check:fast's build,

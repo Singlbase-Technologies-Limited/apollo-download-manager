@@ -1,6 +1,6 @@
 # File names, categories and folders
 
-How V2 names a download's file, chooses its category and folder, and what it does when the name is taken (#31, built on #40). The rules are V1's, with its fixes for V1 issues #38 and #46, adapted to names that the V2 engine learns from the server. The code:
+How Apollo Download Manager names a download's file, chooses its category and folder, and what it does when the name is taken (#31, built on #40). The rules are V1's, with its fixes for V1 issues #38 and #46, adapted to names that the Apollo Download Manager engine learns from the server. The code:
 
 - [`naming.rs`](../crates/velocity-core/src/naming.rs): file names.
 - [`category.rs`](../crates/velocity-core/src/category.rs): categories.
@@ -83,7 +83,7 @@ When the server names the file, the engine reports the name once the download ha
 **A name is taken** by any of these:
 
 - anything at it: a file, a folder or a link, even a broken one;
-- its V2 part file (`.vdmpart`);
+- its Apollo Download Manager part file (`.vdmpart`);
 - V1's control file (`.aria2`), which V1 keeps beside a download it hasn't finished;
 - a download in the list that hasn't finished and is to be saved under it.
 
@@ -92,7 +92,7 @@ When the server names the file, the engine reports the name once the download ha
 - **`ask`:** add nothing, and report what's there with the first free name (`name (1).ext`).
 - **`rename`:** use the first free name.
 
-**An existing file is never replaced.** V1's *Overwrite* isn't carried over, and neither is its *Resume*: V1's partial downloads are aria2's, and V2 never reads them. So when V1 and V2 save into the same folder, neither writes over the other's file.
+**An existing file is never replaced.** V1's *Overwrite* isn't carried over, and neither is its *Resume*: V1's partial downloads are aria2's, and Apollo Download Manager never reads them. So when V1 and Apollo Download Manager save into the same folder, neither writes over the other's file.
 
 **The engine keeps the same rule** for the server's names (#40). A name the server gives that is taken gets the first free one, and the finished file is renamed into place without replacing anything ([ENGINE_INTERNALS.md](ENGINE_INTERNALS.md)).
 
