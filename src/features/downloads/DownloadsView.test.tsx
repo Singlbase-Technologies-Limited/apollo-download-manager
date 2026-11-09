@@ -1,7 +1,7 @@
 import { emit } from '@tauri-apps/api/event';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
 import type { AppearanceSettings, DownloadRecord, DownloadsSnapshot } from '../../contract';
 import { DEFAULT_LAYOUT } from '../../layout/layoutLogic';
@@ -421,5 +421,57 @@ describe('a refused login', () => {
     await act(() => emit('downloads-snapshot', withDownloads([refused, notFound])));
     await rowFor('gone.zip');
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+// Hovering a row (#424): a cut-off value in full, and what a status means, in the window's own tooltip.
+describe('hover help on the download list', () => {
+  const long = makeRecord({ id: 'l', fileName: 'Call-of-Duty-Modern-Warfare-Remastered-SteamRIP.com.rar', status: 'completed', createdAtMs: 4 });
+  // jsdom lays nothing out: a text is "cut off" here when it is longer than 30 characters.
+  const restore: (() => void)[] = [];
+  beforeEach(() => {
+    for (const [prop, value] of [
+      ['scrollWidth', (el: HTMLElement) => (el.textContent.length > 30 ? 400 : 100)],
+      ['clientWidth', () => 100],
+    ] as const) {
+      const before = Object.getOwnPropertyDescriptor(HTMLElement.prototype, prop);
+      Object.defineProperty(HTMLElement.prototype, prop, { configurable: true, get(this: HTMLElement) { return value(this); } });
+      restore.push(() => { if (before) Object.defineProperty(HTMLElement.prototype, prop, before); });
+    }
+    installFakeBackend({ snapshot: withDownloads([archive, broken, long]) });
+  });
+  afterEach(() => { while (restore.length) restore.pop()?.(); });
+
+  it('shows a cut-off name in full, and nothing for a name that fits', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    // A name that fits first: jsdom puts every element at 0,0, so an open tooltip would stay open in its hover area.
+    await user.hover(within(await rowFor('archive.zip')).getByText('archive.zip'));
+    await new Promise((r) => setTimeout(r, 500));
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    await user.hover(within(await rowFor(long.fileName ?? '')).getByText(long.fileName ?? ''));
+    expect((await screen.findByRole('tooltip')).textContent).toBe(long.fileName);
+  });
+
+  it('says what a status means and what to do', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.hover(within(await rowFor('broken.iso')).getByText('Failed'));
+    const tip = (await screen.findByRole('tooltip')).textContent;
+    expect(tip).toContain('The file was not found on the server (HTTP 404).');
+    expect(tip).toContain('Retry');
+  });
+
+  it('gives each row its status help as its description, for screen readers', async () => {
+    renderApp();
+    const row = await rowFor('broken.iso');
+    const help = document.getElementById(row.getAttribute('aria-describedby') ?? '');
+    expect(help?.textContent).toContain('The file was not found on the server (HTTP 404).');
+  });
+
+  it('uses no browser tooltips in the rows, only the window’s own', async () => {
+    renderApp();
+    await rowFor('broken.iso');
+    expect(within(await grid()).queryAllByTitle(/.+/)).toHaveLength(0);
   });
 });

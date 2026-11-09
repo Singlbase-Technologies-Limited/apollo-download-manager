@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { DownloadStatusSchema } from '../contract';
 import { makeRecord } from '../test/records';
-import { STATUS_LABEL, STATUS_TONE, actionsFor, actionsForSelection, averageSpeedOf, displayName, etaSeconds, matchesSearch, nextTry, percentOf, sortDownloads, statusLabel, visibleDownloads } from './list';
+import { STATUS_LABEL, STATUS_TONE, actionsFor, actionsForSelection, averageSpeedOf, displayName, etaSeconds, matchesSearch, nextTry, percentOf, sortDownloads, statusHelp, statusLabel, visibleDownloads } from './list';
 import { countByView, matchesView } from './views';
 
 const progress = makeRecord().progress;
@@ -199,5 +200,45 @@ describe('what the list shows (#59)', () => {
     // Leaving the queue uses the same action as stopping seeding.
     expect(actionsFor(queued).stopSeeding).toBe(true);
     expect(actionsFor(done).stopSeeding).toBe(false);
+  });
+});
+
+// What hovering a status says (#424): what it means, and what to do or what a double-click does.
+describe('statusHelp', () => {
+  const failure = { class: 'permanent' as const, httpStatus: 404, message: 'The file was not found on the server (HTTP 404).', retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false };
+
+  it('explains every status, so a new one can’t be added without its help', () => {
+    for (const status of DownloadStatusSchema.options) {
+      const help = statusHelp(makeRecord({ status }), {});
+      expect(help.length, status).toBeGreaterThan(10);
+      expect(help, status).toMatch(/\.$/);
+    }
+  });
+
+  it('gives a failure’s plain message, and what to do next', () => {
+    const help = statusHelp(makeRecord({ status: 'failed', error: failure }), {});
+    expect(help).toContain('The file was not found on the server (HTTP 404).');
+    expect(help).toContain('Retry');
+  });
+
+  it('says how many downloads run at once for one that waits its turn', () => {
+    expect(statusHelp(makeRecord({ status: 'queued' }), { maxConcurrent: 2 })).toContain('2 downloads');
+    expect(statusHelp(makeRecord({ status: 'queued', waitsUntil: { at: '2026-11-10T08:00:00', reason: 'chosenTime' } }), { maxConcurrent: 2 })).toContain('start time');
+  });
+
+  it('says what a double-click does where it does more than show the details', () => {
+    expect(statusHelp(makeRecord({ status: 'completed' }), {})).toContain('Double-click to open the file');
+    expect(statusHelp(makeRecord({ status: 'completed', kind: 'torrent', fileCount: 3 }), {})).toContain('Double-click to open its folder');
+    expect(statusHelp(makeRecord({ status: 'choosingFiles', kind: 'torrent' }), {})).toContain('Double-click to choose');
+    expect(statusHelp(makeRecord({ status: 'paused' }), {})).toContain('Double-click');
+  });
+
+  it('says where a paused download carries on from', () => {
+    const paused = makeRecord({ status: 'paused', progress: { ...progress, completedBytes: 448 * 1024 * 1024, totalBytes: 1024 ** 3 } });
+    expect(statusHelp(paused, {})).toContain('448');
+  });
+
+  it('puts the login first when the server asks for one', () => {
+    expect(statusHelp(makeRecord({ status: 'failed', error: failure }), { needsLogin: true })).toMatch(/^The server asks for a login/);
   });
 });

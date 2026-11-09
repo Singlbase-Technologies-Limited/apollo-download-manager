@@ -6,9 +6,10 @@ import { SelectBox } from '../../components/SelectBox';
 import { COLUMN_MAX_WIDTH, COLUMN_MIN_WIDTH, type Category, type ColumnId, type Density, type DownloadRecord } from '../../contract';
 import { canOpenFile, displayName, type SortKey, type SortState } from '../../downloads/list';
 import { cn } from '../../lib/cn';
+import { useSettings } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
-import { clampColumnWidth, type ColumnDef } from './columns';
+import { clampColumnWidth, statusHelpId, type ColumnDef } from './columns';
 import { buildMenu } from './menus';
 import type { DownloadActions } from './useDownloadActions';
 
@@ -101,6 +102,8 @@ interface Props {
 
 /** The virtualised, keyboard-operable download grid (V1's): only the rows in view are drawn. */
 export function DownloadTable({ rows, columns, widths: saved, onResize, sort, onSort, actions, busy, density, categories, needsLogin, now }: Props) {
+  // For the status help of a download waiting its turn (#424).
+  const maxConcurrent = useSettings().data?.queue.maxConcurrentDownloads;
   const parentRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   // The width being dragged, shown live and saved when the drag ends.
@@ -258,7 +261,7 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
             const d = rows[vi.index];
             if (!d) return null;
             const selected = selection.has(d.id);
-            const ctx = { category: d.categoryId ? byId.get(d.categoryId) : undefined, now, needsLogin: needsLogin.has(d.id) };
+            const ctx = { category: d.categoryId ? byId.get(d.categoryId) : undefined, now, needsLogin: needsLogin.has(d.id), maxConcurrent };
             return (
               <ContextMenu
                 key={d.id}
@@ -272,6 +275,8 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
                   role="row"
                   aria-selected={selected}
                   aria-rowindex={vi.index + 1}
+                  // The status help, for screen readers and keyboard users, who don't hover (#424).
+                  aria-describedby={columns.some((c) => c.id === 'status') ? statusHelpId(d.id) : undefined}
                   data-status={d.status}
                   onClick={(e) => {
                     const mode = e.shiftKey ? 'range' : e.ctrlKey || e.metaKey ? 'toggle' : 'single';

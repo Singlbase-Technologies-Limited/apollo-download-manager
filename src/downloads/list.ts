@@ -1,5 +1,5 @@
 import type { DownloadRecord, DownloadStatus } from '../contract';
-import { formatDuration, formatWhen } from '../lib/format';
+import { formatDuration, formatTransferredBytes, formatWhen } from '../lib/format';
 import { fileNameFromUrl } from '../naming';
 import { matchesView, type ListView } from './views';
 
@@ -226,6 +226,57 @@ export function statusLabel(d: DownloadRecord, now: number, opts: { needsLogin?:
   // Only torrents have peers; a direct download that stalls is waiting on its server.
   if (d.status === 'stalled' && d.kind !== 'torrent' && d.kind !== 'magnet') return 'No data received';
   return STATUS_LABEL[d.status];
+}
+
+const DETAILS = 'Double-click for details.';
+
+/**
+ * What hovering a download's status says (#424): what the status means, and what to do or what a double-click does
+ * (DownloadTable: a finished download opens, a torrent choosing files chooses them, any other shows its details).
+ * `maxConcurrent` is Settings' number of simultaneous downloads, when known.
+ */
+export function statusHelp(d: DownloadRecord, opts: { needsLogin?: boolean; maxConcurrent?: number }): string {
+  if (opts.needsLogin) return `The server asks for a login. Sign in from its details. ${DETAILS}`;
+  const isTorrent = d.kind === 'torrent' || d.kind === 'magnet';
+  switch (d.status) {
+    case 'queued':
+      if (d.waitsUntil?.reason === 'chosenTime') return `Waits for the start time you chose. ${DETAILS}`;
+      if (d.waitsUntil?.reason === 'schedule') return `Waits for the schedule to allow downloads (Settings, Queue and performance). ${DETAILS}`;
+      return opts.maxConcurrent
+        ? `Waits for its turn: ${String(opts.maxConcurrent)} downloads run at once (Settings, Queue and performance). ${DETAILS}`
+        : `Waits for its turn to start. ${DETAILS}`;
+    case 'connecting':
+      return `Connecting to the server. ${DETAILS}`;
+    case 'downloading':
+      return `Downloading. ${DETAILS}`;
+    case 'paused':
+      return d.progress.completedBytes > 0
+        ? `Paused. Resume carries on from ${formatTransferredBytes(d.progress.completedBytes)}. ${DETAILS}`
+        : `Paused. Resume starts it. ${DETAILS}`;
+    case 'verifying':
+      return `Checking the downloaded data. ${DETAILS}`;
+    case 'retrying':
+      return `${d.error?.message ? `${d.error.message} ` : ''}It tries again by itself. ${DETAILS}`;
+    case 'stalled':
+      return isTorrent ? `No peer is sending data; it carries on when one does. ${DETAILS}` : `The server has sent no data for a while; it reconnects by itself. ${DETAILS}`;
+    case 'completed':
+      if (d.torrent?.seedQueued) return `Finished, and waiting for a free seeding slot. ${(d.fileCount ?? 0) > 1 ? 'Double-click to open its folder.' : 'Double-click to open the file.'}`;
+      return (d.fileCount ?? 0) > 1 ? 'Finished. Double-click to open its folder.' : 'Finished. Double-click to open the file.';
+    case 'seeding':
+      return `Finished, and sharing it with other peers. ${(d.fileCount ?? 0) > 1 ? 'Double-click to open its folder.' : 'Double-click to open the file.'}`;
+    case 'failed':
+      return `${d.error?.message ? `${d.error.message} ` : 'It stopped with an error. '}Retry to try again. ${DETAILS}`;
+    case 'removed':
+      return `Cancelled. ${DETAILS}`;
+    case 'fetchingMetadata':
+      return `Getting the torrent's list of files from peers. ${DETAILS}`;
+    case 'choosingFiles':
+      return 'Waits for you to choose its files. Double-click to choose them.';
+    case 'unknown':
+      return `Its state isn't available right now. ${DETAILS}`;
+    case 'waitingForNetwork':
+      return `Waiting for this computer's network; it starts again by itself. ${DETAILS}`;
+  }
 }
 
 export type StatusTone = 'active' | 'neutral' | 'success' | 'danger' | 'warning' | 'muted';
