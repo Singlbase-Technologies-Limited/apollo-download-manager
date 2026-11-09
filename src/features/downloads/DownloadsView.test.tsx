@@ -492,3 +492,54 @@ describe('hover help on the download list', () => {
     expect(within(await grid()).queryAllByTitle(/.+/)).toHaveLength(0);
   });
 });
+
+// A narrow list (#442): the toolbar's selection actions that don't fit move into More, as the PO chose.
+describe('the toolbar in a narrow list', () => {
+  let state: FakeState;
+  const original = globalThis.ResizeObserver;
+  /** A ResizeObserver that reports every element `width` px wide, as a narrow window would. */
+  const observeAs = (width: number) => {
+    globalThis.ResizeObserver = class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        this.callback([{ target, contentRect: { width } as DOMRectReadOnly } as ResizeObserverEntry], this);
+      }
+      unobserve() {}
+      disconnect() {}
+    };
+  };
+  beforeEach(() => {
+    state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken]) });
+  });
+  afterEach(() => { globalThis.ResizeObserver = original; });
+
+  it('moves Cancel, Retry and Remove selected into More, where they still act on the selection', async () => {
+    observeAs(430);
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    const toolbar = screen.getByRole('toolbar', { name: 'Download actions' });
+    for (const name of ['Cancel selected', 'Retry selected', 'Remove selected from list']) {
+      expect(within(toolbar).queryByRole('button', { name }), name).toBeNull();
+    }
+    expect(within(toolbar).getByRole('button', { name: 'Resume selected' })).toBeTruthy();
+    await user.click(within(toolbar).getByRole('button', { name: 'More actions' }));
+    for (const name of ['Cancel selected', 'Retry selected', 'Remove selected from list']) {
+      expect(await screen.findByRole('menuitem', { name })).toBeTruthy();
+    }
+    await user.click(screen.getByRole('menuitem', { name: 'Retry selected' }));
+    await waitFor(() => { expect(callsOf(state, 'retry_downloads')[0]?.args).toEqual({ ids: ['c'] }); });
+  });
+
+  it('keeps every button in the toolbar, and none of them in More, when they fit', async () => {
+    observeAs(900);
+    const user = userEvent.setup();
+    renderApp();
+    await rowFor('broken.iso');
+    const toolbar = screen.getByRole('toolbar', { name: 'Download actions' });
+    expect(within(toolbar).getByRole('button', { name: 'Retry selected' })).toBeTruthy();
+    await user.click(within(toolbar).getByRole('button', { name: 'More actions' }));
+    await screen.findByRole('menuitem', { name: 'Retry all failed' });
+    expect(screen.queryByRole('menuitem', { name: 'Retry selected' })).toBeNull();
+  });
+});
