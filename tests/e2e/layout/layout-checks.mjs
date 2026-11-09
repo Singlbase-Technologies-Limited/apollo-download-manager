@@ -68,9 +68,15 @@ export async function runChecks({ open, shot, row, newPage, check, BASE }) {
   await page.waitForTimeout(300);
   check('columns: Destination shown and saved', (await saved())?.visibleColumns.includes('destination') === true);
 
-  // The details panel (#61): opened from the toolbar for the selected row, then a drag 100 px left widens it.
+  // The details panel (#61): a plain click on a row opens it for that row (PO decision on #349, so it is already open
+  // from the click above), and the toolbar's button closes it and opens it again. Then a drag 100 px left widens it.
   await row(page, 'extremely-long-file-name').click();
-  await page.getByRole('button', { name: 'Toggle details panel' }).click();
+  await details.waitFor();
+  const toggle = page.getByRole('button', { name: 'Toggle details panel' });
+  await toggle.click();
+  await details.waitFor({ state: 'detached' });
+  check('details: the toolbar button closes it', (await details.count()) === 0);
+  await toggle.click();
   await details.waitFor();
   check('details: opens at the 300 px default', (await width(details)) === 300, `${String(await width(details))} px`);
   check('details: shows the selected download', ((await details.getByRole('heading', { level: 2 }).textContent()) ?? '').startsWith('Ubuntu-24.04.1'));
@@ -111,9 +117,9 @@ export async function runChecks({ open, shot, row, newPage, check, BASE }) {
   });
   check('960 px: no horizontal overflow of the window', overflow.doc <= 960 && overflow.body <= 960, JSON.stringify(overflow));
   check('960 px: the toolbar fits', overflow.toolbar <= overflow.toolbarClient, JSON.stringify(overflow));
-  // TABLE_MIN (440 px) holds the list and the 1 px dividers beside it (layoutLogic.ts): two with the details panel open.
-  const dividers = (await width(navSep)) + (await width(detailsSep));
-  check('960 px: the list keeps a usable width', (await width(grid)) + dividers >= 440, `${String(await width(grid))} px and ${String(dividers)} px of dividers`);
+  // TABLE_MIN (440 px) is the list's panel, its 1 px borders included; the frame and the splitters come on top
+  // (layoutLogic.ts, #433).
+  check('960 px: the list keeps a usable width', (await width(grid)) + 2 >= 440, `${String(await width(grid))} px inside its borders`);
   check('960 px: details shrinks to its minimum first', (await width(details)) === 280, `${String(await width(details))} px`);
   await shot(page, 'min-960x600-light-resized');
   await page.setViewportSize({ width: 1366, height: 768 });
@@ -125,7 +131,9 @@ export async function runChecks({ open, shot, row, newPage, check, BASE }) {
   const gridWide = await width(grid);
   await page.getByRole('button', { name: 'Toggle details panel' }).click();
   await details.waitFor();
-  check('details: closing gives the table the space back', gridWide >= 1366 - 292 - 2, `${String(gridWide)} px`);
+  // All of it: the window less the navigation, the frame (4 px each side), the navigation's splitter (4 px) and the
+  // list panel's own 1 px borders (layoutLogic.ts LAYOUT.FRAME and SPLITTER, #433).
+  check('details: closing gives the table the space back', gridWide === 1366 - 292 - 8 - 4 - 2, `${String(gridWide)} px`);
   check('details: reopens at the saved width', (await width(details)) === 416, `${String(await width(details))} px`);
 
   // Sorting and search still work after all of that.

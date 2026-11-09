@@ -59,10 +59,12 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   // The panels' widths live in CSS variables, so a drag updates them without a React render.
   const writeVar = useCallback((name: '--sidebar-w' | '--details-w', width: number) => rootRef.current?.style.setProperty(name, `${String(width)}px`), []);
   const writeWidth = useCallback((width: number) => writeVar('--sidebar-w', width), [writeVar]);
+  // Only when the widths themselves change: a render for anything else during a drag, such as the details panel
+  // opening for a clicked row, would otherwise put the old width back over the drag's preview (#433).
   useLayoutEffect(() => {
     writeWidth(resolved.sidebar.width);
     writeVar('--details-w', resolved.details.width);
-  });
+  }, [resolved.sidebar.width, resolved.details.width, writeWidth, writeVar]);
   const shellLayout = useMemo<ShellLayout>(() => ({ resolved, previewDetails: (w) => writeVar('--details-w', w) }), [resolved, writeVar]);
 
   const content = useMemo(() => {
