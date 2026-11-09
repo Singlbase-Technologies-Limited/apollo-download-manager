@@ -85,6 +85,8 @@ describe('the website (#353)', () => {
 
   it('has no broken link between its pages, nor to a heading', () => {
     const site = buildSite({ releases: [release()] });
+    // Files the build copies as they are (the icon, the font, the screens), beside the pages it makes.
+    const copied = new Set(siteFiles().map((f) => f.to));
     const broken = [];
     for (const [path, body] of Object.entries(site)) {
       if (!path.endsWith('.html')) continue;
@@ -94,7 +96,7 @@ describe('the website (#353)', () => {
         let file = posix.normalize(posix.join(posix.dirname(path), target || posix.basename(path))).replace(/^\.\/?/, '');
         if (file === '' || file.endsWith('/')) file = `${file}index.html`;
         else if (!file.includes('.')) file = `${file}/index.html`;
-        if (!(file in site) && !['icon.png'].includes(file)) broken.push(`${path}: ${href}`);
+        if (!(file in site) && !copied.has(file)) broken.push(`${path}: ${href}`);
         else if (anchor && file.endsWith('.html') && !site[file].includes(` id="${anchor}"`)) broken.push(`${path}: ${href} (no heading)`);
       }
     }

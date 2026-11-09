@@ -16,6 +16,8 @@
     }
   };
   const root = document.documentElement;
+  // Scripts run: the theme switch's place is kept from the first paint (style.css, #423).
+  root.classList.add('js');
   if (read() === 'dark') root.dataset.theme = 'dark';
 
   document.addEventListener('DOMContentLoaded', () => {

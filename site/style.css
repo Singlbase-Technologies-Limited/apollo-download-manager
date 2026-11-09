@@ -3,7 +3,9 @@
 @font-face {
   font-family: "Inter";
   font-style: normal;
-  font-display: swap;
+  /* Preloaded (site-layout.mjs), and used only if it is there in time: a font that arrives late would re-wrap the
+   * page under the reader (#423), so that one view keeps the system font instead. */
+  font-display: optional;
   font-weight: 100 900;
   src: url("fonts/inter-latin-wght-normal.woff2") format("woff2");
 }
@@ -70,6 +72,8 @@ code { font-family: var(--mono); font-size: 0.875em; background: var(--surface-3
 .tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .theme { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; color: var(--fg-muted); background: none; border: 0; border-radius: 6px; cursor: pointer; }
 .theme[hidden] { display: none; }
+/* With scripts, the switch keeps its place until theme.js shows it, so the header doesn't move (#423). */
+.js .theme[hidden] { display: grid; visibility: hidden; }
 .theme:hover { color: var(--fg); background: var(--surface-3); }
 .theme svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .theme .sun { display: none; }
