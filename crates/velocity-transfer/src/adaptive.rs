@@ -101,6 +101,9 @@ pub struct Ramp {
     remembered: bool,
     /// One more than the remembered count is being measured, against the speed without it.
     probing: Option<f64>,
+    /// One more seemed to help once and is being measured again: a single window can be a fast
+    /// stretch, and taking the whole ceiling on it judges every count again from the top (#432).
+    probe_doubted: bool,
 }
 
 impl Ramp {
@@ -125,6 +128,7 @@ impl Ramp {
             start: None,
             remembered: false,
             probing: None,
+            probe_doubted: false,
         }
     }
 
@@ -226,6 +230,7 @@ impl Ramp {
             self.holding = false;
             self.remembered = false;
             self.probing = None;
+            self.probe_doubted = false;
             self.restart();
         } else if self.target > ceiling {
             // A lower ceiling applies at once; what was measured above it no longer counts.
@@ -293,12 +298,20 @@ impl Ramp {
             } else {
                 0.0
             };
-            if gain >= f64::from(self.policy.help_percent) {
-                // The server gives more now than when the count was remembered: the whole
-                // ceiling, judged from the top.
+            if gain >= f64::from(self.policy.help_percent) && !self.probe_doubted {
+                // Once may be a fast stretch (#432), as a loss once may be a slow one (#281): it
+                // is measured again, against the same speed without it.
+                self.probe_doubted = true;
+                self.restart();
+                self.probing = Some(without);
+            } else if gain >= f64::from(self.policy.help_percent) {
+                // It helped twice: the server gives more now than when the count was remembered.
+                // The whole ceiling, judged from the top.
+                self.probe_doubted = false;
                 self.target = self.ceiling;
                 self.restart();
             } else {
+                self.probe_doubted = false;
                 self.target = self.dropped_from;
                 self.holding = true;
             }
@@ -362,6 +375,7 @@ impl Ramp {
             self.dropped_from = self.target;
             self.target += 1;
             self.probing = Some(rate);
+            self.probe_doubted = false;
             self.restart();
             return;
         }
@@ -699,6 +713,38 @@ mod tests {
         let targets = run(&mut ramp, &mut clock, 30, 8, linear);
         assert!(targets.contains(&8), "it went back to the top: {targets:?}");
         assert_eq!(targets.last(), Some(&8), "{targets:?}");
+    }
+
+    /// #432: a fast stretch while one more is first measured isn't enough to take the whole
+    /// ceiling. The gain has to show twice, as a loss does before a dropped connection comes back
+    /// for good (#281). On a busy CI runner one noisy window took a download remembered at 2 to all
+    /// 4, and it ended before it settled again.
+    #[test]
+    fn one_more_has_to_help_twice_before_the_whole_ceiling_is_taken() {
+        let (mut ramp, mut clock) = start_at(3);
+        // The probe's first measurement (its unmeasured window, then the windows it judges) runs
+        // 50% fast; after that the server is back to 3 connections' worth.
+        let ticks_per_window = (WINDOW.as_millis() / 100) as u32;
+        let fast_ticks = ticks_per_window * (AdaptivePolicy::DEFAULT.windows_per_count + 1);
+        let at_four = Cell::new(0u32);
+        let targets = run(&mut ramp, &mut clock, 40, 8, |n| {
+            if n == 4 && at_four.get() < fast_ticks {
+                at_four.set(at_four.get() + 1);
+                capped(n) * 3 / 2
+            } else {
+                capped(n)
+            }
+        });
+        assert!(
+            at_four.get() >= fast_ticks,
+            "one more was measured: {targets:?}"
+        );
+        assert!(
+            targets.iter().all(|&t| t <= 4),
+            "one fast stretch didn't take the whole ceiling: {targets:?}"
+        );
+        assert_eq!(targets.last(), Some(&3), "{targets:?}");
+        assert!(ramp.settled());
     }
 
     #[test]
