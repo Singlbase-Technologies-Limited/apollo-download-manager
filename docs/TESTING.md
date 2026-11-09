@@ -86,7 +86,7 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 
 ## Fixture policy
 
-- **Local only.** Every test talks to servers it starts itself on `127.0.0.1` (or `::1`), on a free port. No test contacts the public internet, a public tracker, the DHT or a CDN. A test that needs the network is a defect.
+- **Local only.** Every test talks to servers it starts itself on `127.0.0.1` (or `::1`), on a free port. A test's own libtorrent session listens on a port free for TCP and UDP (`velocity_torrent::engine::free_listen_port`, #438), never port 0: on Windows the system's free TCP port can be a reserved UDP one. No test contacts the public internet, a public tracker, the DHT or a CDN. A test that needs the network is a defect.
 - **Seeded data.** Files are generated from a fixed seed with a known SHA-256. Every transfer test checks the SHA-256 of the result, not just "completed".
 - **Deterministic timing.** Throttling and delays are controlled by the fixture, never by real network conditions. Timeouts are generous and bounded. A random seed is printed when a test fails.
 - **Misbehaviour on purpose.** Fixtures expose switches for the server faults Apollo Download Manager must survive (below), so each test chooses its fault explicitly.

@@ -25,13 +25,11 @@ fn completed(s: &TorrentSnapshot) -> bool {
     s.status == DownloadStatus::Completed
 }
 
-/// A port nothing listens on now.
+/// A port nothing listens on now, free for TCP and UDP as libtorrent needs (#438).
 fn free_port() -> u16 {
-    TcpListener::bind("127.0.0.1:0")
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
+    let port = velocity_torrent::engine::free_listen_port();
+    assert_ne!(port, 0, "no port free for both TCP and UDP");
+    port
 }
 
 /// V1's `download_limit_and_global_upload_limit_reach_the_engine`, first half: a torrent's own
@@ -75,7 +73,7 @@ fn leech_time(name: &str, test: &str, engine: &SupervisedTorrentEngine) -> Durat
     let dir = Dir::new(test);
     let port = engine.network().unwrap().listen_port;
     let session = new_session(&SessionConfig {
-        listen_interfaces: "127.0.0.1:0".into(),
+        listen_interfaces: loopback_listen(),
         user_agent: "velocity-test-leecher".into(),
         ..Default::default()
     })

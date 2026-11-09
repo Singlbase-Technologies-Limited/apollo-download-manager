@@ -202,7 +202,7 @@ The Settings screen's BitTorrent section edits them ([SETTINGS.md](SETTINGS.md#a
 |---|---|---|---|
 | `dht`, `peerExchange`, `localPeerDiscovery` | on, on, off | | How peers are found besides trackers. Private torrents never use DHT or peer exchange, which libtorrent enforces |
 | `maxActiveSeeds` | 0 | 0 to 1,000 | [Seeding](#seeding) |
-| `listenPort` | 6890 | 0, or 1,024 to 65,535 | The TCP and UDP port on every interface. V1's 6881 and 6882 are never reused (PO decision on #62). 0 picks one free port when it is set, the same on every interface; libtorrent given 0 itself would pick one per interface |
+| `listenPort` | 6890 | 0, or 1,024 to 65,535 | The TCP and UDP port on every interface. V1's 6881 and 6882 are never reused (PO decision on #62). 0 picks one free port when it is set, the same on every interface; libtorrent given 0 itself would pick one per interface. The port picked is free for both TCP and UDP (#438): Windows reserves port ranges per protocol, so a free TCP port can be a reserved UDP one, and libtorrent couldn't listen on it at all |
 | `portMapping` | off | | Asks the router to forward the port, by UPnP and NAT-PMP |
 | `uploadLimit`, `downloadLimit` | 0 | 0 to 2,147,483,647 bytes per second | All torrents together; 0 for none. Separate from the direct downloads' limit (PO decision on #62) |
 | `extraTrackers` | none | at most 64, each a valid tracker | Added to every public torrent added from then on. A private torrent never gets them, since they would learn its info hash and the user's address (#377). A magnet link doesn't say whether it's private, so it has them until its metadata arrives; libtorrent doesn't share a private torrent's metadata with peers anyway |
@@ -267,7 +267,7 @@ The manager runs torrents beside direct downloads, through the `TorrentEngine` c
 | Owned paths, and deleting only them: links, junctions, sizes, folders left with other files, and waiting for an open file on Windows | `velocity-core` `torrent_files.rs` unit tests (V1's owned-paths and deletion tests) |
 | Resume data put back together from its chunks | `velocity-torrent` `supervisor.rs` unit tests |
 | A torrent's download and upload limits holding back a peer, and the global limits not holding back a local one; a failing tracker shown redacted with its reason, and a re-announce recovering; the peers list; extra trackers; the listening port | `velocity-torrent` `tests/network.rs` (V1's limits and tracker tests). A taken port is checked on Linux |
-| The session's settings; trackers and peers shown, redacted and cleaned; one free port for a random one | `velocity-torrent` `engine.rs` unit tests |
+| The session's settings; trackers and peers shown, redacted and cleaned; one free port for a random one, free for TCP and UDP (#438) | `velocity-torrent` `engine.rs` unit tests |
 | The port-mapping state | `velocity-torrent` `portmap.rs` unit tests (V1's) |
 | Tracker URLs redacted | `velocity-core` `torrent.rs` unit tests |
 | Trackers taken out of resume data before it is stored | `velocity-core` `torrent.rs` unit tests |
