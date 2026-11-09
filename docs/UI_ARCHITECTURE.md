@@ -51,7 +51,8 @@ How the window (`src/`) is built: where its state lives, how it talks to the nat
   - The navigation, a splitter, the current view and the status bar.
   - The navigation's width is a CSS variable, so a drag moves it without a React render. The splitter commits once, when the drag ends ([`Splitter`](../src/components/Splitter.tsx)).
   - `useLayoutPersistence` saves the layout 250 ms after the last change, through `set_appearance`. A failure shows as a toast.
-  - A window too narrow for the navigation shows it as icons, without changing what is saved (`resolveLayout`).
+  - The navigation's width is written to its CSS variable only when the saved or fitted width changes, so a render for something else during a drag, such as the details panel opening, doesn't put the old width back over the preview (#433).
+  - A window too narrow for the navigation shows it as icons, without changing what is saved (`resolveLayout`). The list keeps at least `LAYOUT.TABLE_MIN` (440 px) after the window's frame (`FRAME`, 4 px each side) and a 4 px splitter beside each shown panel (`SPLITTER`), which #347's floating panels added (#433).
 - **The theme:**
   - `useTheme` puts the `dark` class on `<html>` for `dark`, or for `system` while the system is dark, and follows the system as it changes.
   - The colours are V1's design tokens, the PO's brand colours, in `src/index.css`. Tailwind reads them through `@theme`.

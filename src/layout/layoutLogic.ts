@@ -14,8 +14,12 @@ export const LAYOUT = {
   SIDEBAR_RAIL: 56,
   DETAILS_MIN: 280,
   DETAILS_MAX: 600,
-  /** Space always left for the download table, including the 1 px panel dividers. */
+  /** Space always left for the download table, besides the window's frame and the splitters. */
   TABLE_MIN: 440,
+  /** The window's frame beside the panels: 4 px on each side (Shell, `px-1`; #347's floating panels, #433). */
+  FRAME: 8,
+  /** Each splitter, the gap beside a shown panel (Splitter, `w-1`). */
+  SPLITTER: 4,
   /** The desktop window's minimum width (src-tauri/tauri.conf.json). */
   WINDOW_MIN_WIDTH: 800,
   /** Dragging the navigation this far below its minimum collapses it to icons. */
@@ -84,7 +88,9 @@ export function resolveLayout(prefs: LayoutPrefs, viewport: number, detailsOpen:
   let mode: SidebarMode = !prefs.sidebarVisible ? 'hidden' : prefs.sidebarCollapsed ? 'rail' : 'full';
   let sidebar = mode === 'hidden' ? 0 : mode === 'rail' ? LAYOUT.SIDEBAR_RAIL : clamp(prefs.sidebarWidth ?? defaultSidebarWidth(viewport), LAYOUT.SIDEBAR_MIN, LAYOUT.SIDEBAR_MAX);
   let details = detailsOpen ? clamp(prefs.detailsWidth ?? defaultDetailsWidth(viewport), LAYOUT.DETAILS_MIN, LAYOUT.DETAILS_MAX) : 0;
-  const budget = viewport - LAYOUT.TABLE_MIN;
+  // What the panels may take: the window, less the table's minimum, the frame and a splitter beside each shown panel.
+  const splitters = (mode === 'hidden' ? 0 : 1) + (detailsOpen ? 1 : 0);
+  const budget = viewport - LAYOUT.TABLE_MIN - LAYOUT.FRAME - splitters * LAYOUT.SPLITTER;
   let autoCompact = false;
 
   let over = sidebar + details - budget;

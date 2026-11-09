@@ -11,6 +11,8 @@ import {
 } from './layoutLogic';
 
 const prefs = (over: Partial<LayoutPrefs> = {}): LayoutPrefs => ({ ...DEFAULT_LAYOUT, ...over });
+/** The window's frame and the two splitters, with both panels shown (#433). */
+const CHROME = LAYOUT.FRAME + 2 * LAYOUT.SPLITTER;
 
 describe('default panel widths', () => {
   it('keeps the navigation between 220 and 240 px and grows with the window', () => {
@@ -40,6 +42,17 @@ describe('default panel widths', () => {
     expect(saved.details.width).toBe(420);
   });
 
+  it('counts the window frame and the splitters when it keeps the table its minimum (#433)', () => {
+    // Since the panels float on the window's frame (#347), 4 px of frame on each side and a 4 px splitter beside each
+    // shown panel are taken from the window too: at 960 px the table got 422 px.
+    for (const viewport of [LAYOUT.WINDOW_MIN_WIDTH, 960, 1366]) {
+      const r = resolveLayout(prefs({ sidebarWidth: 292, detailsWidth: 416 }), viewport, true);
+      const splitters = (r.sidebar.mode === 'hidden' ? 0 : 1) + (r.details.open ? 1 : 0);
+      const table = viewport - r.sidebar.width - r.details.width - LAYOUT.FRAME - splitters * LAYOUT.SPLITTER;
+      expect(table, `${String(viewport)} px`).toBeGreaterThanOrEqual(LAYOUT.TABLE_MIN);
+    }
+  });
+
   it('leaves the table at least its minimum width at the minimum window size', () => {
     const r = resolveLayout(prefs(), LAYOUT.WINDOW_MIN_WIDTH, true);
     expect(LAYOUT.WINDOW_MIN_WIDTH - r.sidebar.width - r.details.width).toBeGreaterThanOrEqual(LAYOUT.TABLE_MIN);
@@ -65,8 +78,8 @@ describe('width bounds', () => {
 
   it('lowers each maximum so the table keeps its minimum width', () => {
     const r = resolveLayout(prefs({ sidebarWidth: 300 }), 1100, true);
-    expect(r.details.max).toBe(1100 - 300 - LAYOUT.TABLE_MIN);
-    expect(r.sidebar.max).toBe(1100 - r.details.width - LAYOUT.TABLE_MIN);
+    expect(r.details.max).toBe(1100 - 300 - LAYOUT.TABLE_MIN - CHROME);
+    expect(r.sidebar.max).toBe(1100 - r.details.width - LAYOUT.TABLE_MIN - CHROME);
   });
 });
 
@@ -77,10 +90,10 @@ describe('window resizing', () => {
     expect([wide.sidebar.width, wide.details.width]).toEqual([340, 560]);
     const mid = resolveLayout(p, 1200, true);
     expect(mid.sidebar.width).toBe(340);
-    expect(mid.details.width).toBe(1200 - 340 - LAYOUT.TABLE_MIN);
+    expect(mid.details.width).toBe(1200 - 340 - LAYOUT.TABLE_MIN - CHROME);
     const narrow = resolveLayout(p, 960, true);
     expect(narrow.details.width).toBe(LAYOUT.DETAILS_MIN);
-    expect(narrow.sidebar.width).toBe(960 - LAYOUT.DETAILS_MIN - LAYOUT.TABLE_MIN);
+    expect(narrow.sidebar.width).toBe(960 - LAYOUT.DETAILS_MIN - LAYOUT.TABLE_MIN - CHROME);
     expect(p).toEqual(prefs({ sidebarWidth: 340, detailsWidth: 560 }));
   });
 
