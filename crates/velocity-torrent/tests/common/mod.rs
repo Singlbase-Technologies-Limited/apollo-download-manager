@@ -37,6 +37,13 @@ pub const OFF: TorrentSettings = TorrentSettings {
     dht_bootstrap_nodes: Vec::new(),
 };
 
+/// Where a test's own libtorrent session listens: 127.0.0.1, on a port free for TCP and UDP. Port 0
+/// let the system pick a TCP port, and on Windows that can be a reserved UDP one, so libtorrent
+/// couldn't listen at all (#438).
+pub fn loopback_listen() -> String {
+    format!("127.0.0.1:{}", velocity_torrent::engine::free_listen_port())
+}
+
 pub fn program() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_velocity-torrent"))
 }
@@ -125,7 +132,7 @@ pub fn place_files(name: &str, dir: &Path) {
 pub fn seed(name: &str, dir: &Path) -> Seeder {
     place_files(name, dir);
     let session = new_session(&SessionConfig {
-        listen_interfaces: "127.0.0.1:0".into(),
+        listen_interfaces: loopback_listen(),
         user_agent: "velocity-test-seeder".into(),
         ..Default::default()
     })
@@ -272,7 +279,7 @@ pub struct Leecher {
 
 pub fn leech(name: &str, dir: &Path, tracker: &str) -> Leecher {
     let session = new_session(&SessionConfig {
-        listen_interfaces: "127.0.0.1:0".into(),
+        listen_interfaces: loopback_listen(),
         user_agent: "velocity-test-leecher".into(),
         ..Default::default()
     })
@@ -436,7 +443,7 @@ pub fn index_of(meta: &TorrentMeta, path: &str) -> u32 {
 /// yet still interests it and isn't dropped before the metadata is exchanged.
 pub fn metadata_seeder(name: &str, dir: &Path) -> Seeder {
     let session = new_session(&SessionConfig {
-        listen_interfaces: "127.0.0.1:0".into(),
+        listen_interfaces: loopback_listen(),
         user_agent: "velocity-test-seeder".into(),
         ..Default::default()
     })

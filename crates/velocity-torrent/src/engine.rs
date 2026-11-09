@@ -94,11 +94,53 @@ fn listening_port(asked: u16) -> u16 {
     if asked != 0 {
         return asked;
     }
-    // The system's free port, let go at once. Should another program take it meanwhile,
-    // libtorrent says so as a listen error.
-    std::net::TcpListener::bind(("0.0.0.0", 0))
-        .and_then(|l| l.local_addr())
-        .map_or(0, |a| a.port())
+    // A port the system has free for UDP, let go at once, and kept only if TCP can have it too
+    // (#438): Windows reserves port ranges per protocol, and libtorrent listens on both (TCP, and
+    // UDP for uTP), so a port free for one only leaves it unable to listen at all. Should another
+    // program take the port meanwhile, libtorrent says so as a listen error.
+    let ipv6 = std::net::TcpListener::bind(("::", 0)).is_ok();
+    pick_port(
+        || {
+            std::net::UdpSocket::bind(("0.0.0.0", 0))
+                .and_then(|s| s.local_addr())
+                .ok()
+                .map(|a| a.port())
+        },
+        |port| opens_for_tcp_and_udp(port, ipv6),
+        PORT_TRIES,
+    )
+}
+
+/// A port free now for TCP and UDP on every interface, as port 0 ("any") picks: for tests that
+/// start their own libtorrent sessions (#438). 0 if none was found.
+pub fn free_listen_port() -> u16 {
+    listening_port(0)
+}
+
+/// How many free ports `listening_port` tries before it gives up with 0. Windows hands out free
+/// ports in order, and a reserved range is 100 ports, sometimes a few in a row.
+const PORT_TRIES: usize = 400;
+
+/// The first port `candidate` offers that `usable` accepts, within `tries` offers; 0 if none.
+fn pick_port(
+    mut candidate: impl FnMut() -> Option<u16>,
+    usable: impl Fn(u16) -> bool,
+    tries: usize,
+) -> u16 {
+    (0..tries)
+        .map_while(|_| candidate())
+        .find(|&port| port != 0 && usable(port))
+        .unwrap_or(0)
+}
+
+/// Whether `port` can be opened now for TCP and UDP on every interface, IPv6 too when `ipv6`:
+/// the sockets libtorrent will open on it.
+fn opens_for_tcp_and_udp(port: u16, ipv6: bool) -> bool {
+    let both = |host: &str| {
+        std::net::TcpListener::bind((host, port)).is_ok()
+            && std::net::UdpSocket::bind((host, port)).is_ok()
+    };
+    both("0.0.0.0") && (!ipv6 || both("::"))
 }
 
 /// The session's settings: listening on `port` on every interface, router port mapping only when
@@ -1553,6 +1595,45 @@ impl Drop for LtEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Port 0 ("any") picks a port libtorrent can open for TCP and for UDP (uTP), on IPv4 and,
+    /// where this computer has it, IPv6 (#438). Windows reserves port ranges per protocol: a free
+    /// TCP port can be a reserved UDP one, and libtorrent then can't listen at all.
+    #[test]
+    fn a_port_picked_for_any_can_be_opened_for_tcp_and_udp() {
+        let ipv6 = std::net::TcpListener::bind(("::", 0)).is_ok();
+        for _ in 0..500 {
+            let port = listening_port(0);
+            assert_ne!(port, 0);
+            assert!(
+                std::net::TcpListener::bind(("0.0.0.0", port)).is_ok()
+                    && std::net::UdpSocket::bind(("0.0.0.0", port)).is_ok(),
+                "port {port} can't be opened for both TCP and UDP on IPv4"
+            );
+            if ipv6 {
+                assert!(
+                    std::net::TcpListener::bind(("::", port)).is_ok()
+                        && std::net::UdpSocket::bind(("::", port)).is_ok(),
+                    "port {port} can't be opened for both TCP and UDP on IPv6"
+                );
+            }
+        }
+    }
+
+    /// The choice itself, with made-up candidates: a port that can't be opened for both is
+    /// passed over, and after `tries` misses it gives up with 0 (#438).
+    #[test]
+    fn a_candidate_that_cant_be_opened_for_both_is_passed_over() {
+        let mut offered = vec![56754, 56755, 50100].into_iter();
+        let reserved_for_udp = |p: u16| (56700..56800).contains(&p);
+        assert_eq!(
+            pick_port(|| offered.next(), |p| !reserved_for_udp(p), 8),
+            50100
+        );
+        let mut never = std::iter::repeat(56754_u16);
+        assert_eq!(pick_port(|| never.next(), |p| !reserved_for_udp(p), 8), 0);
+        assert_eq!(pick_port(|| None, |_| true, 8), 0);
+    }
 
     #[test]
     fn a_private_torrent_gets_only_its_own_trackers() {

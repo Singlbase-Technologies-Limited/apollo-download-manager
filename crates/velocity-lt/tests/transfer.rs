@@ -51,9 +51,27 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
+/// A port free now for TCP and UDP on 127.0.0.1. Port 0 let the system pick a TCP port, and on
+/// Windows that can be a reserved UDP one, which libtorrent (TCP, and UDP for uTP) can't listen on
+/// (#438). The engine's own choice is `velocity_torrent::engine::free_listen_port`; this crate sits
+/// below it.
+fn free_port() -> u16 {
+    for _ in 0..400 {
+        let port = std::net::UdpSocket::bind("127.0.0.1:0")
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port();
+        if std::net::TcpListener::bind(("127.0.0.1", port)).is_ok() {
+            return port;
+        }
+    }
+    panic!("no port free for both TCP and UDP");
+}
+
 fn session() -> cxx::UniquePtr<Session> {
     new_session(&SessionConfig {
-        listen_interfaces: "127.0.0.1:0".into(),
+        listen_interfaces: format!("127.0.0.1:{}", free_port()),
         user_agent: "velocity-test".into(),
         peer_fingerprint: "-VL0100-".into(),
         ..Default::default()
