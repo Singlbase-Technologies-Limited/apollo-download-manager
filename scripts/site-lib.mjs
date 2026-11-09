@@ -8,7 +8,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { buildDevSite } from './dev-site-lib.mjs';
 import { buildGuide, parsePage, resolveLinks } from './guide-lib.mjs';
-import { esc, layout, logoSvg, NAME, pager, REPO, SITE_URL, tableOfContents } from './site-layout.mjs';
+import { esc, layout, logoSvg, NAME, pager, REPO, searchForm, SITE_URL, tableOfContents } from './site-layout.mjs';
 
 export { SITE_URL };
 
@@ -399,17 +399,23 @@ export function buildSite({ releases }) {
     }
     const at = order.indexOf(p.id);
     const neighbour = (id) => id && { href: href({ page: id }), title: id === 'index' ? 'Introduction' : guide.find((g) => g.id === id).title };
+    // The guide's own search (#422): the developer site's script, over an index of the guide's pages only.
+    const guideRoot = '../'.repeat(path.split('/').length - 2) || './';
     out[path] = layout({
       path,
       title: p.id === 'index' ? 'User guide' : p.title,
       description: firstText(p.blocks),
       body: renderBlocks(p.blocks, href, afterHeading),
-      aside: guideNav(guide, p.id, href),
+      aside: `${searchForm({ root: guideRoot, id: 'guide-search', label: 'Search the user guide', placeholder: 'Resume, torrents, browser…' })}\n${guideNav(guide, p.id, href)}`,
       toc: tableOfContents(p.headings),
       after: pager(neighbour(order[at - 1]), neighbour(order[at + 1])),
       crumb: 'User guide',
+      head: `<script type="module" src="${guideRoot}search.js"></script>\n`,
     });
   }
+  const guideIndex = guide.flatMap((p) => p.sections.map((s) => ({ page: p.id === 'index' ? 'Introduction' : p.title, heading: s.heading, path: p.id === 'index' ? '' : `${p.id}/`, anchor: s.anchor, text: s.text })));
+  out['guide/search-index.json'] = JSON.stringify(guideIndex);
+  out['guide/search.js'] = read('site/developers/search.js');
 
   const docFiles = (dir) =>
     readdirSync(new URL(`docs/${dir}`, root), { withFileTypes: true }).flatMap((e) => {

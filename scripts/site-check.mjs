@@ -19,6 +19,18 @@ const WIDTHS = [
   ['tablet', 820, 1100],
   ['desktop', 1440, 900],
 ];
+/** The most lines a table cell may wrap to at desktop width (#422). */
+const TABLE_LINES = 8;
+/** Pages whose tables hold paragraphs, not values: CSS can't make them short, so #425 rewrites them. */
+const TALL_TABLES = [
+  'developers/architecture/',
+  'developers/contracts/',
+  'developers/dependencies/',
+  'developers/engine-internals/',
+  'developers/parity/',
+  'developers/research/2026-10-21-libcurl-engine-research-r2/',
+  'developers/testing/',
+];
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.xml': 'application/xml' };
 const at = process.argv.indexOf('--shots');
 const shots = at > 0 ? process.argv[at + 1] : null;
@@ -97,6 +109,20 @@ for (const [name, width, height] of WIDTHS) {
     if (!seen.logo.endsWith('logo-light.svg') || !seen.logoShown) problem(where, 'the logo is missing');
     for (const image of seen.broken) problem(where, `broken image: ${image}`);
     if (seen.noAlt) problem(where, `${String(seen.noAlt)} images without alt`);
+    // Tables stay readable on a desktop (#422): no cell wraps into a tall, narrow column. The pages whose tables
+    // hold paragraphs rather than values are listed in TALL_TABLES, for the content audit (#425).
+    if (name === 'desktop' && !TALL_TABLES.includes(route)) {
+      const tall = await page.evaluate((most) => {
+        const found = [];
+        for (const cell of document.querySelectorAll('.prose td, .prose th')) {
+          const style = getComputedStyle(cell);
+          const lines = Math.round((cell.getBoundingClientRect().height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)) / parseFloat(style.lineHeight));
+          if (lines > most) found.push(`${String(lines)} lines: ${cell.textContent.trim().slice(0, 50)}`);
+        }
+        return found;
+      }, TABLE_LINES);
+      for (const t of tall.slice(0, 3)) problem(where, `a table cell wraps to ${t}`);
+    }
     for (const link of seen.links) if (link.startsWith(origin)) links.add(link.split('#')[0]);
     if (shots && (route.split('/').length <= 2 || ['guide/torrents/', 'developers/testing/', 'developers/decisions/'].includes(route))) {
       await page.screenshot({ path: join(shots, `${name}-${route.replace(/\//g, '-') || 'home-'}page.png`), fullPage: true });
@@ -144,16 +170,45 @@ for (const link of links) {
   await faq.close();
 }
 
-// The developer search, and following a result.
-{
-  const page = await open(check, 'developers/', 'search');
-  await page.fill('#dev-search', 'libtorrent bridge');
+// Both guides' searches (#355, #422): lined up with the documents list, a placeholder that says what to search,
+// a result that opens the right page, by mouse and by keyboard alone, and "Nothing found." for no match.
+for (const [route, id, query, target] of [
+  ['developers/', 'dev-search', 'libtorrent bridge', '/developers/'],
+  ['guide/', 'guide-search', 'seeding', '/guide/torrents/'],
+]) {
+  const where = `search /${route}`;
+  const page = await open(check, route, where);
+  const input = page.locator(`#${id}`);
+  if (!(await input.isVisible())) {
+    problem(where, 'no search box');
+    await page.close();
+    continue;
+  }
+  if (!(await input.getAttribute('placeholder'))) problem(where, 'the search box has no placeholder');
+  // One text edge down the side: the search's label, what is typed in the box, and the documents list's links.
+  const edges = await page.evaluate((id) => {
+    const textStart = (el) => el.getBoundingClientRect().left + parseFloat(getComputedStyle(el).borderLeftWidth) + parseFloat(getComputedStyle(el).paddingLeft);
+    const link = [...document.querySelectorAll('.docs-side a')].find((a) => !a.closest('.search'));
+    return { label: textStart(document.querySelector(`label[for="${id}"]`)), input: textStart(document.getElementById(id)), links: textStart(link) };
+  }, id);
+  for (const [what, x] of [['label', edges.label], ['typed text', edges.input]]) {
+    if (Math.abs(x - edges.links) > 1) problem(where, `the search's ${what} starts at ${x.toFixed(1)} px, the documents list's text at ${edges.links.toFixed(1)} px`);
+  }
+  await input.fill(query);
   await page.waitForSelector('.search ul li');
   await page.locator('.search ul li a').first().click();
   await page.waitForLoadState();
-  if (!page.url().includes('/developers/')) problem('search', `a result went to ${page.url()}`);
-  await page.goto(`${origin}${BASE}developers/`);
-  await page.fill('#dev-search', 'zzzznothing');
+  if (!page.url().includes(target)) problem(where, `"${query}" went to ${page.url()}, not ${target}`);
+  // By keyboard alone: focus the box, type, Tab to the first result, Enter.
+  await page.goto(`${origin}${BASE}${route}`);
+  await page.focus(`#${id}`);
+  await page.keyboard.type(query);
+  await page.waitForSelector('.search ul li');
+  await page.keyboard.press('Tab');
+  await Promise.all([page.waitForURL((u) => !u.pathname.endsWith(`/${route}`) || u.hash !== ''), page.keyboard.press('Enter')]);
+  if (!page.url().includes(target)) problem(where, `by keyboard, "${query}" went to ${page.url()}`);
+  await page.goto(`${origin}${BASE}${route}`);
+  await page.fill(`#${id}`, 'zzzznothing');
   await page.waitForFunction(() => document.querySelector('.search p')?.textContent === 'Nothing found.');
   await page.close();
 }
