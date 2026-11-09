@@ -1,8 +1,8 @@
 # Development workflow
 
-V2 follows a main-centred workflow: every change goes from a GitHub issue, to a short-lived branch, to a pull request into `main`, to a squash merge by the Product Owner. There are no permanent `develop` or `staging` branches. Release candidates and releases are tags on verified `main` commits.
+Apollo Download Manager follows a main-centred workflow: every change goes from a GitHub issue, to a short-lived branch, to a pull request into `main`, to a squash merge by the Product Owner. There are no permanent `develop` or `staging` branches. Release candidates and releases are tags on verified `main` commits.
 
-Each rule below is marked as **GitHub-documented** (with a link to the source) or **project judgment** (decided for V2; change it only through the Product Owner).
+Each rule below is marked as **GitHub-documented** (with a link to the source) or **project judgment** (decided for Apollo Download Manager; change it only through the Product Owner).
 
 ## Principles
 
@@ -47,7 +47,7 @@ Each rule below is marked as **GitHub-documented** (with a link to the source) o
 
 ## Releases
 
-- **Versions:** [Semantic Versioning](https://semver.org/) tags `vX.Y.Z` (*documented in the specification*). While V2 is below 1.0.0, minor versions may contain breaking changes, as SemVer allows for 0.y.z.
+- **Versions:** [Semantic Versioning](https://semver.org/) tags `vX.Y.Z` (*documented in the specification*). While Apollo Download Manager is below 1.0.0, minor versions may contain breaking changes, as SemVer allows for 0.y.z.
 - **Release candidates:** tags `vX.Y.Z-rc.N` on a `main` commit whose checks passed. CI builds downloadable installers from them, and from a `main` commit started by hand ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md), #17). *Project judgment.*
 - **Releases:** a tag `vX.Y.Z` on the commit of an accepted release candidate. The release workflow stops at a PO approval gate and creates only a draft release ([RELEASE_PROCESS.md](RELEASE_PROCESS.md#making-the-release), #18). *Project judgment.*
 - **Tags are never moved or deleted** once pushed. If a candidate fails, the next one is `-rc.N+1`. *Project judgment.*

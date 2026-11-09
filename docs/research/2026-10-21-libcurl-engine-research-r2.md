@@ -1,7 +1,7 @@
 > **Research, not decisions.** This is a verbatim copy of revision 2 of the research report, dated 2026-10-21. It was exported as Markdown from the Claude Doc <https://claude.ai/artifact/NYyKUpBeoMLipdarEicJD2> on 2026-10-21 (doc revision 38).
 >
-> - **About V1:** the report describes the original Velocity Download Manager (V1) at `e9d717a8`. Paths such as `manager.rs` or `vendor/aria2/` refer to that repository, not to V2.
-> - **Overridden for V2:** where the report keeps aria2 as a default, legacy or fallback engine, the Product Owner's direction overrides it. V2 contains no aria2. See [ADR-0001](../decisions/0001-v2-direction.md) for what does and does not carry over.
+> - **About V1:** the report describes the original Velocity Download Manager (V1) at `e9d717a8`. Paths such as `manager.rs` or `vendor/aria2/` refer to that repository, not to Apollo Download Manager.
+> - **Overridden for Apollo Download Manager:** where the report keeps aria2 as a default, legacy or fallback engine, the Product Owner's direction overrides it. Apollo Download Manager contains no aria2. See [ADR-0001](../decisions/0001-v2-direction.md) for what does and does not carry over.
 > - **Decisions:** the report's recommendations are inputs to the decision issues, not decisions. Accepted decisions live in [docs/decisions/](../decisions/README.md).
 > - **Export loss:** one embedded diagram did not survive the export. It appears below as "embedded content: proposed engine architecture" in section 4. The text around it describes it.
 

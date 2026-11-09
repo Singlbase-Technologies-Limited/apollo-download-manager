@@ -1,6 +1,6 @@
 # Logs, redaction and diagnostics
 
-What V2 records about itself, how secrets are kept out of it, and what the user can share (#28). Privacy as a whole is in [PRIVACY.md](PRIVACY.md).
+What Apollo Download Manager records about itself, how secrets are kept out of it, and what the user can share (#28). Privacy as a whole is in [PRIVACY.md](PRIVACY.md).
 
 ## The app's log
 

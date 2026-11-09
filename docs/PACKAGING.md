@@ -1,41 +1,41 @@
 # Packaging
 
-How V2 becomes an installer: Windows (#81) and Linux (#82) are built; macOS is #83. Release-candidate builds and releases come later (#17, #18): nothing here publishes, signs or releases anything.
+How Apollo Download Manager becomes an installer: Windows (#81) and Linux (#82) are built; macOS is #83. Release-candidate builds and releases come later (#17, #18): nothing here publishes, signs or releases anything.
 
 ## The Windows installer
 
 One installer, a per-user NSIS setup (`Apollo Download Manager_<version>_x64-setup.exe`), made by Tauri from [`src-tauri/tauri.release.conf.json`](../src-tauri/tauri.release.conf.json). No MSI (PO decision on #81).
 
 - **For this user only:** it installs without an administrator prompt, into `%LOCALAPPDATA%\Apollo Download Manager`.
-- **What it installs:** the app, and beside it the three programs the app starts: the transfer engine (`velocity-transfer.exe`), the torrent helper (`velocity-torrent.exe`) and the browser's native host (`velocity-native-host-v2.exe`). Also V2's [`LICENSE`](../LICENSE) (GPL-3.0 requires giving it with every copy, ADR-0017), [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and the native libraries' `build-info.json` ([BUILDING_NATIVE.md](BUILDING_NATIVE.md#build-infojson)). No aria2 (ADR-0001): the build checks the installer's contents for it.
+- **What it installs:** the app, and beside it the three programs the app starts: the transfer engine (`velocity-transfer.exe`), the torrent helper (`velocity-torrent.exe`) and the browser's native host (`velocity-native-host-v2.exe`). Also Apollo Download Manager's [`LICENSE`](../LICENSE) (GPL-3.0 requires giving it with every copy, ADR-0017), [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and the native libraries' `build-info.json` ([BUILDING_NATIVE.md](BUILDING_NATIVE.md#build-infojson)). No aria2 (ADR-0001): the build checks the installer's contents for it.
 - **The release identity:** every program in it is built with the `release-identity` feature, so it runs as `com.velocity.downloadmanager.v2`, with its data in `%APPDATA%\com.velocity.downloadmanager.v2`. A development build never uses that folder ([COEXISTENCE.md](COEXISTENCE.md)).
 - **WebView2:** the installer downloads Microsoft's WebView2 bootstrapper if the machine lacks WebView2, as Tauri does by default. Windows 10 and 11 normally have it already.
 
 ### Beside V1
 
-V1 is installed as "Velocity Download Manager". V2's installer uses its own product name, Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md)):
+V1 is installed as "Velocity Download Manager". The new installer uses its own product name, Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md)):
 
-| | V2 | V1 |
+| | Apollo DM | V1 |
 |---|---|---|
 | Install folder | `%LOCALAPPDATA%\Apollo Download Manager` | `%LOCALAPPDATA%\Velocity Download Manager` |
 | Apps & features entry (`HKCU\…\Uninstall\<name>`) | `Apollo Download Manager` | `Velocity Download Manager` |
 | Data folder | `%APPDATA%\com.velocity.downloadmanager.v2` | `%APPDATA%\com.velocity.downloadmanager` |
 | Browser registrations | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 
-V2's publisher is "Singlbase Technologies Limited" (PO decision on #347); V1's is "Velocity Project". The installer keeps its own settings under `HKCU\Software\Singlbase Technologies Limited\Apollo Download Manager`.
+Apollo Download Manager's publisher is "Singlbase Technologies Limited" (PO decision on #347); V1's is "Velocity Project". The installer keeps its own settings under `HKCU\Software\Singlbase Technologies Limited\Apollo Download Manager`.
 
-Offering to remove V1 from V2's installer is left for a later issue (PO decision on #81).
+Offering to remove V1 from Apollo Download Manager's installer is left for a later issue (PO decision on #81).
 
 ### Uninstalling and upgrading
 
-- **Uninstalling** removes the programs, the shortcut and the Apps & features entry. It also removes V2's browser registrations: the `HKCU\Software\<browser>\NativeMessagingHosts\com.velocity.download_manager_v2` keys for Chrome, Chromium, Edge, Brave and Firefox ([`src-tauri/windows/installer-hooks.nsh`](../src-tauri/windows/installer-hooks.nsh)). V1's keys have another name and stay.
+- **Uninstalling** removes the programs, the shortcut and the Apps & features entry. It also removes Apollo Download Manager's browser registrations: the `HKCU\Software\<browser>\NativeMessagingHosts\com.velocity.download_manager_v2` keys for Chrome, Chromium, Edge, Brave and Firefox ([`src-tauri/windows/installer-hooks.nsh`](../src-tauri/windows/installer-hooks.nsh)). V1's keys have another name and stay.
 - **Your downloads and settings stay** unless you tick "Delete the application data", which removes `%APPDATA%\com.velocity.downloadmanager.v2` and `%LOCALAPPDATA%\com.velocity.downloadmanager.v2`. Downloaded files are never removed.
 - **Upgrading:** a newer installer runs the old version's uninstaller with `/UPDATE`. That keeps the data and the browser registrations, so the browsers keep working.
 - **Upgrading from 0.1.x,** which was named "Velocity Download Manager V2" (ADR-0016): Tauri finds an earlier version only by the product name, so the installer's own hook (`NSIS_HOOK_PREINSTALL` in [`installer-hooks.nsh`](../src-tauri/windows/installer-hooks.nsh)) does it for the old name (#347):
   - It reads the old install folder from `HKCU\…\Uninstall\Velocity Download Manager V2`, runs that folder's uninstaller silently with `/UPDATE`, and waits for it. The old programs and the old Apps & features entry go; the data, the settings and the browser keys stay. One install and one entry remain.
   - Then it removes the old uninstaller and folder, the old "Velocity Download Manager V2" Start menu and desktop shortcuts (only when they point into the old folder), the old `HKCU\Software\Velocity Project\Velocity Download Manager V2` key, and the `Velocity Project` key only when it is empty, so V1's stays.
   - If the old uninstaller fails, the hook removes nothing more, so the old install stays whole, with its entry.
-  - The browser registrations' manifests still name the old folder's native host. On its next start the app points each V2 registration whose host is gone at its own host (`repair_moved_host` in `crates/velocity-core/src/browser/registration.rs`), and leaves V1's alone.
+  - The browser registrations' manifests still name the old folder's native host. On its next start the app points each Apollo Download Manager registration whose host is gone at its own host (`repair_moved_host` in `crates/velocity-core/src/browser/registration.rs`), and leaves V1's alone.
 
 ### Building it
 
@@ -55,10 +55,10 @@ It also writes the platform's records for a release candidate in `target/release
 
 What #81 asks to record, on the PO's Windows PC with V1 installed:
 
-1. **Install:** run the setup. Check the folder, the Start menu entry and the Apps & features entry say V2, and V1's are unchanged.
-2. **Run:** start V2, add a download, and check V1 still starts and works.
-3. **Upgrade:** install a newer V2 over it. This needs two builds with different versions; the upgrade from a release-candidate build waits for #17.
-4. **Uninstall:** from Apps & features, without deleting the data. Check V2's folder, entry and browser keys are gone, its data folder is still there, and V1 still works.
+1. **Install:** run the setup. Check the folder, the Start menu entry and the Apps & features entry say Apollo Download Manager, and V1's are unchanged.
+2. **Run:** start Apollo Download Manager, add a download, and check V1 still starts and works.
+3. **Upgrade:** install a newer Apollo Download Manager over it. This needs two builds with different versions; the upgrade from a release-candidate build waits for #17.
+4. **Uninstall:** from Apps & features, without deleting the data. Check Apollo Download Manager's folder, entry and browser keys are gone, its data folder is still there, and V1 still works.
 
 ### Signing
 
@@ -81,18 +81,18 @@ A deb, for Ubuntu and Debian, and an rpm, for Fedora and openSUSE, made by Tauri
   | `/usr/share/icons/hicolor/<size>/apps/velocity-desktop-v2.png` | The icons |
 
 - **What they depend on:** the distribution's WebKitGTK 4.1, GTK 3 and Ayatana AppIndicator, for the tray. Tauri adds them: the deb `Depends:` on `libayatana-appindicator3-1, libwebkit2gtk-4.1-0, libgtk-3-0`, and the rpm `Requires:` `libayatana-appindicator3.so.1`, `libgtk-3.so.0` and `libwebkit2gtk-4.1.so.0`. The package manager installs them; nothing of theirs is bundled.
-- **What they don't depend on:** libcurl, OpenSSL, nghttp2, zlib, libtorrent and Boost are linked into V2's programs statically ([BUILDING_NATIVE.md](BUILDING_NATIVE.md)), so a distribution's copies are never used. The build checks that no program loads one.
+- **What they don't depend on:** libcurl, OpenSSL, nghttp2, zlib, libtorrent and Boost are linked into Apollo Download Manager's programs statically ([BUILDING_NATIVE.md](BUILDING_NATIVE.md)), so a distribution's copies are never used. The build checks that no program loads one.
 - **The release identity:** as on Windows, every program runs as `com.velocity.downloadmanager.v2`, with its data in `~/.local/share/com.velocity.downloadmanager.v2` ([COEXISTENCE.md](COEXISTENCE.md)).
 
 ### Beside V1
 
-V1's Linux packages are named `velocity-download-manager`, and install `/usr/bin/velocity-desktop`, `/usr/bin/velocity-aria2c`, `/usr/bin/velocity-native-host`, `/usr/lib/Velocity Download Manager/`, `Velocity Download Manager.desktop` and `velocity-desktop.png` icons (V1's `tauri.conf.json` at `e9d717a8`). V2's packages share none of these, so both install side by side; the build fails if a V2 package would install any of them.
+V1's Linux packages are named `velocity-download-manager`, and install `/usr/bin/velocity-desktop`, `/usr/bin/velocity-aria2c`, `/usr/bin/velocity-native-host`, `/usr/lib/Velocity Download Manager/`, `Velocity Download Manager.desktop` and `velocity-desktop.png` icons (V1's `tauri.conf.json` at `e9d717a8`). Apollo Download Manager's packages share none of these, so both install side by side; the build fails if an Apollo Download Manager package would install any of them.
 
 ### Removing and upgrading
 
 - **Removing** the package (`sudo apt remove apollo-download-manager`, or `sudo dnf remove apollo-download-manager`) removes the programs, the notices, the menu entry and the icons.
 - **Your downloads and settings stay** in your home folder, and downloaded files are never removed.
-- **Browser registrations stay:** they are files in each user's home folder, which a package can't reach. Unregister the browsers in Settings, Browser, before removing V2. A registration left behind points to a program that's gone, so the browser reports the native host as missing; V1's registrations have another name and aren't touched.
+- **Browser registrations stay:** they are files in each user's home folder, which a package can't reach. Unregister the browsers in Settings, Browser, before removing Apollo Download Manager. A registration left behind points to a program that's gone, so the browser reports the native host as missing; V1's registrations have another name and aren't touched.
 - **Upgrading:** install a newer package over it. The package manager replaces the files; the data and the browser registrations stay.
 - **Upgrading from 0.1.x** (`velocity-download-manager-v2`): the new package replaces the old one (PO decision on #347). The deb declares `Conflicts:` and `Replaces: velocity-download-manager-v2`, and the rpm `Obsoletes: velocity-download-manager-v2` (`bundle.linux` in [`tauri.release.conf.json`](../src-tauri/tauri.release.conf.json)), so `apt` and `dnf` remove the old package while installing the new one. The programs keep their paths in `/usr/bin`, so the browser registrations still find the native host.
 
@@ -107,7 +107,7 @@ pnpm package:linux
 [`scripts/package-linux.mjs`](../scripts/package-linux.mjs) builds and stages the programs and files as `package:windows` does, and runs `tauri build --config src-tauri/tauri.release.conf.json --features release-identity --bundles deb,rpm`. The packages land in `target/release/bundle/deb/` and `target/release/bundle/rpm/`, each with its SHA-256 in a `.sha256` file beside it. Then it checks:
 
 - **each package's files** (`dpkg-deb -c`, `rpm -qlp`): the app, its three programs, the notices, `build-info.json` and the menu entry are there, nothing is named aria2, and no path is one of V1's;
-- **the programs in the deb** (`readelf -d`, `objdump -T`): none loads a system copy of a library V2 links statically, and none needs a glibc newer than 2.35.
+- **the programs in the deb** (`readelf -d`, `objdump -T`): none loads a system copy of a library Apollo Download Manager links statically, and none needs a glibc newer than 2.35.
 
 A check whose tool is missing is reported NOT RUN; `--require-listing` makes that an error, as in CI. Built on a newer distribution than Ubuntu 22.04, the glibc check fails, as it should.
 
@@ -115,4 +115,4 @@ A check whose tool is missing is reported NOT RUN; `--require-listing` makes tha
 
 ### Testing them beside V1
 
-What #82 asks to record, on Ubuntu 24.04 with V1's package installed: install V2's deb, start V2 and add a download, check V1 still starts and works, then remove V2's package and check V1 is unchanged.
+What #82 asks to record, on Ubuntu 24.04 with V1's package installed: install Apollo Download Manager's deb, start it and add a download, check V1 still starts and works, then remove the package and check V1 is unchanged.

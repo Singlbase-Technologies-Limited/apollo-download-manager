@@ -41,7 +41,7 @@ Rejected during the research: Atlas (an active download manager already has that
 
 - **#347 applies the name:** logo, icons and colours, `branding.json`'s `releaseProductName`, `src-tauri/tauri.release.conf.json`, the window title, and the documents that describe the installer ([PACKAGING.md](../PACKAGING.md), [COEXISTENCE.md](../COEXISTENCE.md), [BROWSER_EXTENSION.md](../BROWSER_EXTENSION.md) and the [user guide](../user/README.md)). Until then they describe the current release and keep its name.
 - **The upgrade from 0.1.x is the main risk.** Tauri's NSIS installer names the install folder and the uninstall key after the product name, so a renamed release would otherwise install a second copy. #347 must leave one Apps & features entry after the upgrade and keep all data, settings, history, browser registrations and keychain entries.
-- **V1 and V2 still install side by side:** the new name differs from V1's, and the test in `crates/velocity-core/src/branding.rs` that keeps them apart stays.
+- **V1 and Apollo Download Manager still install side by side:** the new name differs from V1's, and the test in `crates/velocity-core/src/branding.rs` that keeps them apart stays.
 - **The browser extension's release name** follows the product name; #356 redesigns the extension and #240 publishes it. The Firefox add-on ID is permanent once uploaded, so it is chosen with this name in mind.
 - **The website (#353) and the developer site (#355)** use the new name.
 

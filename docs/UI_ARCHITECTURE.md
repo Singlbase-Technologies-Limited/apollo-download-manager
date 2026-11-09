@@ -41,7 +41,7 @@ How the window (`src/`) is built: where its state lives, how it talks to the nat
 2. **`app_info`:** a native side with another contract version is refused, saying so.
 3. **`get_shell_settings`:** a failure shows its code, with "Try again".
 4. **Setup not finished:** the first-run setup shows the transfer engine's state and asks for the download folder. `complete_onboarding` checks the folder: it must exist and can't be a link.
-   - Unlike V1, the setup doesn't wait for the engine, because V2's window works without one and says why (#58).
+   - Unlike V1, the setup doesn't wait for the engine, because Apollo Download Manager's window works without one and says why (#58).
    - The browser extension step comes with #64.
 5. **The shell.**
 

@@ -10,7 +10,7 @@ The *Release candidate* workflow ([`release-candidate.yml`](../.github/workflows
 |---|---|
 | `…-windows-x64-setup.exe` | The Windows installer ([PACKAGING.md](PACKAGING.md#the-windows-installer)) |
 | `…-linux-amd64.deb`, `…-linux-x86_64.rpm` | The Linux packages ([PACKAGING.md](PACKAGING.md#the-linux-packages)) |
-| `…-licence-report-windows.json`, `…-licence-report-linux.json` | Every third-party component each platform's build ships, with the licence V2 uses it under (`pnpm notices` with `--report`, [LICENSING.md](LICENSING.md)) |
+| `…-licence-report-windows.json`, `…-licence-report-linux.json` | Every third-party component each platform's build ships, with the licence Apollo DM uses it under (`pnpm notices` with `--report`, [LICENSING.md](LICENSING.md)) |
 | `build-info.json` | The version, the tag if any, the commit, when and by which run it was built, each file's size and SHA-256, and each platform's native build records: the libcurl, OpenSSL, nghttp2, zlib, libtorrent and Boost versions with their sources, and the toolchains ([BUILDING_NATIVE.md](BUILDING_NATIVE.md#build-infojson)) |
 | `SHA256SUMS` | The SHA-256 of every file above, in the `sha256sum` format |
 
@@ -38,18 +38,18 @@ Only from a commit on `main` whose *Main checks* run on `main` passed. The workf
 
 ## Installing it beside V1
 
-The installers are V2's release identity, so they install beside V1 and never touch it ([PACKAGING.md](PACKAGING.md), [COEXISTENCE.md](COEXISTENCE.md)). On Windows, run the installer; on Linux, `sudo apt install ./<file>.deb` or `sudo dnf install ./<file>.rpm`.
+The installers are Apollo Download Manager's release identity, so they install beside V1 and never touch it ([PACKAGING.md](PACKAGING.md), [COEXISTENCE.md](COEXISTENCE.md)). On Windows, run the installer; on Linux, `sudo apt install ./<file>.deb` or `sudo dnf install ./<file>.rpm`.
 
 - **Windows SmartScreen** warns, because the installer isn't signed: **More info**, then **Run anyway**.
 - **The PO's test** for #17 and #81: install the candidate on the Windows PC with V1 installed, run both, then upgrade it with a later candidate, and record the result on the issue ([PACKAGING.md](PACKAGING.md#testing-it-beside-v1)).
 
 ## Going back to an earlier version
 
-A newer V2 may have changed the format of its data, and an older one can't always read it: the download list then says the saved downloads are from a newer Apollo Download Manager. So:
+A newer Apollo Download Manager may have changed the format of its data, and an older one can't always read it: the download list then says the saved downloads are from a newer Apollo Download Manager. So:
 
-1. **Before installing a candidate,** copy V2's data folder: `%APPDATA%\com.velocity.downloadmanager.v2` on Windows, `~/.local/share/com.velocity.downloadmanager.v2` on Linux. Quit V2 first.
+1. **Before installing a candidate,** copy Apollo Download Manager's data folder: `%APPDATA%\com.velocity.downloadmanager.v2` on Windows, `~/.local/share/com.velocity.downloadmanager.v2` on Linux. Quit Apollo Download Manager first.
 2. **To go back:**
-   - **Windows:** uninstall V2 from Apps & features without ticking "Delete the application data", then run the earlier installer.
+   - **Windows:** uninstall Apollo Download Manager from Apps & features without ticking "Delete the application data", then run the earlier installer.
    - **Linux:** `sudo apt install --allow-downgrades ./<earlier>.deb`, or `sudo dnf downgrade ./<earlier>.rpm`.
 3. **If the earlier version can't read the data,** quit it, put the copy from step 1 back in place of the data folder, and start it again.
 

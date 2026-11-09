@@ -14,7 +14,7 @@ The full setup for Windows, Linux and macOS is in [docs/DEVELOPMENT.md](docs/DEV
 
 ## Documentation
 
-The [user guide](docs/user/README.md) is for people who use V2; it is also in the app (Help, User guide) and on the [website](docs/WEBSITE.md). [docs/README.md](docs/README.md) maps every document, and the [developer site](https://singlbase-technologies-limited.github.io/apollo-download-manager/developers/) shows them with search. The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and accepted decisions are in [docs/decisions/](docs/decisions/README.md).
+The [user guide](docs/user/README.md) is for people who use Apollo Download Manager; it is also in the app (Help, User guide) and on the [website](docs/WEBSITE.md). [docs/README.md](docs/README.md) maps every document, and the [developer site](https://singlbase-technologies-limited.github.io/apollo-download-manager/developers/) shows them with search. The architecture is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and accepted decisions are in [docs/decisions/](docs/decisions/README.md).
 
 ## Contributing
 
@@ -26,4 +26,4 @@ Copyright (C) 2026 Singlbase Technologies Limited.
 
 Apollo Download Manager is free software: you can redistribute it and change it under the terms of the [GNU General Public License, version 3 only](LICENSE) (`GPL-3.0-only`). It is distributed without any warranty; see the licence for details. The decision is [ADR-0017](docs/decisions/0017-gpl-3-licence.md).
 
-The third-party components V2 contains, and their licences, are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+The third-party components Apollo Download Manager contains, and their licences, are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

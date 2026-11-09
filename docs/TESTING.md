@@ -1,10 +1,10 @@
 # Testing and verification levels
 
-V2 replaces aria2 with its own transfer engine, so V2's correctness rests on V2's tests. This page is the test strategy (#15):
+Apollo Download Manager replaces aria2 with its own transfer engine, so its correctness rests on its own tests. This page is the test strategy (#15):
 
 - **Levels L1–L5:** what each proves, and how long it takes.
 - **The test pyramid,** and which issue builds each layer.
-- **Fixtures:** the rules, and the local servers V2 needs.
+- **Fixtures:** the rules, and the local servers Apollo Download Manager needs.
 - **Platform reporting:** how results are reported per platform.
 
 All check commands run every check even after one fails, print a PASS/FAIL summary with timings, and exit non-zero if anything failed. They run tools directly, never through a shell.
@@ -19,9 +19,11 @@ All check commands run every check even after one fails, print a PASS/FAIL summa
 | **L4** | `pnpm check:full`; later the cross-platform, end-to-end, fuzz, stress and benchmark suites | Every L1 check, then `vite build` and `cargo build --workspace --release` (LTO, one codegen unit), and since #46 the engine's examples for release, so a test-only feature can't break them unseen. `pnpm test:e2e:layout` (#59): the window's layout in a real Chromium, run on its own. Later: browser end-to-end (#64), fuzzing (#73), stress and resource bounds (#77), benchmarks (#20, #21), macOS (#83) | **Measured:** 224–249 s locally, mostly the release build; suites to be measured | Before a release candidate, after build-setting changes, and weekly in CI (#19) |
 | **L5** | Production acceptance (none yet) | Installed builds on real machines: install and upgrade beside V1 (#81), parity with V1 (#85), soak runs (research report section 7, at least 300 runs per key scenario), release-readiness review (#78) | Hours to days | Before a release is published |
 
-**In CI** ([CI.md](CI.md)): pull requests run `pnpm check:pr` for the selected areas, and every merge to `main` runs `pnpm check:fast`, `pnpm check:links` and `pnpm check:guidance` on Linux. Every run publishes one report with every failure ([CI_DIAGNOSTICS.md](CI_DIAGNOSTICS.md)).
+**In CI** ([CI.md](CI.md)): pull requests run `pnpm check:pr` for the selected areas, and every merge to `main` runs `pnpm check:fast`, `pnpm check:links`, `pnpm check:product-name` and `pnpm check:guidance` on Linux. Every run publishes one report with every failure ([CI_DIAGNOSTICS.md](CI_DIAGNOSTICS.md)).
 
 For documentation, `pnpm check:links` checks that every relative link and heading anchor in the repository's Markdown files resolves. External links aren't fetched.
+
+`pnpm check:product-name` (#421) fails when `V2`, the old working name, is used for the product in the documents, the README, the website's content, the extension's pages or the window's source. Identifiers in code, BitTorrent v2, the quoted 0.1.x name, quoted issue titles, and decision records' titles and quotes may keep it; the list and its reasons are in `scripts/product-name-lib.mjs`. Every pull request and every merge to `main` runs it.
 
 ### Examples
 
@@ -80,18 +82,18 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 | **Security** | TLS certificate rules per backend, redirect and credential rules, secret-leak scans, filesystem attacks, fuzzed parsers | Fixture suites plus `cargo-fuzz` targets (needs approval) | L2, plus L4 for fuzzing | #67, #69–#73 |
 | **End-to-end and platform** | The packaged app installed on Windows, Linux and macOS; install and upgrade beside V1 | Installer tests, real machines | L4 and L5 | #81–#83 |
 | **Field test** | The installed app used as a user uses it, with real downloads from real servers and real settings: what fixtures can't show, such as servers that cut connections, long downloads, pause, resume and crashes | `pnpm field` ([`tests/field/`](../tests/field/README.md)), by hand on Windows, never in CI | L5 | #262 |
-| **Benchmarks** | V2's own speed, resource use and reliability, measured once the engine and app exist. No aria2 comparison for now ([ADR-0009](decisions/0009-no-aria2-benchmark-gate.md)) | To be designed then | L4 | #77 |
+| **Benchmarks** | Apollo DM's own speed, resource use and reliability, measured once the engine and app exist. No aria2 comparison for now ([ADR-0009](decisions/0009-no-aria2-benchmark-gate.md)) | To be designed then | L4 | #77 |
 
 ## Fixture policy
 
 - **Local only.** Every test talks to servers it starts itself on `127.0.0.1` (or `::1`), on a free port. No test contacts the public internet, a public tracker, the DHT or a CDN. A test that needs the network is a defect.
 - **Seeded data.** Files are generated from a fixed seed with a known SHA-256. Every transfer test checks the SHA-256 of the result, not just "completed".
 - **Deterministic timing.** Throttling and delays are controlled by the fixture, never by real network conditions. Timeouts are generous and bounded. A random seed is printed when a test fails.
-- **Misbehaviour on purpose.** Fixtures expose switches for the server faults V2 must survive (below), so each test chooses its fault explicitly.
+- **Misbehaviour on purpose.** Fixtures expose switches for the server faults Apollo Download Manager must survive (below), so each test chooses its fault explicitly.
 - **No secrets.** Test certificates, keys and passwords are generated for the test or committed as obviously fake fixtures, never real credentials.
 - **Real components where it matters.** Fakes are fine at unit boundaries. Claims about the engine, processes, files or crash recovery use real libcurl, real processes and real files.
 
-## Fixture servers V2 needs
+## Fixture servers Apollo Download Manager needs
 
 | Fixture | Fault switches (research report section 5.4) | Used by | Built in |
 |---|---|---|---|
@@ -105,11 +107,11 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 | FTP and FTPS (`velocity_test_http::ftp::FtpServer`, standard library, with rustls for FTPS) | **Built** (#51), ported from V1's FTP test server: passive mode (`EPSV`, `PASV`), a required login, `SIZE`, `MDTM`, `REST`, a missing file; switches for no `SIZE`, no `REST`, no `MDTM`, a cut transfer and throttling; a file replaced with another time; explicit FTPS (`AUTH TLS`, `PBSZ`, `PROT P`) and implicit FTPS on a `TestPki` leaf with its revocation list; a record of logins, commands, `RETR`s, `REST` offsets and encrypted connections | FTP, FTPS, resume with `REST`, the cleartext rules | **#51** |
 | SFTP (`velocity_test_http::ssh::SshServer`, the installed OpenSSH) | **Built** (#53): the machine's `sshd`, started unprivileged on a free port for the user running the tests, with throwaway host keys (Ed25519, ECDSA or RSA), key logins (one key with a passphrase) and `internal-sftp`; a cut (sshd and its sessions killed) and a restart with the same or a new host key. Without `sshd`, NOT RUN; with `VELOCITY_REQUIRE_SSHD`, as on CI, a failure. **Known flake on Windows** (#62): the unprivileged `sshd`'s SFTP child process sometimes never answers after the login, or ends the session at once. The fetch then fails with a timeout or an interrupted connection, and the test fails. It failed one Windows `check:fast` run on 2026-10-26 and none of the 10 runs of the SFTP tests alone just after; with 4 test binaries at a time it came back 1 to 2 times in 60 runs, and it was worse for a while after heavy repeated load. The server log, which a failing test prints, shows the subsystem starting and no SFTP data. Password logins need a root `sshd`, which CI's Linux job provisions (`scripts/ci-sftp-server.sh`, `VELOCITY_SFTP_PASSWORD_SERVER`), and which WSL gets once through `sudo bash scripts/local-sftp-server.sh` (#176; [platform-verify reference](../.claude/skills/platform-verify/reference.md#local-sftp-password-login-server)); NOT RUN on Windows | Host keys, logins, resume, failures | **#53** (OpenSSH installed by the PO: Windows OpenSSH Server, `openssh-server` in WSL) |
 | Proxy (`velocity_test_http::proxy`: `HttpProxy`, `Socks5Proxy`, standard library only) | **Built** (#192): an HTTP proxy that only tunnels (`CONNECT`) and refuses any other request, and a SOCKS5 proxy that resolves names, mapping test names to 127.0.0.1; each with an optional required login, and a record of the targets asked for, the logins given, the refusals and the plain requests | Proxy support: libcurl, SFTP, torrents, the leak scan | **#192** |
-| Mirrors and Metalink | **Built** (#46): wrong piece hashes, as piece lists the tests supply, with a byte sent flipped once. **Built** (#54): a Metalink corpus (`crates/velocity-core/tests/fixtures/metalink/`: RFC 5854's example, Metalink 4 with subfolders and sources V2 can't use, Metalink 3) with malicious documents in the unit tests (entity bombs, external entities, unsafe and duplicate names, oversized documents), the HTTP server's `Content-Type` (`FileHeaders::content_type`), and an end-to-end test of a followed link whose file gets one bad piece. **Built** (#55): mirrors as several local servers in `crates/velocity-transfer/tests/mirrors.rs`: one missing the file, one dead (a closed port), one with other bytes of the same size, a throttled one beside a fast one, ETags that do or don't match, and the requests a mirror received (no login, no custom header) | Failover, integrity | #46, #54, #55 |
+| Mirrors and Metalink | **Built** (#46): wrong piece hashes, as piece lists the tests supply, with a byte sent flipped once. **Built** (#54): a Metalink corpus (`crates/velocity-core/tests/fixtures/metalink/`: RFC 5854's example, Metalink 4 with subfolders and sources Apollo DM can't use, Metalink 3) with malicious documents in the unit tests (entity bombs, external entities, unsafe and duplicate names, oversized documents), the HTTP server's `Content-Type` (`FileHeaders::content_type`), and an end-to-end test of a followed link whose file gets one bad piece. **Built** (#55): mirrors as several local servers in `crates/velocity-transfer/tests/mirrors.rs`: one missing the file, one dead (a closed port), one with other bytes of the same size, a throttled one beside a fast one, ETags that do or don't match, and the requests a mirror received (no login, no custom header) | Failover, integrity | #46, #54, #55 |
 | BitTorrent tracker and peers | Local tracker, libtorrent seeders and leechers; DHT, LPD and peer exchange off | Torrents | **#62** |
 | Fake desktop IPC and browser harness | Malformed messages, the app unavailable, wrong caller | Native host, extension | **#65**, #64 |
 | Disk and crash faults | **Built:** a full disk and a refused write, simulated by velocity-transfer's test-only `test-faults` feature (no real small drive, PO decision on #74); the engine (#43) and the app (#74) killed at random points ([ENGINE_INTERNALS.md](ENGINE_INTERNALS.md#tests)) | Recovery | **#74**, #43 |
-| Benchmark server | Byte and request counters, throttle modes, h2 and TLS, kill and resume | V2's own benchmarks, later (ADR-0009) | #77 |
+| Benchmark server | Byte and request counters, throttle modes, h2 and TLS, kill and resume | Apollo DM's own benchmarks, later (ADR-0009) | #77 |
 
 ## How the engine is tested
 
@@ -121,7 +123,7 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 
 ## The secret-leak scan (#71)
 
-`velocity_test_http::leaks::LeakScan` looks for a test's known secrets everywhere V2 writes or shows something. A test that uses a login, a cookie, a key's passphrase or a tracker passkey runs it at the end:
+`velocity_test_http::leaks::LeakScan` looks for a test's known secrets everywhere Apollo Download Manager writes or shows something. A test that uses a login, a cookie, a key's passphrase or a tracker passkey runs it at the end:
 
 - **Where it looks:** every file under the folders the test gives it (the database and its WAL, checkpoints, part and finished files), files in the system's temporary folder changed since the test began (three levels deep), texts such as the app's log, the diagnostics export and what the details panel shows, and a running child process's arguments and environment.
 - **In what forms:** each secret as written, percent-encoded, and in base64 at each of its three possible alignments, so a `Basic` login or an encoded link is caught too. A secret must be at least 8 bytes, so it can't match by chance.

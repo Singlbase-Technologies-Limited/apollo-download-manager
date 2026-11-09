@@ -7,7 +7,7 @@
 
 ## Context
 
-On resume, V2 must know whether the file on the server is still the one it started downloading. Bytes from two versions must never be mixed (research report section 5.3; `.claude/rules/transfer-engine.md`, "Validators").
+On resume, Apollo Download Manager must know whether the file on the server is still the one it started downloading. Bytes from two versions must never be mixed (research report section 5.3; `.claude/rules/transfer-engine.md`, "Validators").
 
 A strong ETag or a strong `Last-Modified` proves it, and the engine sends it in `If-Range` (#45). Some servers send neither. The only check left is then the total length, which misses a file that changed without changing size.
 
@@ -17,7 +17,7 @@ V1 resumes in that case. The research recommended the same, with a visible flag 
 
 When a server gives no strong validator:
 
-1. **V2 may resume after a pause or a crash**, if the server still reports the same total length as when the download started.
+1. **Apollo Download Manager may resume after a pause or a crash**, if the server still reports the same total length as when the download started.
 2. **A changed length means a changed object:** the old bytes are discarded and the download restarts once (#45).
 3. **The download is marked "not verified"** in the UI and in its record, and is never shown as "Verified" (#46).
 4. **A user-supplied or trusted checksum** replaces the flag with a real check, once the whole file has been hashed (#46).

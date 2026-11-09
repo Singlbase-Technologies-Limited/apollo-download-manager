@@ -84,7 +84,7 @@ Check: `gh api $R/pages --jq .build_type` → `workflow`.
 | Private vulnerability reporting | On | Public repositories | On (2026-10-31) |
 | Dependabot malware alerts | On | Public repositories | On (2026-10-31) | `gh api $R/private-vulnerability-reporting` |
 
-Source: [GitHub security features](https://docs.github.com/en/code-security/getting-started/github-security-features). What V2 does with an advisory is in [SECURITY.md](SECURITY.md#dependency-advisories-75).
+Source: [GitHub security features](https://docs.github.com/en/code-security/getting-started/github-security-features). What Apollo Download Manager does with an advisory is in [SECURITY.md](SECURITY.md#dependency-advisories-75).
 
 ## When something changes
 

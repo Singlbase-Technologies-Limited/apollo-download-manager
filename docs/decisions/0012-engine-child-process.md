@@ -48,4 +48,4 @@ The research report (section 4.3) recommended a child process unless the prototy
 ## Follow-up
 
 - **The Windows crash-detection outlier** (about 7 s in one run per series) is investigated in #39, which owns crash detection.
-- **Revisit** if V2's own benchmarks (#77) show the child process missing the report's thresholds on real networks or other machines.
+- **Revisit** if Apollo Download Manager's own benchmarks (#77) show the child process missing the report's thresholds on real networks or other machines.

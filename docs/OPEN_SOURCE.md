@@ -1,11 +1,11 @@
 # Open source
 
-How V2 is run as an open-source project, and the checklist for making the repository public (#90). The licence is GPL-3.0-only, copyright Singlbase Technologies Limited ([ADR-0017](decisions/0017-gpl-3-licence.md)).
+How Apollo Download Manager is run as an open-source project, and the checklist for making the repository public (#90). The licence is GPL-3.0-only, copyright Singlbase Technologies Limited ([ADR-0017](decisions/0017-gpl-3-licence.md)).
 
 ## Governance
 
-- **Owner:** Singlbase Technologies Limited owns V2 and its name, and the repository: `Singlbase-Technologies-Limited/apollo-download-manager`, public since 2026-10-31, with its board as the organisation's [project 4](https://github.com/orgs/Singlbase-Technologies-Limited/projects/4).
-- **V1's code:** V2 ports parts of the original Velocity Download Manager (the browser extension and native host, naming and request rules, test servers). Singlbase wrote V1 and owns it, so those parts are published under V2's licence by Singlbase's own decision (PO, 2026-10-31).
+- **Owner:** Singlbase Technologies Limited owns Apollo Download Manager and its name, and the repository: `Singlbase-Technologies-Limited/apollo-download-manager`, public since 2026-10-31, with its board as the organisation's [project 4](https://github.com/orgs/Singlbase-Technologies-Limited/projects/4).
+- **V1's code:** Apollo Download Manager ports parts of the original Velocity Download Manager (the browser extension and native host, naming and request rules, test servers). Singlbase wrote V1 and owns it, so those parts are published under Apollo Download Manager's licence by Singlbase's own decision (PO, 2026-10-31).
 - **Decisions:** the Product Owner decides scope, architecture, dependencies, licensing, security trade-offs, repository settings, merges and releases ([AGENTS.md](../AGENTS.md#project-and-authority)). Accepted decisions are in [decisions/](decisions/README.md).
 - **Maintainers:** the Product Owner (`vincentarisawork`), and the machine account `velocity-claude-agent` for AI-agent work, an outside collaborator that never approves, releases or changes settings ([AI_AGENT_ACCOUNT.md](AI_AGENT_ACCOUNT.md)).
 - **Contributions:** anyone may propose a change. Outside contributors agree to the [CLA](../CLA.md) once, on their first pull request ([CONTRIBUTING.md](../CONTRIBUTING.md#licence-and-the-contributor-licence-agreement)).
@@ -33,7 +33,7 @@ The audit run for #90 on 2026-10-31, on every branch's history (102 commits) and
 | Personal data in files | Personal names, home-folder paths | A Windows user name in a test (`paths.rs`) was replaced with `Jane Doe`; the history keeps the old commits |
 | Email addresses in commits | `git log --all --format='%ae %ce'` | 96 commits by `vincentarisawork+velocity-agent@gmail.com` and 4 by `admin@singlbase.com` become public with the repository. **Left as they are** (PO decision, 2026-10-31): the history is never rewritten |
 | Workflows a fork's pull request could abuse | `.github/workflows/*.yml` | **Safe:** no `pull_request_target`, no secrets used anywhere, every token read-only unless a job needs more, every action pinned to a commit |
-| Third-party notices | `pnpm check:notices` (#76) | Complete: every component V2 ships, with its licence |
+| Third-party notices | `pnpm check:notices` (#76) | Complete: every component Apollo DM ships, with its licence |
 | Test credentials | The SFTP test servers | For the tests only: a throwaway user with a random password, created on the CI runner and masked in its log (`scripts/ci-sftp-server.sh`), never a real account |
 
 ### The checklist

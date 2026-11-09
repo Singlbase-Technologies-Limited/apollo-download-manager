@@ -1,6 +1,6 @@
 # Agent guidance
 
-How V2's instructions for contributors and AI agents are organised, checked and reviewed (#88). The rules themselves are in [AGENTS.md](../AGENTS.md).
+How Apollo Download Manager's instructions for contributors and AI agents are organised, checked and reviewed (#88). The rules themselves are in [AGENTS.md](../AGENTS.md).
 
 ## Where guidance lives
 
@@ -26,7 +26,7 @@ Instructions are guidance: Claude Code applies them, but doesn't enforce them. A
 | Every skill has a `description:`, only known frontmatter fields, under 500 lines, and a listing under 1,536 characters | Claude Code ignores an unknown field silently, and truncates a long description ([skills docs](https://code.claude.com/docs/en/skills)) |
 | Every `pnpm <command>` in code is a `package.json` script or a pnpm command | A renamed script leaves instructions that fail |
 | No `package.json` script is named like a pnpm command, such as `doctor` or `setup` | `pnpm doctor` runs pnpm's own command, so the script never runs |
-| No `develop` or `staging` branch, and no aria2 use | V2 has neither ([DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md), [ADR-0001](decisions/0001-v2-direction.md)); a line that rules them out ("no", "never", V1 as a reference) passes |
+| No `develop` or `staging` branch, and no aria2 use | Apollo DM has neither ([DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md), [ADR-0001](decisions/0001-v2-direction.md)); a line that rules them out ("no", "never", V1 as a reference) passes |
 | No requirement sentence repeated in two guidance files | Copies drift apart; keep one and link to it (AGENTS.md, "Documentation") |
 
 Relative links in these files are checked by `pnpm check:links`, like every other Markdown file.

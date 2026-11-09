@@ -7,7 +7,7 @@
 
 ## Context
 
-V2 uses libtorrent for every torrent ([ADR-0001](0001-v2-direction.md), [ADR-0005](0005-v1-features-without-aria2.md)), and only the torrent bridge calls it ([ADR-0002](0002-engine-crate-layout.md)). [ADR-0012](0012-engine-child-process.md) put the direct-download engine in a supervised child process, so a native fault or a panic ends only the engine. It left libtorrent out of scope, for #62 to decide.
+Apollo Download Manager uses libtorrent for every torrent ([ADR-0001](0001-v2-direction.md), [ADR-0005](0005-v1-features-without-aria2.md)), and only the torrent bridge calls it ([ADR-0002](0002-engine-crate-layout.md)). [ADR-0012](0012-engine-child-process.md) put the direct-download engine in a supervised child process, so a native fault or a panic ends only the engine. It left libtorrent out of scope, for #62 to decide.
 
 These are the facts on 2026-10-26:
 

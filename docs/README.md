@@ -4,7 +4,7 @@ Every document in `docs/` is listed here. A new document is added to this map in
 
 ## Start here
 
-**Using V2?** The [user guide](user/README.md) covers installing, downloads, protocols and their limits, torrents, categories, settings, browser integration, troubleshooting, and using V2 beside V1 (#79). The documents below are for people who build V2.
+**Using Apollo Download Manager?** The [user guide](user/README.md) covers installing, downloads, protocols and their limits, torrents, categories, settings, browser integration, troubleshooting, and using it beside V1 (#79). The documents below are for people who build the app.
 
 | Document | Read it to |
 |---|---|
@@ -12,11 +12,11 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [REPOSITORY_MAP.md](REPOSITORY_MAP.md) | See where everything lives: each folder and crate, and what it holds |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Set up a clean clone, run the app, and see the commands and build times |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Fix common setup and build problems |
-| [PARITY.md](PARITY.md) | See every V1 feature (commands, settings, views, engine behaviours, extension, persistence) with its V1 code and tests, V2 disposition and V2 issue |
+| [PARITY.md](PARITY.md) | See every V1 feature (commands, settings, views, engine behaviours, extension, persistence) with its V1 code and tests, Apollo DM disposition and Apollo DM issue |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Understand the components, who owns which state, and the open architecture decisions |
 | [GLOSSARY.md](GLOSSARY.md) | Look up a term (lease, coverage, validator, checkpoint, capability and more) |
-| [COEXISTENCE.md](COEXISTENCE.md) | See how V2 stays separate from V1: identity, data folder, single instance, IPC names |
-| [BROWSER_EXTENSION.md](BROWSER_EXTENSION.md) | Work on the browser extension: what it intercepts, its rules and fallbacks, V2's extension IDs and key, the protocol, permissions, building and tests |
+| [COEXISTENCE.md](COEXISTENCE.md) | See how Apollo DM stays separate from V1: identity, data folder, single instance, IPC names |
+| [BROWSER_EXTENSION.md](BROWSER_EXTENSION.md) | Work on the browser extension: what it intercepts, its rules and fallbacks, Apollo DM's extension IDs and key, the protocol, permissions, building and tests |
 | [BROWSER_EXTENSION_RELEASE_TEST.md](BROWSER_EXTENSION_RELEASE_TEST.md) | Check an extension store package by hand on Windows and Linux before it is uploaded |
 | [WEBSITE.md](WEBSITE.md) | The product website and developer site: what they are built from, building them, and publishing on GitHub Pages |
 | [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md) | Change how the manager talks to a direct-download engine: the `DirectTransfer` commands, events, secrets and wire forms |
@@ -24,12 +24,12 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [ENGINE_PROTOCOL.md](ENGINE_PROTOCOL.md) | Change how the app and its child processes (the engine and the torrent helper) talk: framing, versions, limits, the supervisor and its restarts |
 | [TORRENTS.md](TORRENTS.md) | Work on torrents: the bridge, the torrent helper, the checks before libtorrent, the torrent contract and statuses, seeding, resume data and recovery, deleting a torrent's files, trackers and peers, settings and port mapping, and what is still to come |
 | [DATA_AND_MIGRATIONS.md](DATA_AND_MIGRATIONS.md) | Change the app database: the file, the schema, unknown values, secrets, and how to add a migration |
-| [DIAGNOSTICS.md](DIAGNOSTICS.md) | See what V2 logs, how secrets are redacted, what the diagnostics export holds, and the crash-log policy |
-| [PRIVACY.md](PRIVACY.md) | See what V2 sends (only the downloads), what it keeps on this computer, and what a diagnostics export holds |
-| [SECURITY.md](SECURITY.md) | See how V2 verifies TLS certificates on each platform, what was measured (purpose, host, expiry, revocation, TLS 1.3), and how the tests trust a test CA |
-| [SETTINGS.md](SETTINGS.md) | See each setting V2 has so far, what it does and its bounds: performance profiles, the queue, folders, and what a build can do |
+| [DIAGNOSTICS.md](DIAGNOSTICS.md) | See what Apollo DM logs, how secrets are redacted, what the diagnostics export holds, and the crash-log policy |
+| [PRIVACY.md](PRIVACY.md) | See what Apollo DM sends (only the downloads), what it keeps on this computer, and what a diagnostics export holds |
+| [SECURITY.md](SECURITY.md) | See how Apollo DM verifies TLS certificates on each platform, what was measured (purpose, host, expiry, revocation, TLS 1.3), and how the tests trust a test CA |
+| [SETTINGS.md](SETTINGS.md) | See each setting Apollo DM has so far, what it does and its bounds: performance profiles, the queue, folders, and what a build can do |
 | [FILE_NAMING.md](FILE_NAMING.md) | Change how a download's file is named, its category and folder are chosen, and what happens when the name is taken |
-| [ACCESSIBILITY.md](ACCESSIBILITY.md) | See what V2 does for keyboard and screen-reader users, how each behaviour is tested, the contrast rules, and the manual screen-reader check |
+| [ACCESSIBILITY.md](ACCESSIBILITY.md) | See what Apollo DM does for keyboard and screen-reader users, how each behaviour is tested, the contrast rules, and the manual screen-reader check |
 | [UI_ARCHITECTURE.md](UI_ARCHITECTURE.md) | Change the window: where its state lives, the command bridge, starting up, the shell, the tray and notifications, styling and UI tests |
 | [BRANDING.md](BRANDING.md) | Use the Apollo mark, app icon, colours and type, and see the rules behind them |
 | [CONTRACTS.md](CONTRACTS.md) | Change a type shared by the UI and Rust: the domain types, contract fixtures and the contract version |
@@ -46,7 +46,7 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [LICENSING.md](LICENSING.md) | Read the licensing assessment: today's third-party licences, planned native libraries, notices |
 | [PACKAGING.md](PACKAGING.md) | Build the Windows installer and the Linux packages, see what they install and how they live beside V1, and test install, upgrade and uninstall |
 | [OPEN_SOURCE.md](OPEN_SOURCE.md) | See who decides, the community files, the audit before going public and the checklist for it |
-| [RELEASE_PROCESS.md](RELEASE_PROCESS.md) | Change V2's version, draft and edit the changelog ([`CHANGELOG.md`](../CHANGELOG.md)), and tag a candidate or a release |
+| [RELEASE_PROCESS.md](RELEASE_PROCESS.md) | Change Apollo DM's version, draft and edit the changelog ([`CHANGELOG.md`](../CHANGELOG.md)), and tag a candidate or a release |
 | [RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md) | Build a release candidate from a verified `main` commit, see what it holds, check it, install it beside V1, and go back to an earlier version |
 | [BUILDING_NATIVE.md](BUILDING_NATIVE.md) | Build the native libraries (libcurl, nghttp2, zlib, OpenSSL) from verified sources, read `build-info.json`, update a pin, and build libtorrent with vcpkg |
 | [CI.md](CI.md) | See what CI runs on each event, how jobs are selected, cached and secured, and the monthly cost model |
@@ -63,9 +63,9 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [decisions/0000-template.md](decisions/0000-template.md) | Start a new decision record |
 | [decisions/0001-v2-direction.md](decisions/0001-v2-direction.md) | Read ADR-0001: own engine on libcurl, libtorrent for BitTorrent, no aria2 |
 | [decisions/0002-engine-crate-layout.md](decisions/0002-engine-crate-layout.md) | Read ADR-0002: the engine lives in `velocity-transfer` and `velocity-curl` |
-| [decisions/0003-v2-app-identity.md](decisions/0003-v2-app-identity.md) | Read ADR-0003: V2's own identifiers (app ID, native host, extension IDs) |
+| [decisions/0003-v2-app-identity.md](decisions/0003-v2-app-identity.md) | Read ADR-0003: Apollo DM's own identifiers (app ID, native host, extension IDs) |
 | [decisions/0004-libcurl-build-path.md](decisions/0004-libcurl-build-path.md) | Read ADR-0004: how libcurl is obtained for the prototype and for releases |
-| [decisions/0005-v1-features-without-aria2.md](decisions/0005-v1-features-without-aria2.md) | Read ADR-0005: profiles, disk settings, Metalink, engine restart and other aria2-era features in V2 |
+| [decisions/0005-v1-features-without-aria2.md](decisions/0005-v1-features-without-aria2.md) | Read ADR-0005: profiles, disk settings, Metalink, engine restart and other aria2-era features in Apollo DM |
 | [decisions/0006-browser-links-to-local-networks.md](decisions/0006-browser-links-to-local-networks.md) | Read ADR-0006: browser links to your PC or local network need confirmation |
 | [decisions/0007-no-v1-import-at-first.md](decisions/0007-no-v1-import-at-first.md) | Read ADR-0007: no import from V1 in the first releases |
 | [decisions/0008-proxy-support.md](decisions/0008-proxy-support.md) | Read ADR-0008: full proxy settings in the first release |

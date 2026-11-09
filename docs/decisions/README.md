@@ -6,14 +6,14 @@ An architecture decision record (ADR) states one decision, why it was taken and 
 
 | ADR | Title | Status | Date |
 |---|---|---|---|
-| [0001](0001-v2-direction.md) | V2 builds its own direct-download engine; libtorrent for BitTorrent; no aria2 | Accepted | 2026-10-21 |
+| [0001](0001-v2-direction.md) | Apollo DM builds its own direct-download engine; libtorrent for BitTorrent; no aria2 | Accepted | 2026-10-21 |
 | [0002](0002-engine-crate-layout.md) | The transfer engine lives in its own crates (`velocity-transfer`, `velocity-curl`) | Accepted | 2026-10-22 |
-| [0003](0003-v2-app-identity.md) | V2 keeps its own technical identity, separate from V1's | Accepted | 2026-10-22 |
-| [0004](0004-libcurl-build-path.md) | A reviewed git pin of `curl-sys` for the prototype; V2 builds libcurl itself for releases | Accepted | 2026-10-22 |
+| [0003](0003-v2-app-identity.md) | Apollo DM keeps its own technical identity, separate from V1's | Accepted | 2026-10-22 |
+| [0004](0004-libcurl-build-path.md) | A reviewed git pin of `curl-sys` for the prototype; Apollo DM builds libcurl itself for releases | Accepted | 2026-10-22 |
 | [0005](0005-v1-features-without-aria2.md) | What happens to V1 features whose meaning changes without aria2 | Accepted | 2026-10-22 |
 | [0006](0006-browser-links-to-local-networks.md) | Browser links to loopback or private addresses need the user's confirmation | Accepted | 2026-10-22 |
-| [0007](0007-no-v1-import-at-first.md) | The first V2 releases don't import anything from V1 | Accepted | 2026-10-22 |
-| [0008](0008-proxy-support.md) | V2 has full proxy settings in its first release | Accepted | 2026-10-22 |
+| [0007](0007-no-v1-import-at-first.md) | The first Apollo DM releases don't import anything from V1 | Accepted | 2026-10-22 |
+| [0008](0008-proxy-support.md) | Apollo DM has full proxy settings in its first release | Accepted | 2026-10-22 |
 | [0009](0009-no-aria2-benchmark-gate.md) | Build the engine first; no aria2 benchmark comparison for now | Accepted | 2026-10-22 |
 | [0010](0010-resume-without-validator.md) | Without a validator, resume after a length check and show "not verified" | Accepted | 2026-10-22 |
 | [0011](0011-sftp-libssh2.md) | SFTP uses libssh2 through libcurl | Superseded by ADR-0013 | 2026-10-22 |
@@ -22,7 +22,7 @@ An architecture decision record (ADR) states one decision, why it was taken and 
 | [0014](0014-torrent-helper-child-process.md) | libtorrent runs in a supervised helper process, on a child-process layer shared with the engine | Accepted | 2026-10-26 |
 | [0015](0015-keychain-with-consent.md) | Logins are saved in the system keychain only when the user asks, one download at a time | Accepted | 2026-10-29 |
 | [0016](0016-release-product-name-v2.md) | The released app is named "Velocity Download Manager V2" | Superseded by ADR-0018 | 2026-10-30 |
-| [0017](0017-gpl-3-licence.md) | V2 is licensed GPL-3.0-only, owned by Singlbase Technologies Limited, with contributions under a CLA | Accepted | 2026-10-31 |
+| [0017](0017-gpl-3-licence.md) | Apollo DM is licensed GPL-3.0-only, owned by Singlbase Technologies Limited, with contributions under a CLA | Accepted | 2026-10-31 |
 | [0018](0018-product-name-apollo.md) | The released app is named "Apollo Download Manager" | Accepted | 2026-11-05 |
 | [0019](0019-waiting-for-network-status.md) | A download can wait for the network | Accepted | 2026-11-05 |
 | [0020](0020-extension-store-distribution.md) | The browser extension is published in the three browser stores | Accepted | 2026-11-07 |
