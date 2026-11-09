@@ -23,21 +23,13 @@ const WIDTHS = [
 const TABLE_LINES = 8;
 /** Pages whose tables hold paragraphs, not values: CSS can't make them short, so #425 rewrites them. */
 const TALL_TABLES = [
-  'developers/ai-agent-account/',
   'developers/architecture/',
-  'developers/ci/',
   'developers/contracts/',
-  'developers/decisions/0013-sftp-russh/',
   'developers/dependencies/',
   'developers/engine-internals/',
   'developers/parity/',
-  'developers/repository-settings/',
   'developers/research/2026-10-21-libcurl-engine-research-r2/',
-  'developers/research/engine-prototype-results/',
-  'developers/security/',
   'developers/testing/',
-  'guide/settings/',
-  'guide/troubleshooting/',
 ];
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.xml': 'application/xml' };
 const at = process.argv.indexOf('--shots');
