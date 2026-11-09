@@ -24,10 +24,15 @@ export function Tooltip({
   shortcut,
   side = 'top',
   canBeDisabled = false,
+  open,
+  onOpenChange,
   children,
   ...passedOn
 }: PassedOn & {
   label: string;
+  /** Controls when it shows, for a tooltip that only sometimes has something to say (CutOffText). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   /** Shown beside the label, as the menus show theirs, e.g. "Ctrl+N". */
   shortcut?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
@@ -41,14 +46,14 @@ export function Tooltip({
   children: ReactElement;
 }) {
   return (
-    <TooltipPrimitive.Root>
+    <TooltipPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <TooltipPrimitive.Trigger asChild {...passedOn}>{canBeDisabled ? <span className="inline-flex">{children}</span> : children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           side={side}
           sideOffset={6}
           collisionPadding={8}
-          className="z-50 flex max-w-72 select-none items-center gap-2 rounded-md bg-fg px-2 py-1 text-xs text-bg shadow-panel"
+          className="z-50 flex max-w-72 select-none items-center gap-2 rounded-md bg-fg px-2 py-1 text-xs text-bg shadow-panel [overflow-wrap:anywhere]"
         >
           <span>{label}</span>
           {shortcut ? <span className="text-[11px] opacity-70">{shortcut}</span> : null}

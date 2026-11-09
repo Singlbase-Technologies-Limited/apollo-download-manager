@@ -58,6 +58,8 @@ The first download from an SFTP server stops before logging in and asks **Trust 
 
 **The lists** in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. **Search** (**Ctrl+F**) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again.
 
+**Hovering a download** shows a name, folder or category that doesn't fit its column in full, and hovering its status says what the status means and what to do, such as why it failed, or that a double-click opens it. A screen reader reads the same help with the row.
+
 **Columns:** click a column's name to sort by it, and again to reverse. **Choose columns** shows or hides any of the 13 columns; Name is always shown, and **Reset to default columns** brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; **Home** or a double-click restores its width. Widths are kept.
 
 **Selecting:** click, **Ctrl+click** and **Shift+click**, or the checkboxes; the top checkbox selects every download shown.

@@ -77,7 +77,49 @@ async function screenshots() {
   }
 }
 
+// Hovering a row (#424): a cut-off name in full, and what a failed download's status means, in the window's tooltip.
+async function hoverHelp() {
+  for (const theme of ['light', 'dark']) {
+    for (const [label, w, h] of [
+      ['laptop-1366x768', 1366, 768],
+      ['wide-1920x1080', 1920, 1080],
+    ]) {
+      const { ctx, page } = await newPage(w, h);
+      await open(page, `fresh=1&theme=${theme}`);
+      const name = row(page, 'Ubuntu-24.04.1').getByText(/^Ubuntu-24\.04\.1-desktop/);
+      await name.hover();
+      const tip = page.getByRole('tooltip').first();
+      await tip.waitFor({ timeout: 3000 }).catch(() => undefined);
+      const shown = (await tip.textContent().catch(() => '')) ?? '';
+      check(`hover ${label} ${theme}: a cut-off name shows in full`, shown.includes('beyond-the-column-width.iso'), shown.slice(0, 60));
+      await shot(page, `${label}-${theme}-hover-name`);
+      // Away and onto the status as a mouse moves, in steps: Radix keeps a closing tooltip's "pointer in transit"
+      // until the next move, so a single jump would land on the status while it still thinks so.
+      await page.mouse.move(0, 0, { steps: 5 });
+      await page.waitForTimeout(300);
+      const badge = await row(page, 'broken-download-with-a-long-name').getByText('Failed').boundingBox();
+      if (badge) await page.mouse.move(badge.x + badge.width / 2, badge.y + badge.height / 2, { steps: 10 });
+      const status = page.getByRole('tooltip').first();
+      await status.waitFor({ timeout: 3000 }).catch(() => undefined);
+      const said = (await status.textContent().catch(() => '')) ?? '';
+      check(`hover ${label} ${theme}: a failed status says what to do`, said.includes('Retry'), said.slice(0, 60));
+      await shot(page, `${label}-${theme}-hover-status`);
+      // By keyboard: Home reaches the long name's row, and its cut-off name shows without a hover.
+      await page.mouse.move(0, 0, { steps: 5 });
+      await page.getByRole('grid', { name: 'Downloads' }).focus();
+      await page.keyboard.press('Home');
+      const byKey = page.getByRole('tooltip').filter({ hasText: 'beyond-the-column-width.iso' }).first();
+      const keyShown = await byKey.waitFor({ timeout: 3000 }).then(() => true, () => false);
+      check(`keyboard ${label} ${theme}: a cut-off name shows in full on its row`, keyShown);
+      await shot(page, `${label}-${theme}-keyboard-name`);
+      await ctx.close();
+    }
+  }
+}
+
 try {
+  // First, so it reports even when a later check stops the run.
+  await hoverHelp();
   const { runChecks } = await import('./layout-checks.mjs');
   await runChecks({ open, shot, row, newPage, check, BASE });
   await screenshots();

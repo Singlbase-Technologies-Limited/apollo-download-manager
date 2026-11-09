@@ -4,7 +4,9 @@ import { Badge } from '../../components/Badge';
 import { CategoryGlyph } from '../../components/CategoryGlyph';
 import { ProgressBar } from '../../components/ProgressBar';
 import { COLUMN_MAX_WIDTH, COLUMN_MIN_WIDTH, type Category, type ColumnId, type DownloadRecord } from '../../contract';
-import { STATUS_TONE, averageSpeedOf, displayName, etaSeconds, percentOf, statusLabel, type SortKey } from '../../downloads/list';
+import { CutOffText } from '../../components/CutOffText';
+import { Tooltip } from '../../components/Tooltip';
+import { STATUS_TONE, averageSpeedOf, displayName, etaSeconds, percentOf, statusHelp, statusLabel, type SortKey } from '../../downloads/list';
 import { formatBytes, formatDuration, formatPercent, formatShortDate, formatSpeed, formatTransferredBytes } from '../../lib/format';
 
 /** What a cell needs besides its download. */
@@ -13,7 +15,14 @@ export interface CellContext {
   /** Now, in ms since the Unix epoch, for the retry countdown. */
   now: number;
   needsLogin: boolean;
+  /** Settings' number of simultaneous downloads, when known, for the status help. */
+  maxConcurrent?: number;
+  /** The keyboard has moved to this row: its cut-off values show in full without a hover (#424). */
+  keyboardFocus?: boolean;
 }
+
+/** The id of the hidden status help that describes a download's row (#424). */
+export const statusHelpId = (id: string) => `status-help-${id}`;
 
 export interface ColumnDef {
   id: ColumnId;
@@ -40,7 +49,7 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
     width: 'minmax(160px, 3fr)',
     minWidth: 160,
     sort: 'name',
-    render: (d, { category }) => (
+    render: (d, { category, keyboardFocus }) => (
       <span className="flex min-w-0 items-center gap-2">
         {category ? (
           <CategoryGlyph icon={category.icon} color={category.color} className="size-4 shrink-0" />
@@ -50,14 +59,14 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
         ) : (
           <FileIcon className="size-4 shrink-0" aria-hidden />
         )}
-        <span className="truncate font-medium text-fg" title={displayName(d)}>
-          {displayName(d)}
-        </span>
+        <CutOffText text={displayName(d)} className="font-medium text-fg" showNow={keyboardFocus} />
         {torrent(d) ? (
-          <span title="Torrent" className="flex shrink-0 items-center text-fg-subtle">
-            <Magnet className="size-3.5" aria-hidden />
-            <span className="sr-only">Torrent</span>
-          </span>
+          <Tooltip label="Torrent">
+            <span className="flex shrink-0 items-center text-fg-subtle">
+              <Magnet className="size-3.5" aria-hidden />
+              <span className="sr-only">Torrent</span>
+            </span>
+          </Tooltip>
         ) : null}
       </span>
     ),
@@ -106,23 +115,30 @@ export const ALL_COLUMNS: readonly ColumnDef[] = [
     width: '132px',
     minWidth: 118,
     sort: 'status',
-    render: (d, { now, needsLogin }) => (
-      <span title={d.error?.message}>
-        <Badge tone={needsLogin ? 'warning' : STATUS_TONE[d.status]}>{statusLabel(d, now, { needsLogin })}</Badge>
-      </span>
-    ),
+    // Hovering says what the status means and what to do (#424); the same text describes the row for screen readers.
+    render: (d, { now, needsLogin, maxConcurrent }) => {
+      const help = statusHelp(d, { needsLogin, maxConcurrent });
+      return (
+        <>
+          <Tooltip label={help}>
+            <span>
+              <Badge tone={needsLogin ? 'warning' : STATUS_TONE[d.status]}>{statusLabel(d, now, { needsLogin })}</Badge>
+            </span>
+          </Tooltip>
+          <span id={statusHelpId(d.id)} className="sr-only">
+            {help}
+          </span>
+        </>
+      );
+    },
   },
-  { id: 'category', label: 'Category', width: '104px', minWidth: 104, sort: 'category', render: (_d, { category }) => <span className="truncate">{category?.name ?? '—'}</span> },
+  { id: 'category', label: 'Category', width: '104px', minWidth: 104, sort: 'category', render: (_d, { category, keyboardFocus }) => <CutOffText text={category?.name ?? '—'} showNow={keyboardFocus} /> },
   {
     id: 'destination',
     label: 'Destination',
     width: 'minmax(140px, 1.5fr)',
     minWidth: 140,
-    render: (d) => (
-      <span className="truncate" title={d.directory}>
-        {d.directory}
-      </span>
-    ),
+    render: (d, { keyboardFocus }) => <CutOffText text={d.directory} showNow={keyboardFocus} />,
   },
   { id: 'added', label: 'Added', width: '132px', minWidth: 132, sort: 'added', render: (d) => formatShortDate(d.createdAtMs) },
   { id: 'started', label: 'Started', width: '132px', minWidth: 132, render: (d) => formatShortDate(d.startedAtMs) },
