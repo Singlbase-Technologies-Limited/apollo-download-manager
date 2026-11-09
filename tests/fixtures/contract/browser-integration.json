@@ -2,7 +2,7 @@
   "chromeExtensionIds": [
     "adhefdmekgeafmopfbiappajaolcbhkc"
   ],
-  "firefoxExtensionId": "velocity-download-manager-v2@velocity.local",
+  "firefoxExtensionId": "apollo-download-manager@singlbase.com",
   "hostPath": "/opt/velocity/velocity-native-host-v2",
   "nativeHostName": "dev.velocity.download_manager_v2",
   "registrations": [

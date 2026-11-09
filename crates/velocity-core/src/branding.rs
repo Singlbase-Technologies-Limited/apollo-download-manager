@@ -246,7 +246,7 @@ mod tests {
         );
         assert_eq!(
             b.firefox_extension_id,
-            "velocity-download-manager-v2@velocity.local"
+            "apollo-download-manager@singlbase.com"
         );
         assert_eq!(b.identifier, "dev.velocity.downloadmanager.v2");
         // ADR-0018 replaced ADR-0016's "Velocity Download Manager V2" (PO decision on #346).

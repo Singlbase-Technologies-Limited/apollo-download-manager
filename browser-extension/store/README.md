@@ -37,15 +37,16 @@ Up to 132 characters (the Chrome Web Store's limit):
 | `nativeMessaging` | Passes links to the Apollo Download Manager desktop app on this computer. It is the only channel to the app. |
 | `storage` | Keeps the extension's settings, the popup's last 5 sends (file name and site only) and pending "ask first" prompts. |
 | `contextMenus` | Adds "Download with Apollo Download Manager" to the right-click menu on links and media. It can be turned off. |
-| `scripting` | Registers the magnet-link script, only while torrent capture is on and page access was granted. |
+| `scripting` | Registers the magnet-link script, only while torrent capture is on and page access was granted, and puts it into the pages already open when capture starts. |
 | Optional access to all sites | Asked for only when you turn on magnet capture, so magnet link clicks on pages reach the app. |
 
 ## Privacy
 
 - **Data collected:** none. Nothing is sent anywhere except the links you send to the app on your own computer.
-- **Privacy policy:** the project's [privacy document](../../docs/PRIVACY.md). Once the website (#353) is live, its privacy page is the listing's link.
+- **Privacy policy:** <https://singlbase-technologies-limited.github.io/apollo-download-manager/privacy/>, the website's page for [PRIVACY.md](../../docs/PRIVACY.md).
+- **Firefox:** the manifest declares that the add-on collects no data (`data_collection_permissions: { required: ["none"] }`, [ADR-0020](../../docs/decisions/0020-extension-store-distribution.md)).
 
 ## Images
 
 - **Icon:** 128 × 128 px, `dist/<target>/icons/icon-128.png` from the build.
-- **Screenshots:** 1280 × 800 px of the popup and the settings page, light and dark. Not yet taken; they come with #240, from an installed release build.
+- **Screenshots:** 1280 × 800 px, in [`screenshots/`](screenshots/): the popup and the settings page, light and dark, from the release build against the installed app.
