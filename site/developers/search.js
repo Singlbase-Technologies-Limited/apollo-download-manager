@@ -1,5 +1,5 @@
-// The developer site's search (#355): the site's only script, on its developer pages only (PO decision). It reads
-// search-index.json from this site when someone first types, and asks nothing of any other site. Every result is
+// The guides' search (#355): on the developer pages (PO decision), and on the user guide's since #422 (PO's brief of
+// 2026-11-09), each guide with its own index. It reads search-index.json from that guide when someone first types, and asks nothing of any other site. Every result is
 // added as text, never as markup.
 
 const terms = (query) => query.toLowerCase().split(/\s+/).filter(Boolean);

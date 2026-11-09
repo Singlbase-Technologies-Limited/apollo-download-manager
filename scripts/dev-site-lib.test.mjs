@@ -123,12 +123,12 @@ describe('the developer site, built from docs/ (#355)', () => {
     expect(site['index.html']).toMatch(/<a href="[^"]*developers\/">Developers<\/a>/);
   });
 
-  it('loads only its own scripts: the theme everywhere, and the search on developer pages (#379)', () => {
+  it('loads only its own scripts: the theme everywhere, and the search on developer and user guide pages (#379, #422)', () => {
     for (const [path, body] of Object.entries(site)) {
       if (!path.endsWith('.html')) continue;
       const scripts = body.match(/<script\b[^>]*>/gi) ?? [];
       expect(scripts[0], path).toMatch(/^<script src="(\.\/|(\.\.\/)+)theme\.js">$/);
-      if (path.startsWith('developers/')) {
+      if (path.startsWith('developers/') || path.startsWith('guide/')) {
         expect(scripts, path).toHaveLength(2);
         expect(scripts[1], path).toMatch(/^<script type="module" src="(\.\/|(\.\.\/)+)search\.js">$/);
       } else {
@@ -136,6 +136,16 @@ describe('the developer site, built from docs/ (#355)', () => {
       }
     }
     expect(site['developers/search.js']).toBeDefined();
+    expect(site['guide/search.js']).toBe(site['developers/search.js']);
+  });
+
+  it('lets the user guide be searched with the same search, over its own pages only (#422)', () => {
+    const index = JSON.parse(site['guide/search-index.json']);
+    expect(search(index, 'seeding')[0].path).toBe('torrents/');
+    expect(search(index, 'magnet').map((e) => e.path)).toContain('torrents/');
+    expect(index.every((e) => !e.path.startsWith('developers'))).toBe(true);
+    expect(site['guide/torrents/index.html']).toMatch(/<input id="guide-search" type="search" placeholder="[^"]+"/);
+    expect(site['developers/index.html']).toMatch(/<input id="dev-search" type="search" placeholder="[^"]+"/);
   });
 
   it('has the file of every image a developer page shows', () => {

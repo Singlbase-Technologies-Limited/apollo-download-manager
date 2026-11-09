@@ -4,7 +4,7 @@
 // doesn't exist, so a pull request can't break the site's links. The only script is site/developers/search.js.
 import { posix } from 'node:path';
 import { parsePage, resolveLinks } from './guide-lib.mjs';
-import { pager, tableOfContents } from './site-layout.mjs';
+import { pager, searchForm, tableOfContents } from './site-layout.mjs';
 
 const START = 'START_HERE.md';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -84,13 +84,7 @@ function topics(sections, titles, root) {
   return `\n<div class="topics">${shown.join('\n')}</div>`;
 }
 
-/** Hidden until the script runs, so a browser without scripts never shows a search that can't work. */
-const searchForm = (root) => `<form class="search" role="search" data-root="${root}" hidden>
-<label for="dev-search">Search the developer documents</label>
-<input id="dev-search" type="search" autocomplete="off">
-<p role="status"></p>
-<ul></ul>
-</form>`;
+const devSearch = (root) => searchForm({ root, id: 'dev-search', label: 'Search the developer documents', placeholder: 'Commands, files, settings…' });
 
 /**
  * Every file of the developer site, by its path in the website.
@@ -126,7 +120,7 @@ export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
       title: file === START ? 'Developers' : `${page.title} · Developers`,
       description: first.length > 155 ? `${first.slice(0, 152).replace(/\s+\S*$/, '')}…` : first.padEnd(20, '.'),
       body: renderBlocks(page.blocks, hrefOf) + (file === START ? topics(sections, titles, root) : ''),
-      aside: `${searchForm(root)}\n${contents(sections, titles, file, (f) => `${root}${pagePath(f)}`)}\n`,
+      aside: `${devSearch(root)}\n${contents(sections, titles, file, (f) => `${root}${pagePath(f)}`)}\n`,
       toc: tableOfContents(page.headings),
       after: pager(neighbour(docs[at - 1]), neighbour(docs[at + 1])),
       crumb: 'Developer documents',

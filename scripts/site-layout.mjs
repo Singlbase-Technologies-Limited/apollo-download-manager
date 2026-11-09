@@ -82,6 +82,21 @@ export function tableOfContents(headings) {
   return `<ul>${shown.map((h) => `<li${h.level === 3 ? ' class="sub"' : ''}><a href="#${esc(h.id)}">${esc(h.text)}</a></li>`).join('')}</ul>`;
 }
 
+/**
+ * A guide's search box (#355; the user guide's since #422), above its list of documents. site/developers/search.js
+ * runs it, reading `search-index.json` from `root`. Hidden until that script runs, so a browser without scripts
+ * never shows a search that can't work.
+ * @param {{ root: string, id: string, label: string, placeholder: string }} form
+ */
+export function searchForm({ root, id, label, placeholder }) {
+  return `<form class="search" role="search" data-root="${esc(root)}" hidden>
+<label for="${esc(id)}">${esc(label)}</label>
+<input id="${esc(id)}" type="search" placeholder="${esc(placeholder)}" autocomplete="off">
+<p role="status"></p>
+<ul></ul>
+</form>`;
+}
+
 /** The next and previous documents: each `{ href, title }`, or nothing at the ends. */
 export function pager(previous, next) {
   const side = (rel, label, to) => (to ? `<a rel="${rel}" href="${esc(to.href)}"><small>${label}</small>${esc(to.title)}</a>` : '<span></span>');

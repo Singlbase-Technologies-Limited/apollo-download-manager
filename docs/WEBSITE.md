@@ -40,6 +40,7 @@ The numbers in a picture are examples, never a speed claim.
 - **The colours** are the app's tokens from `src/index.css`; a test fails if they drift.
 - **Light by default** (PO, 2026-11-06): the site never follows the system's dark mode. Dark is a switch in the header, remembered in that browser only.
 - **Two page shapes:** a product page, and a document with a grouped sidebar, its contents ("On this page") and previous and next links. The user guide's groups are in `scripts/site-lib.mjs`; the developer sections are in `site/content/developers.json`.
+- **Documents give their tables the width** (#422). "On this page" is a box at the top of the document, and becomes a column on the right only on a screen 1600 px wide or more. Text keeps a 760 px line; a table may use the whole column. No table column is narrower than 11em, apart from a first column and a cell holding only code (a path, a command, a setting), which keep to their content and don't wrap. A table wider than its column scrolls sideways in its own box, never the page.
 - **On a phone** the header and the document sidebar fold into menus, which work without a script.
 - **Features** show the part of a screen they describe: `focus` in `screens.json` says where, in percent, and how far in.
 - **macOS isn't mentioned** (PO, 2026-11-06).
@@ -51,7 +52,7 @@ Every page is plain HTML and one stylesheet, with the site's own copy of the Int
 The site has two small scripts of its own:
 
 - **`site/theme.js`** on every page (PO decision on #379): the theme switch. The choice stays in the browser and is sent nowhere. Without scripts the switch is hidden and the page is light.
-- **`site/developers/search.js`** on the developer pages (PO decision on #355): the search box. It loads `search-index.json` from the site when someone first types. Without scripts the box stays hidden. Offline, a browser shows what it has cached; there's no service worker.
+- **`site/developers/search.js`** on the developer pages (PO decision on #355) and, since the PO's brief of 2026-11-09 (#422), the user guide's pages: the search box above the documents list, with a placeholder saying what to search. Each guide loads its own `search-index.json` (`developers/`, `guide/`), so a search finds pages of that guide only, when someone first types. Without scripts the box stays hidden. Offline, a browser shows what it has cached; there's no service worker.
 
 The screen switcher, the FAQ's answers and the phone menus are HTML and CSS. Tests (`scripts/site-lib.test.mjs`, `scripts/dev-site-lib.test.mjs`) fail if a page loads any other script, or anything from another address. Each page has a title, a description, its canonical address and sharing (Open Graph) tags; `sitemap.xml` lists every page and `robots.txt` points to it.
 
@@ -73,7 +74,9 @@ pnpm site -- --releases releases.json      # with the download page made from a 
 - the keyboard: Tab starts at the skip link, reaches the home page's links and buttons, and every one shows its focus outline;
 - no sideways scroll, broken image, image without `alt`, console error or failed request;
 - every internal link;
-- the menus, the theme switch and that it's remembered, the screen switcher, the FAQ, the search, and previous and next.
+- the menus, the theme switch and that it's remembered, the screen switcher, the FAQ, and previous and next;
+- both searches (#422): the label, the typed text and the documents list share one left edge; the box has a placeholder; a result opens the right page by mouse and by keyboard alone (focus, type, Tab, Enter); and no match says "Nothing found.";
+- tables at desktop width (#422): no cell wraps to more than 8 lines. The pages whose tables hold paragraphs rather than values are listed in `TALL_TABLES` in `scripts/site-check.mjs`, for the content audit (#425) to rewrite; a page leaves the list once it passes.
 
 `pnpm site:check -- --shots <folder>` also saves full-page screenshots to look at. It runs locally, before a change to the site's look is pushed.
 
