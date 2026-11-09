@@ -18,6 +18,10 @@ import { useShellLayout } from '../../layout/useLayout';
 import { cn } from '../../lib/cn';
 import { api } from '../../lib/api';
 import { toApiError } from '../../lib/errors';
+import { useNarrowerThan } from '../../lib/useNarrowerThan';
+
+/** The narrowest toolbar, in px, that still holds every button with the labels hidden (#442). */
+const TOOLBAR_FITS = 540;
 import { keys, useCategories, useShellSettings } from '../../lib/queries';
 import { useDownloadsStore } from '../../stores/downloads';
 import { useUiStore } from '../../stores/ui';
@@ -117,6 +121,9 @@ export function DownloadsView({ view }: { view: ListView }) {
   useLoginPrompt();
   const saveColumns = useSaveColumns();
   const searchRef = useRef<HTMLInputElement>(null);
+  // The toolbar needs about 536 px with its labels hidden (#442, measured by the layout run at a 960 px window): below
+  // TOOLBAR_FITS the selection's Cancel, Retry and Remove move into More.
+  const [toolbarRef, narrowToolbar] = useNarrowerThan<HTMLDivElement>(TOOLBAR_FITS);
 
   const categoryName = useMemo(() => {
     const names = new Map((categories ?? []).map((c) => [c.id, c.name]));
@@ -172,7 +179,7 @@ export function DownloadsView({ view }: { view: ListView }) {
     <div className="flex min-h-0 min-w-0 flex-1">
       {/* The list and its toolbar are one panel, and the details panel another beside it. */}
       <div className={cn(PANEL, '@container flex min-h-0 min-w-0 flex-1 flex-col bg-bg')}>
-      <div className="flex h-12 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-3" role="toolbar" aria-label="Download actions">
+      <div ref={toolbarRef} className="flex h-12 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-3" role="toolbar" aria-label="Download actions">
         <Tooltip label="Resume selected" canBeDisabled>
           <Button variant="ghost" size="icon" aria-label="Resume selected" disabled={busy || !can.resume} onClick={() => void actions.resume(ids)}>
             <Play />
@@ -183,21 +190,26 @@ export function DownloadsView({ view }: { view: ListView }) {
             <Pause />
           </Button>
         </Tooltip>
-        <Tooltip label="Cancel selected: keeps what was downloaded for a retry" canBeDisabled>
-          <Button variant="ghost" size="icon" aria-label="Cancel selected" disabled={busy || !can.cancel} onClick={() => void actions.cancel(ids)}>
-            <Square />
-          </Button>
-        </Tooltip>
-        <Tooltip label="Retry selected" canBeDisabled>
-          <Button variant="ghost" size="icon" aria-label="Retry selected" disabled={busy || !can.retry} onClick={() => void actions.retry(ids)}>
-            <RotateCcw />
-          </Button>
-        </Tooltip>
-        <Tooltip label="Remove selected from list" canBeDisabled>
-          <Button variant="ghost" size="icon" aria-label="Remove selected from list" disabled={busy || !can.remove} onClick={() => void actions.remove(selected)}>
-            <X />
-          </Button>
-        </Tooltip>
+        {/* In a narrow list these three move into More (#442, PO's choice), so the toolbar never runs off its panel. */}
+        {narrowToolbar ? null : (
+          <>
+            <Tooltip label="Cancel selected: keeps what was downloaded for a retry" canBeDisabled>
+              <Button variant="ghost" size="icon" aria-label="Cancel selected" disabled={busy || !can.cancel} onClick={() => void actions.cancel(ids)}>
+                <Square />
+              </Button>
+            </Tooltip>
+            <Tooltip label="Retry selected" canBeDisabled>
+              <Button variant="ghost" size="icon" aria-label="Retry selected" disabled={busy || !can.retry} onClick={() => void actions.retry(ids)}>
+                <RotateCcw />
+              </Button>
+            </Tooltip>
+            <Tooltip label="Remove selected from list" canBeDisabled>
+              <Button variant="ghost" size="icon" aria-label="Remove selected from list" disabled={busy || !can.remove} onClick={() => void actions.remove(selected)}>
+                <X />
+              </Button>
+            </Tooltip>
+          </>
+        )}
         <div className="mx-1.5 h-5 w-px bg-border" />
         {/* Labels give way to icons when the list is narrow; the names stay for assistive technology. */}
         <Tooltip label="Resume all" canBeDisabled>
@@ -219,6 +231,14 @@ export function DownloadsView({ view }: { view: ListView }) {
             </Tooltip>
           }
           items={[
+            ...(narrowToolbar
+              ? ([
+                  { label: 'Cancel selected', icon: <Square />, disabled: busy || !can.cancel, onSelect: () => void actions.cancel(ids) },
+                  { label: 'Retry selected', icon: <RotateCcw />, disabled: busy || !can.retry, onSelect: () => void actions.retry(ids) },
+                  { label: 'Remove selected from list', icon: <X />, disabled: busy || !can.remove, onSelect: () => void actions.remove(selected) },
+                  'separator',
+                ] as const)
+              : []),
             { label: 'Retry all failed', icon: <RotateCcw />, disabled: busy, onSelect: () => void actions.retryFailed() },
             { label: 'Clear completed from list', icon: <X />, disabled: busy, onSelect: () => void actions.clearCompleted() },
             'separator',
