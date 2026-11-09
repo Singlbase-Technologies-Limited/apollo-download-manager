@@ -4,7 +4,7 @@
 // itself, with made-up downloads of free software, so no native side runs and no real data is shown. It stops if the
 // list doesn't load: the window checks every answer against the contract, and refuses one that doesn't fit.
 /* global window -- installBackend runs in the page. */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -182,24 +182,57 @@ async function open(theme, { onboarded = true, over = {} } = {}) {
   return page;
 }
 
+/** The widths the website offers besides the full 2880 px screenshot, so a phone or an ordinary screen fetches less (#423). */
+const SMALLER = [720, 1440];
+
+/**
+ * Writes `<name>.webp` from an image (a data: URL), at its own size (unless `full` is false), and at each of SMALLER,
+ * as `<name>-<width>.webp`.
+ * WebP, drawn by the browser itself: a third of a PNG's size, with no tool to add (#379).
+ */
+async function writeWebp(page, name, dataUrl, full = true) {
+  /* global Image, document -- this callback runs in the page */
+  const encoded = await page.evaluate(
+    async ({ dataUrl, widths }) => {
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
+      const at = (width) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = Math.round((image.naturalHeight * width) / image.naturalWidth);
+        const context = canvas.getContext('2d');
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/webp', 0.88).split(',')[1];
+      };
+      return [{ suffix: '', data: at(image.naturalWidth) }, ...widths.map((w) => ({ suffix: `-${String(w)}`, data: at(w) }))];
+    },
+    { dataUrl, widths: SMALLER },
+  );
+  for (const e of encoded.filter((x) => full || x.suffix)) {
+    writeFileSync(join(out, `${name}${e.suffix}.webp`), Buffer.from(e.data, 'base64'));
+    console.log(`site/screens/${name}${e.suffix}.webp`);
+  }
+}
+
 const shot = async (page, name) => {
   await page.waitForTimeout(350);
   const png = await page.screenshot();
-  /* global Image, document -- this callback runs in the page */
-  // WebP, drawn by the browser itself: a third of a PNG's size, with no tool to add (#379).
-  const webp = await page.evaluate(async (data) => {
-    const image = new Image();
-    image.src = `data:image/png;base64,${data}`;
-    await image.decode();
-    const canvas = document.createElement('canvas');
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
-    canvas.getContext('2d').drawImage(image, 0, 0);
-    return canvas.toDataURL('image/webp', 0.88).split(',')[1];
-  }, png.toString('base64'));
-  writeFileSync(join(out, `${name}.webp`), Buffer.from(webp, 'base64'));
-  console.log(`site/screens/${name}.webp`);
+  await writeWebp(page, name, `data:image/png;base64,${png.toString('base64')}`);
 };
+
+// `pnpm site:screens -- --sizes-only`: makes the smaller widths from the screenshots already in site/screens/, without
+// the app, for when SMALLER changes.
+if (process.argv.includes('--sizes-only')) {
+  const page = await (await browser.newContext()).newPage();
+  for (const name of readdirSync(out).filter((f) => /^[a-z-]+\.webp$/.test(f) && !/-\d+\.webp$/.test(f)).map((f) => f.slice(0, -5))) {
+    const full = readFileSync(join(out, `${name}.webp`)).toString('base64');
+    await writeWebp(page, name, `data:image/webp;base64,${full}`, false);
+  }
+  await browser.close();
+  process.exit(0);
+}
 const settingsSection = (page, name) => page.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name }).click();
 
 try {

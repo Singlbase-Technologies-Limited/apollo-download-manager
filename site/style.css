@@ -86,9 +86,12 @@ code { font-family: var(--mono); font-size: 0.875em; background: var(--surface-3
 .hero .small { color: var(--fg-subtle); font-size: 0.9rem; margin: 16px 0 0; }
 .stage { margin-top: 56px; padding-bottom: 72px; background: linear-gradient(var(--bg) 0 34%, var(--frame) 34%); }
 .stage .shot { margin: 0; }
-.stage img.dark-only, [data-theme="dark"] .stage img.light-only { display: none; }
-[data-theme="dark"] .stage img.dark-only { display: block; }
-.stage img { display: block; width: 100%; border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); }
+/* The dark screenshot takes over only once it has loaded (theme.js marks it `ready`), so switching the theme never
+ * shows an empty frame (#423); until then the light one stays. The frame has the app's surface while either loads. */
+[data-theme="dark"] .stage img.light-only { display: block; }
+.stage img.dark-only, [data-theme="dark"] .stage:has(img.dark-only.ready) img.light-only { display: none; }
+[data-theme="dark"] .stage img.dark-only.ready { display: block; }
+.stage img { display: block; width: 100%; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); }
 .stage figcaption { color: var(--fg-muted); font-size: 0.85rem; margin-top: 12px; }
 
 .strengths { padding-top: 64px; padding-bottom: 8px; }
