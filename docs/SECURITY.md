@@ -189,6 +189,7 @@ What the check found or accepts, checked 2026-10-30:
 | GHSA-4p9f-7p9m-5vfg, GHSA-fw5c-8223-6h42 | russh 0.64.1: the SSH client allocates without bound on EXT_INFO packets; a peer's zero maximum packet size stalls channel writes | russh, the SFTP client | **Fixed** in #255: russh 0.65.0 |
 | GHSA-9wfm-jcj8-jfv9, GHSA-vp5q-ff62-jwqv | russh 0.64.1: the SSH agent server allocates without bound, and ignores the confirm constraint | russh's agent server, which Apollo DM doesn't use | **Fixed** in #255: russh 0.65.0 |
 | GHSA-662x-8wvj-2276 | pageant 0.2.4: unbounded frame buffering | russh's Pageant client, Windows only, which Apollo DM doesn't use | **Fixed** in #255: pageant 0.2.5 |
+| RUSTSEC-2026-0459 (GHSA-72w2-rjgg-q729, CVE-2026-119375), Medium | libsqlite3-sys 0.38.2: SQLite 3.53.2 can return uninitialised page-cache memory when it opens a database with a crafted `-wal` file | rusqlite, the app database (WAL mode), Windows and Linux | **Fixed** in #446: rusqlite 0.41.1, libsqlite3-sys 0.39.1, SQLite 3.54.1; `rusqlite_migration`, which held rusqlite at 0.40, replaced by Apollo DM's own runner |
 | (yanked) | crypto-bigint 0.7.7: yanked by its authors | russh 0.65.0 and its elliptic-curve crates | **Listed:** a warning; moves with russh |
 
 npm, checked 2026-11-03:

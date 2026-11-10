@@ -14,11 +14,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Per-OS data directory (#27, PO-approved 2026-10-22); also used by Tauri itself.
 dirs = "7.0.0"
-# SQLite for the app database (PO-approved on #26, 2026-10-23). `bundled` compiles the SQLite 3.53.2
-# source that ships inside libsqlite3-sys 0.38.2, the same on every platform (docs/DEPENDENCIES.md).
-rusqlite = { version = "=0.40.2", features = ["bundled"] }
-# Numbered migrations for the app database (PO-approved on #26, 2026-10-23). No default features.
-rusqlite_migration = { version = "=2.6.0", default-features = false }
+# SQLite for the app database (PO-approved on #26, 2026-10-23). `bundled` compiles the SQLite 3.54.1
+# source that ships inside libsqlite3-sys 0.39.1, the same on every platform (docs/DEPENDENCIES.md).
+# 0.41.1 fixes RUSTSEC-2026-0459 (#446).
+rusqlite = { version = "=0.41.1", features = ["bundled"] }
 # Windows file operations for the engine: sparse part files and the no-replace rename (PO-approved on
 # #43, 2026-10-23). The same version curl and dirs already bring.
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_Ioctl"] }
