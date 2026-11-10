@@ -17,7 +17,7 @@ import { homedir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { LIBTORRENT_INFO_SCHEMA, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
+import { LIBTORRENT_INFO_SCHEMA, PRELOADED_DOWNLOADS, TRIPLETS, checkLibtorrentInfo, preloadAction, vcpkgInstallArgs, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
 import { NATIVE_DIR, hostTarget } from './fetch.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +25,7 @@ const MANIFEST_DIR = join(HERE, 'vcpkg');
 const INSTALL_ROOT = join(NATIVE_DIR, 'vcpkg-installed');
 
 const sha256 = (data) => createHash('sha256').update(data).digest('hex');
+const sha512 = (data) => createHash('sha512').update(data).digest('hex');
 
 /** Every file under `dir`, sorted, as paths relative to it. */
 function filesUnder(dir) {
@@ -50,6 +51,23 @@ export function findVcpkg() {
   throw new Error(
     `vcpkg was not found (looked in ${roots.join(', ')}). Clone https://github.com/microsoft/vcpkg, run its bootstrap script, and set VCPKG_ROOT (docs/BUILDING_NATIVE.md, "libtorrent")`,
   );
+}
+
+/**
+ * Puts the files of PRELOADED_DOWNLOADS into vcpkg's downloads folder (#454), so vcpkg doesn't ask
+ * github.com for them. Each is checked against its port's SHA-512 first; vcpkg checks it again.
+ */
+function placeDownloads(downloads, log) {
+  mkdirSync(downloads, { recursive: true });
+  for (const file of PRELOADED_DOWNLOADS) {
+    const source = readFileSync(join(HERE, 'vcpkg-downloads', file.name));
+    const target = join(downloads, file.name);
+    const placed = existsSync(target) ? sha512(readFileSync(target)) : null;
+    if (preloadAction(file, sha512(source), placed) === 'place') {
+      writeFileSync(target, source);
+      log(`placed ${file.name} for vcpkg, instead of downloading ${file.url}`);
+    }
+  }
 }
 
 /** Changes to the manifest, the ports or how they're built invalidate a finished build. */
@@ -96,7 +114,8 @@ export function buildLibtorrent({ target = hostTarget(), force = false, log = co
   }
 
   const vcpkg = findVcpkg();
-  const args = ['install', '--triplet', triplet, `--x-manifest-root=${MANIFEST_DIR}`, `--x-install-root=${INSTALL_ROOT}`, '--clean-after-build'];
+  placeDownloads(process.env.VCPKG_DOWNLOADS || join(vcpkg.root, 'downloads'), log);
+  const args = vcpkgInstallArgs(triplet, MANIFEST_DIR, INSTALL_ROOT);
   log(`$ ${[vcpkg.exe, ...args].join(' ')}`);
   const r = spawnSync(vcpkg.exe, args, { stdio: 'inherit', env: { ...process.env, VCPKG_DISABLE_METRICS: '1' } });
   if (r.error) throw new Error(`vcpkg could not start: ${r.error.message}`);

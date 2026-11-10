@@ -15,6 +15,44 @@ export const TRIPLETS = {
 export const LIBTORRENT_INFO_SCHEMA = 1;
 
 /**
+ * Files a vcpkg port at the pinned baseline downloads from github.com, kept in
+ * scripts/native/vcpkg-downloads/ because github.com rate-limits them (#454). The build places each
+ * in vcpkg's downloads folder, where vcpkg uses a file whose SHA-512 matches the port's pin instead
+ * of downloading it. `sha512` is the port's own pin; `url` is where the port fetches it.
+ */
+export const PRELOADED_DOWNLOADS = [
+  {
+    // boost-math (Boost Software License 1.0): boostorg/math's pull request merged as 05d9f24,
+    // rebuilt with `git format-patch -n --full-index --no-signature 05d9f24^1..05d9f24^2` and
+    // `*.hpp diff=cpp` (docs/BUILDING_NATIVE.md, "libtorrent").
+    name: 'boost_math_android.patch',
+    sha512: '19b6cf82f2e10b0154227e8e31eb892f3ca8899dd3946b909088be13b322a8881ff91b8aec2e2d099140f170f1d76547034e4def56ece347b6b52dbabeb1cf51',
+    url: 'https://github.com/boostorg/math/commit/05d9f24f080f2c02ca34967c802f46851736e830.patch?full_index=1',
+  },
+];
+
+/**
+ * `vcpkg install`'s arguments. It cleans build trees and packages after each package to save disk,
+ * but keeps downloads: `--clean-after-build` would also empty vcpkg's downloads folder, and with it
+ * the files placed there (#454).
+ */
+export function vcpkgInstallArgs(triplet, manifestRoot, installRoot) {
+  return ['install', '--triplet', triplet, `--x-manifest-root=${manifestRoot}`, `--x-install-root=${installRoot}`, '--clean-buildtrees-after-build', '--clean-packages-after-build'];
+}
+
+/**
+ * What to do with a file of PRELOADED_DOWNLOADS, from the SHA-512 of the repository's copy and of
+ * the one in vcpkg's downloads folder (`null` when there is none): 'place' it, or leave it
+ * 'present'. A repository copy that isn't the pinned file is refused, never placed.
+ */
+export function preloadAction(file, sourceSha512, downloadedSha512) {
+  if (sourceSha512 !== file.sha512) {
+    throw new Error(`scripts/native/vcpkg-downloads/${file.name} has SHA-512 ${sourceSha512}, not the ${file.sha512} its vcpkg port pins`);
+  }
+  return downloadedSha512 === file.sha512 ? 'present' : 'place';
+}
+
+/**
  * Definitions that change libtorrent's types or which code it has: the shim must be compiled with
  * them, so a record without them describes a build the shim would disagree with.
  */
