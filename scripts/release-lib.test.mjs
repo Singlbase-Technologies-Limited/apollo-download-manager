@@ -62,6 +62,8 @@ describe("the candidate's files", () => {
     expect(releaseFileName('apollo-download-manager-0.1.0-rc.2-3a93690-20261102-windows-x64-setup.exe', '0.1.0')).toBe('apollo-download-manager-0.1.0-windows-x64-setup.exe');
     expect(releaseFileName('apollo-download-manager-0.1.0-rc.2-3a93690-20261102-licence-report-linux.json', '0.1.0')).toBe('apollo-download-manager-0.1.0-licence-report-linux.json');
     expect(() => releaseFileName('SHA256SUMS', '0.1.0')).toThrow(/isn't a release candidate's file/);
+    // #452: the build-info file is named like every other file, not velocity-v2-….
+    expect(releaseFileName('build-info.json', '0.2.0')).toBe('apollo-download-manager-0.2.0-build-info.json');
   });
 });
 
@@ -71,6 +73,12 @@ describe('the release notes', () => {
   it("are the version's CHANGELOG.md section, without its heading", () => {
     expect(releaseNotes(changelog, '0.1.0')).toBe('### Features\n\n- downloads\n');
     expect(releaseNotes(changelog, '0.0.9')).toBe('- old\n');
+  });
+
+  // #452: a release page can't resolve the changelog's links into the repository, so they point at the tag's files.
+  it("link into the repository at the version's tag", () => {
+    const notes = releaseNotes('## 0.2.0\n\nSee [Upgrading](docs/user/installing.md#upgrading), [#1](https://github.com/o/r/issues/1) and [below](#x).\n', '0.2.0', 'o/r');
+    expect(notes).toBe('See [Upgrading](https://github.com/o/r/blob/v0.2.0/docs/user/installing.md#upgrading), [#1](https://github.com/o/r/issues/1) and [below](#x).\n');
   });
 
   it('must be written before the release', () => {
@@ -92,5 +100,12 @@ describe('the release workflow', () => {
     expect(text).toMatch(/environment: release/);
     expect(text).toMatch(/gh release create .*--draft/);
     expect(text).not.toMatch(/gh release (edit|upload)|--draft=false|gh release create (?!.*--draft)/);
+  });
+
+  // #452: every version before 1.0.0 is published as a pre-release (docs/RELEASE_PROCESS.md), so its draft is one.
+  it('drafts a version below 1.0.0 as a pre-release', () => {
+    const text = readFileSync(join(import.meta.dirname, '..', '.github', 'workflows', 'release.yml'), 'utf8');
+    expect(text).toMatch(/0\.\*\) pre=\(--prerelease\)/);
+    expect(text).toMatch(/gh release create .*"\$\{pre\[@\]\}"/);
   });
 });

@@ -111,4 +111,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --verify-tag --title "Apollo Download Manager ${TAG#v}" --notes-file release/notes.md release/files/*
+        # Every version before 1.0.0 is published as a pre-release (docs/RELEASE_PROCESS.md, #452).
+        run: |
+          pre=()
+          case "${TAG#v}" in 0.*) pre=(--prerelease) ;; esac
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft "${pre[@]}" --verify-tag --title "Apollo Download Manager ${TAG#v}" --notes-file release/notes.md release/files/*

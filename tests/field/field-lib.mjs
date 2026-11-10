@@ -190,7 +190,7 @@ export function elevationCheck(result) {
   if (answer === 'True') {
     return {
       refuse: true,
-      message: 'This session runs as administrator, and WebView2 then ignores the debugging port, so the window would never answer. Start the terminal or VS Code without administrator rights, then run pnpm field start again.',
+      message: 'This session runs as administrator, and WebView2 then ignores the debugging port, so the window would never answer. Start the terminal, or the editor it runs in, without administrator rights, then run pnpm field start again.',
     };
   }
   if (answer === 'False') return { refuse: false, message: null };

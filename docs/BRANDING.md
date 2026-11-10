@@ -40,7 +40,7 @@ The small sizes use slightly lighter blues than the full icon: `#1B68CB` behind 
 
 ## The app icon
 
-**The A alone, with no tile or border,** like the VS Code and Edge icons in the Windows Start menu. The surrounding desktop, taskbar or browser shows through.
+**The A alone, with no tile or border,** as many app icons in the Windows Start menu are. The surrounding desktop, taskbar or browser shows through.
 
 **Two flat tones, with no gradient or shine:**
 
@@ -78,7 +78,7 @@ On dark backgrounds the lockup moves both halves one step lighter (`apollo-locku
 
 ## The window's layout
 
-The window is laid out like VS Code's (PO requests on #347):
+The window's layout (PO requests on #347):
 
 - **The frame:** the title bar, the status bar and the gaps share one colour, `--frame` (`#D9DFE7` light, `#07090D` dark), so they read as the window's background.
 - **Floating panels:** the sidebar, the download list, the details panel and the other views each sit on the frame as their own rounded panel, 4 px apart (`src/layout/panel.ts`). The resize handles are the gaps between them: a thin blue line shows in the gap after a short pause on hover, and at once while dragging.
