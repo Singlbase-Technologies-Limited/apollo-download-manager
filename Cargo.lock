@@ -6028,7 +6028,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "velocity-child"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -6037,7 +6037,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-core"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "dirs",
  "getrandom 0.4.3",
@@ -6061,7 +6061,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-curl"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "curl",
  "curl-sys",
@@ -6072,7 +6072,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-desktop-v2"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -6091,7 +6091,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-lt"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -6101,7 +6101,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-native-host"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "serde_json",
  "tokio",
@@ -6110,7 +6110,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-sftp"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "russh",
  "russh-sftp",
@@ -6121,7 +6121,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-test-http"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "bytes",
  "h2",
@@ -6135,7 +6135,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-torrent"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "serde_json",
  "sha2 0.11.1",
@@ -6149,7 +6149,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-transfer"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "fastrand",
  "httpdate",
@@ -6172,7 +6172,7 @@ dependencies = [
 
 [[package]]
 name = "velocity-transfer-h2c"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "velocity-core",
  "velocity-curl",

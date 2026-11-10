@@ -9,13 +9,13 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 - **Gaps:** every item that isn't PASS is also in [Gaps for the PO](#gaps-for-the-po). The PO accepts each gap or asks for it to be fixed; nothing is accepted on the PO's behalf.
 - **Scope:** Windows and Linux. macOS isn't planned, and V1 parity acceptance (#85) was closed as not planned (PO decision, 2026-11-05).
 
-**Last reviewed:** 2026-11-10, on `main` at `7dce4d1`, for v0.2.0.
+**Last reviewed:** 2026-11-10, for v0.2.0: on `main` at `7dce4d1`, and the advisory check again with #446 in, on the branch for #450.
 
 ## Security
 
 | Item | Owner | Status | Evidence |
 |---|---|---|---|
-| Dependency advisories (#75) | Agent | FAIL on `7dce4d1`; fixed in PR 447 | `pnpm check:advisories`: Rust FAIL, RUSTSEC-2026-0459 in the bundled SQLite (Medium); npm PASS. The weekly *Advisories* run has failed since 2026-11-09. #446 updates SQLite; `cargo deny check advisories` passes on its branch. A Medium advisory blocks a release ([SECURITY.md](SECURITY.md#dependency-advisories-75)) |
+| Dependency advisories (#75) | Agent | PASS | `pnpm check:advisories` with #446 in: Rust PASS, npm PASS. RUSTSEC-2026-0459 (SQLite, Medium), found by this review, was fixed in #446; the rest are fixed or accepted in the register ([SECURITY.md](SECURITY.md#the-register)) |
 | TLS verification on every backend (#69) | Agent | PASS | #69 closed; [SECURITY.md](SECURITY.md#tls-verification-69) |
 | Links, redirects and local addresses (#67) | Agent | PASS | #67 closed; [SECURITY.md](SECURITY.md#links-redirects-and-local-addresses-67) |
 | Secrets kept out of storage (#70), and the leak scan (#71) | Agent | PASS | #70 and #71 closed; [SECURITY.md](SECURITY.md#secrets-70) |
@@ -111,7 +111,6 @@ Each item here needs the PO's decision before the release it blocks: accept it f
 
 | Gap | Blocks | PO decision |
 |---|---|---|
-| RUSTSEC-2026-0459 in the bundled SQLite (#446) | Every release, until PR 447 merges | Open: fix chosen (2026-11-10), PR 447 |
 | No fuzzing (#73) | 1.0.0 | Open |
 | No load, stress or long-run test (#77, #337) | 1.0.0 | Open |
 | No legal review of the licensing or the CLA | 1.0.0; the CLA also blocks the first outside contribution ([OPEN_SOURCE.md](OPEN_SOURCE.md)) | Open |

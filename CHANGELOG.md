@@ -2,21 +2,67 @@
 
 What changed in each version of Apollo Download Manager, named Velocity Download Manager V2 until 0.2.0. Versions follow [Semantic Versioning](https://semver.org/); while V2 is below 1.0.0, a minor version may change things that break. How sections are drafted from the merged pull requests, and edited into release notes, is in [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
 
-## Unreleased
+## 0.2.0 - 2026-11-10
 
-### Changes
+The first version named **Apollo Download Manager**, with a new look, a browser extension in the Chrome Web Store, and a user guide in the app. Install it over 0.1.x, which was named "Velocity Download Manager V2": your downloads, settings and history are kept, and on Windows the browsers keep working ([Upgrading](docs/user/installing.md#upgrading)).
 
-- **A schedule that's easier to set and to follow:** choose its start and stop with hour and minute boxes instead of typing them; Settings says when it next runs (**Next: tomorrow 02:00 to 07:00**); and the list says when each scheduled download starts (#350).
-- **A start time for each download:** in the Add window, or later with **Start at…** in a waiting download's menu. It beats the schedule, and a time missed while the app was closed starts it as soon as the app opens (#350).
-- **12-hour times:** Settings, Appearance, Time format switches every time the app shows to 12-hour with AM and PM; 24-hour stays the default (#350).
+### A new name and a new window
+
+- **Apollo Download Manager:** a new name, logo, icons and colours, in the app, the installers and the browser extension (#346, #347).
+- **A window in the style of VS Code:** the app draws its own title bar, with Windows 11's snap layouts on the maximise button, and its panels float beside the list (#359, #360, #363).
+- **Settings opens over the app,** in a window of its own, instead of replacing the list (#364).
+- **A redesigned details panel,** with a download's actions in its footer. Double-clicking a download opens its details, or its file once it's finished (#349).
+- **Hovering a row** shows values the column cuts off, and says what the download's status means (#424).
+- **A narrow window** keeps the whole toolbar: Cancel, Retry and Remove selected move into **More** (#442).
+- **A first-run setup** that fits small windows and asks one thing at a time. It says at once when the download folder doesn't exist (#372, #403).
+- **Layouts, lists, buttons, messages and pointers** are consistent across the window (#348).
+
+### Your browser
+
+- **In the Chrome Web Store:** Chrome and Brave install the extension from its store page. **Get the extension** in Settings, Browser opens it (#240, #241). The Edge and Firefox store pages follow in a later version.
+- **A redesigned extension,** with Ask first, rules and the right-click menu (#356).
+- **The app starts itself** when a link arrives while it isn't running, and the link's Add dialog opens once the window is ready (#322, #415).
+- **Fixes:**
+  - Several links sent while Add download was open replaced each other, so only the last was kept (#365).
+  - A `.zip` link without ".zip" in it stayed in the browser (#406).
+  - In Firefox, a download given back to the browser was usually lost (#408).
+  - The Ask-first prompt was empty in Chrome 116 (#411).
+  - Magnet links in pages open before you allowed access still went to the browser (#416).
+  - The popup's Recent sends label covered the site name (#412).
+
+### Downloads
+
+- **Plain error messages,** with the technical detail behind a toggle (#252).
+- **The login window opens** when a download fails because the server asks for a login (#249).
+- **Changing a download's category moves its files** to that category's folder (#366).
+- **Metalink files on your computer:** **Choose Metalink files…** in the Add window adds every file they list (#222).
+- **Faster starts:** the app remembers how many connections each server allowed, so later downloads from it start at that pace. Extra connections to a server reuse its TLS session (#325, #327, #432).
 - **Downloads wait for the network:** a download that failed because there was no network shows **Waiting for network**, and continues by itself from where it stopped when Windows or Linux says the network is back. On by default; Settings, Queue and performance (#318).
 - **Two downloads at once by default,** instead of 3, so each one gets more of your connection and finishes sooner. If you kept the old default of 3, updating sets it to 2 once; you can set it back in Settings, Queue and performance (#351).
+- **Start when you sign in,** so queued downloads and seeding carry on after a restart: on for a new install, off if you used an earlier version (#321).
+- **Private torrents** get none of the extra trackers (#377).
+
+### The schedule
+
+- **A schedule that's easier to set and to follow:** choose its start and stop with hour and minute boxes instead of typing them. Settings says when it next runs (**Next: tomorrow 02:00 to 07:00**), and the list says when each scheduled download starts (#350).
+- **A start time for each download:** in the Add window, or later with **Start at…** in a waiting download's menu. It beats the schedule, and a time missed while the app was closed starts it as soon as the app opens (#350).
+- **12-hour times:** Settings, Appearance, Time format switches every time the app shows to 12-hour with AM and PM. 24-hour stays the default (#350).
+
+### Help and the website
+
+- **A user guide in the app,** from the same pages as the website (#79, #354).
+- **A website** with downloads and the guide, and a developer site built from the project's documents (#353, #355, #379).
 
 ### Fixes
 
 - **What you type stays yours:** the window no longer remembers typed links, folders or the proxy's user name in its own autofill store, and the first start of this version clears what earlier versions kept there (#345).
+- **Through an HTTP proxy,** a download no longer fails with "The file changed on the server" as soon as it opens a second connection. A proxy that wants a login none was set for says "The proxy refused the connection" (#344).
+- **The login window's remember checkbox** says "system keychain", as the Add dialog does (#398).
+- **Release builds' window title** no longer says "(dev)" (#401).
 
-- **Through an HTTP proxy,** a download no longer fails with "The file changed on the server" as soon as it opens a second connection, and a proxy that wants a login none was set for says "The proxy refused the connection" (#344).
+### Security
+
+- **SQLite 3.54.1,** which fixes a memory-exposure advisory in the database the app keeps (RUSTSEC-2026-0459, #446).
 
 ## 0.1.1 - 2026-11-04
 
