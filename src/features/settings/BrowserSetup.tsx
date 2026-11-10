@@ -19,8 +19,8 @@ function statusText(r: Registration): string {
 /**
  * Setting up browser integration (#241), in Settings, Browser and in Get started: each browser
  * installed here, and any still registered, with Register or Unregister and "Get the extension",
- * which opens the extension's store page in that browser. The store pages come with #240; until
- * then the button is off and says why.
+ * which opens the extension's store page in that browser. The store pages come with #240, one
+ * store at a time; until a browser's store page is live, its button is off and the note names it.
  */
 export function BrowserSetup() {
   const qc = useQueryClient();
@@ -66,7 +66,8 @@ export function BrowserSetup() {
   }
   const { hostPath, registrations } = integration.data;
   const shown = registrations.filter((r) => r.found !== null || r.registered);
-  const noStore = shown.some((r) => r.storeUrl === null);
+  const noStore = shown.filter((r) => r.storeUrl === null).map((r) => BROWSER_NAMES[r.browser]);
+  const someStore = shown.some((r) => r.storeUrl !== null);
   return (
     <div className="flex flex-col">
       {hostPath === null ? (
@@ -112,9 +113,11 @@ export function BrowserSetup() {
           </div>
         </div>
       ))}
-      {noStore ? (
+      {noStore.length > 0 ? (
         <p className="mt-1 rounded-md bg-warning-soft px-3 py-2 text-xs text-fg">
-          The extension isn’t in the browser stores yet, so “Get the extension” is off for now. It turns on in an update once the store pages are live.
+          {someStore
+            ? `The extension isn’t in the store for ${noStore.join(' or ')} yet, so “Get the extension” is off there for now. It turns on in an update once that store page is live.`
+            : 'The extension isn’t in the browser stores yet, so “Get the extension” is off for now. It turns on in an update once the store pages are live.'}
         </p>
       ) : null}
     </div>

@@ -144,6 +144,20 @@ mod tests {
         }
     }
 
+    /// #240 (PO decision, 2026-11-10): v0.2.0 ships with the Chrome Web Store link, and it opens
+    /// the very item whose ID the native host allows, so the store's extension can connect.
+    #[test]
+    fn the_chrome_store_link_opens_the_allowed_item() {
+        let b = branding();
+        let url = b
+            .extension_store_urls
+            .chrome
+            .as_deref()
+            .expect("the Chrome Web Store link is set");
+        let item = url.rsplit('/').next().unwrap_or_default();
+        assert!(b.chrome_extension_ids.iter().any(|id| id == item), "{url}");
+    }
+
     #[test]
     fn identifiers_are_well_formed() {
         let b = branding();

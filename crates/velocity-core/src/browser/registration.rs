@@ -845,8 +845,9 @@ mod tests {
         }
     }
 
-    /// #241: each row says whether the browser is installed here, and has no store link until
-    /// the extension is published (#240).
+    /// #241: each row says whether the browser is installed here, and carries its store's link
+    /// once that store publishes the extension (#240): in v0.2.0 the Chrome Web Store only, for
+    /// Chrome, Chromium and Brave (PO decision, 2026-11-10).
     #[test]
     fn the_integration_shows_which_browsers_are_installed() {
         let f = Fixture::new("found");
@@ -864,7 +865,17 @@ mod tests {
                 "{:?}: nothing is installed in the fixture",
                 r.browser
             );
-            assert_eq!(r.store_url, None, "{:?}", r.browser);
+            let chrome_store = matches!(
+                r.browser,
+                Browser::Chrome | Browser::Chromium | Browser::Brave
+            );
+            assert_eq!(r.store_url.is_some(), chrome_store, "{:?}", r.browser);
+            assert_eq!(
+                r.store_url.as_deref(),
+                r.browser.store_url(),
+                "{:?}",
+                r.browser
+            );
         }
         let edge = i
             .registrations
