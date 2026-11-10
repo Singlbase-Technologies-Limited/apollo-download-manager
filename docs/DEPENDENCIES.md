@@ -14,7 +14,7 @@ The rule in [AGENTS.md](../AGENTS.md#engineering) is short: **a new crate, npm p
 | Toolchains | Rust 1.99.1, Node.js 24.12.0, pnpm 12.14.0 | `rust-toolchain.toml`, `packageManager` in `package.json`, and the Node version in the workflows |
 | GitHub Actions | `actions/checkout`, `actions/cache` | A full commit SHA in the workflows ([CI.md](CI.md#permissions-and-supply-chain)) |
 | Developer tools, not shipped | cargo-deny 0.20.2 (MIT OR Apache-2.0, released 2026-07-09, Embark Studios; PO, #75) for `pnpm check:advisories` | The version in `scripts/check-advisories.mjs` and `.github/workflows/advisories.yml`; installed with `cargo install cargo-deny --locked --version 0.20.2` |
-| Services and background processes | none today | — |
+| Services and background processes | The extension store accounts, held by the PO for Singlbase: the Chrome Web Store (publisher Singlbase Technologies Limited), Microsoft Edge Add-ons (Partner Center) and Firefox Add-ons (AMO). They publish the browser extension; the app talks to none of them, and only opens a store page when the user asks ([ADR-0020](decisions/0020-extension-store-distribution.md), #240) | The listings, and the IDs and links in `branding.json` |
 
 ## Approving a new dependency
 

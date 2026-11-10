@@ -13,7 +13,7 @@ Apollo Download Manager and the original Velocity Download Manager (V1) can be i
 | Native-messaging host (#65) | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 | Native host program and its registration (#65) | `velocity-native-host-v2`; manifests and, on Windows, `HKCU` keys named after Apollo DM's host ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#registering-with-each-browser)) | the same | `velocity-native-host`, named after V1's host |
 | Firefox extension ID (#64, #240) | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |
-| Chrome extension IDs (#64) | `adhefdmekgeafmopfbiappajaolcbhkc`, pinned by Apollo DM's own key ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#identity)) | the same | `eecopkg…` |
+| Chrome extension IDs (#64, #240) | `fhhohpcahhmlijibcpppoddcklobfpld`, the Chrome Web Store's item, pinned by its key ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#identity)) | the same | `eecopkg…` |
 | Browser extension name (#64) | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
 
 ## What derives from the identifier

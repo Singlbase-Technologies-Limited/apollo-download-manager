@@ -371,6 +371,18 @@ describe('setting up a browser (#241)', () => {
     expect(screen.getByText(/isn’t in the browser stores yet/)).toBeTruthy();
   });
 
+  it('names only the browsers whose store page isn’t live yet (#240)', async () => {
+    const state = installFakeBackend();
+    installed(state, 'chrome', { storeUrl: 'https://chromewebstore.google.com/detail/abc' });
+    installed(state, 'firefox', {});
+    await openSettings('Browser');
+    const chrome = await screen.findByRole<HTMLButtonElement>('button', { name: 'Get the extension for Google Chrome' });
+    expect(chrome.disabled).toBe(false);
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Get the extension for Mozilla Firefox' }).disabled).toBe(true);
+    expect(screen.getByText(/isn’t in the store for Mozilla Firefox yet/)).toBeTruthy();
+    expect(screen.queryByText(/Google Chrome yet/)).toBeNull();
+  });
+
   it('opens the store page in that browser, and offers the link to copy when it can’t', async () => {
     const state = installFakeBackend();
     const page = 'https://chromewebstore.google.com/detail/apollo/abc';
