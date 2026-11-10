@@ -30,3 +30,6 @@
 *.dylib binary
 *.pdf binary
 *.sqlite3 binary
+
+# Files placed for vcpkg (#454) keep their exact bytes: vcpkg checks their SHA-512.
+scripts/native/vcpkg-downloads/** -text

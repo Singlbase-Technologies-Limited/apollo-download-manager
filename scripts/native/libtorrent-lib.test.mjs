@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LIBTORRENT_VERSION, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
+import { LIBTORRENT_VERSION, PRELOADED_DOWNLOADS, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, preloadAction, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
 
 // The two lines that matter, as vcpkg's libtorrent 2.0.15 package writes them (#62).
 const WINDOWS_TARGETS = String.raw`
@@ -126,5 +128,29 @@ describe('the recorded prefix', () => {
     expect(prefixFor(native, 'vcpkg-installed/x64-linux-release')).toBe(join(native, 'vcpkg-installed', 'x64-linux-release'));
     const absolute = join(process.cwd(), 'old', 'vcpkg-installed', 't');
     expect(prefixFor(native, absolute)).toBe(absolute);
+  });
+});
+
+// #454: github.com rate-limits some files vcpkg's ports fetch, so the repository holds them and the build places them
+// in vcpkg's downloads folder, where vcpkg uses a file whose SHA-512 matches the port's pin instead of downloading it.
+describe('files placed for vcpkg instead of downloaded', () => {
+  const file = { name: 'x.patch', sha512: 'a'.repeat(128) };
+
+  it('is placed when vcpkg does not have it, and left when it has the same file', () => {
+    expect(preloadAction(file, 'a'.repeat(128), null)).toBe('place');
+    expect(preloadAction(file, 'a'.repeat(128), 'a'.repeat(128))).toBe('present');
+    expect(preloadAction(file, 'a'.repeat(128), 'b'.repeat(128))).toBe('place');
+  });
+
+  it("is refused when the repository's copy isn't the one the port pins", () => {
+    expect(() => preloadAction(file, 'b'.repeat(128), null)).toThrow(/x\.patch .*SHA-512/);
+  });
+
+  it("are the repository's files, each with the SHA-512 its vcpkg port pins", () => {
+    expect(PRELOADED_DOWNLOADS.map((f) => f.name)).toEqual(['boost_math_android.patch']);
+    for (const f of PRELOADED_DOWNLOADS) {
+      const bytes = readFileSync(join(import.meta.dirname, 'vcpkg-downloads', f.name));
+      expect(createHash('sha512').update(bytes).digest('hex'), f.name).toBe(f.sha512);
+    }
   });
 });
