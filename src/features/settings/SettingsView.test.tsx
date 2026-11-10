@@ -174,7 +174,7 @@ describe('the Settings screen (#30)', () => {
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
   });
 
-  // #364 (PO): Settings opens in a window over the app, as in VS Code, and the list stays behind it.
+  // #364 (PO): Settings opens in a window over the app, and the list stays behind it.
   it('opens in a window over the list, which stays behind it', async () => {
     installFakeBackend();
     const user = userEvent.setup();

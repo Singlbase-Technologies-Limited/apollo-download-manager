@@ -28,14 +28,15 @@ The PO decides each version, from what the release contains (PO decisions on #25
 - **Releases are built from `main`.** Once a feature is merged, the next release can only be a MINOR one. So while a PATCH release is planned, only fixes are merged into `main` until it's tagged, and features wait.
 - **Checking before a candidate:** `pnpm changelog <last tag>` groups the merged pull requests by their title's type. A `feat:` pull request means a MINOR release at least. If every title is `fix:`, `docs:`, `test:`, `ci:`, `build:` or `chore:`, a PATCH is enough.
 - **Version milestones:** each planned release has a GitHub milestone named after it, such as `v0.1.1`, holding the issues it's planned to contain. The milestones R1 to R10 hold the rest of the roadmap (epic #1).
-- **The plan** (PO decisions, 2026-11-01):
+- **The plan** (PO decisions, 2026-11-01, revised 2026-11-05, 2026-11-07 and 2026-11-10):
 
   | Version | What it contains | Status |
   |---|---|---|
   | 0.1.0 | The first release, Windows and Linux | Released 2026-10-31, as a pre-release |
-  | 0.1.1 | Fixes only: the download log (#251), connections (#221), the battle test (#77) and the bugs it and the PO's testing find | Next |
-  | 0.2.0 | Features: a local `.metalink` file (#222), the login window (#249), plain error messages (#252) | After 0.1.1 |
-  | 1.0.0 | The first production release, after the comparison with V1 (#85), fuzzing (#73) and the release-readiness review ([RELEASE_READINESS.md](RELEASE_READINESS.md), #78) | Later |
+  | 0.1.1 | Fixes only: the download log (#251), connections (#221), the battle test (#77) and the bugs it and the PO's testing found | Released 2026-11-04, as a pre-release |
+  | 0.2.0 | The new name, Apollo Download Manager, with its new window; the browser extension in the Chrome Web Store; the user guide in the app and the website; and features such as a local `.metalink` file (#222), the login window (#249) and plain error messages (#252). The Edge and Firefox store pages follow in a later version (#240, #241) | This version |
+  | 0.3.0 | The load and long-run field test (#337), the ramp field test (#330), mirrors (#324), the extension finding the files on a page (#426), the guide audit (#425), research on other download managers (#427), release signing (#428, #429) and legal due diligence (#441) | Next |
+  | 1.0.0 | The first production release, after the release-readiness review ([RELEASE_READINESS.md](RELEASE_READINESS.md), #78), with the PO's decision on each of its gaps | Later |
 
   Every release before 1.0.0 is published as a pre-release.
 
@@ -75,8 +76,8 @@ Once the PO accepts a candidate, its installers are the release: the release wor
 1. **The PO tags `vX.Y.Z`** on the accepted candidate's commit, within 14 days of its build, while its files are kept.
 2. **The *Release* workflow** ([`release.yml`](../.github/workflows/release.yml)) starts on the tag:
    - **`verify`** refuses a tag that isn't `v<package.json version>`, isn't on `main`, has no green *Main checks* run, or isn't on a candidate's commit (a `v<version>-rc.N` tag; the highest N is the one released). It finds the candidate's run and artifact. Its files gone, it refuses: tag a new candidate.
-   - **`assemble`** downloads the candidate, checks every file against its `SHA256SUMS`, and names them `apollo-download-manager-<version>-<what>`, such as `apollo-download-manager-0.2.0-windows-x64-setup.exe` (`velocity-v2-…` until 0.1.1), with a new `SHA256SUMS`. It attests their build provenance with GitHub's [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations), and takes the notes from `CHANGELOG.md`'s `## <version>` section; without one it refuses.
-   - **`draft`** waits in the `release` environment for the PO's approval ([below](#the-release-environment)), then creates a **draft** GitHub release with the files and the notes. It is the only job that may write.
+   - **`assemble`** downloads the candidate, checks every file against its `SHA256SUMS`, and names them `apollo-download-manager-<version>-<what>`, such as `apollo-download-manager-0.2.0-windows-x64-setup.exe` (`velocity-v2-…` until 0.1.1), and `build-info.json` as `apollo-download-manager-<version>-build-info.json` (#452), with a new `SHA256SUMS`. It attests their build provenance with GitHub's [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations), and takes the notes from `CHANGELOG.md`'s `## <version>` section; without one it refuses. The section's links into the repository, such as `docs/user/installing.md`, become full links to that file at the version's tag, since a release page can't follow a relative one (#452).
+   - **`draft`** waits in the `release` environment for the PO's approval ([below](#the-release-environment)), then creates a **draft** GitHub release with the files and the notes, marked as a pre-release for a version below 1.0.0 (#452). It is the only job that may write.
 3. **The PO publishes the draft,** on GitHub, after a last look. Nothing publishes it automatically.
 4. **The website's download page** updates by itself: publishing the release starts the *Website* workflow, which rebuilds the site from `main` with the new files ([WEBSITE.md](WEBSITE.md#publishing)).
 

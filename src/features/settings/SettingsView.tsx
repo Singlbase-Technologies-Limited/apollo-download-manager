@@ -205,7 +205,7 @@ export function SettingsView() {
 }
 
 /**
- * Settings in a window over the app (#364, PO: as in VS Code): the list stays behind it. Close, Escape or a click
+ * Settings in a window over the app (#364, PO): the list stays behind it. Close, Escape or a click
  * outside closes it, and focus goes back to what opened it. It grows and shrinks with the window, leaving the title
  * bar and the status bar in view (PO, 2026-11-06).
  */

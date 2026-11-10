@@ -195,7 +195,7 @@ export function Splitter({ label, controls, side, value, min, max, onPreview, on
         onReset?.();
       }}
       className={cn(
-        // The 4px gap between two panels, with a 12px hit area (PO, #347: like VS Code's).
+        // The 4px gap between two panels, with a 12px hit area (PO, #347).
         'group/split relative z-20 w-1 shrink-0 cursor-col-resize touch-none select-none outline-none',
         'before:absolute before:inset-y-0 before:-left-1 before:-right-1 before:content-[""]',
         className,

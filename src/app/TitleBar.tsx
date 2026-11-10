@@ -34,7 +34,7 @@ function WindowButton({ label, onClick, danger, children, ref, native }: { label
 }
 
 /**
- * The window's own title bar, in the frame colour so it reads as part of the app, like VS Code's (PO, #347).
+ * The window's own title bar, in the frame colour so it reads as part of the app (PO, #347).
  * The bar drags the window and a double-click maximises it; the icon and title let the drag through.
  */
 /**

@@ -9,7 +9,7 @@ The first version named **Apollo Download Manager**, with a new look, a browser 
 ### A new name and a new window
 
 - **Apollo Download Manager:** a new name, logo, icons and colours, in the app, the installers and the browser extension (#346, #347).
-- **A window in the style of VS Code:** the app draws its own title bar, with Windows 11's snap layouts on the maximise button, and its panels float beside the list (#359, #360, #363).
+- **A new window layout:** the app draws its own title bar, with Windows 11's snap layouts on the maximise button, and its panels float beside the list (#359, #360, #363).
 - **Settings opens over the app,** in a window of its own, instead of replacing the list (#364).
 - **A redesigned details panel,** with a download's actions in its footer. Double-clicking a download opens its details, or its file once it's finished (#349).
 - **Hovering a row** shows values the column cuts off, and says what the download's status means (#424).

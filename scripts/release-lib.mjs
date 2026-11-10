@@ -57,6 +57,8 @@ export function candidateArtifact(artifacts, candidate, commit) {
  * `…-windows-x64-setup.exe` stays `…-windows-x64-setup.exe`. The bytes are the candidate's.
  */
 export function releaseFileName(candidateFile, version) {
+  // The candidate's build-info.json carries no prefix of its own (#452).
+  if (candidateFile === 'build-info.json') return `apollo-download-manager-${version}-build-info.json`;
   const m = /^apollo-download-manager-\d+\.\d+\.\d+-rc\.\d+-[0-9a-f]{7}-\d{8}-(.+)$/.exec(candidateFile);
   if (!m) throw new Error(`${candidateFile} isn't a release candidate's file`);
   return `apollo-download-manager-${version}-${m[1]}`;
@@ -65,14 +67,20 @@ export function releaseFileName(candidateFile, version) {
 /**
  * The release notes: the section of CHANGELOG.md for `version`, whose heading is `## <version>`
  * followed by anything, such as ` - 2026-11-02`, up to the next `## `. Throws when there is none:
- * a release needs its notes written first (docs/RELEASE_PROCESS.md).
+ * a release needs its notes written first (docs/RELEASE_PROCESS.md). A link into the repository,
+ * such as `docs/user/installing.md#upgrading`, points at that file at the version's tag in `repo`
+ * (`owner/name`), since a release page can't resolve a relative link (#452).
  */
-export function releaseNotes(changelog, version) {
+export function releaseNotes(changelog, version, repo) {
   const lines = changelog.split(/\r?\n/);
   const start = lines.findIndex((l) => l === `## ${version}` || l.startsWith(`## ${version} `));
   if (start === -1) throw new Error(`CHANGELOG.md has no "## ${version}" section: write the release notes first (docs/RELEASE_PROCESS.md)`);
   const end = lines.findIndex((l, i) => i > start && l.startsWith('## '));
   const body = lines.slice(start + 1, end === -1 ? undefined : end).join('\n').trim();
   if (!body) throw new Error(`CHANGELOG.md's "## ${version}" section is empty`);
-  return `${body}\n`;
+  const linked = body.replace(/\]\((?![a-z][a-z0-9+.-]*:|#)([^)\s]+)\)/gi, (_, path) => {
+    if (!repo) throw new Error(`the notes link to ${path}, and no repository was given to point it at`);
+    return `](https://github.com/${repo}/blob/v${version}/${path})`;
+  });
+  return `${linked}\n`;
 }

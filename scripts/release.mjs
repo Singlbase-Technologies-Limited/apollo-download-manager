@@ -83,12 +83,12 @@ function assemble(candidateDir, out) {
   }
   mkdirSync(out, { recursive: true });
   const released = listed.map(({ name, sha256: hash }) => {
-    const to = name === 'build-info.json' ? `velocity-v2-${version}-build-info.json` : releaseFileName(name, version);
+    const to = releaseFileName(name, version);
     copyFileSync(join(candidateDir, name), join(out, to));
     return { name: to, sha256: hash };
   });
   writeFileSync(join(out, 'SHA256SUMS'), sha256sums(released));
-  writeFileSync(join(dirname(out), 'notes.md'), releaseNotes(readFileSync(join(root, 'CHANGELOG.md'), 'utf8'), version));
+  writeFileSync(join(dirname(out), 'notes.md'), releaseNotes(readFileSync(join(root, 'CHANGELOG.md'), 'utf8'), version, process.env.GITHUB_REPOSITORY));
   console.log(`v${version}: ${String(released.length)} files, every one the candidate's\n${released.map((f) => `  ${f.name}`).join('\n')}\n  SHA256SUMS`);
 }
 

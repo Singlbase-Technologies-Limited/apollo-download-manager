@@ -1,6 +1,6 @@
 # Packaging
 
-How Apollo Download Manager becomes an installer: Windows (#81) and Linux (#82) are built; macOS is #83. Release-candidate builds and releases come later (#17, #18): nothing here publishes, signs or releases anything.
+How Apollo Download Manager becomes an installer: Windows (#81) and Linux (#82) are built; macOS isn't planned (#83). Release candidates and releases are made from these packages by CI ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md), [RELEASE_PROCESS.md](RELEASE_PROCESS.md)). Nothing is signed ([Signing](#signing)).
 
 ## The Windows installer
 

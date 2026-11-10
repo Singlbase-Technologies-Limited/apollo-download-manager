@@ -6,7 +6,7 @@ The installed app, used the way a person uses it, with real downloads from real 
 
 1. **Build and install the app from `main`:** `pnpm native:build`, then `pnpm package:windows` ([docs/PACKAGING.md](../../docs/PACKAGING.md#the-windows-installer)). Install it per-user with `/S`, or by hand. It replaces the V2 already installed; its settings and downloads are kept.
 2. **Quit the app** from the tray if it's running. It runs one instance, so a running app without the debugging port can't be driven.
-3. **Not as administrator:** WebView2 ignores the debugging port in an elevated app by design (WebView2Feedback #5640, #5645), so `pnpm field start` refuses at once when the terminal, or VS Code, runs as administrator (#397). Start it normally.
+3. **Not as administrator:** WebView2 ignores the debugging port in an elevated app by design (WebView2Feedback #5640, #5645), so `pnpm field start` refuses at once when the terminal, or the editor it runs in, runs as administrator (#397). Start it normally.
 4. **From a terminal that leaves the app running:** PowerShell or a normal terminal. A tool that ends every program a command started once the command finishes, such as an AI agent's Git Bash tool, ends the app too.
 5. **Agree the data budget with the PO:** at most 20 GB a session unless the PO says otherwise. Delete the big files after each scenario, with the app's own *Delete files of selected…*.
 
