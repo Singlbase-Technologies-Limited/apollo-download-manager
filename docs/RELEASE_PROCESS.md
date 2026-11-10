@@ -35,7 +35,7 @@ The PO decides each version, from what the release contains (PO decisions on #25
   | 0.1.0 | The first release, Windows and Linux | Released 2026-10-31, as a pre-release |
   | 0.1.1 | Fixes only: the download log (#251), connections (#221), the battle test (#77) and the bugs it and the PO's testing find | Next |
   | 0.2.0 | Features: a local `.metalink` file (#222), the login window (#249), plain error messages (#252) | After 0.1.1 |
-  | 1.0.0 | The first production release, after the comparison with V1 (#85), fuzzing (#73) and the release-readiness review (#78) | Later |
+  | 1.0.0 | The first production release, after the comparison with V1 (#85), fuzzing (#73) and the release-readiness review ([RELEASE_READINESS.md](RELEASE_READINESS.md), #78) | Later |
 
   Every release before 1.0.0 is published as a pre-release.
 
@@ -57,6 +57,8 @@ The PO decides each version, from what the release contains (PO decisions on #25
 - **Who:** the PO only. The *Release Tags* ruleset lets only admins create, move or delete `v*` tags ([REPOSITORY_SETTINGS.md](REPOSITORY_SETTINGS.md#rules-for-the-main-branch)), so an agent prepares the exact command and the PO runs it.
 
 ## Before a candidate
+
+[RELEASE_READINESS.md](RELEASE_READINESS.md) is brought up to date for the version, and the PO decides each of its open gaps.
 
 The [`/release-candidate`](../.claude/skills/release-candidate/SKILL.md) skill walks through these, and changes nothing without the PO's approval:
 

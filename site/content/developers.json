@@ -30,7 +30,7 @@
     },
     {
       "title": "Releases and versioning",
-      "pages": ["RELEASE_PROCESS.md", "RELEASE_CANDIDATES.md", "REPOSITORY_SETTINGS.md"]
+      "pages": ["RELEASE_PROCESS.md", "RELEASE_READINESS.md", "RELEASE_CANDIDATES.md", "REPOSITORY_SETTINGS.md"]
     },
     {
       "title": "Troubleshooting",
