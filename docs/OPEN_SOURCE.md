@@ -53,5 +53,5 @@ The PO does these, in this order:
 
 ## After going public
 
-- **The deferred testing** (PO decision, 2026-10-31): every check not run since then, the container install tests (#82), the first release candidate (#17), the parity check (#85), the stress and fuzz tests (#77, #73), and the release-readiness review (#78).
+- **The deferred testing** (PO decision, 2026-10-31): every check not run since then, the container install tests (#82), the first release candidate (#17), the parity check (#85), the stress and fuzz tests (#77, #73), and the release-readiness review ([RELEASE_READINESS.md](RELEASE_READINESS.md), #78).
 - **The CLA's legal review,** before the first outside contribution is merged.
