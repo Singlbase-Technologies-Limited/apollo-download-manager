@@ -17,7 +17,7 @@ import { homedir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { LIBTORRENT_INFO_SCHEMA, PRELOADED_DOWNLOADS, TRIPLETS, checkLibtorrentInfo, preloadAction, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
+import { LIBTORRENT_INFO_SCHEMA, PRELOADED_DOWNLOADS, TRIPLETS, checkLibtorrentInfo, preloadAction, vcpkgInstallArgs, librariesForLibtorrent, parsePackageVersion, parseTargets, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
 import { NATIVE_DIR, hostTarget } from './fetch.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -115,7 +115,7 @@ export function buildLibtorrent({ target = hostTarget(), force = false, log = co
 
   const vcpkg = findVcpkg();
   placeDownloads(process.env.VCPKG_DOWNLOADS || join(vcpkg.root, 'downloads'), log);
-  const args = ['install', '--triplet', triplet, `--x-manifest-root=${MANIFEST_DIR}`, `--x-install-root=${INSTALL_ROOT}`, '--clean-after-build'];
+  const args = vcpkgInstallArgs(triplet, MANIFEST_DIR, INSTALL_ROOT);
   log(`$ ${[vcpkg.exe, ...args].join(' ')}`);
   const r = spawnSync(vcpkg.exe, args, { stdio: 'inherit', env: { ...process.env, VCPKG_DISABLE_METRICS: '1' } });
   if (r.error) throw new Error(`vcpkg could not start: ${r.error.message}`);

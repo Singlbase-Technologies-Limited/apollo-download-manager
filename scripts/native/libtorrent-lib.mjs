@@ -32,6 +32,15 @@ export const PRELOADED_DOWNLOADS = [
 ];
 
 /**
+ * `vcpkg install`'s arguments. It cleans build trees and packages after each package to save disk,
+ * but keeps downloads: `--clean-after-build` would also empty vcpkg's downloads folder, and with it
+ * the files placed there (#454).
+ */
+export function vcpkgInstallArgs(triplet, manifestRoot, installRoot) {
+  return ['install', '--triplet', triplet, `--x-manifest-root=${manifestRoot}`, `--x-install-root=${installRoot}`, '--clean-buildtrees-after-build', '--clean-packages-after-build'];
+}
+
+/**
  * What to do with a file of PRELOADED_DOWNLOADS, from the SHA-512 of the repository's copy and of
  * the one in vcpkg's downloads folder (`null` when there is none): 'place' it, or leave it
  * 'present'. A repository copy that isn't the pinned file is refused, never placed.

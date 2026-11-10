@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { LIBTORRENT_VERSION, PRELOADED_DOWNLOADS, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, preloadAction, prefixFor, recordedPrefix } from './libtorrent-lib.mjs';
+import { LIBTORRENT_VERSION, PRELOADED_DOWNLOADS, TRIPLETS, checkLibtorrentInfo, librariesForLibtorrent, parsePackageVersion, parseTargets, preloadAction, prefixFor, recordedPrefix, vcpkgInstallArgs } from './libtorrent-lib.mjs';
 
 // The two lines that matter, as vcpkg's libtorrent 2.0.15 package writes them (#62).
 const WINDOWS_TARGETS = String.raw`
@@ -144,6 +144,16 @@ describe('files placed for vcpkg instead of downloaded', () => {
 
   it("is refused when the repository's copy isn't the one the port pins", () => {
     expect(() => preloadAction(file, 'b'.repeat(128), null)).toThrow(/x\.patch .*SHA-512/);
+  });
+
+  // --clean-after-build also empties vcpkg's downloads after each package, which removed the placed file before
+  // boost-math was built (PR 455's first CI run).
+  it('stay in place while vcpkg builds: it cleans build trees and packages, never downloads', () => {
+    const args = vcpkgInstallArgs('x64-linux-release', '/m', '/i');
+    expect(args.slice(0, 5)).toEqual(['install', '--triplet', 'x64-linux-release', '--x-manifest-root=/m', '--x-install-root=/i']);
+    expect(args).toContain('--clean-buildtrees-after-build');
+    expect(args).toContain('--clean-packages-after-build');
+    expect(args.filter((a) => /^--clean-(after-build|downloads-after-build)$/.test(a))).toEqual([]);
   });
 
   it("are the repository's files, each with the SHA-512 its vcpkg port pins", () => {
