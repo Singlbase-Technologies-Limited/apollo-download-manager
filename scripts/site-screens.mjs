@@ -77,6 +77,11 @@ const CATEGORIES = [
   ['images', 'Disk images', '#64748b', 'disc', 'iso img vhd vhdx vmdk qcow2'],
 ].map(([id, name, color, icon, extensions]) => ({ id, name, color, icon, extensions: extensions.split(' '), directory: null, builtin: true }));
 
+// Each browser's store page, as the app takes it from branding.json (Browser::store_url): Chromium and Brave use the
+// Chrome Web Store's.
+const STORE_URLS = JSON.parse(readFileSync(join(root, 'branding.json'), 'utf8')).extensionStoreUrls;
+const STORE_OF = { chrome: 'chrome', chromium: 'chrome', brave: 'chrome', edge: 'edge', firefox: 'firefox' };
+
 function browserIntegration() {
   const browser = fixture('browser-integration.json');
   browser.hostPath = 'C:\\Program Files\\Apollo Download Manager\\native-host.exe';
@@ -86,6 +91,7 @@ function browserIntegration() {
     r.found = installed ? { program: `C:\\Program Files\\${r.browser}\\${r.browser}.exe`, sandboxed: false } : null;
     r.registered = r.browser === 'chrome' || r.browser === 'edge';
     r.hostMatches = r.registered;
+    r.storeUrl = STORE_URLS[STORE_OF[r.browser]] ?? null;
   }
   return browser;
 }
@@ -112,6 +118,7 @@ function installBackend(d) {
     list_categories: () => d.categories,
     get_capabilities: () => d.capabilities,
     get_browser_integration: () => d.browser,
+    take_browser_requests: () => [],
     get_settings: () => d.settings,
     get_storage_settings: () => d.settings.storage,
     get_proxy_password_set: () => false,
