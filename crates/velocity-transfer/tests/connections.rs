@@ -332,8 +332,11 @@ fn adaptive_connections_start_with_all_asked_for_and_keep_each_that_helps() {
     let _serial = one_at_a_time();
     // Per-connection throttle: every connection adds 1 MiB/s, so losing one of the 4 asked for
     // costs 25%, well clear of the 10% threshold and of measurement noise on a loaded machine.
-    // 64 MiB, about 17 s: still running after the 4th is judged, at about 9 s.
-    let data = seeded_bytes(64 * MIB, 52);
+    // The ramp judges the 4th twice (#281): 4, then 3, the 4th back, 3 again, and it keeps 4, at
+    // about 19 s on a desktop (#457). The throttle, not the machine, sets the download's length:
+    // 256 MiB, about 66 s, so it still runs when CI's slower runners stretch the ramp's windows
+    // (#154). 64 MiB ended at 18.5 s, before the decision, and CI's Windows runs timed out.
+    let data = seeded_bytes(256 * MIB, 52);
     let server = throttled_server(&data, MIB as u64, None);
     let dir = Dir::new("start-at-four");
     let control = Arc::new(Control::default());
@@ -341,18 +344,31 @@ fn adaptive_connections_start_with_all_asked_for_and_keep_each_that_helps() {
         connections: 4,
         ..ADAPTIVE
     };
+    let timeline = ramp_timeline(&control);
     let download = run(&server, &dir, four, &control);
     // All 4 from the start (PO decision on #221). #47's climb took at least 6 s to reach them.
     wait_until(Duration::from_secs(5), "4 responses run", || {
         server.counters().answering == 4
     });
-    // After 2 windows it tries 3, and the 4th, which helped, comes back.
-    wait_until(Duration::from_secs(20), "it tries without the 4th", || {
-        control.connections_now().tuned == Some((3, Tuning::RampingUp))
-    });
-    wait_until(Duration::from_secs(20), "it keeps the 4 asked for", || {
-        control.connections_now().tuned.is_none() && server.counters().answering == 4
-    });
+    let trying_three = || control.connections_now().tuned == Some((3, Tuning::RampingUp));
+    let four_settled =
+        || control.connections_now().tuned.is_none() && server.counters().answering == 4;
+    // Each step in turn (#281): after 2 windows it tries 3; the 4th, which helped, comes back and
+    // is measured afresh; it tries 3 again; the second loss keeps the 4th.
+    for (what, done) in [
+        (
+            "it tries without the 4th",
+            &trying_three as &dyn Fn() -> bool,
+        ),
+        ("the 4th comes back", &four_settled),
+        ("it judges the 4th again", &trying_three),
+        ("it keeps the 4 asked for", &four_settled),
+    ] {
+        wait_until_showing(Duration::from_secs(40), what, Some(&timeline), done);
+    }
+    // Kept for good: no third try.
+    std::thread::sleep(Duration::from_secs(5));
+    assert!(four_settled(), "it still keeps 4:\n{}", timeline.text());
     let (dest, report) = download.join().unwrap();
     // Counted by the engine: the server may count a stopped request's tail as one more (#154).
     assert_eq!(report.peak_requests, 4, "never more than asked");
