@@ -31,27 +31,22 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
 use rusqlite::Connection;
-use rusqlite_migration::{Migrations, M};
 
 use crate::domain::ErrorCode;
 
-const MIGRATIONS: &[M<'static>] = &[
-    M::up(include_str!("../../migrations/0001_initial.sql")),
-    M::up(include_str!("../../migrations/0002_checkpoints.sql")),
-    M::up(include_str!("../../migrations/0003_queue.sql")),
-    M::up(include_str!("../../migrations/0004_verification.sql")),
-    M::up(include_str!("../../migrations/0005_torrents.sql")),
-    M::up(include_str!("../../migrations/0006_builtin_categories.sql")),
-    M::up(include_str!("../../migrations/0007_activity.sql")),
-    M::up(include_str!("../../migrations/0008_two_at_once.sql")),
-    M::up(include_str!("../../migrations/0009_start_at.sql")),
-    M::up(include_str!("../../migrations/0010_host_memory.sql")),
+/// Each migration's SQL, in order: migration `n` takes the schema from version `n - 1` to `n`.
+const MIGRATIONS: &[&str] = &[
+    include_str!("../../migrations/0001_initial.sql"),
+    include_str!("../../migrations/0002_checkpoints.sql"),
+    include_str!("../../migrations/0003_queue.sql"),
+    include_str!("../../migrations/0004_verification.sql"),
+    include_str!("../../migrations/0005_torrents.sql"),
+    include_str!("../../migrations/0006_builtin_categories.sql"),
+    include_str!("../../migrations/0007_activity.sql"),
+    include_str!("../../migrations/0008_two_at_once.sql"),
+    include_str!("../../migrations/0009_start_at.sql"),
+    include_str!("../../migrations/0010_host_memory.sql"),
 ];
-
-/// The migrations this build applies.
-pub fn migrations() -> Migrations<'static> {
-    Migrations::from_slice(MIGRATIONS)
-}
 
 /// The schema version this build writes.
 pub fn latest_schema_version() -> u32 {
@@ -98,16 +93,14 @@ impl Database {
     /// Opens the database at `path`, creating it owner-only if it doesn't exist, and upgrades it
     /// to this build's schema.
     pub fn open(path: &Path) -> Result<Self, DatabaseError> {
-        open_with(path, &migrations())
+        open_with(path, MIGRATIONS)
     }
 
     /// A database in memory, at the latest schema, for tests and tools.
     pub fn open_in_memory() -> Result<Self, DatabaseError> {
         let mut conn = Connection::open_in_memory()?;
         configure(&conn)?;
-        migrations()
-            .to_latest(&mut conn)
-            .map_err(|e| DatabaseError::new(ErrorCode::DatabaseMigration, e.to_string()))?;
+        to_latest(&mut conn, MIGRATIONS)?;
         Ok(Database {
             conn: Mutex::new(conn),
             path: None,
@@ -230,7 +223,7 @@ fn configure(conn: &Connection) -> Result<(), DatabaseError> {
 }
 
 /// [`Database::open`] with the given migrations (tests add one to prove the upgrade path).
-fn open_with(path: &Path, migrations: &Migrations<'_>) -> Result<Database, DatabaseError> {
+fn open_with(path: &Path, migrations: &[&str]) -> Result<Database, DatabaseError> {
     let existed = match std::fs::symlink_metadata(path) {
         // Never follow a link to somewhere else (persistence rule).
         Ok(m) if crate::fs_safety::is_link(&m) || !m.is_file() => {
@@ -248,7 +241,7 @@ fn open_with(path: &Path, migrations: &Migrations<'_>) -> Result<Database, Datab
             ))
         }
     };
-    let known = latest_of(migrations);
+    let known = migrations.len();
     if existed {
         let found = header_version(path)?;
         if found as usize > known {
@@ -267,11 +260,12 @@ fn open_with(path: &Path, migrations: &Migrations<'_>) -> Result<Database, Datab
     if existed && current > 0 && (current as usize) < known {
         backup(&conn, path, current)?;
     }
-    migrations.to_latest(&mut conn).map_err(|e| {
+    to_latest(&mut conn, migrations).map_err(|e| {
         DatabaseError::new(
             ErrorCode::DatabaseMigration,
             format!(
-                "upgrading from schema {current} failed; the database and its backup were kept: {e}"
+                "upgrading from schema {current} failed; the database and its backup were kept: {}",
+                e.detail
             ),
         )
     })?;
@@ -281,13 +275,26 @@ fn open_with(path: &Path, migrations: &Migrations<'_>) -> Result<Database, Datab
     })
 }
 
-/// The schema version `migrations` lead to.
-fn latest_of(migrations: &Migrations<'_>) -> usize {
-    // An in-memory database at version 0 has every migration pending.
-    Connection::open_in_memory()
-        .ok()
-        .and_then(|c| migrations.pending_migrations(&c).ok())
-        .map_or(0, |n| n.max(0) as usize)
+/// Applies the migrations `conn` doesn't have yet, all in one transaction, and records the new
+/// version in `PRAGMA user_version`: a failure undoes every one of them (#446, in place of
+/// `rusqlite_migration`). A database newer than `migrations` is refused unchanged.
+fn to_latest(conn: &mut Connection, migrations: &[&str]) -> Result<(), DatabaseError> {
+    let current = user_version(conn)? as usize;
+    if current > migrations.len() {
+        return Err(newer(current as u32, migrations.len()));
+    }
+    let Some(pending) = migrations.get(current..).filter(|p| !p.is_empty()) else {
+        return Ok(());
+    };
+    let tx = conn.transaction()?;
+    for sql in pending {
+        tx.execute_batch(sql)?;
+    }
+    let latest = u32::try_from(migrations.len())
+        .map_err(|_| DatabaseError::new(ErrorCode::DatabaseMigration, "too many migrations"))?;
+    tx.pragma_update(None, "user_version", latest)?;
+    tx.commit()?;
+    Ok(())
 }
 
 /// Copies the database next to itself before an upgrade: `<file>.bak-v<version>-<ms>`.
@@ -349,10 +356,10 @@ mod tests {
     }
 
     /// This build's migrations plus a test-only next one, to prove the upgrade path.
-    fn with_next(sql: &'static str) -> Migrations<'static> {
+    fn with_next(sql: &'static str) -> Vec<&'static str> {
         let mut all = MIGRATIONS.to_vec();
-        all.push(M::up(sql));
-        Migrations::new(all)
+        all.push(sql);
+        all
     }
 
     const NEXT: &str = "ALTER TABLE downloads ADD COLUMN note TEXT;";
@@ -379,7 +386,8 @@ mod tests {
 
     #[test]
     fn the_migrations_are_valid() {
-        assert_eq!(migrations().validate(), Ok(()));
+        let db = Database::open_in_memory().expect("every migration applies");
+        assert_eq!(db.schema_version(), Ok(10));
         assert_eq!(latest_schema_version(), 10);
     }
 
@@ -439,7 +447,7 @@ mod tests {
     fn an_upgrade_backs_up_first_and_keeps_the_data() {
         let dir = Dir::new("upgrade");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(MIGRATIONS)).unwrap();
+            let db = open_with(&dir.db(), MIGRATIONS).unwrap();
             db.insert_download(&sample("d-0001")).unwrap();
         }
         let latest = latest_schema_version();
@@ -486,6 +494,27 @@ mod tests {
         assert_eq!(dir.names(), names, "no file was added: no backup, no WAL");
     }
 
+    /// #446: two pending migrations run in one transaction, so when the second fails the first
+    /// is undone too, and the database stays exactly at its version.
+    #[test]
+    fn an_upgrade_is_all_or_nothing() {
+        let dir = Dir::new("all-or-nothing");
+        drop(Database::open(&dir.db()).unwrap());
+        let mut both = with_next(NEXT);
+        both.push("THIS IS NOT SQL;");
+        assert!(open_with(&dir.db(), &both).is_err(), "the upgrade fails");
+        let conn = Connection::open(dir.db()).unwrap();
+        assert_eq!(user_version(&conn), Ok(latest_schema_version()));
+        let note: u32 = conn
+            .query_row(
+                "SELECT count(*) FROM pragma_table_info('downloads') WHERE name = 'note'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(note, 0, "the first pending migration was undone too");
+    }
+
     #[test]
     fn a_failed_upgrade_keeps_the_data_and_the_backup() {
         let dir = Dir::new("failed");
@@ -514,7 +543,7 @@ mod tests {
         // Migration 0002 (#43), from the previous schema with a record in it.
         let dir = Dir::new("v1-to-v2");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..1])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..1]).unwrap();
             assert_eq!(db.schema_version(), Ok(1));
             db.insert_download(&sample("d-0001")).unwrap();
         }
@@ -531,7 +560,7 @@ mod tests {
         // Migration 0003 (#50), from the previous schema with a record in it.
         let dir = Dir::new("v2-to-v3");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..2])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..2]).unwrap();
             assert_eq!(db.schema_version(), Ok(2));
             db.insert_download(&sample("d-0001")).unwrap();
         }
@@ -554,7 +583,7 @@ mod tests {
         // Migration 0004 (#58), from the previous schema with a record in it.
         let dir = Dir::new("v3-to-v4");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..3])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..3]).unwrap();
             assert_eq!(db.schema_version(), Ok(3));
             db.insert_download(&sample("d-0001")).unwrap();
         }
@@ -605,7 +634,7 @@ mod tests {
         for (name, saved, expected) in cases {
             let dir = Dir::new(&format!("v7-to-v8-{name}"));
             {
-                let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..7])).unwrap();
+                let db = open_with(&dir.db(), &MIGRATIONS[..7]).unwrap();
                 assert_eq!(db.schema_version(), Ok(7));
                 if let Some(saved) = &saved {
                     db.save_settings(saved, 1).unwrap();
@@ -630,7 +659,7 @@ mod tests {
     fn schema_8_is_upgraded_with_its_queue_and_gains_a_start_time() {
         let dir = Dir::new("v8-to-v9");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..8])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..8]).unwrap();
             assert_eq!(db.schema_version(), Ok(8));
             db.insert_download(&sample("d-0001")).unwrap();
             db.conn()
@@ -681,7 +710,7 @@ mod tests {
     fn schema_9_is_upgraded_with_its_downloads_and_gains_a_memory_of_servers() {
         let dir = Dir::new("v9-to-v10");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..9])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..9]).unwrap();
             assert_eq!(db.schema_version(), Ok(9));
             db.insert_download(&sample("d-0001")).unwrap();
         }
@@ -697,7 +726,7 @@ mod tests {
         // Migration 0007 (#59), from the previous schema with a record in it.
         let dir = Dir::new("v6-to-v7");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..6])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..6]).unwrap();
             assert_eq!(db.schema_version(), Ok(6));
             db.insert_download(&sample("d-0001")).unwrap();
         }
@@ -722,7 +751,7 @@ mod tests {
         // Migration 0006 (#31), from the previous schema with a record in it.
         let dir = Dir::new("v5-to-v6");
         {
-            let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..5])).unwrap();
+            let db = open_with(&dir.db(), &MIGRATIONS[..5]).unwrap();
             assert_eq!(db.schema_version(), Ok(5));
             db.insert_download(&sample("d-0001")).unwrap();
         }
@@ -1192,7 +1221,7 @@ mod tests {
             // Migration 0005 (#58), from the previous schema with a record in it.
             let dir = Dir::new("v4-to-v5");
             {
-                let db = open_with(&dir.db(), &Migrations::from_slice(&MIGRATIONS[..4])).unwrap();
+                let db = open_with(&dir.db(), &MIGRATIONS[..4]).unwrap();
                 assert_eq!(db.schema_version(), Ok(4));
                 db.insert_download(&sample("d-0001")).unwrap();
             }

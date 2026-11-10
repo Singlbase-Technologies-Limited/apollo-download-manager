@@ -15,7 +15,7 @@ The code is in [`crates/velocity-core/src/database/`](../crates/velocity-core/sr
   - foreign keys on;
   - a 5-second busy timeout;
   - *defensive* mode, which refuses SQL that could corrupt the file. Both SQLite CVEs fixed in 3.53.2 needed defensive mode off.
-- **SQLite:** 3.53.2, compiled into Apollo Download Manager from the source inside `libsqlite3-sys` ([DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies)).
+- **SQLite:** 3.54.1, compiled into Apollo Download Manager from the source inside `libsqlite3-sys` ([DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies)).
 
 ## Schema
 
@@ -56,7 +56,7 @@ When the app opens the database:
 
 1. **A newer database is refused unmodified.** The version is read from the file's header before SQLite opens it, so nothing is written. A database from a later Apollo Download Manager is `DATABASE_MIGRATION`, and the file and its folder are left exactly as they were. Downgrading needs the backup that the later version made.
 2. **Before an upgrade, a backup.** An existing database at an older version is copied next to itself with `VACUUM INTO`, as `<file>.bak-v<old version>-<ms>`, owner-only.
-3. **The migrations run in one transaction** ([`rusqlite_migration`](DEPENDENCIES.md#approved-direct-dependencies)), and `user_version` is set to the new version.
+3. **The migrations run in one transaction,** and `user_version` is set to the new version. The runner is Apollo Download Manager's own (`to_latest` in `crates/velocity-core/src/database/mod.rs`); it replaced `rusqlite_migration` in #446, which kept `rusqlite` from the SQLite fix.
 4. **A failed upgrade changes nothing.** The transaction rolls back, and the database stays at its old version with its data. The error is `DATABASE_MIGRATION`, and the backup stays. User data is never deleted or recreated to repair a migration.
 
 ## Adding a migration

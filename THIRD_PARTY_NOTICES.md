@@ -15,7 +15,7 @@ Linked into V2's programs. The rules for each are in docs/LICENSING.md.
 | openssl | 3.5.9 | Apache-2.0 | Apache-2.0 | https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz |
 | zlib | 1.3.2 | Zlib | Zlib | https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz |
 
-## Rust crates (578)
+## Rust crates (577)
 
 In the app, the transfer engine, the torrent helper and the browser's native host, on every target platform.
 
@@ -264,7 +264,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | libdbus-sys | 0.2.7 | Apache-2.0/MIT | MIT | https://github.com/diwic/dbus-rs |
 | libloading | 0.7.4 | ISC | ISC | https://github.com/nagisa/rust_libloading/ |
 | libredox | 0.1.25 | MIT | MIT | https://gitlab.redox-os.org/redox-os/libredox.git |
-| libsqlite3-sys | 0.38.2 | MIT | MIT | https://github.com/rusqlite/rusqlite |
+| libsqlite3-sys | 0.39.1 | MIT | MIT | https://github.com/rusqlite/rusqlite |
 | libz-sys | 1.1.31 | MIT OR Apache-2.0 | MIT | https://github.com/rust-lang/libz-sys |
 | link-cplusplus | 1.0.12 | MIT OR Apache-2.0 | MIT | https://github.com/dtolnay/link-cplusplus |
 | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | MIT | https://github.com/sunfishcode/linux-raw-sys |
@@ -381,8 +381,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | ring | 0.17.14 | Apache-2.0 AND ISC | Apache-2.0 AND ISC | https://github.com/briansmith/ring |
 | rsa | 0.10.0-rc.18 | MIT OR Apache-2.0 | MIT | https://github.com/RustCrypto/RSA |
 | rsqlite-vfs | 0.1.1 | MIT | MIT | https://crates.io/crates/rsqlite-vfs/0.1.1 |
-| rusqlite | 0.40.2 | MIT | MIT | https://github.com/rusqlite/rusqlite |
-| rusqlite_migration | 2.6.0 | Apache-2.0 | Apache-2.0 | https://github.com/cljoly/rusqlite_migration |
+| rusqlite | 0.41.1 | MIT | MIT | https://github.com/rusqlite/rusqlite |
 | russh | 0.65.0 | Apache-2.0 | Apache-2.0 | https://github.com/warp-tech/russh |
 | russh-cryptovec | 0.62.0 | Apache-2.0 | Apache-2.0 | https://github.com/warp-tech/russh |
 | russh-sftp | 3.0.1 | Apache-2.0 | Apache-2.0 | https://github.com/AspectUnk/russh-sftp |
@@ -6804,7 +6803,7 @@ SOFTWARE.
 
 ### 139. MIT
 
-Used by: libsqlite3-sys 0.38.2, rusqlite 0.40.2.
+Used by: libsqlite3-sys 0.39.1, rusqlite 0.41.1.
 
 ````text
 Copyright (c) 2014 The rusqlite developers
@@ -11443,7 +11442,6 @@ SOFTWARE.
 These components ship no licence file. They are used under the standard text of their licence; each is named with the authors its package metadata gives:
 
 - pageant 0.2.5, by Eugene
-- rusqlite_migration 2.6.0, by Clément Joly
 - russh 0.65.0, by Pierre-Étienne Meunier
 - russh-cryptovec 0.62.0, by Pierre-Étienne Meunier, Eugeny <e@ajenti.org
 - russh-util 0.52.0
