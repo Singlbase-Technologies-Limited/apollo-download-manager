@@ -1136,6 +1136,7 @@ mod tests {
                 download_limit: 0,
                 in_order: true,
                 ends_first: false,
+                trackers_saved: true,
             }
         }
 

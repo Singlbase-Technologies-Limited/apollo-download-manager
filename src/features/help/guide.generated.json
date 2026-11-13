@@ -5072,7 +5072,33 @@
          },
          {
           "type": "text",
-          "text": " Apollo Download Manager doesn't keep tracker addresses, which can carry passkeys, when it closes. A private torrent then finds no peers; add it again from its "
+          "text": " tracker addresses can carry your passkey, so Apollo Download Manager keeps them only if you tick "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Remember this torrent's trackers in the system keychain"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ", in the Add dialog or in "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Edit…"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " from the details panel. Then the torrent finds its peers again after a restart. Without it, a private torrent finds no peers after a restart; add it again from its "
          },
          {
           "type": "code",
@@ -5080,7 +5106,20 @@
          },
          {
           "type": "text",
-          "text": " file or magnet link."
+          "text": " file or magnet link. The details panel's "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Trackers"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " row says whether they're remembered."
          }
         ]
        }
@@ -5192,7 +5231,7 @@
     {
      "anchor": "not-yet-or-different-from-v1",
      "heading": "Not yet, or different from V1",
-     "text": "Private torrents after a restart: Apollo Download Manager doesn't keep tracker addresses, which can carry passkeys, when it closes. A private torrent then finds no peers; add it again from its .torrent file or magnet link. Connections for a torrent are the torrent helper's own, so a torrent's details don't offer a connection count. Through a proxy, torrents don't look for peers on the local network or map a port, use the DHT only through a SOCKS5 proxy, and can't use an HTTPS proxy at all (Settings)."
+     "text": "Private torrents after a restart: tracker addresses can carry your passkey, so Apollo Download Manager keeps them only if you tick Remember this torrent's trackers in the system keychain, in the Add dialog or in Edit… from the details panel. Then the torrent finds its peers again after a restart. Without it, a private torrent finds no peers after a restart; add it again from its .torrent file or magnet link. The details panel's Trackers row says whether they're remembered. Connections for a torrent are the torrent helper's own, so a torrent's details don't offer a connection count. Through a proxy, torrents don't look for peers on the local network or map a port, use the DHT only through a SOCKS5 proxy, and can't use an HTTPS proxy at all (Settings)."
     }
    ],
    "file": "torrents.md"

@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 37;
+export const COMMAND_API_VERSION = 38;
 
 const bytes = z.number().int().nonnegative();
 
@@ -644,6 +644,10 @@ export const TorrentDetailsSchema = z.strictObject({
   seeding: SeedPolicySchema,
   /** 0 for no limit. */
   uploadLimitBps: bytes,
+  /** Its trackers are remembered in the system keychain (#472). */
+  trackersSaved: z.boolean(),
+  /** They were remembered, but couldn't be read back after a restart: it has none. */
+  trackersMissing: z.boolean(),
   /** `null` until its metadata is known. */
   contents: TorrentContentsSchema.nullable(),
   /** `null` for every file. */

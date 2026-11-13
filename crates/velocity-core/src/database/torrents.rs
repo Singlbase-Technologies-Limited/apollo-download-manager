@@ -47,6 +47,10 @@ pub struct TorrentOptions {
     pub in_order: bool,
     #[serde(default)]
     pub ends_first: bool,
+    /// Its trackers are saved in the system keychain, at the user's request (#472, ADR-0021);
+    /// never the trackers themselves. Off in options stored before this existed.
+    #[serde(default)]
+    pub trackers_saved: bool,
 }
 
 /// A torrent read back.

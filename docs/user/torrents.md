@@ -54,6 +54,6 @@ Settings, BitTorrent holds the torrent settings: DHT, peer exchange and local pe
 
 ## Not yet, or different from V1
 
-- **Private torrents after a restart:** Apollo Download Manager doesn't keep tracker addresses, which can carry passkeys, when it closes. A private torrent then finds no peers; add it again from its `.torrent` file or magnet link.
+- **Private torrents after a restart:** tracker addresses can carry your passkey, so Apollo Download Manager keeps them only if you tick **Remember this torrent's trackers in the system keychain**, in the Add dialog or in **Edit…** from the details panel. Then the torrent finds its peers again after a restart. Without it, a private torrent finds no peers after a restart; add it again from its `.torrent` file or magnet link. The details panel's **Trackers** row says whether they're remembered.
 - **Connections** for a torrent are the torrent helper's own, so a torrent's details don't offer a connection count.
 - **Through a proxy,** torrents don't look for peers on the local network or map a port, use the DHT only through a SOCKS5 proxy, and can't use an HTTPS proxy at all ([Settings](settings.md#proxy)).

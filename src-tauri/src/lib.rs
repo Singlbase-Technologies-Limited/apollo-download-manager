@@ -112,6 +112,8 @@ pub fn run() {
             browser::take_browser_requests,
             downloads::remember_login,
             downloads::use_new_link,
+            downloads::remember_trackers,
+            downloads::forget_trackers,
             downloads::choose_torrent_files,
             downloads::set_torrent_seeding,
             downloads::restart_torrent_helper,

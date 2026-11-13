@@ -26,6 +26,7 @@ An architecture decision record (ADR) states one decision, why it was taken and 
 | [0018](0018-product-name-apollo.md) | The released app is named "Apollo Download Manager" | Accepted | 2026-11-05 |
 | [0019](0019-waiting-for-network-status.md) | A download can wait for the network | Accepted | 2026-11-05 |
 | [0020](0020-extension-store-distribution.md) | The browser extension is published in the three browser stores | Accepted | 2026-11-07 |
+| [0021](0021-tracker-passkeys-in-the-keychain.md) | A torrent's tracker addresses are saved in the system keychain when the user asks | Accepted | 2026-11-13 |
 
 Decisions still open are tracked as GitHub issues titled `decision: …`, for example #38 (in-process or child process). [ARCHITECTURE.md](../ARCHITECTURE.md#open-decisions) lists the ones that shape the architecture.
 

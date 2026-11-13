@@ -129,6 +129,12 @@ impl Manager {
                 tracing::warn!("the saved login of {id} couldn't be deleted: {code:?}");
             }
         }
+        // So do a torrent's remembered trackers (#472, ADR-0021).
+        if matches!(&d.job, super::Job::Torrent(t) if t.options.trackers_saved) {
+            if let Err(code) = self.keychain.delete_trackers(id) {
+                tracing::warn!("the saved trackers of {id} couldn't be deleted: {code:?}");
+            }
+        }
         let saved = self
             .database
             .update_download(&d.record, &d.activity.totals)

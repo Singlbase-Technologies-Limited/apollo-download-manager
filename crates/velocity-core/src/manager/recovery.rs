@@ -184,7 +184,16 @@ impl Manager {
                         file_count = metadata
                             .and_then(|m| parse_metadata(&m).ok())
                             .map(|meta| file_count_of(&meta));
-                        Job::Torrent(Box::new(TorrentJob::new(options, None)))
+                        let remembered = options.trackers_saved;
+                        let mut job = TorrentJob::new(options, None);
+                        // Its trackers, if the user asked to remember them (#472, ADR-0021).
+                        if remembered {
+                            match m.keychain.load_trackers(&stored.id) {
+                                Ok(Some(trackers)) => job.trackers = trackers,
+                                _ => job.trackers_missing = true,
+                            }
+                        }
+                        Job::Torrent(Box::new(job))
                     }
                     _ => {
                         m.unavailable.push(stored);

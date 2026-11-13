@@ -142,6 +142,20 @@ describe('adding torrents (V1)', () => {
     expect(requests(state)[0]).toMatchObject({ inOrder: false, endsFirst: true });
   });
 
+  it('remembers a torrent’s trackers in the keychain only when asked, from the Add dialog (#472)', async () => {
+    state.chosenTorrents = ['/t/album.torrent'];
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    act(() => { useUiStore.getState().openAdd(); });
+    await user.click(await screen.findByRole('button', { name: /Choose .torrent files/ }));
+    const remember = await screen.findByRole<HTMLInputElement>('checkbox', { name: /Remember this torrent’s trackers/ });
+    expect(remember.checked).toBe(false);
+    await user.click(remember);
+    await user.click(screen.getByRole('button', { name: 'Start download' }));
+    await waitFor(() => { expect(callsOf(state, 'remember_trackers').map((c) => c.args)).toEqual([{ id: 'd-100' }]); });
+  });
+
   it('sends no torrent options for ordinary links', async () => {
     const user = userEvent.setup();
     renderApp();
@@ -305,6 +319,26 @@ describe('trackers, peers and limits in the details (V1)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_torrent_order').at(-1)?.args).toEqual({ id: 'u', inOrder: false, endsFirst: true }); });
     expect(callsOf(state, 'set_torrent_upload_limit')).toHaveLength(0);
+  });
+
+  it('remembers or forgets a torrent’s trackers from the Edit dialog, and says when they were lost (#472)', async () => {
+    const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [torrent({ id: 'u', status: 'downloading' })] }, torrentDetails: () => ({ ...details(), trackersSaved: false, trackersMissing: false }) });
+    const user = userEvent.setup();
+    const p = await openDetails('u');
+    await user.click(within(p).getByRole('button', { name: 'Edit…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit download' });
+    const remember = await within(dialog).findByRole<HTMLInputElement>('checkbox', { name: /Remember this torrent’s trackers/ });
+    expect(remember.checked).toBe(false);
+    await user.click(remember);
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => { expect(callsOf(state, 'remember_trackers').map((c) => c.args)).toEqual([{ id: 'u' }]); });
+    expect(callsOf(state, 'forget_trackers')).toHaveLength(0);
+  });
+
+  it('says a torrent’s remembered trackers couldn’t be read back (#472)', async () => {
+    installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [torrent({ id: 'u', status: 'downloading' })] }, torrentDetails: () => ({ ...details(), trackersSaved: true, trackersMissing: true }) });
+    const p = await openDetails('u');
+    expect(await within(p).findByText(/couldn’t be read from the system keychain/)).toBeTruthy();
   });
 
   it('says why the trackers can’t be shown while the helper doesn’t have the torrent', async () => {

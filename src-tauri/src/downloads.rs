@@ -517,6 +517,22 @@ pub async fn use_new_link(
     .await?
 }
 
+/// Saves a torrent's trackers in the system keychain, at the user's request (#472, ADR-0021):
+/// after a restart a private torrent gets its passkey trackers back.
+#[tauri::command]
+pub async fn remember_trackers(
+    downloads: State<'_, Downloads>,
+    id: String,
+) -> Result<(), ErrorCode> {
+    on_manager(&downloads, move |m| m.remember_trackers(&id)).await?
+}
+
+/// Deletes a torrent's remembered trackers from the keychain (#472).
+#[tauri::command]
+pub async fn forget_trackers(downloads: State<'_, Downloads>, id: String) -> Result<(), ErrorCode> {
+    on_manager(&downloads, move |m| m.forget_trackers(&id)).await?
+}
+
 /// Trusts the SFTP host key the user confirmed (#53); the UI then retries the download.
 #[tauri::command]
 pub async fn trust_host_key(

@@ -88,7 +88,9 @@ use serde::Serialize;
 /// in `TorrentDetails`: a torrent downloads in order, its files' ends first.
 /// Version 37 (#471) added `list_network_adapters`, the torrent setting `networkAdapter` and the
 /// torrent network status's `adapterMissing`.
-pub const COMMAND_API_VERSION: u32 = 37;
+/// Version 38 (#472) added `remember_trackers`, `forget_trackers`, and `trackersSaved` and
+/// `trackersMissing` in `TorrentDetails`: a torrent's trackers kept in the keychain.
+pub const COMMAND_API_VERSION: u32 = 38;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

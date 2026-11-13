@@ -237,7 +237,7 @@ The manager runs torrents beside direct downloads, through the `TorrentEngine` c
   - its metadata, once known and checked;
   - its resume data, without its trackers (`torrent::strip_trackers`), saved whenever the helper sends it;
   - its info hashes and upload, on its `downloads` row.
-- **Tracker passkeys** (PO decision on #58): tracker addresses can carry a private tracker's passkey, so none is stored. Trackers given this session stay in memory. Keeping them in the OS keychain is #70; until then a private torrent comes back without its trackers after the app restarts, and finds peers only through DHT or the settings' extra trackers.
+- **Tracker passkeys** (PO decision on #58): tracker addresses can carry a private tracker's passkey, so none is stored in the database, resume data, checkpoints or logs. Trackers given this session stay in memory. A torrent's trackers are kept across a restart only when the user asks, in the system keychain (#472, [ADR-0021](decisions/0021-tracker-passkeys-in-the-keychain.md)): every tracker it is known to have (given, its magnet link's, and those stripped from its resume data, where a `.torrent` file's own are), in parts of at most 1,000 characters, since a Windows keychain entry keeps at most 1,280 (`Keychain::save_trackers`). Resume data that brings a new tracker saves the list again. After a restart the torrent is added again with them; if they can't be read, its details say so. Without them, a private torrent finds peers only through the settings' extra trackers, and as before the user adds it again.
 - **Starting again:** a torrent comes back from its stored resume data (uploaded in chunks, then added with `{"kind":"resume"}`), and otherwise from where it came from. A completed torrent isn't added again; a seeding one is.
 - **A helper that stops:** its supervisor adds the torrents back under the same ids. A torrent it reports lost (`torrent_engine::lost_by_helper`) shows as waiting, with the reason, and keeps its slot; the manager doesn't add it again too.
 - **Commands:** pause, resume, cancel (the helper forgets it and its files are kept, as in V1), retry, remove with or without its files, the download limit, `choose_files` and `set_seeding`. A torrent's connections are libtorrent's, so `set_download_connections` is `UNSUPPORTED` for one.
@@ -248,7 +248,7 @@ The manager runs torrents beside direct downloads, through the `TorrentEngine` c
 
 ## Not yet
 
-- **Keeping trackers across a restart:** not part of #70, whose keychain holds downloads' logins only ([ADR-0015](decisions/0015-keychain-with-consent.md)).
+- **Trackers of torrents added before #472** can't be remembered: they were never kept. Add such a torrent again once.
 
 ## Tests
 

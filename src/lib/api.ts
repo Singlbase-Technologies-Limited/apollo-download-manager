@@ -138,6 +138,8 @@ export const api = {
   allowDownload: (id: string, kind: ConfirmKind) => call('allow_download', { id, kind }, nothing),
   /** Saves a download's login in the system keychain, at the user's request (#70). */
   rememberLogin: (id: string) => call('remember_login', { id }, nothing),
+  rememberTrackers: (id: string) => call('remember_trackers', { id }, nothing),
+  forgetTrackers: (id: string) => call('forget_trackers', { id }, nothing),
   useNewLink: (id: string, link: string) => call('use_new_link', { id, link }, nothing),
   retryDownloads: (ids: string[]) => call('retry_downloads', { ids }, BatchResultSchema),
   // The list's commands (#58, #59). Those over several downloads say what each did.

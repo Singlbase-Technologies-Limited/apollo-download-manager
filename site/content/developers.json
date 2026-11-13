@@ -108,6 +108,7 @@
     "decisions/0018-product-name-apollo.md": "0018 Apollo DM name",
     "decisions/0019-waiting-for-network-status.md": "0019 Wait for network",
     "decisions/0020-extension-store-distribution.md": "0020 Extension stores",
+    "decisions/0021-tracker-passkeys-in-the-keychain.md": "0021 Tracker keychain",
     "research/README.md": "Research",
     "research/2026-10-21-libcurl-engine-research-r2.md": "libcurl engine",
     "research/2026-11-05-product-name-shortlist.md": "Name shortlist",

@@ -35,6 +35,8 @@
       "mode": "ratio",
       "ratio": 2.0
     },
+    "trackersMissing": false,
+    "trackersSaved": true,
     "uploadLimitBps": 65536
   },
   "peers": [
