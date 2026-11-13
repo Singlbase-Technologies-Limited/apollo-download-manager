@@ -39,6 +39,15 @@ For a torrent, the details panel shows the peers and seeds connected, what it up
 
 **Tracker passkeys are hidden:** a private tracker's address can carry a personal key. Apollo Download Manager shows only a tracker's name and port, and never writes the rest to its log.
 
+## Watching while it downloads
+
+A torrent normally downloads its pieces in whatever order helps the swarm most, so a video can't play until the end. Two switches change that, in the Add dialog and in **Edit…** from the details panel, which shows the order as **Piece order**:
+
+- **Download in order:** the pieces come from the start of the torrent to its end. A player can then open a file while it downloads. It can be slower, since the torrent shares fewer rare pieces with others.
+- **First and last pieces first:** each file's first and last pieces come before the rest. Many players read a file's end before they start, so this helps them open it early. It works on its own or with in order.
+
+Open the unfinished file in your player from its folder. Apollo Download Manager doesn't stream anything itself.
+
 ## Limits and settings
 
 Settings, BitTorrent holds the torrent settings: DHT, peer exchange and local peer discovery, peers per torrent, the seeding limit, upload and download limits for all torrents together, extra trackers, the listening port (6890 by default) with port mapping on your router, and the one network adapter torrents may use, such as a VPN's. They are listed in [Settings](settings.md#bittorrent).

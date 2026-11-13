@@ -138,6 +138,7 @@ export const api = {
   allowDownload: (id: string, kind: ConfirmKind) => call('allow_download', { id, kind }, nothing),
   /** Saves a download's login in the system keychain, at the user's request (#70). */
   rememberLogin: (id: string) => call('remember_login', { id }, nothing),
+  useNewLink: (id: string, link: string) => call('use_new_link', { id, link }, nothing),
   retryDownloads: (ids: string[]) => call('retry_downloads', { ids }, BatchResultSchema),
   // The list's commands (#58, #59). Those over several downloads say what each did.
   pauseDownloads: (ids: string[]) => call('pause_downloads', { ids }, BatchResultSchema),
@@ -190,6 +191,7 @@ export const api = {
   reannounce: (id: string) => call('reannounce_torrent', { id }, nothing),
   /** KiB/s; 0 for no limit. */
   setUploadLimit: (id: string, kib: number) => call('set_torrent_upload_limit', { id, kib }, nothing),
+  setTorrentOrder: (id: string, inOrder: boolean, endsFirst: boolean) => call('set_torrent_order', { id, inOrder, endsFirst }, nothing),
   /** Downloads exactly `files`; with `deleteDropped`, deletes the torrent's own files no longer chosen. Answers the files kept. */
   chooseTorrentFiles: (id: string, files: number[], deleteDropped: boolean) => call('choose_torrent_files', { id, files, deleteDropped }, z.array(KeptFileSchema)),
   /** Gives a download that came back without its login, headers or SSH key those again; then resume or retry it. */

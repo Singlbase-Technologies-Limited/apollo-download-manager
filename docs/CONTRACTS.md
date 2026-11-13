@@ -66,12 +66,14 @@ The commands of [`src-tauri/src/downloads.rs`](../src-tauri/src/downloads.rs) (#
 | `trust_host_key` | `host`, `port`, `fingerprint` | nothing; the UI then retries the download |
 | `allow_download` | `id`, `kind`: `insecureRedirect` or `localAddress` | nothing. Allows what the download's `error.confirm` asked for, for that download only, stores it, and retries the download. `INVALID_STATE` unless it failed waiting for that confirmation. Since contract version 18 (#67) |
 | `remember_login` | `id` | nothing. Saves the download's login, custom headers and SSH key in the system keychain, at the user's request; `INVALID_STATE` for one without any, `KEYCHAIN_UNAVAILABLE` when there is no keychain or it refused. Since contract version 20 (#70) |
+| `use_new_link` | `id`, `link` | nothing. Gives a failed or paused direct download a new link for the same file, and queues it to continue from its checkpoint (#466). The link is checked as an added one: `INVALID_URL` for one that isn't valid, has a login in it, or is of another kind; `INVALID_STATE` for another status; `UNSUPPORTED` for a torrent. On another server the login, headers, referrer and SSH key are dropped, and a saved login is deleted. Since contract version 35 |
 | `choose_torrent_files` | `id`, `files` (indexes, at least one), `deleteDropped` | the files kept, each a `KeptFile`. With `deleteDropped`, the torrent's own files no longer chosen are deleted, by the rules torrents use; otherwise they stay (#63) |
 | `get_torrent_details` | `id` | `TorrentDetails`; `UNSUPPORTED` for a direct download (#63) |
 | `preview_torrent_file` | `path` (absolute) | `TorrentPreview`, read as adding reads the file: never through a link, at most the size limit (#63) |
 | `get_torrent_trackers`, `get_torrent_peers` | `id` | the helper's `TrackerStatus` or `PeerStatus` list; `INVALID_STATE` while the helper doesn't have the torrent (#63) |
 | `reannounce_torrent` | `id` | nothing; `INVALID_STATE` while the helper doesn't have the torrent (#63) |
 | `set_torrent_upload_limit` | `id`, `kib` (KiB/s; 0 for no limit) | nothing (#63) |
+| `set_torrent_order` | `id`, `inOrder`, `endsFirst` | nothing. The torrent downloads its pieces in order, or not, and each wanted file's first and last pieces first, or not, while it runs and after a restart (#470). `UNSUPPORTED` for a direct download. Since contract version 36; `TorrentDetails` and the Add request carry `inOrder` and `endsFirst` too |
 | `set_torrent_seeding` | `id`, `seeding` (a seeding policy; `{ "mode": "never" }` stops seeding) | nothing |
 | `restart_torrent_helper` | — | `EngineHealth` |
 
@@ -133,8 +135,8 @@ The commands of [`src-tauri/src/shell.rs`](../src-tauri/src/shell.rs) (#29). A c
 | `forget_learned_servers` | — | nothing; forgets what downloads learned about servers, in the database and in the engine (#325). Since contract version 32 |
 | `get_proxy_password_set` | — | whether the proxy has a password, typed this session or remembered; the password never comes to the window. Since contract version 21 (#192) |
 | `set_proxy_password` | `password` (`null` clears it) | nothing. Gives both engines the proxy with it, and keeps it in the system keychain when `proxy.rememberPassword` is on; `INVALID_INPUT` for one a login can't have, `KEYCHAIN_UNAVAILABLE` when the keychain refused (it is still used). Since contract version 21 (#192) |
-| `get_torrent_network` | — | the torrent helper's `NetworkStatus`: `listenPort`, `listenError`, `portMapping`, and `adapterMissing`, the chosen network adapter's id while it is gone or not connected (#471, since contract version 35) |
-| `list_network_adapters` | — | this computer's network adapters, each `{ id, name, up }`, without loopback: `id` is what the torrent setting `networkAdapter` stores (#471). `UNSUPPORTED` on a system without a list. Since contract version 35 |
+| `get_torrent_network` | — | the torrent helper's `NetworkStatus`: `listenPort`, `listenError`, `portMapping`, and `adapterMissing`, the chosen network adapter's id while it is gone or not connected (#471, since contract version 37) |
+| `list_network_adapters` | — | this computer's network adapters, each `{ id, name, up }`, without loopback: `id` is what the torrent setting `networkAdapter` stores (#471). `UNSUPPORTED` on a system without a list. Since contract version 37 |
 
 **The `maximize-button` event** carries `idle`, `hover` or `pressed`: on Windows a native window has the mouse over the maximise button, so it says what the button should show (#359).
 

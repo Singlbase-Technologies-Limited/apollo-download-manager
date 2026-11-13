@@ -59,6 +59,9 @@ pub struct TorrentDetails {
     pub contents: Option<TorrentContents>,
     /// The files chosen, by index; `None` for every file.
     pub chosen: Option<Vec<u32>>,
+    /// It downloads its pieces in order, and its files' first and last pieces first (#470).
+    pub in_order: bool,
+    pub ends_first: bool,
 }
 
 /// What adding a `.torrent` file would add.
@@ -78,6 +81,8 @@ impl TorrentDetails {
             upload_limit_bps: 65_536,
             contents: Some(TorrentContents::sample()),
             chosen: Some(vec![1, 3]),
+            in_order: true,
+            ends_first: false,
         }
     }
 }
@@ -184,6 +189,8 @@ impl Manager {
             upload_limit_bps: options.upload_limit,
             contents: self.stored_meta(id)?.as_ref().map(TorrentContents::from),
             chosen: options.files.clone(),
+            in_order: options.in_order,
+            ends_first: options.ends_first,
         })
     }
 
@@ -228,6 +235,26 @@ impl Manager {
             self.torrents.set_limits(torrent, upload, download)?;
         }
         self.torrent_job_mut(id)?.options.upload_limit = upload;
+        self.store_torrent_options(id);
+        Ok(())
+    }
+
+    /// Downloads the torrent's pieces in order, or not, and its files' first and last pieces
+    /// first, or not (#470, PO decision: two separate switches), while it runs and after a
+    /// restart. `Unsupported` for a direct download.
+    pub fn set_torrent_order(
+        &mut self,
+        id: &str,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        let job = self.torrent_job(id)?;
+        if let Some(torrent) = job.torrent {
+            self.torrents.set_order(torrent, in_order, ends_first)?;
+        }
+        let options = &mut self.torrent_job_mut(id)?.options;
+        options.in_order = in_order;
+        options.ends_first = ends_first;
         self.store_torrent_options(id);
         Ok(())
     }

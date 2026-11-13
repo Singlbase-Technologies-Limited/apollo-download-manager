@@ -66,6 +66,8 @@ fn request(dir: &Path, seeding: SeedPolicy) -> TorrentRequest {
         seeding,
         upload_limit: 0,
         download_limit: 0,
+        in_order: false,
+        ends_first: false,
     }
 }
 

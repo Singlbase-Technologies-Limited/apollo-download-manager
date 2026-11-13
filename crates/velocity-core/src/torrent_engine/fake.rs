@@ -409,6 +409,20 @@ impl TorrentEngine for FakeTorrentEngine {
         Ok(())
     }
 
+    fn set_order(
+        &mut self,
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        let mut s = lock(&self.state);
+        s.command(format!("set_order {} {in_order} {ends_first}", id.0))?;
+        let t = s.torrent(id)?;
+        t.spec.in_order = in_order;
+        t.spec.ends_first = ends_first;
+        Ok(())
+    }
+
     fn trackers(&self, id: TorrentId) -> Result<Vec<TrackerStatus>, ErrorCode> {
         let s = lock(&self.state);
         Ok(s.torrents

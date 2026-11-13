@@ -59,6 +59,9 @@ pub struct TorrentRequest {
     /// Bytes per second; 0 for no limit.
     pub upload_limit: u64,
     pub download_limit: u64,
+    /// Download its pieces in order, and each file's ends first (#470).
+    pub in_order: bool,
+    pub ends_first: bool,
 }
 
 /// A torrent's part of a download.
@@ -179,6 +182,8 @@ impl Manager {
             seeding: request.seeding,
             upload_limit: request.upload_limit,
             download_limit: request.download_limit,
+            in_order: request.in_order,
+            ends_first: request.ends_first,
         };
         let category_id = self.known_category(options.category_id.as_deref())?;
         let paused = options.start_paused
@@ -432,6 +437,8 @@ impl Manager {
             seeding: options.seeding,
             upload_limit: options.upload_limit,
             download_limit: options.download_limit,
+            in_order: options.in_order,
+            ends_first: options.ends_first,
         };
         let torrent = self.torrents.add(spec)?;
         self.torrent_job_mut(id)?.torrent = Some(torrent);

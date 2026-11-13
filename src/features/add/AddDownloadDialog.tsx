@@ -6,6 +6,7 @@ import { availability, cleartextWarning } from '../../capabilities';
 import { Button } from '../../components/Button';
 import { Tooltip } from '../../components/Tooltip';
 import { Checkbox } from '../../components/Checkbox';
+import { OrderFields } from '../torrents/OrderFields';
 import { Dialog } from '../../components/Dialog';
 import { Field } from '../../components/Field';
 import { Input } from '../../components/Input';
@@ -73,6 +74,9 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const [startAt, setStartAt] = useState(() => nextFullHour());
   const [requireEncryption, setRequireEncryption] = useState(false);
   const [chooseFiles, setChooseFiles] = useState(defaults?.chooseFilesForMagnets ?? false);
+  // In order (#470, PO decision: two separate switches), off by default.
+  const [inOrder, setInOrder] = useState(false);
+  const [endsFirst, setEndsFirst] = useState(false);
   // A torrent's seeding, upload limit and, for a single `.torrent` file, its files (#63).
   const [seeding, setSeeding] = useState<SeedPolicy>(defaults?.seeding ?? { mode: 'never' });
   const [uploadLimit, setUploadLimit] = useState(defaults && defaults.uploadLimitKib > 0 ? String(defaults.uploadLimitKib) : '');
@@ -202,6 +206,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     fileChoices: previewed !== undefined && preview.data && choice.files !== null ? [{ torrentFile: previewed, files: choice.files }] : [],
     seeding: torrentMode ? seeding : null,
     uploadLimitKib: torrentMode && Number(uploadLimit) > 0 ? Math.floor(Number(uploadLimit)) : 0,
+    inOrder: torrentMode && inOrder,
+    endsFirst: torrentMode && endsFirst,
     // The browser's link, unchanged, waits for the user at a local address; one typed or pasted here doesn't (#67, ADR-0006).
     fromBrowser: prefill?.fromBrowser !== undefined && text.trim() === (prefill.links ?? '').trim(),
     startAt: startAtOn ? startAt : null,
@@ -539,6 +545,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                   Choose files before downloading
                 </Checkbox>
               )}
+              <OrderFields inOrder={inOrder} endsFirst={endsFirst} onInOrder={setInOrder} onEndsFirst={setEndsFirst} />
               <div className="flex flex-wrap items-start gap-3">
                 <SeedingFields value={seeding} onChange={setSeeding} />
                 <Field label="Upload limit (KiB/s)" hint="Empty or 0 means no limit.">

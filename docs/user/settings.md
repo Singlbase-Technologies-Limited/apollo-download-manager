@@ -2,7 +2,7 @@
 
 Open **Settings** with the gear in the title bar, beside the window buttons, or press **Ctrl+,**. It opens in a window over the app, so your downloads stay in view behind it; **Escape** or the close button closes it. **Search settings** at the top finds a setting by its name and opens the section it's in.
 
-The **?** beside the gear has **What’s new**, **Send feedback…**, which opens the project’s issue page in your browser (Apollo Download Manager sends nothing itself), and **About Apollo DM**, which opens About and diagnostics.
+The **?** beside the gear has **What’s new**, which shows what changed in this version and the ones before, from the release notes the app carries with it, **Send feedback…**, which opens the project’s issue page in your browser (Apollo Download Manager sends nothing itself), and **About Apollo DM**, which opens About and diagnostics.
 
 - **Every change is saved and applies at once;** no setting needs a restart. The screen says "Saving…", then "Saved", or why a value was refused, and shows what is saved.
 - **Numbers** are saved when you leave the field or press Enter, and brought within their limits.

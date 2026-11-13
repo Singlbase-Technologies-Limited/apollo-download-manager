@@ -184,6 +184,19 @@ impl ChildTorrentEngine {
         })
     }
 
+    pub fn set_order(
+        &self,
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        self.done(TorrentCommand::SetOrder {
+            id,
+            in_order,
+            ends_first,
+        })
+    }
+
     pub fn trackers(&self, id: TorrentId) -> Result<Vec<TrackerStatus>, ErrorCode> {
         match self.process.request(TorrentCommand::Trackers { id })? {
             TorrentReply::Trackers { trackers } => Ok(trackers),
@@ -288,6 +301,15 @@ impl TorrentEngine for ChildTorrentEngine {
 
     fn set_limits(&mut self, id: TorrentId, upload: u64, download: u64) -> Result<(), ErrorCode> {
         ChildTorrentEngine::set_limits(self, id, upload, download)
+    }
+
+    fn set_order(
+        &mut self,
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        ChildTorrentEngine::set_order(self, id, in_order, ends_first)
     }
 
     fn trackers(&self, id: TorrentId) -> Result<Vec<TrackerStatus>, ErrorCode> {

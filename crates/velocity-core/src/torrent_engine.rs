@@ -33,9 +33,11 @@ use crate::seeding::{SeedPolicy, MAX_ACTIVE_SEEDS};
 /// Version 5 (#192): [`TorrentCommand::SetProxy`]; peers and trackers go through the user's proxy.
 /// Version 6 (#366): [`TorrentCommand::MoveStorage`], [`TorrentEvent::Moved`] and
 /// [`TorrentEvent::MoveFailed`]; a torrent's files move to another folder.
-/// Version 7 (#471): [`TorrentSettings::network_adapter`] and
+/// Version 7 (#470): [`TorrentSpec::in_order`], [`TorrentSpec::ends_first`] and
+/// [`TorrentCommand::SetOrder`]; a torrent downloads in order, its files' ends first.
+/// Version 8 (#471): [`TorrentSettings::network_adapter`] and
 /// [`NetworkStatus::adapter_missing`]; torrents use one network adapter, such as a VPN's.
-pub const TORRENT_CONTRACT_VERSION: u32 = 7;
+pub const TORRENT_CONTRACT_VERSION: u32 = 8;
 
 /// The port the torrent helper listens on unless the user sets another (PO decision on #62):
 /// not V1's 6881 or 6882.
@@ -124,6 +126,12 @@ pub struct TorrentSpec {
     /// Bytes per second, 0 for no limit, at most [`MAX_RATE_LIMIT`].
     pub upload_limit: u64,
     pub download_limit: u64,
+    /// Download the pieces in order, for a player to read a file while it downloads (#470).
+    #[serde(default)]
+    pub in_order: bool,
+    /// Download each wanted file's first and last pieces first (#470).
+    #[serde(default)]
+    pub ends_first: bool,
 }
 
 /// The state of one torrent.
@@ -486,6 +494,14 @@ pub trait TorrentEngine: Send {
     /// Sets the torrent's upload and download limits, in bytes per second; 0 for none.
     /// `InvalidInput` above [`MAX_RATE_LIMIT`].
     fn set_limits(&mut self, id: TorrentId, upload: u64, download: u64) -> Result<(), ErrorCode>;
+    /// Downloads the torrent's pieces in order, or not, and its files' first and last pieces
+    /// first, or not (#470), while it runs; kept if the torrent is added again.
+    fn set_order(
+        &mut self,
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode>;
     /// The torrent's trackers, in tier order.
     fn trackers(&self, id: TorrentId) -> Result<Vec<TrackerStatus>, ErrorCode>;
     /// Announces the torrent to its trackers now, without waiting for their interval.
@@ -584,6 +600,14 @@ impl TorrentEngine for MissingTorrentEngine {
     ) -> Result<(), ErrorCode> {
         Err(ErrorCode::EngineUnavailable)
     }
+    fn set_order(
+        &mut self,
+        _id: TorrentId,
+        _in_order: bool,
+        _ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        Err(ErrorCode::EngineUnavailable)
+    }
     fn trackers(&self, _id: TorrentId) -> Result<Vec<TrackerStatus>, ErrorCode> {
         Err(ErrorCode::EngineUnavailable)
     }
@@ -665,6 +689,11 @@ pub enum TorrentCommand {
         id: TorrentId,
         upload: u64,
         download: u64,
+    },
+    SetOrder {
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
     },
     Trackers {
         id: TorrentId,
@@ -761,6 +790,14 @@ pub fn dispatch(
             engine.set_limits(id, upload, download)?;
             TorrentReply::Done {}
         }
+        TorrentCommand::SetOrder {
+            id,
+            in_order,
+            ends_first,
+        } => {
+            engine.set_order(id, in_order, ends_first)?;
+            TorrentReply::Done {}
+        }
         TorrentCommand::Trackers { id } => TorrentReply::Trackers {
             trackers: engine.trackers(id)?,
         },
@@ -799,13 +836,16 @@ mod tests {
                 seeding: SeedPolicy::Ratio { ratio: 1.5 },
                 upload_limit: 1024,
                 download_limit: 0,
+                in_order: true,
+                ends_first: true,
             },
         };
         // Contract 2 (#62's file choice) added `chooseFiles` and `files`; contract 3 (#62's
-        // lifecycle part) `seeding`; contract 4 (trackers and port mapping) the limits.
+        // lifecycle part) `seeding`; contract 4 (trackers and port mapping) the limits; contract 7
+        // (#470) `inOrder` and `endsFirst`.
         assert_eq!(
             serde_json::to_string(&add).unwrap(),
-            r#"{"command":"add","spec":{"source":{"kind":"magnet","uri":"magnet:?xt=urn:btih:557f8c61bcecd14914e421389d4f46c5d7c336db"},"directory":"d","trackers":["udp://t.example:1"],"paused":true,"chooseFiles":true,"files":null,"seeding":{"mode":"ratio","ratio":1.5},"uploadLimit":1024,"downloadLimit":0}}"#
+            r#"{"command":"add","spec":{"source":{"kind":"magnet","uri":"magnet:?xt=urn:btih:557f8c61bcecd14914e421389d4f46c5d7c336db"},"directory":"d","trackers":["udp://t.example:1"],"paused":true,"chooseFiles":true,"files":null,"seeding":{"mode":"ratio","ratio":1.5},"uploadLimit":1024,"downloadLimit":0,"inOrder":true,"endsFirst":true}}"#
         );
         let seeding = TorrentCommand::SetSeeding {
             id: TorrentId(2),

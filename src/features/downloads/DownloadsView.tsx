@@ -30,6 +30,7 @@ import { DetailsPanel } from './DetailsPanel';
 import { DownloadTable } from './DownloadTable';
 import { LoginDialog } from './LoginDialog';
 import { useLoginPrompt } from './useLoginPrompt';
+import { NewLinkDialog } from './NewLinkDialog';
 import { StartAtDialog } from './StartAtDialog';
 import { useDownloadActions } from './useDownloadActions';
 
@@ -372,6 +373,7 @@ export function DownloadsView({ view }: { view: ListView }) {
         ) : null}
       <LoginDialog />
       <StartAtDialog />
+      <NewLinkDialog />
     </div>
   );
 }

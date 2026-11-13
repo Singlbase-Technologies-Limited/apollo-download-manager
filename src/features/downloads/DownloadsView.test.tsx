@@ -49,7 +49,7 @@ beforeEach(() => {
     configurable: true,
     value: () => ({ matches: false, addEventListener: () => undefined, removeEventListener: () => undefined }),
   });
-  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null } });
+  useUiStore.setState({ view: 'all', categoryFilter: null, layout: { ...DEFAULT_LAYOUT }, addDialog: { open: false, prefill: null }, newLinkId: null });
   useDownloadsStore.setState({ snapshot: null, error: null, ...INITIAL_LIST });
 });
 
@@ -326,6 +326,56 @@ describe('the download list (#59)', () => {
     renderApp();
     await rowFor('movie.mp4');
     expect(screen.getByRole('status', { name: 'Transfer engine' }).textContent).toMatch(/isn’t running/);
+  });
+});
+
+// #466 (PO decisions): a failed or paused direct download gets a new link for the same file, and continues.
+describe('a new link for an expired one', () => {
+  const expired = makeRecord({
+    id: 'x',
+    fileName: 'big.iso',
+    status: 'failed',
+    createdAtMs: 4,
+    error: { message: 'The link expired.', class: 'permanent', httpStatus: 403, retryable: false, hostKey: null, confirm: null, noNetwork: false, detail: null, loginRequired: false },
+  });
+
+  it('is given from the menu of a failed download, and continues it', async () => {
+    const state = installFakeBackend({ snapshot: withDownloads([expired, archive]) });
+    renderApp();
+    fireEvent.contextMenu(await rowFor('archive.zip'));
+    expect((await screen.findByRole('menuitem', { name: 'Use a new link…' })).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    fireEvent.contextMenu(await rowFor('big.iso'));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Use a new link…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Use a new link' });
+    fireEvent.change(within(dialog).getByLabelText('New link'), { target: { value: 'https://example.com/big.iso?token=new' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue with this link' }));
+    await waitFor(() => { expect(callsOf(state, 'use_new_link').map((c) => c.args)).toEqual([{ id: 'x', link: 'https://example.com/big.iso?token=new' }]); });
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'Use a new link' })).toBeNull(); });
+  });
+
+  it('says why a link is refused, and keeps the dialog open', async () => {
+    const state = installFakeBackend({ snapshot: withDownloads([expired]) });
+    state.failures.use_new_link = 'INVALID_URL';
+    renderApp();
+    fireEvent.contextMenu(await rowFor('big.iso'));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Use a new link…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Use a new link' });
+    fireEvent.change(within(dialog).getByLabelText('New link'), { target: { value: 'ftp://example.com/big.iso' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue with this link' }));
+    expect(await within(dialog).findByText("The link isn't a valid download address.")).toBeTruthy();
+  });
+
+  it('can start the link as a new download instead', async () => {
+    installFakeBackend({ snapshot: withDownloads([expired]) });
+    renderApp();
+    fireEvent.contextMenu(await rowFor('big.iso'));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Use a new link…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Use a new link' });
+    fireEvent.change(within(dialog).getByLabelText('New link'), { target: { value: 'https://example.com/other.iso' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Start as a new download' }));
+    const add = await screen.findByRole('dialog', { name: /Add/ });
+    expect(within(add).getByDisplayValue('https://example.com/other.iso')).toBeTruthy();
   });
 });
 
