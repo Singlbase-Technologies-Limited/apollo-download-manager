@@ -1,13 +1,15 @@
-# ADR-0016: The released app is named "Velocity Download Manager V2"
+# ADR-0016: The released app is named after V1, with a version number added
 
 - **Status:** Superseded by ADR-0018
 - **Date:** 2026-10-30
 - **Decided by:** the Product Owner
 - **Issue:** #81
 
+> **Edited on 2026-11-13 (#486, PO decision):** V1's full product name, and Apollo Download Manager's 0.1.x name that contained it, are replaced with descriptions. Nothing else in this record changed.
+
 ## Context
 
-[ADR-0003](0003-v2-app-identity.md) gave Apollo Download Manager its own technical identity: identifiers, data folders, pipes and browser names that never collide with V1's. It kept V1's product name, "Velocity Download Manager", for the released app.
+[ADR-0003](0003-v2-app-identity.md) gave Apollo Download Manager its own technical identity: identifiers, data folders, pipes and browser names that never collide with V1's. It kept V1's product name for the released app.
 
 The Windows installer Tauri 2.12.3 generates names three things after the product name, as its NSIS template shows (`${PRODUCTNAME}`):
 
@@ -15,11 +17,11 @@ The Windows installer Tauri 2.12.3 generates names three things after the produc
 - the Apps & features entry, the registry key `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\<product name>`;
 - the Start menu shortcut.
 
-V1 is installed on the PO's PC under exactly these names: the key `Velocity Download Manager`, and the folder `C:\Users\…\AppData\Local\Velocity Download Manager` (read 2026-10-30). An Apollo Download Manager installer with the same product name would install over V1 and replace its uninstall entry.
+V1 is installed on the PO's PC under exactly these names: the key `<V1's product name>`, and the folder `C:\Users\…\AppData\Local\<V1's product name>` (read 2026-10-30). An Apollo Download Manager installer with the same product name would install over V1 and replace its uninstall entry.
 
 ## Decision
 
-**The released app's product name is "Velocity Download Manager V2".** It names the install folder, the Apps & features entry, the Start menu shortcut and the window title. It matches the browser extension's release name, "Velocity Download Manager V2".
+**The released app's product name is V1's product name with a version number added.** It names the install folder, the Apps & features entry, the Start menu shortcut and the window title. It matches the browser extension's release name, the same name.
 
 Everything else in ADR-0003 stands: the identifiers, the native-messaging host and the extension IDs don't change. This replaces only ADR-0003's release product name.
 
@@ -27,7 +29,7 @@ Everything else in ADR-0003 stands: the identifiers, the native-messaging host a
 
 | Option | For | Against |
 |---|---|---|
-| **"Velocity Download Manager V2" (chosen)** | Its own folder, uninstall entry and shortcut, with Tauri's own installer; the two are told apart in Apps & features | Apollo DM shows a version in its name |
+| **V1's product name with a version number added (chosen)** | Its own folder, uninstall entry and shortcut, with Tauri's own installer; the two are told apart in Apps & features | Apollo DM shows a version in its name |
 | Keep the name, with a custom installer script | One product name for both | Replacing Tauri's NSIS template means maintaining it; the two look identical in Apps & features |
 
 ## Consequences

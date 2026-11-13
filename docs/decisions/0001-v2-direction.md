@@ -5,9 +5,11 @@
 - **Decided by:** the Product Owner (direction stated in the epic #1)
 - **Issue:** #1, recorded under #8
 
+> **Edited on 2026-11-13 (#486, PO decision):** V1's full product name, and Apollo Download Manager's 0.1.x name that contained it, are replaced with descriptions. Nothing else in this record changed.
+
 ## Context
 
-The original Velocity Download Manager (V1) hands every HTTP, HTTPS and FTP download to aria2, a GPL-licensed engine that runs as a separate process. BitTorrent runs on libtorrent. The [research report, revision 2](../research/2026-10-21-libcurl-engine-research-r2.md), found these gaps in aria2 as V1 ships it (section 1, verified in V1's code):
+V1, the download manager Apollo Download Manager grew out of, hands every HTTP, HTTPS and FTP download to aria2, a GPL-licensed engine that runs as a separate process. BitTorrent runs on libtorrent. The [research report, revision 2](../research/2026-10-21-libcurl-engine-research-r2.md), found these gaps in aria2 as V1 ships it (section 1, verified in V1's code):
 
 - **Protocols:** HTTP/1.1 only, and no SFTP in V1's builds.
 - **Resume:** no ETag or `If-Range` validation, so a file changed on the server can be stitched from two versions.
@@ -67,7 +69,7 @@ These are summarised from the report's comparison in sections 2 and 4. The full 
   - #52: the SFTP backend.
   - #56: proxies.
   - #68: browser links to private networks.
-  - #11: the final identifiers. #11 has since recorded that Apollo Download Manager will replace V1 under the name "Velocity Download Manager"; side-by-side coexistence applies at least during development.
+  - #11: the final identifiers. #11 has since recorded that Apollo Download Manager will replace V1 under V1's product name; side-by-side coexistence applies at least during development.
 
 ## Follow-up
 
