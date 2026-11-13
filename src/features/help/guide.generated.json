@@ -2137,6 +2137,56 @@
           "content": [
            {
             "type": "text",
+            "text": "Cancel"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " leaves the download failed. "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Retry"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " connects again and asks again. If you close Apollo Download Manager without answering, it doesn't ask at the next start: "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Retry"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the download to see the question again."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
             "text": "\"The server's host key changed\""
            }
           ]
@@ -3521,7 +3571,7 @@
     {
      "anchor": "sftp-servers",
      "heading": "SFTP servers",
-     "text": "The first download from an SFTP server stops before logging in and asks Trust this server?, with the server's key fingerprint (SHA256:…). Nothing has been sent yet: no login, no file name. Check the fingerprint with the server's owner before trusting it. On the server, ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub prints it. Choose Trust and continue only if they match. \"The server's host key changed\" means the server shows another key than the one you trusted. A reinstalled server does that, and so does an attacker. Apollo Download Manager refuses it every time. Ask the server's owner whether and why the key changed (Troubleshooting)."
+     "text": "The first download from an SFTP server stops before logging in and asks Trust this server?, with the server's key fingerprint (SHA256:…). Nothing has been sent yet: no login, no file name. Check the fingerprint with the server's owner before trusting it. On the server, ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub prints it. Choose Trust and continue only if they match. Cancel leaves the download failed. Retry connects again and asks again. If you close Apollo Download Manager without answering, it doesn't ask at the next start: Retry the download to see the question again. \"The server's host key changed\" means the server shows another key than the one you trusted. A reinstalled server does that, and so does an attacker. Apollo Download Manager refuses it every time. Ask the server's owner whether and why the key changed (Troubleshooting)."
     },
     {
      "anchor": "the-download-list",

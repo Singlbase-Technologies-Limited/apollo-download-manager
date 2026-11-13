@@ -682,6 +682,18 @@ describe('the SFTP host key', () => {
     await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
   });
 
+  it('connects again when the engine no longer has the key, rather than failing (#459)', async () => {
+    // After the transfer engine restarts, it hasn't seen the key, so trusting it is refused with NOT_FOUND.
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [hostKey(null)] }, failures: { trust_host_key: 'NOT_FOUND' } });
+    renderApp();
+    const ask = await screen.findByRole('dialog', { name: 'Trust this server?' });
+    await user.click(within(ask).getByRole('button', { name: 'Trust and continue' }));
+    await waitFor(() => { expect(callsOf(state, 'retry_downloads')[0]?.args).toEqual({ ids: ['d-0007'] }); });
+    await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
+    expect(screen.queryByText(ERROR_MESSAGES.NOT_FOUND)).toBeNull();
+  });
+
   it('Cancel trusts nothing and doesn’t ask again for that download', async () => {
     const user = userEvent.setup();
     const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [hostKey(null)] } });
