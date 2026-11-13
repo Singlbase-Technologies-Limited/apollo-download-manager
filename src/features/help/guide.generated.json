@@ -4031,6 +4031,11 @@
      "text": "In the details panel"
     },
     {
+     "id": "watching-while-it-downloads",
+     "level": 2,
+     "text": "Watching while it downloads"
+    },
+    {
      "id": "limits-and-settings",
      "level": 2,
      "text": "Limits and settings"
@@ -4732,6 +4737,115 @@
     {
      "type": "heading",
      "level": 2,
+     "id": "watching-while-it-downloads",
+     "content": [
+      {
+       "type": "text",
+       "text": "Watching while it downloads"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "A torrent normally downloads its pieces in whatever order helps the swarm most, so a video can't play until the end. Two switches change that, in the Add dialog and in "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Edit…"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " from the details panel, which shows the order as "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Piece order"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ":"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Download in order:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the pieces come from the start of the torrent to its end. A player can then open a file while it downloads. It can be slower, since the torrent shares fewer rare pieces with others."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "First and last pieces first:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " each file's first and last pieces come before the rest. Many players read a file's end before they start, so this helps them open it early. It works on its own or with in order."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Open the unfinished file in your player from its folder. Apollo Download Manager doesn't stream anything itself."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
      "id": "limits-and-settings",
      "content": [
       {
@@ -4906,6 +5020,11 @@
      "anchor": "in-the-details-panel",
      "heading": "In the details panel",
      "text": "For a torrent, the details panel shows the peers and seeds connected, what it uploaded, its upload speed and time seeding, its hashes, version and seeding policy, each tracker's state with Re-announce, the connected peers, and its upload limit, which you can change. Tracker passkeys are hidden: a private tracker's address can carry a personal key. Apollo Download Manager shows only a tracker's name and port, and never writes the rest to its log."
+    },
+    {
+     "anchor": "watching-while-it-downloads",
+     "heading": "Watching while it downloads",
+     "text": "A torrent normally downloads its pieces in whatever order helps the swarm most, so a video can't play until the end. Two switches change that, in the Add dialog and in Edit… from the details panel, which shows the order as Piece order: Download in order: the pieces come from the start of the torrent to its end. A player can then open a file while it downloads. It can be slower, since the torrent shares fewer rare pieces with others. First and last pieces first: each file's first and last pieces come before the rest. Many players read a file's end before they start, so this helps them open it early. It works on its own or with in order. Open the unfinished file in your player from its folder. Apollo Download Manager doesn't stream anything itself."
     },
     {
      "anchor": "limits-and-settings",

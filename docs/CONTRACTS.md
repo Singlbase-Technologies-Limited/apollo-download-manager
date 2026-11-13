@@ -72,6 +72,7 @@ The commands of [`src-tauri/src/downloads.rs`](../src-tauri/src/downloads.rs) (#
 | `get_torrent_trackers`, `get_torrent_peers` | `id` | the helper's `TrackerStatus` or `PeerStatus` list; `INVALID_STATE` while the helper doesn't have the torrent (#63) |
 | `reannounce_torrent` | `id` | nothing; `INVALID_STATE` while the helper doesn't have the torrent (#63) |
 | `set_torrent_upload_limit` | `id`, `kib` (KiB/s; 0 for no limit) | nothing (#63) |
+| `set_torrent_order` | `id`, `inOrder`, `endsFirst` | nothing. The torrent downloads its pieces in order, or not, and each wanted file's first and last pieces first, or not, while it runs and after a restart (#470). `UNSUPPORTED` for a direct download. Since contract version 35; `TorrentDetails` and the Add request carry `inOrder` and `endsFirst` too |
 | `set_torrent_seeding` | `id`, `seeding` (a seeding policy; `{ "mode": "never" }` stops seeding) | nothing |
 | `restart_torrent_helper` | — | `EngineHealth` |
 

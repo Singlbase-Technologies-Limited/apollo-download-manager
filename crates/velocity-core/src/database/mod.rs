@@ -1134,6 +1134,8 @@ mod tests {
                 seeding: SeedPolicy::Ratio { ratio: 1.5 },
                 upload_limit: 65_536,
                 download_limit: 0,
+                in_order: true,
+                ends_first: false,
             }
         }
 

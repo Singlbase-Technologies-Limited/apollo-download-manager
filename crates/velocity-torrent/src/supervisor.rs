@@ -490,6 +490,21 @@ impl TorrentEngine for SupervisedTorrentEngine {
         Ok(())
     }
 
+    fn set_order(
+        &mut self,
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        self.running(id)?.set_order(id, in_order, ends_first)?;
+        // A helper started again adds it with them (#470).
+        self.keep(id, |spec| {
+            spec.in_order = in_order;
+            spec.ends_first = ends_first;
+        });
+        Ok(())
+    }
+
     fn trackers(&self, id: TorrentId) -> Result<Vec<TrackerStatus>, ErrorCode> {
         self.running(id)?.trackers(id)
     }

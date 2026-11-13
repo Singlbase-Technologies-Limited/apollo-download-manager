@@ -64,7 +64,7 @@ Torrent metadata and magnet links are untrusted input. `velocity_core::torrent` 
 
 ## The torrent contract
 
-`TORRENT_CONTRACT_VERSION` is 6: version 1 had no file choice, version 2 no seeding or resume data, version 3 no trackers, peers, limits or port settings, version 4 no proxy, and version 5 no `moveStorage` (#366). Every wire form refuses unknown fields.
+`TORRENT_CONTRACT_VERSION` is 7: version 1 had no file choice, version 2 no seeding or resume data, version 3 no trackers, peers, limits or port settings, version 4 no proxy, version 5 no `moveStorage` (#366), and version 6 no piece order: version 7 added `inOrder` and `endsFirst` to the spec and `setOrder` (#470). In order is libtorrent's `sequential_download` flag. Ends first puts each wanted file's first and last piece at the top priority once the torrent's files are wanted, again whenever it is added again; switching it off puts those pieces back to their file's priority. Every wire form refuses unknown fields.
 
 | Command | Reply | What it does |
 |---|---|---|

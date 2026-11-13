@@ -113,6 +113,44 @@ fn a_hybrid_torrent_downloads_through_the_helper() {
     downloads("hybrid-single", || file("hybrid-single"));
 }
 
+/// In order (#470): a torrent added to download in order with its files' ends first downloads
+/// whole through the helper, and both switch while it runs.
+#[test]
+fn a_torrent_downloads_in_order_with_its_files_ends_first() {
+    let name = "v1-multi";
+    let seed_dir = Dir::new("in-order-seed");
+    let get_dir = Dir::new("in-order-get");
+    let seeder = seed(name, &seed_dir.0);
+    let mut engine = helper();
+    let events = engine.subscribe();
+    let id = engine
+        .add(TorrentSpec {
+            in_order: true,
+            ends_first: true,
+            paused: true,
+            ..spec(file(name), &get_dir.0, vec![tracker(seeder.port)])
+        })
+        .unwrap();
+    engine.set_order(id, false, true).unwrap();
+    engine.set_order(id, true, true).unwrap();
+    assert_eq!(
+        engine.set_order(TorrentId(999), true, false),
+        Err(ErrorCode::NotFound)
+    );
+    engine.resume(id).unwrap();
+    let done = wait_status(&events, DownloadStatus::Completed, 120);
+    assert_eq!(done.id, id);
+    for (path, data) in files_of(name) {
+        let got = std::fs::read(get_dir.0.join(&path)).unwrap_or_else(|e| panic!("{path}: {e}"));
+        assert_eq!(
+            hex(&Sha256::digest(&got)),
+            hex(&Sha256::digest(&data)),
+            "{path}"
+        );
+    }
+    drop(seeder);
+}
+
 #[test]
 fn a_v2_magnet_learns_its_metadata_and_downloads() {
     let uri = manifest()["magnets"]["v2-single"]

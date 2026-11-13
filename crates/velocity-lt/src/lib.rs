@@ -58,6 +58,8 @@ pub mod ffi {
         /// Files start at priority 0 when a magnet's metadata arrives, so a
         /// metadata-only fetch never downloads payload.
         pub dont_download: bool,
+        /// Download the pieces in order (#470): libtorrent `sequential_download`.
+        pub sequential: bool,
     }
 
     #[derive(Debug, Clone, Default)]
@@ -65,6 +67,8 @@ pub mod ffi {
         /// libtorrent `torrent_status::state_t`.
         pub state: u8,
         pub paused: bool,
+        /// Its pieces download in order (#470).
+        pub sequential: bool,
         pub has_metadata: bool,
         pub is_finished: bool,
         pub is_seeding: bool,
@@ -174,6 +178,13 @@ pub mod ffi {
         fn pause(self: &Session, id: u64) -> Result<()>;
         fn resume(self: &Session, id: u64) -> Result<()>;
         fn set_file_priorities(self: &Session, id: u64, priorities: &[u8]) -> Result<()>;
+        /// Downloads the pieces in order, or not (#470).
+        fn set_sequential(self: &Session, id: u64, on: bool) -> Result<()>;
+        /// Puts the first and last piece of each wanted file first (#470), or back to its
+        /// file's priority. Needs the metadata.
+        fn set_file_ends_first(self: &Session, id: u64, on: bool) -> Result<()>;
+        /// Each piece's priority, 0 (skipped) to 7 (first).
+        fn piece_priorities(self: &Session, id: u64) -> Result<Vec<u8>>;
         fn set_limits(self: &Session, id: u64, upload: i32, download: i32) -> Result<()>;
         fn force_reannounce(self: &Session, id: u64) -> Result<()>;
         fn force_recheck(self: &Session, id: u64) -> Result<()>;
