@@ -24,7 +24,7 @@ Each condition has a measurable test. "Owner" says who does it: the **agent**, t
 | 1.3 | **An outside security review** of the trust boundaries: the browser bridge and native host, the helper processes, file handling, secrets, the release pipeline | A written report from a reviewer outside the project; every High or Critical finding fixed, the rest fixed or accepted by the PO | — | None | **Not planned** (PO decision, 2026-11-13: "Automated score only"). 1.4 is the security gate instead |
 | 1.4 | **OpenSSF Scorecard** for the repository (#473): the security gate in place of an outside review | Score of 7 or more, with the low checks explained | Agent | Not measured | v0.4.0 |
 | 1.5 | **No unaccepted advisories** | `pnpm check:advisories` passes; every accepted one is in the register with a reason | Agent | PASS (2026-11-10); minimatch accepted until ESLint allows the fix | Every release |
-| 1.6 | **Mark of the Web** on Windows | #469's acceptance criteria | Agent | Missing | v0.3.0 (#469) |
+| 1.6 | **Mark of the Web** on Windows | #469's acceptance criteria | Agent | Done: direct downloads and torrent files (#469) | v0.3.0 (#469) |
 | 1.7 | **A security response promise** (#476) (PO decision, 2026-11-13) | `SECURITY.md` states: an answer to a report within 7 days, and a fix for a serious hole within 30 days | Agent | Private reporting is on; no times stated | v0.4.0 |
 
 ### 2. Reliability: no lost or corrupt downloads
