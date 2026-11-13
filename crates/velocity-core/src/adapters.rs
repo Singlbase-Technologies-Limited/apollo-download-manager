@@ -99,11 +99,10 @@ mod imp {
     fn read(first: *const IP_ADAPTER_ADDRESSES_LH) -> Vec<NetworkAdapter> {
         let mut out = Vec::new();
         let mut at = first;
-        while !at.is_null() {
-            // SAFETY: `at` is `first` or a `Next` link of the list `GetAdaptersAddresses` just
-            // wrote into a buffer that outlives this function's caller's use of it; each entry
-            // and its strings stay valid until that buffer is dropped.
-            let a = unsafe { &*at };
+        // SAFETY: `at` is null, which ends the loop, or `first` or a `Next` link of the list
+        // `GetAdaptersAddresses` just wrote into a buffer the caller keeps until this returns; each
+        // entry and its strings stay valid until then. `as_ref` checks for null first.
+        while let Some(a) = unsafe { at.as_ref() } {
             if a.IfType != LOOPBACK {
                 // SAFETY: `AdapterName` is a NUL-terminated ANSI string, `FriendlyName` a
                 // NUL-terminated wide string, both in the same buffer.
@@ -163,10 +162,9 @@ mod imp {
         }
         let mut out: Vec<NetworkAdapter> = Vec::new();
         let mut at = head;
-        while !at.is_null() {
-            // SAFETY: `at` is `head` or an `ifa_next` link of the list `getifaddrs` returned,
-            // valid until `freeifaddrs`.
-            let a = unsafe { &*at };
+        // SAFETY: `at` is null, which ends the loop, or `head` or an `ifa_next` link of the list
+        // `getifaddrs` returned, valid until `freeifaddrs` below; `as_ref` checks for null first.
+        while let Some(a) = unsafe { at.cast_const().as_ref() } {
             if !a.ifa_name.is_null() {
                 // SAFETY: `ifa_name` is a NUL-terminated string in the same list.
                 let name = unsafe { std::ffi::CStr::from_ptr(a.ifa_name) }
