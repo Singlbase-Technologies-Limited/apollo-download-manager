@@ -149,6 +149,15 @@ fn opens_for_tcp_and_udp(port: u16, ipv6: bool) -> bool {
 /// mapping are off, and the DHT is on only through SOCKS5, which carries it. An HTTPS proxy,
 /// which libtorrent can't use, turns all of them off and sets no proxy: the app starts no torrent
 /// meanwhile.
+/// The chosen adapter's id when it isn't among `adapters` connected (#471); `None` for any.
+fn adapter_missing(
+    chosen: Option<&str>,
+    adapters: &[velocity_core::adapters::NetworkAdapter],
+) -> Option<String> {
+    let id = chosen?;
+    (!adapters.iter().any(|a| a.id == id && a.up)).then(|| id.to_owned())
+}
+
 fn session_config(settings: &TorrentSettings, port: u16, proxy: Option<&Proxy>) -> SessionConfig {
     let kind = proxy.map(|p| p.kind);
     let direct = kind.is_none();
@@ -171,8 +180,15 @@ fn session_config(settings: &TorrentSettings, port: u16, proxy: Option<&Proxy>) 
         ),
         _ => (0, String::new(), 0, String::new(), String::new()),
     };
+    // One adapter (#471): listened on and connected through, and no other, even while it is
+    // missing. libtorrent binds Windows adapters by GUID, Linux ones by name.
+    let (listen_interfaces, outgoing_interfaces) = match &settings.network_adapter {
+        Some(adapter) => (format!("{adapter}:{port}"), adapter.clone()),
+        None => (format!("0.0.0.0:{port},[::]:{port}"), String::new()),
+    };
     SessionConfig {
-        listen_interfaces: format!("0.0.0.0:{port},[::]:{port}"),
+        listen_interfaces,
+        outgoing_interfaces,
         enable_dht: settings.dht && (direct || kind == Some(ProxyKind::Socks5)),
         enable_lsd: settings.local_peer_discovery && direct,
         enable_upnp: settings.port_mapping && direct,
@@ -1596,10 +1612,20 @@ impl TorrentEngine for LtEngine {
                 state.port
             )
         });
+        let listen_error = state.listen_error.clone().or(moved);
+        let port_mapping = state.portmap.state(Instant::now());
+        let chosen = state.settings.network_adapter.clone();
+        // The adapters are the system's to list, with no lock held.
+        drop(state);
+        let adapters = match &chosen {
+            Some(_) => velocity_core::adapters::network_adapters().unwrap_or_default(),
+            None => Vec::new(),
+        };
         Ok(NetworkStatus {
             listen_port,
-            listen_error: state.listen_error.clone().or(moved),
-            port_mapping: state.portmap.state(Instant::now()),
+            listen_error,
+            port_mapping,
+            adapter_missing: adapter_missing(chosen.as_deref(), &adapters),
         })
     }
 
@@ -1747,6 +1773,52 @@ mod tests {
         assert_eq!(
             (c.upload_rate_limit, c.download_rate_limit),
             (262_144, 1024)
+        );
+        assert_eq!(c.outgoing_interfaces, "", "any adapter");
+    }
+
+    /// One network adapter (#471): torrents listen and connect through it only.
+    #[test]
+    fn a_chosen_adapter_is_the_only_one_listened_on_and_connected_through() {
+        let c = session_config(
+            &TorrentSettings {
+                network_adapter: Some("{921A8483-F16D-4CC1-959B-8A85B6BFEC1C}".into()),
+                ..TorrentSettings::default()
+            },
+            6890,
+            None,
+        );
+        assert_eq!(
+            c.listen_interfaces,
+            "{921A8483-F16D-4CC1-959B-8A85B6BFEC1C}:6890"
+        );
+        assert_eq!(
+            c.outgoing_interfaces,
+            "{921A8483-F16D-4CC1-959B-8A85B6BFEC1C}"
+        );
+    }
+
+    /// The status says when the chosen adapter is gone or not connected (#471): libtorrent then
+    /// listens nowhere and says nothing itself.
+    #[test]
+    fn a_chosen_adapter_that_is_gone_or_down_is_reported() {
+        let adapter = |id: &str, up: bool| velocity_core::adapters::NetworkAdapter {
+            id: id.into(),
+            name: id.into(),
+            up,
+        };
+        let list = [adapter("tun0", true), adapter("wg0", false)];
+        assert_eq!(adapter_missing(None, &list), None, "any adapter");
+        assert_eq!(adapter_missing(Some("tun0"), &list), None);
+        assert_eq!(
+            adapter_missing(Some("wg0"), &list),
+            Some("wg0".to_owned()),
+            "not connected"
+        );
+        assert_eq!(
+            adapter_missing(Some("tap9"), &list),
+            Some("tap9".to_owned()),
+            "gone"
         );
     }
 

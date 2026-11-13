@@ -3,6 +3,7 @@
 //! The application identity and the engine-neutral domain types shared with the UI
 //! (`domain`, docs/CONTRACTS.md).
 
+pub mod adapters;
 pub mod app_settings;
 pub mod autostart;
 pub mod branding;
@@ -82,7 +83,9 @@ use serde::Serialize;
 /// store page; `open_extension_page`.
 /// Version 34 (#415): the `browser-request` event only says a link waits; the window takes the
 /// waiting links with `take_browser_requests`.
-pub const COMMAND_API_VERSION: u32 = 34;
+/// Version 35 (#471) added `list_network_adapters`, the torrent setting `networkAdapter` and the
+/// torrent network status's `adapterMissing`.
+pub const COMMAND_API_VERSION: u32 = 35;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

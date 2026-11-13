@@ -161,8 +161,29 @@ describe('BitTorrent settings (V1)', () => {
     await waitFor(() => { expect(state.appSettings.torrent.portMapping).toBe(true); });
   });
 
+  it('binds torrents to one network adapter, such as a VPN’s (#471)', async () => {
+    const state = installFakeBackend({ adapters: [{ id: '{A}', name: 'Wi-Fi', up: true }, { id: '{B}', name: 'VPN', up: false }] });
+    const user = await openSettings('BitTorrent');
+    const adapter = await screen.findByLabelText('Network adapter');
+    expect(adapter.textContent).toContain('Any adapter');
+    await chooseOption(user, adapter, 'VPN (not connected)');
+    await waitFor(() => { expect(state.appSettings.torrent.networkAdapter).toBe('{B}'); });
+    await chooseOption(user, adapter, 'Any adapter');
+    await waitFor(() => { expect(state.appSettings.torrent.networkAdapter).toBeNull(); });
+  });
+
+  it('keeps a chosen adapter that is gone, and says torrents wait for it (#471)', async () => {
+    const state = installFakeBackend({ adapters: [{ id: '{A}', name: 'Wi-Fi', up: true }], network: { listenPort: 0, listenError: null, portMapping: { state: 'off' }, adapterMissing: '{GONE}' } });
+    state.appSettings.torrent.networkAdapter = '{GONE}';
+    await openSettings('BitTorrent');
+    const adapter = await screen.findByLabelText('Network adapter');
+    expect(adapter.textContent).toContain('The adapter chosen before (not found)');
+    const session = await screen.findByRole('region', { name: 'Connection' });
+    await waitFor(() => { expect(session.textContent).toContain('The network adapter chosen for torrents isn’t connected'); });
+  });
+
   it('shows the libtorrent session and the port mapping state', async () => {
-    installFakeBackend({ network: { listenPort: 6890, listenError: null, portMapping: { state: 'mapped', externalPort: 40000, via: 'natpmp' } } });
+    installFakeBackend({ network: { listenPort: 6890, listenError: null, portMapping: { state: 'mapped', externalPort: 40000, via: 'natpmp' }, adapterMissing: null } });
     await openSettings('BitTorrent');
     const session = await screen.findByRole('region', { name: 'Connection' });
     await waitFor(() => { expect(session.textContent).toContain('Listening on port 6890'); });

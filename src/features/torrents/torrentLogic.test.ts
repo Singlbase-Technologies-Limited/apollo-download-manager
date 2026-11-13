@@ -94,7 +94,7 @@ describe('tracker text', () => {
 });
 
 describe('port mapping text (#30)', () => {
-  const at = (portMapping: Parameters<typeof portMapText>[0]['portMapping']) => portMapText({ listenPort: 6882, listenError: null, portMapping });
+  const at = (portMapping: Parameters<typeof portMapText>[0]['portMapping']) => portMapText({ listenPort: 6882, listenError: null, portMapping, adapterMissing: null });
   it('describes every port mapping state', () => {
     expect(at({ state: 'mapped', externalPort: 40000, via: 'natpmp' })).toBe('Port 6882 forwarded by the router as 40000 (NAT-PMP).');
     expect(at({ state: 'off' })).toMatch(/^Off/);

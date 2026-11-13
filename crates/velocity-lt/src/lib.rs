@@ -11,6 +11,9 @@ pub mod ffi {
     pub struct SessionConfig {
         /// libtorrent `listen_interfaces`, e.g. `0.0.0.0:6882,[::]:6882`.
         pub listen_interfaces: String,
+        /// libtorrent `outgoing_interfaces`: the adapters peers and trackers are reached through
+        /// (#471); empty for any.
+        pub outgoing_interfaces: String,
         pub enable_dht: bool,
         pub enable_lsd: bool,
         pub enable_upnp: bool,
