@@ -1244,6 +1244,187 @@
           "content": [
            {
             "type": "text",
+            "text": "Numbered series, with a pattern:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a range in square brackets in a link's path adds one link per value. The dialog shows how many links it makes, and the first and last, before you add them."
+         }
+        ]
+       },
+       {
+        "type": "list",
+        "ordered": false,
+        "items": [
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "code",
+             "text": "file[1-10].zip"
+            },
+            {
+             "type": "text",
+             "text": " adds "
+            },
+            {
+             "type": "code",
+             "text": "file1.zip"
+            },
+            {
+             "type": "text",
+             "text": " to "
+            },
+            {
+             "type": "code",
+             "text": "file10.zip"
+            },
+            {
+             "type": "text",
+             "text": "."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "code",
+             "text": "file[001-100].zip"
+            },
+            {
+             "type": "text",
+             "text": " keeps the zeros: "
+            },
+            {
+             "type": "code",
+             "text": "file001.zip"
+            },
+            {
+             "type": "text",
+             "text": " to "
+            },
+            {
+             "type": "code",
+             "text": "file100.zip"
+            },
+            {
+             "type": "text",
+             "text": "."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "code",
+             "text": "img[0-100:5].png"
+            },
+            {
+             "type": "text",
+             "text": " counts in steps of 5: "
+            },
+            {
+             "type": "code",
+             "text": "img0.png"
+            },
+            {
+             "type": "text",
+             "text": ", "
+            },
+            {
+             "type": "code",
+             "text": "img5.png"
+            },
+            {
+             "type": "text",
+             "text": " and so on, to "
+            },
+            {
+             "type": "code",
+             "text": "img100.png"
+            },
+            {
+             "type": "text",
+             "text": "."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "code",
+             "text": "part-[a-e].rar"
+            },
+            {
+             "type": "text",
+             "text": " adds "
+            },
+            {
+             "type": "code",
+             "text": "part-a.rar"
+            },
+            {
+             "type": "text",
+             "text": " to "
+            },
+            {
+             "type": "code",
+             "text": "part-e.rar"
+            },
+            {
+             "type": "text",
+             "text": "; "
+            },
+            {
+             "type": "code",
+             "text": "[A-Z]"
+            },
+            {
+             "type": "text",
+             "text": " works for capitals."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "One range per link, from the smaller end. All the links together still count toward the 500."
+            }
+           ]
+          }
+         ]
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
             "text": "Magnet links,"
            }
           ]
@@ -3511,7 +3692,7 @@
     {
      "anchor": "adding-downloads",
      "heading": "Adding downloads",
-     "text": "Open the Add dialog with Add download at the top of the navigation, or Ctrl+N. Dropping .torrent files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or .torrent link anywhere outside a text field also opens it, with the link filled in. What you can add: Links, one per line, up to 500 at once: http://, https://, ftp://, ftps:// and sftp:// (Protocols and limits). Magnet links, and links to .torrent files: Apollo Download Manager downloads the .torrent file first, for up to 60 seconds, then adds the torrent. .torrent files on your computer, with Choose .torrent files…. Metalink files (.metalink, .meta4) on your computer, with Choose Metalink files…: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason (Protocols and limits). A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example \"Only http, https, ftp, ftps, sftp and magnet links are supported.\" Links with spaces or control characters are refused too. Before you add, the dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Logins Start download adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; Add paused adds it without starting it. After you choose Start download or Add paused: A name already taken: choose Keep both (rename) or Skip. Apollo Download Manager never replaces a file that is already there. A link added before: Add anyway starts a separate download, and Show download selects the one already in the list. Links that failed are listed, each with the reason."
+     "text": "Open the Add dialog with Add download at the top of the navigation, or Ctrl+N. Dropping .torrent files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or .torrent link anywhere outside a text field also opens it, with the link filled in. What you can add: Links, one per line, up to 500 at once: http://, https://, ftp://, ftps:// and sftp:// (Protocols and limits). Numbered series, with a pattern: a range in square brackets in a link's path adds one link per value. The dialog shows how many links it makes, and the first and last, before you add them. file[1-10].zip adds file1.zip to file10.zip. file[001-100].zip keeps the zeros: file001.zip to file100.zip. img[0-100:5].png counts in steps of 5: img0.png, img5.png and so on, to img100.png. part-[a-e].rar adds part-a.rar to part-e.rar; [A-Z] works for capitals. One range per link, from the smaller end. All the links together still count toward the 500. Magnet links, and links to .torrent files: Apollo Download Manager downloads the .torrent file first, for up to 60 seconds, then adds the torrent. .torrent files on your computer, with Choose .torrent files…. Metalink files (.metalink, .meta4) on your computer, with Choose Metalink files…: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason (Protocols and limits). A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example \"Only http, https, ftp, ftps, sftp and magnet links are supported.\" Links with spaces or control characters are refused too. Before you add, the dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Logins Start download adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; Add paused adds it without starting it. After you choose Start download or Add paused: A name already taken: choose Keep both (rename) or Skip. Apollo Download Manager never replaces a file that is already there. A link added before: Add anyway starts a separate download, and Show download selects the one already in the list. Links that failed are listed, each with the reason."
     },
     {
      "anchor": "a-start-time-of-its-own",

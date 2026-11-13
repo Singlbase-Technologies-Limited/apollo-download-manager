@@ -9,6 +9,12 @@ Open the Add dialog with **Add download** at the top of the navigation, or **Ctr
 **What you can add:**
 
 - **Links,** one per line, up to 500 at once: `http://`, `https://`, `ftp://`, `ftps://` and `sftp://` ([Protocols and limits](protocols.md)).
+- **Numbered series, with a pattern:** a range in square brackets in a link's path adds one link per value. The dialog shows how many links it makes, and the first and last, before you add them.
+  - `file[1-10].zip` adds `file1.zip` to `file10.zip`.
+  - `file[001-100].zip` keeps the zeros: `file001.zip` to `file100.zip`.
+  - `img[0-100:5].png` counts in steps of 5: `img0.png`, `img5.png` and so on, to `img100.png`.
+  - `part-[a-e].rar` adds `part-a.rar` to `part-e.rar`; `[A-Z]` works for capitals.
+  - One range per link, from the smaller end. All the links together still count toward the 500.
 - **Magnet links,** and **links to `.torrent` files**: Apollo Download Manager downloads the `.torrent` file first, for up to 60 seconds, then adds the torrent.
 - **`.torrent` files** on your computer, with **Choose .torrent files…**.
 - **Metalink files** (`.metalink`, `.meta4`) on your computer, with **Choose Metalink files…**: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason ([Protocols and limits](protocols.md#metalink)).
