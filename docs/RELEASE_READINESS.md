@@ -1,6 +1,6 @@
 # Release readiness
 
-Passing tests isn't the same as being ready to release. This checklist covers everything else a release depends on: security, licences, signing, the release pipeline, field testing, privacy, documentation, rollback and known limits (#78). It is the gate before 1.0.0, and it's brought up to date before each release, starting with 0.2.0.
+Passing tests isn't the same as being ready to release. This checklist covers everything else a release depends on: security, licences, signing, the release pipeline, field testing, privacy, documentation, rollback and known limits (#78). It is the gate before 1.0.0, and it's brought up to date before each release, starting with 0.2.0. Which version closes each gap, and what else 1.0.0 needs, is in [the road to 1.0.0](ROADMAP_TO_1.0.md) (#461).
 
 **How to read it:**
 
