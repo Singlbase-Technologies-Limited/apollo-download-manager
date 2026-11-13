@@ -494,6 +494,20 @@ fn wanted_bytes(entries: &[FileEntry]) -> (u64, u64) {
         })
 }
 
+/// The files of a completed torrent to mark as from the internet (#469): the wanted, whole,
+/// non-padding files whose path, as libtorrent reports it, is inside the torrent's `folder` and
+/// reached through plain folders only. A name from the torrent's metadata never leads the mark
+/// outside the folder or through a link; `mark_from_internet` then refuses anything that isn't a
+/// plain file.
+fn finished_files(folder: &Path, entries: &[FileEntry]) -> Vec<PathBuf> {
+    entries
+        .iter()
+        .filter(|f| f.priority > 0 && !f.pad && f.size >= 0 && f.done >= f.size)
+        .map(|f| PathBuf::from(&f.path))
+        .filter(|path| velocity_core::fs_safety::reached_through_plain_folders(folder, path))
+        .collect()
+}
+
 struct Torrent {
     /// libtorrent's id for it, through the bridge; `None` while it is added again (`readd`).
     lt: Option<u64>,
@@ -923,6 +937,11 @@ impl Shared {
                 }
             }
         }
+        // Just completed: its files are marked before anyone hears it completed (#469).
+        let completed = finish.complete() && !seen.finish.complete();
+        if completed {
+            self.mark_downloaded(seen.id, lt, Path::new(&seen.base.save_path));
+        }
         let mut snapshot = snapshot_of(seen.id, &status, finish, &phase);
         if let Some((done, total)) = partial {
             snapshot.progress.completed_bytes = done;
@@ -972,9 +991,38 @@ impl Shared {
         let due = seen
             .resume_asked
             .is_none_or(|asked| asked.elapsed() >= RESUME_EVERY);
-        let completed = finish.complete() && !seen.finish.complete();
         if status.has_metadata && ((status.need_save_resume && due) || completed) {
             self.ask_resume(seen.id, lt);
+        }
+    }
+
+    /// Marks a just completed torrent's files as from the internet (#469), as browsers mark their
+    /// downloads, so SmartScreen and Office's protected view still warn before one opens. A
+    /// torrent has no web address to name, so the mark gives the zone only. A file system without
+    /// streams (FAT32, exFAT) can't hold the mark: the torrent stays completed, and the helper's
+    /// log says so. Does nothing outside Windows.
+    fn mark_downloaded(&self, id: TorrentId, lt: u64, folder: &Path) {
+        if !cfg!(windows) {
+            return;
+        }
+        let entries = match self.session.files(lt) {
+            Ok(entries) => entries,
+            Err(e) => {
+                eprintln!(
+                    "WARN the files of torrent {} couldn't be listed to mark them as downloaded from the internet: {}",
+                    id.0,
+                    e.what()
+                );
+                return;
+            }
+        };
+        for path in finished_files(folder, &entries) {
+            if let Err(e) = velocity_core::fs_safety::mark_from_internet(&path, None) {
+                eprintln!(
+                    "WARN {} couldn't be marked as downloaded from the internet: {e}",
+                    path.display()
+                );
+            }
         }
     }
 
@@ -2080,6 +2128,42 @@ mod tests {
         assert_eq!(
             read_torrent_file(&dir.join("none")),
             Err(ErrorCode::NotFound)
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Mark of the Web (#469): only the whole, wanted files a torrent has inside its folder are
+    /// marked, reached through plain folders; libtorrent's paths are checked like any other.
+    #[test]
+    fn only_a_torrents_whole_wanted_files_inside_its_folder_are_marked() {
+        let dir = std::env::temp_dir().join(format!("v2-torrent-mark-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("t/sub")).unwrap();
+        let entry = |path: PathBuf, done: i64, priority: u8, pad: bool| FileEntry {
+            path: path.to_string_lossy().into_owned(),
+            size: 4,
+            done,
+            priority,
+            pad,
+        };
+        let entries = vec![
+            entry(dir.join("t/a.bin"), 4, 4, false),
+            entry(dir.join("t/sub/b.bin"), 4, 1, false),
+            entry(dir.join("t/skipped.bin"), 4, 0, false),
+            entry(dir.join("t/partial.bin"), 2, 4, false),
+            entry(dir.join("t/.pad/0"), 4, 4, true),
+            entry(dir.join("t/../../outside.bin"), 4, 4, false),
+            entry(std::env::temp_dir().join("elsewhere.bin"), 4, 4, false),
+        ];
+        // Creating a link needs extra rights on Windows, so this part runs on Unix.
+        #[cfg(unix)]
+        let entries = {
+            std::os::unix::fs::symlink(std::env::temp_dir(), dir.join("t/link")).unwrap();
+            [entries, vec![entry(dir.join("t/link/c.bin"), 4, 4, false)]].concat()
+        };
+        assert_eq!(
+            finished_files(&dir, &entries),
+            [dir.join("t/a.bin"), dir.join("t/sub/b.bin")]
         );
         let _ = std::fs::remove_dir_all(&dir);
     }

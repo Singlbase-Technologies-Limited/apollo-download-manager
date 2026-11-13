@@ -59,7 +59,43 @@ fn downloads(name: &str, source: impl FnOnce() -> TorrentSource) {
         Err(ErrorCode::InvalidState),
         "a completed torrent seeds again only through setSeeding"
     );
+    // Mark of the Web (#469): every file is marked as from the internet, as a browser would.
+    for (path, _) in files_of(name) {
+        assert_marked(&get_dir.0.join(&path));
+    }
     drop(seeder);
+}
+
+/// The file at `path` carries the Mark of the Web (#469): its `Zone.Identifier` stream names the
+/// internet zone, and no address, since a torrent has none. Windows only: elsewhere nothing is
+/// marked.
+fn assert_marked(path: &Path) {
+    #[cfg(windows)]
+    {
+        let mut stream = path.as_os_str().to_owned();
+        stream.push(":Zone.Identifier");
+        let mark = std::fs::read_to_string(std::path::PathBuf::from(stream))
+            .unwrap_or_else(|e| panic!("{} has no Mark of the Web: {e}", path.display()));
+        assert_eq!(mark, "[ZoneTransfer]\r\nZoneId=3\r\n", "{}", path.display());
+    }
+    #[cfg(not(windows))]
+    let _ = path;
+}
+
+/// The file at `path` has no Mark of the Web (#469).
+fn assert_not_marked(path: &Path) {
+    #[cfg(windows)]
+    {
+        let mut stream = path.as_os_str().to_owned();
+        stream.push(":Zone.Identifier");
+        assert!(
+            !std::path::PathBuf::from(stream).exists(),
+            "{} is marked",
+            path.display()
+        );
+    }
+    #[cfg(not(windows))]
+    let _ = path;
 }
 
 #[test]
@@ -277,6 +313,9 @@ fn a_torrent_file_downloads_only_its_first_choice() {
         digest_on_disk(&get_dir.0, "v1-multi/sub/b.bin"),
         content_digest(name, "v1-multi/sub/b.bin")
     );
+    // Only the chosen file is a download: libtorrent's own part file isn't marked (#469).
+    assert_marked(&get_dir.0.join("v1-multi/sub/b.bin"));
+    assert_not_marked(&get_dir.0.join(&parts));
     drop(seeder);
 }
 
