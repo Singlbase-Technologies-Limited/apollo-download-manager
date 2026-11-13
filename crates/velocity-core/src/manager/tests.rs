@@ -1873,6 +1873,48 @@ mod recovery {
         assert!(m.queue().is_empty());
     }
 
+    /// #459: the key an SFTP download stopped at was seen by the engine before the restart, and
+    /// only a key the engine saw can be trusted. So after a restart the download no longer asks
+    /// about it: its message stays, and Retry connects, sees the key again and asks then.
+    #[test]
+    fn a_host_key_question_is_not_asked_again_after_a_restart() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let id = {
+            let (mut m, control) = restart(&db, 1);
+            let id = m.add(DownloadKind::Http, spec(), T0).unwrap();
+            control.fail(
+                TransferId(1),
+                TransferError::new(
+                    FailureClass::Permanent,
+                    None,
+                    "The server's host key isn't trusted yet.",
+                )
+                .with_host_key(crate::domain::HostKeyCheck {
+                    host: "files.example".to_owned(),
+                    port: 22,
+                    fingerprint: "SHA256:abc123".to_owned(),
+                    pinned: None,
+                }),
+            );
+            m.pump(T0 + 1);
+            assert!(m
+                .get(&id)
+                .unwrap()
+                .error
+                .as_ref()
+                .unwrap()
+                .host_key
+                .is_some());
+            id
+        };
+        let (m, _control) = restart(&db, 1);
+        let r = m.get(&id).unwrap();
+        assert_eq!(r.status, DownloadStatus::Failed);
+        let error = r.error.as_ref().unwrap();
+        assert_eq!(error.message, "The server's host key isn't trusted yet.");
+        assert!(error.host_key.is_none(), "{error:?}");
+    }
+
     #[test]
     fn a_download_that_had_a_login_comes_back_paused_and_resumes_only_with_it() {
         let db = Arc::new(Database::open_in_memory().unwrap());

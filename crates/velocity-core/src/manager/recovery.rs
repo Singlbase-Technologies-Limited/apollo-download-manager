@@ -201,7 +201,13 @@ impl Manager {
                 .and_then(LocalTime::parse)
                 .map(|t| t.0);
             let error = match &stored.error {
-                Some(crate::database::Stored::Known(e)) => Some(e.clone()),
+                Some(crate::database::Stored::Known(e)) => {
+                    let mut e = e.clone();
+                    // An SFTP host key can be trusted only as the engine saw it, and this run's
+                    // engine hasn't (#459). The message stays; Retry connects and asks again.
+                    e.host_key = None;
+                    Some(e)
+                }
                 _ => None,
             };
             let activity = super::activity::Tracker::new(stored.activity);

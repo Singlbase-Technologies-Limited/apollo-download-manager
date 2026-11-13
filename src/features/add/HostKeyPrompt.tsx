@@ -32,7 +32,13 @@ export function HostKeyPrompt() {
   const trust = async () => {
     setBusy(true);
     try {
-      await api.trustHostKey(key.host, key.port, key.fingerprint);
+      try {
+        await api.trustHostKey(key.host, key.port, key.fingerprint);
+      } catch (e) {
+        // The engine trusts only a key it saw; after it restarted it hasn't (#459). Connecting again shows the key
+        // again, and this question comes back for a key that can be trusted.
+        if (toApiError(e).code !== 'NOT_FOUND') throw e;
+      }
       await api.retryDownloads([asking.id]);
     } catch (e) {
       toast.error(toApiError(e).message);
