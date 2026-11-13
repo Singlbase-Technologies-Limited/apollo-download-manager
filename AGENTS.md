@@ -5,7 +5,7 @@ These rules apply to every contributor, human or AI agent. Each rule has one hom
 ## Project and authority
 
 - **What V2 is:** a desktop download manager with a Tauri 2 shell (`src-tauri/`), a React and TypeScript UI (`src/`) and Rust crates (`crates/`). It has its own direct-download engine, on libcurl for HTTP, HTTPS and FTP and on russh for SFTP, and uses libtorrent for BitTorrent ([ADR-0001](docs/decisions/0001-v2-direction.md), [ADR-0013](docs/decisions/0013-sftp-russh.md)).
-- **No aria2:** V2 never bundles, calls, falls back to or copies aria2. V1, the original Velocity Download Manager, may serve only as a feature and benchmark reference, and is never modified from V2 work.
+- **No aria2:** V2 never bundles, calls, falls back to or copies aria2. V1, the download manager Apollo Download Manager grew out of, may serve only as a feature and benchmark reference, and is never modified from V2 work.
 - **Separate from V1:** V2 runs beside V1, so it never reuses V1's identifiers, data directories, ports or registrations (#11, #27).
 - **Platforms:** Windows and Linux are verified for development. macOS is not yet established (#83).
 - **The Product Owner (PO) decides** scope, architecture, dependencies, licensing, security trade-offs, repository settings, merges and releases. When a change needs one of these decisions, stop and ask; don't decide by default. Accepted decisions are recorded in [docs/decisions/](docs/decisions/README.md).
@@ -98,7 +98,7 @@ pnpm check:fast                # L1 checks: fmt, clippy, cargo test, tsc, ESLint
 pnpm check:pr                  # L3: the checks this branch's changes need
 pnpm check:full                # L4 locally: L1 + production web build + Rust release build
 pnpm check:links               # relative links and anchors in all Markdown files
-pnpm check:product-name        # no "V2" for the product in docs, the website, the extension or the window
+pnpm check:product-name        # no "V2" for the product, and no V1 full product name, in public texts
 pnpm guide                     # rebuild the in-app user guide from docs/user/ after editing a guide
 pnpm check:guidance            # AGENTS.md, CLAUDE.md, rules and skills (docs/AGENT_GUIDANCE.md)
 pnpm check:pr-body <file> --title "…"  # a PR description and title against the PR template

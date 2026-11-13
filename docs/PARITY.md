@@ -1,6 +1,6 @@
 # Parity map: V1 to Apollo Download Manager
 
-Every user-visible behaviour of the original Velocity Download Manager (V1), with where it lives in V1, the V1 tests that prove it, what Apollo Download Manager does with it, and the issue that delivers it (#22). The default is **keep every V1 feature**. Rows that changed meaning without aria2 were decided in #23 ([ADR-0005](decisions/0005-v1-features-without-aria2.md)); any further scope change needs a new PO decision.
+Every user-visible behaviour of V1, the download manager Apollo Download Manager grew out of, with where it lives in V1, the V1 tests that prove it, what Apollo Download Manager does with it, and the issue that delivers it (#22). The default is **keep every V1 feature**. Rows that changed meaning without aria2 were decided in #23 ([ADR-0005](decisions/0005-v1-features-without-aria2.md)); any further scope change needs a new PO decision.
 
 - **V1 reference:** `Singlbase-Technologies-Limited/velocity-download-manager` at commit `e9d717a8`. Every link below opens that exact commit.
 - **Dispositions:**

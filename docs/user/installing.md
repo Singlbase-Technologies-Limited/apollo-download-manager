@@ -1,6 +1,6 @@
 # Installing
 
-Apollo Download Manager installs beside the original Velocity Download Manager (V1): each has its own programs, menu entries and data, and installing or removing one never changes the other ([V1 and Apollo Download Manager](v1-and-v2.md)).
+Apollo Download Manager installs beside V1, the download manager it grew out of: each has its own programs, menu entries and data, and installing or removing one never changes the other ([V1 and Apollo Download Manager](v1-and-v2.md)).
 
 **No signed release yet:** Apollo Download Manager's installers are test builds, made by its CI and not signed.
 
@@ -38,7 +38,7 @@ No AppImage is made for now.
 
 Install a newer version over the old one: run the newer Windows installer, or install the newer Linux package. Your downloads, settings, history and browser registrations are kept.
 
-**From 0.1.x,** which was named "Velocity Download Manager V2": install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed.
+**From 0.1.x,** which had an earlier name: install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed.
 
 ## Removing Apollo Download Manager
 

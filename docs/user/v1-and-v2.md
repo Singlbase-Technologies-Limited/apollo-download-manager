@@ -1,6 +1,6 @@
-# Beside Velocity Download Manager
+# Beside V1
 
-Apollo Download Manager is a new app, not an update of the original Velocity Download Manager (V1). V1 downloads with aria2; Apollo Download Manager has its own download engine, and libtorrent for torrents. The aim is to keep every V1 feature, and where a feature had to change without aria2, the change was decided and is listed below.
+Apollo Download Manager is a new app, not an update of V1, the download manager it grew out of, which installs separately. V1 downloads with aria2; Apollo Download Manager has its own download engine, and libtorrent for torrents. The aim is to keep every V1 feature, and where a feature had to change without aria2, the change was decided and is listed below.
 
 ## Using both side by side
 
@@ -8,10 +8,10 @@ You can install and run V1 and Apollo Download Manager at the same time. They sh
 
 | | Apollo Download Manager | V1 |
 |---|---|---|
-| Name in menus and in Apps & features | Apollo Download Manager ("Velocity Download Manager V2" until 0.2.0) | Velocity Download Manager |
+| Name in menus and in Apps & features | Apollo Download Manager (from 0.2.0; versions 0.1.x had an earlier name) | V1's own name |
 | Data (Windows) | `%APPDATA%\com.velocity.downloadmanager.v2` | `%APPDATA%\com.velocity.downloadmanager` |
 | Data (Linux) | `~/.local/share/com.velocity.downloadmanager.v2` | `~/.local/share/com.velocity.downloadmanager` |
-| Browser extension | Apollo Download Manager, "Download with Apollo Download Manager" | Velocity Download Manager |
+| Browser extension | Apollo Download Manager, "Download with Apollo Download Manager" | V1's own extension |
 | Torrent listening port | 6890 | 6881, 6882 |
 
 - **Downloads, settings and history are separate.** Apollo Download Manager doesn't read V1's, and V1 doesn't read Apollo Download Manager's.

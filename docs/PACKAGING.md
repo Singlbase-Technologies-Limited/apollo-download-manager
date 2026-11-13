@@ -13,12 +13,12 @@ One installer, a per-user NSIS setup (`Apollo Download Manager_<version>_x64-set
 
 ### Beside V1
 
-V1 is installed as "Velocity Download Manager". The new installer uses its own product name, Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md)):
+V1 is installed under its own product name. The new installer uses Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md); the tests in `crates/velocity-core/src/branding.rs` check it against V1's exact name):
 
 | | Apollo DM | V1 |
 |---|---|---|
-| Install folder | `%LOCALAPPDATA%\Apollo Download Manager` | `%LOCALAPPDATA%\Velocity Download Manager` |
-| Apps & features entry (`HKCU\…\Uninstall\<name>`) | `Apollo Download Manager` | `Velocity Download Manager` |
+| Install folder | `%LOCALAPPDATA%\Apollo Download Manager` | `%LOCALAPPDATA%\<V1's product name>` |
+| Apps & features entry (`HKCU\…\Uninstall\<name>`) | `Apollo Download Manager` | V1's product name |
 | Data folder | `%APPDATA%\com.velocity.downloadmanager.v2` | `%APPDATA%\com.velocity.downloadmanager` |
 | Browser registrations | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 
@@ -31,9 +31,9 @@ Offering to remove V1 from Apollo Download Manager's installer is left for a lat
 - **Uninstalling** removes the programs, the shortcut and the Apps & features entry. It also removes Apollo Download Manager's browser registrations: the `HKCU\Software\<browser>\NativeMessagingHosts\com.velocity.download_manager_v2` keys for Chrome, Chromium, Edge, Brave and Firefox ([`src-tauri/windows/installer-hooks.nsh`](../src-tauri/windows/installer-hooks.nsh)). V1's keys have another name and stay.
 - **Your downloads and settings stay** unless you tick "Delete the application data", which removes `%APPDATA%\com.velocity.downloadmanager.v2` and `%LOCALAPPDATA%\com.velocity.downloadmanager.v2`. Downloaded files are never removed.
 - **Upgrading:** a newer installer runs the old version's uninstaller with `/UPDATE`. That keeps the data and the browser registrations, so the browsers keep working.
-- **Upgrading from 0.1.x,** which was named "Velocity Download Manager V2" (ADR-0016): Tauri finds an earlier version only by the product name, so the installer's own hook (`NSIS_HOOK_PREINSTALL` in [`installer-hooks.nsh`](../src-tauri/windows/installer-hooks.nsh)) does it for the old name (#347):
-  - It reads the old install folder from `HKCU\…\Uninstall\Velocity Download Manager V2`, runs that folder's uninstaller silently with `/UPDATE`, and waits for it. The old programs and the old Apps & features entry go; the data, the settings and the browser keys stay. One install and one entry remain.
-  - Then it removes the old uninstaller and folder, the old "Velocity Download Manager V2" Start menu and desktop shortcuts (only when they point into the old folder), the old `HKCU\Software\Velocity Project\Velocity Download Manager V2` key, and the `Velocity Project` key only when it is empty, so V1's stays.
+- **Upgrading from 0.1.x,** which had an earlier product name (ADR-0016; the exact name is `OLD_PRODUCTNAME` in `installer-hooks.nsh`): Tauri finds an earlier version only by the product name, so the installer's own hook (`NSIS_HOOK_PREINSTALL` in [`installer-hooks.nsh`](../src-tauri/windows/installer-hooks.nsh)) does it for the old name (#347):
+  - It reads the old install folder from `HKCU\…\Uninstall\<the 0.1.x product name>`, runs that folder's uninstaller silently with `/UPDATE`, and waits for it. The old programs and the old Apps & features entry go; the data, the settings and the browser keys stay. One install and one entry remain.
+  - Then it removes the old uninstaller and folder, the old Start menu and desktop shortcuts with that name (only when they point into the old folder), the old `HKCU\Software\Velocity Project\<the 0.1.x product name>` key, and the `Velocity Project` key only when it is empty, so V1's stays.
   - If the old uninstaller fails, the hook removes nothing more, so the old install stays whole, with its entry.
   - The browser registrations' manifests still name the old folder's native host. On its next start the app points each Apollo Download Manager registration whose host is gone at its own host (`repair_moved_host` in `crates/velocity-core/src/browser/registration.rs`), and leaves V1's alone.
 
@@ -86,7 +86,7 @@ A deb, for Ubuntu and Debian, and an rpm, for Fedora and openSUSE, made by Tauri
 
 ### Beside V1
 
-V1's Linux packages are named `velocity-download-manager`, and install `/usr/bin/velocity-desktop`, `/usr/bin/velocity-aria2c`, `/usr/bin/velocity-native-host`, `/usr/lib/Velocity Download Manager/`, `Velocity Download Manager.desktop` and `velocity-desktop.png` icons (V1's `tauri.conf.json` at `e9d717a8`). Apollo Download Manager's packages share none of these, so both install side by side; the build fails if an Apollo Download Manager package would install any of them.
+V1's Linux packages are named `velocity-download-manager`, and install `/usr/bin/velocity-desktop`, `/usr/bin/velocity-aria2c`, `/usr/bin/velocity-native-host`, a `/usr/lib/` folder and a `.desktop` file named after V1's product name, and `velocity-desktop.png` icons (V1's `tauri.conf.json` at `e9d717a8`). Apollo Download Manager's packages share none of these, so both install side by side; the build fails if an Apollo Download Manager package would install any of them.
 
 ### Removing and upgrading
 

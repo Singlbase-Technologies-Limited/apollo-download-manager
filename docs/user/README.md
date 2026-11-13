@@ -2,7 +2,7 @@
 
 These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open **Help** (the **?** in the title bar), then **User guide**. How Apollo Download Manager is built and tested is in the [developer documents](../README.md).
 
-Apollo Download Manager is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other ([Beside Velocity Download Manager](v1-and-v2.md)).
+Apollo Download Manager is a separate app from V1, the download manager it grew out of. You can install and run both at once; nothing one does changes the other ([Beside V1](v1-and-v2.md)).
 
 | Guide | What it covers |
 |---|---|
@@ -14,6 +14,6 @@ Apollo Download Manager is a separate app from the original Velocity Download Ma
 | [Settings](settings.md) | Every section of the Settings screen, including the proxy |
 | [Browser integration](browser.md) | Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager |
 | [Troubleshooting](troubleshooting.md) | Common problems, the diagnostics report, and what error messages mean |
-| [Beside Velocity Download Manager](v1-and-v2.md) | Using both side by side, and what is different |
+| [Beside V1](v1-and-v2.md) | Using both side by side, and what is different |
 
 **Apollo Download Manager is still in development.** The guides describe what this version does. Where something isn't there yet, the guide says so.
