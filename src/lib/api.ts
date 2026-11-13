@@ -190,6 +190,7 @@ export const api = {
   reannounce: (id: string) => call('reannounce_torrent', { id }, nothing),
   /** KiB/s; 0 for no limit. */
   setUploadLimit: (id: string, kib: number) => call('set_torrent_upload_limit', { id, kib }, nothing),
+  setTorrentOrder: (id: string, inOrder: boolean, endsFirst: boolean) => call('set_torrent_order', { id, inOrder, endsFirst }, nothing),
   /** Downloads exactly `files`; with `deleteDropped`, deletes the torrent's own files no longer chosen. Answers the files kept. */
   chooseTorrentFiles: (id: string, files: number[], deleteDropped: boolean) => call('choose_torrent_files', { id, files, deleteDropped }, z.array(KeptFileSchema)),
   /** Gives a download that came back without its login, headers or SSH key those again; then resume or retry it. */

@@ -80,6 +80,7 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
         {t ? <Row label="Seeding">{seedingSummary(t.seeding)}</Row> : null}
         {/* Changed in the Edit dialog (#349). */}
         {t ? <Row label="Upload limit">{t.uploadLimitBps > 0 ? formatSpeed(t.uploadLimitBps) : 'None'}</Row> : null}
+        {t ? <Row label="Piece order">{pieceOrder(t.inOrder, t.endsFirst)}</Row> : null}
         {t ? (
           <Row label="Trackers">
             {t.trackersMissing
@@ -160,4 +161,12 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
       ) : null}
     </section>
   );
+}
+
+/** How a torrent's pieces come in (#470): libtorrent's own order unless the user chose otherwise. */
+function pieceOrder(inOrder: boolean, endsFirst: boolean): string {
+  if (inOrder && endsFirst) return 'In order, each file’s first and last pieces first';
+  if (inOrder) return 'In order';
+  if (endsFirst) return 'Each file’s first and last pieces first';
+  return 'Rarest first, the usual';
 }

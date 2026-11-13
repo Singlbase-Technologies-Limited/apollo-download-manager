@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 36;
+export const COMMAND_API_VERSION = 37;
 
 const bytes = z.number().int().nonnegative();
 
@@ -398,6 +398,9 @@ export const AddRequestSchema = z.strictObject({
   seeding: SeedPolicySchema.nullable(),
   /** KiB/s each torrent uploads at most; 0 for no limit. */
   uploadLimitKib: z.number().int().nonnegative(),
+  /** Each torrent downloads its pieces in order, and its files' first and last pieces first (#470). */
+  inOrder: z.boolean(),
+  endsFirst: z.boolean(),
   /** The browser extension sent the links (#65): a link that reaches this computer or a private network waits for the user (#67). */
   fromBrowser: z.boolean(),
   /** Its own start time, local `YYYY-MM-DDTHH:MM` (#350); `null` to start as usual. */
@@ -649,6 +652,9 @@ export const TorrentDetailsSchema = z.strictObject({
   contents: TorrentContentsSchema.nullable(),
   /** `null` for every file. */
   chosen: z.array(z.number().int().positive()).nullable(),
+  /** It downloads its pieces in order, and its files' first and last pieces first (#470). */
+  inOrder: z.boolean(),
+  endsFirst: z.boolean(),
 });
 export type TorrentDetails = z.infer<typeof TorrentDetailsSchema>;
 

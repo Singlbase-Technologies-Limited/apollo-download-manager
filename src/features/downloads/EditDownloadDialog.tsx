@@ -8,6 +8,7 @@ import { Select } from '../../components/Select';
 import type { DownloadRecord } from '../../contract';
 import { displayName, FINISHED } from '../../downloads/list';
 import { keys, useCategories, useTorrentDetails } from '../../lib/queries';
+import { OrderFields } from '../torrents/OrderFields';
 import { RememberTrackers } from '../torrents/RememberTrackers';
 import type { DownloadActions } from './useDownloadActions';
 
@@ -38,12 +39,16 @@ export function EditDownloadDialog({ download: d, actions, onClose }: { download
   const [speed, setSpeed] = useState(String(savedKib));
   const [connections, setConnections] = useState(String(d.requestedConnections ?? ''));
   const [upload, setUpload] = useState<string | null>(null);
+  // `null` until changed: the saved value shows (#470).
+  const [inOrder, setInOrder] = useState<boolean | null>(null);
+  const [endsFirst, setEndsFirst] = useState<boolean | null>(null);
   // `null` until changed: the saved value shows (#472).
   const [trackers, setTrackers] = useState<boolean | null>(null);
 
   const showsSpeed = !finished && d.status !== 'seeding';
   const showsConnections = !torrent && !finished;
   const showsUpload = torrent && !finished && d.status !== 'fetchingMetadata' && savedUpload !== null;
+  const order = torrentDetails.data && torrent && !finished ? { inOrder: inOrder ?? torrentDetails.data.inOrder, endsFirst: endsFirst ?? torrentDetails.data.endsFirst } : null;
   const savedTrackers = torrent && torrentDetails.data ? torrentDetails.data.trackersSaved : null;
   const speedKib = wholeAtLeast(speed, 0);
   const wanted = wholeAtLeast(connections, 1);
@@ -57,6 +62,9 @@ export function EditDownloadDialog({ download: d, actions, onClose }: { download
     if (showsConnections && wanted !== null && wanted !== d.requestedConnections) void actions.setConnections(d.id, wanted);
     if (showsUpload && uploadKib !== null && uploadKib !== savedUpload) {
       void actions.setUploadLimit(d.id, uploadKib).then(() => qc.invalidateQueries({ queryKey: keys.torrent(d.id) }));
+    }
+    if (order && torrentDetails.data && (order.inOrder !== torrentDetails.data.inOrder || order.endsFirst !== torrentDetails.data.endsFirst)) {
+      void actions.setTorrentOrder(d.id, order.inOrder, order.endsFirst).then(() => qc.invalidateQueries({ queryKey: keys.torrent(d.id) }));
     }
     if (savedTrackers !== null && trackers !== null && trackers !== savedTrackers) {
       void actions.rememberTrackers(d.id, trackers).then(() => qc.invalidateQueries({ queryKey: keys.torrent(d.id) }));
@@ -98,6 +106,7 @@ export function EditDownloadDialog({ download: d, actions, onClose }: { download
             {(p) => <Input {...p} type="number" min={0} inputMode="numeric" className="w-32" value={upload ?? String(savedUpload)} onChange={(e) => { setUpload(e.target.value); }} />}
           </Field>
         ) : null}
+        {order ? <OrderFields inOrder={order.inOrder} endsFirst={order.endsFirst} onInOrder={setInOrder} onEndsFirst={setEndsFirst} /> : null}
         {savedTrackers !== null ? <RememberTrackers checked={trackers ?? savedTrackers} onChange={setTrackers} /> : null}
       </div>
     </Dialog>

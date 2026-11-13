@@ -171,6 +171,7 @@ std::uint64_t Session::add(AddParams const& p) const {
     if (p.disable_lsd) atp.flags |= lt::torrent_flags::disable_lsd;
     if (p.disable_pex) atp.flags |= lt::torrent_flags::disable_pex;
     if (p.dont_download) atp.flags |= lt::torrent_flags::default_dont_download;
+    if (p.sequential) atp.flags |= lt::torrent_flags::sequential_download;
     atp.upload_limit = p.upload_limit > 0 ? p.upload_limit : -1;
     atp.download_limit = p.download_limit > 0 ? p.download_limit : -1;
     if (p.max_connections > 0) atp.max_connections = p.max_connections;
@@ -214,6 +215,7 @@ TorrentStatus Session::status(std::uint64_t id) const {
     TorrentStatus o{};
     o.state = static_cast<std::uint8_t>(s.state);
     o.paused = bool(s.flags & lt::torrent_flags::paused);
+    o.sequential = bool(s.flags & lt::torrent_flags::sequential_download);
     o.has_metadata = s.has_metadata;
     o.is_finished = s.is_finished;
     o.is_seeding = s.is_seeding;
@@ -331,6 +333,37 @@ void Session::set_file_priorities(std::uint64_t id, rust::Slice<std::uint8_t con
     std::vector<lt::download_priority_t> v;
     for (auto p : priorities) v.push_back(lt::download_priority_t(p));
     handle(id).prioritize_files(v);
+}
+
+void Session::set_sequential(std::uint64_t id, bool on) const {
+    auto h = handle(id);
+    if (on) h.set_flags(lt::torrent_flags::sequential_download);
+    else h.unset_flags(lt::torrent_flags::sequential_download);
+}
+
+void Session::set_file_ends_first(std::uint64_t id, bool on) const {
+    auto h = handle(id);
+    auto ti = h.torrent_file();
+    if (!ti) throw std::runtime_error("the torrent has no metadata yet");
+    auto const& fs = ti->files();
+    auto files = h.get_file_priorities();
+    for (lt::file_index_t i : fs.file_range()) {
+        auto const size = fs.file_size(i);
+        auto const at = static_cast<std::size_t>(static_cast<int>(i));
+        if (size <= 0 || fs.pad_file_at(i)) continue;
+        auto const file = at < files.size() ? files[at] : lt::default_priority;
+        if (file == lt::dont_download) continue;
+        // Off: back to the file's own priority, as libtorrent derived it from the file.
+        auto const priority = on ? lt::top_priority : file;
+        h.piece_priority(fs.map_file(i, 0, 0).piece, priority);
+        h.piece_priority(fs.map_file(i, size - 1, 0).piece, priority);
+    }
+}
+
+rust::Vec<std::uint8_t> Session::piece_priorities(std::uint64_t id) const {
+    rust::Vec<std::uint8_t> out;
+    for (auto p : handle(id).get_piece_priorities()) out.push_back(static_cast<std::uint8_t>(static_cast<std::uint8_t>(p)));
+    return out;
 }
 
 void Session::set_limits(std::uint64_t id, std::int32_t upload, std::int32_t download) const {

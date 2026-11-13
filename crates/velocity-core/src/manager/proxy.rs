@@ -295,6 +295,8 @@ mod tests {
                 seeding: SeedPolicy::Never {},
                 upload_limit: 0,
                 download_limit: 0,
+                in_order: false,
+                ends_first: false,
             },
             AddOptions::default(),
             T0,

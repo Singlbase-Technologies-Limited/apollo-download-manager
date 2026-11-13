@@ -158,6 +158,8 @@ export function useDownloadActions() {
       // A torrent's (#63).
       reannounce: (id: string) => send(async () => { await api.reannounce(id); toast.success('Asked the trackers for peers'); }),
       setUploadLimit: (id: string, kib: number) => send(() => api.setUploadLimit(id, kib)),
+      /** How a torrent's pieces come in (#470). */
+      setTorrentOrder: (id: string, inOrder: boolean, endsFirst: boolean) => send(() => api.setTorrentOrder(id, inOrder, endsFirst)),
       /** A torrent's trackers in the system keychain, or not (#472). */
       rememberTrackers: (id: string, on: boolean) => send(() => (on ? api.rememberTrackers(id) : api.forgetTrackers(id))),
       /** Changes a torrent's files; whether it was done. */

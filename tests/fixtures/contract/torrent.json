@@ -29,6 +29,8 @@
       "totalBytes": 3300000,
       "version": "hybrid"
     },
+    "endsFirst": false,
+    "inOrder": true,
     "seeding": {
       "mode": "ratio",
       "ratio": 2.0
