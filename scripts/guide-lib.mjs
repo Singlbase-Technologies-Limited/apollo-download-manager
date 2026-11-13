@@ -263,15 +263,26 @@ export function resolveLinks(page, resolve) {
 
 /**
  * @param {Record<string, string>} files the guide's files by name (`README.md`, `downloads.md`, …)
- * @returns {{ pages: { id: string, file: string, title: string, headings: { id: string, level: number, text: string }[], blocks: object[], sections: { anchor: string, heading: string, text: string }[] }[] }}
+ * @returns {{ groups: { title: string, pages: string[] }[], pages: { id: string, file: string, title: string, headings: { id: string, level: number, text: string }[], blocks: object[], sections: { anchor: string, heading: string, text: string }[] }[] }}
  */
 export function buildGuide(files) {
   if (!('README.md' in files)) throw new Error('The guide has no README.md to list its pages');
   const order = ['README.md'];
-  // The order is the README's table: each row starts with a link to its page.
-  for (const m of files['README.md'].matchAll(/^\| \[[^\]]+\]\(([a-z0-9-]+\.md)\)/gm)) {
-    if (!order.includes(m[1])) order.push(m[1]);
+  // The order is the README's tables: each row starts with a link to its page. Each table follows a `##` heading,
+  // which is the pages' group in the app's and the website's sidebar (#488); the README itself opens the first group.
+  /** @type {{ title: string, files: string[] }[]} */
+  const grouped = [];
+  for (const m of files['README.md'].matchAll(/^## (.+)$|^\| \[[^\]]+\]\(([a-z0-9-]+\.md)\)/gm)) {
+    if (m[1] !== undefined) {
+      grouped.push({ title: m[1].trim(), files: grouped.length === 0 ? ['README.md'] : [] });
+      continue;
+    }
+    if (order.includes(m[2])) continue;
+    if (grouped.length === 0) throw new Error(`${m[2]} is listed in the guide's README.md before any group heading (## …)`);
+    order.push(m[2]);
+    grouped[grouped.length - 1].files.push(m[2]);
   }
+  if (grouped.length === 0) grouped.push({ title: 'User guide', files: ['README.md'] });
   for (const f of Object.keys(files)) {
     if (!order.includes(f)) throw new Error(`${f} is not listed in the guide's README.md`);
   }
@@ -295,7 +306,8 @@ export function buildGuide(files) {
       return m[2] ? { page: target.id, anchor: m[2] } : { page: target.id };
     });
   }
-  return { pages: pages.map(({ file, ...p }) => ({ ...p, file })) };
+  const groups = grouped.filter((g) => g.files.length > 0).map((g) => ({ title: g.title, pages: g.files.map(pageId) }));
+  return { groups, pages: pages.map(({ file, ...p }) => ({ ...p, file })) };
 }
 
 const GUIDE_DIR = new URL('../docs/user/', import.meta.url);

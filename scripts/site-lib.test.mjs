@@ -102,6 +102,17 @@ describe('the website (#353)', () => {
     }
     expect(broken).toEqual([]);
   });
+
+  it('groups the user guide’s sidebar as docs/user/README.md does, the same groups the app shows (#488)', () => {
+    const page = buildSite({ releases: null })['guide/torrents/index.html'];
+    const nav = page.slice(page.indexOf('<nav aria-label="User guide">'));
+    const groups = [...nav.matchAll(/<div class="nav-group"><p>([^<]+)<\/p><ul>(.*?)<\/ul><\/div>/g)].map((m) => [m[1], [...m[2].matchAll(/>([^<]+)<\/a>/g)].map((a) => a[1])]);
+    const app = JSON.parse(readFileSync(new URL('../src/features/help/guide.generated.json', import.meta.url), 'utf8'));
+    expect(groups.map(([title]) => title)).toEqual(app.groups.map((g) => g.title));
+    expect(groups.map(([, names]) => names.length)).toEqual(app.groups.map((g) => g.pages.length));
+    expect(groups[0]).toEqual(['Getting started', ['Introduction', 'Installing']]);
+    expect(nav).toMatch(/aria-current="page">Torrents</);
+  });
 });
 
 describe('the website shows the real app (#353)', () => {

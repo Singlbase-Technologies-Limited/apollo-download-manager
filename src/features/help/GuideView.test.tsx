@@ -36,6 +36,19 @@ describe('the in-app user guide (#354)', () => {
     expect(within(guide).getByRole('heading', { level: 1, name: 'Apollo Download Manager: user guide' })).toBeTruthy();
   });
 
+  it('groups the contents as the website does, each group a labelled list, the open page marked current (#488)', async () => {
+    await renderApp();
+    act(() => { useUiStore.getState().openGuide('torrents'); });
+    const guide = await screen.findByRole('dialog', { name: 'User guide' });
+    const contents = within(guide).getByRole('navigation', { name: 'Guide contents' });
+    const names = (group: string) => within(within(contents).getByRole('list', { name: group })).getAllByRole('button').map((b) => b.textContent);
+    expect(names('Getting started')).toEqual(['Introduction', 'Installing']);
+    expect(names('Using the app')).toEqual(['Downloads', 'Torrents', 'Categories', 'Browser integration']);
+    expect(names('Reference')).toEqual(['Settings', 'Protocols and limits']);
+    expect(names('Help')).toEqual(['Troubleshooting', expect.stringMatching(/^Beside /)]);
+    expect(within(contents).getByRole('button', { name: 'Torrents' }).getAttribute('aria-current')).toBe('page');
+  });
+
   it('opens a page at its very top, not at its heading, which sits below the page’s margin', async () => {
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
     const user = await renderApp();
@@ -54,8 +67,8 @@ describe('the in-app user guide (#354)', () => {
     await user.click(within(guide).getByRole('button', { name: 'Downloads' }));
     expect(within(guide).getByRole('heading', { level: 1, name: 'Downloads' })).toBeTruthy();
     expect(within(guide).getByRole('heading', { level: 2, name: 'Adding downloads' })).toBeTruthy();
-    await user.click(within(guide).getByRole('button', { name: /Next: Protocols and limits/ }));
-    expect(within(guide).getByRole('heading', { level: 1, name: 'Protocols and limits' })).toBeTruthy();
+    await user.click(within(guide).getByRole('button', { name: /Next: Torrents/ }));
+    expect(within(guide).getByRole('heading', { level: 1, name: 'Torrents' })).toBeTruthy();
     await user.click(within(guide).getByRole('button', { name: /Previous: Downloads/ }));
     expect(within(guide).getByRole('heading', { level: 1, name: 'Downloads' })).toBeTruthy();
   });

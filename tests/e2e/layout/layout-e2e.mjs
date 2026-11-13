@@ -117,9 +117,40 @@ async function hoverHelp() {
   }
 }
 
+// The user guide (#488): the website's four groups in the sidebar, each a labelled list, every entry on one line.
+async function guideSidebar() {
+  for (const theme of ['light', 'dark']) {
+    for (const [label, w, h] of [
+      ['laptop-1366x768', 1366, 768],
+      ['min-960x600', 960, 600],
+    ]) {
+      const { ctx, page } = await newPage(w, h);
+      await open(page, `fresh=1&theme=${theme}`);
+      await page.getByRole('button', { name: 'Help' }).click();
+      await page.getByRole('menuitem', { name: 'User guide' }).click();
+      const contents = page.getByRole('dialog', { name: 'User guide' }).getByRole('navigation', { name: 'Guide contents' });
+      await contents.waitFor();
+      const groups = [];
+      for (const name of ['Getting started', 'Using the app', 'Reference', 'Help']) groups.push(await contents.getByRole('list', { name }).count());
+      check(`guide ${label} ${theme}: the sidebar has the website's four groups`, groups.every((n) => n === 1), groups.join(','));
+      const shape = await contents.evaluate((nav) => ({
+        wrapped: [...nav.querySelectorAll('li > button, ul[aria-labelledby] ~ p, p[id^="guide-group-"]')]
+          .filter((e) => e.getBoundingClientRect().height > parseFloat(getComputedStyle(e).lineHeight) * 1.5 + parseFloat(getComputedStyle(e).paddingTop) + parseFloat(getComputedStyle(e).paddingBottom))
+          .map((e) => e.textContent),
+        sideways: nav.scrollWidth > nav.clientWidth,
+      }));
+      check(`guide ${label} ${theme}: no sidebar entry wraps`, shape.wrapped.length === 0, shape.wrapped.slice(0, 3).join(', '));
+      check(`guide ${label} ${theme}: the sidebar doesn't scroll sideways`, !shape.sideways);
+      await shot(page, `${label}-${theme}-guide`);
+      await ctx.close();
+    }
+  }
+}
+
 try {
   // First, so it reports even when a later check stops the run.
   await hoverHelp();
+  await guideSidebar();
   const { runChecks } = await import('./layout-checks.mjs');
   await runChecks({ open, shot, row, newPage, check, BASE });
   await screenshots();

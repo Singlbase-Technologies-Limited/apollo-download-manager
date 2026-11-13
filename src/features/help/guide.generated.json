@@ -1,4 +1,36 @@
 {
+ "groups": [
+  {
+   "title": "Getting started",
+   "pages": [
+    "index",
+    "installing"
+   ]
+  },
+  {
+   "title": "Using the app",
+   "pages": [
+    "downloads",
+    "torrents",
+    "categories",
+    "browser"
+   ]
+  },
+  {
+   "title": "Reference",
+   "pages": [
+    "settings",
+    "protocols"
+   ]
+  },
+  {
+   "title": "Help",
+   "pages": [
+    "troubleshooting",
+    "v1-and-v2"
+   ]
+  }
+ ],
  "pages": [
   {
    "id": "index",
@@ -8,6 +40,26 @@
      "id": "apollo-download-manager-user-guide",
      "level": 1,
      "text": "Apollo Download Manager: user guide"
+    },
+    {
+     "id": "getting-started",
+     "level": 2,
+     "text": "Getting started"
+    },
+    {
+     "id": "using-the-app",
+     "level": 2,
+     "text": "Using the app"
+    },
+    {
+     "id": "reference",
+     "level": 2,
+     "text": "Reference"
+    },
+    {
+     "id": "help",
+     "level": 2,
+     "text": "Help"
     }
    ],
    "blocks": [
@@ -96,6 +148,48 @@
      ]
     },
     {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": ""
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Apollo Download Manager is still in development."
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " The guides describe what this version does. Where something isn't there yet, the guide says so."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "The guides are in four groups, here and in the sidebar, in the app and on the website alike."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "getting-started",
+     "content": [
+      {
+       "type": "text",
+       "text": "Getting started"
+      }
+     ]
+    },
+    {
      "type": "table",
      "head": [
       [
@@ -133,7 +227,37 @@
          "text": "The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager"
         }
        ]
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "using-the-app",
+     "content": [
+      {
+       "type": "text",
+       "text": "Using the app"
+      }
+     ]
+    },
+    {
+     "type": "table",
+     "head": [
+      [
+       {
+        "type": "text",
+        "text": "Guide"
+       }
       ],
+      [
+       {
+        "type": "text",
+        "text": "What it covers"
+       }
+      ]
+     ],
+     "rows": [
       [
        [
         {
@@ -153,28 +277,6 @@
         {
          "type": "text",
          "text": "Adding downloads, the download list, the details panel, the history, files and folders, logins"
-        }
-       ]
-      ],
-      [
-       [
-        {
-         "type": "link",
-         "content": [
-          {
-           "type": "text",
-           "text": "Protocols and limits"
-          }
-         ],
-         "to": {
-          "page": "protocols"
-         }
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do"
         }
        ]
       ],
@@ -229,6 +331,58 @@
          "content": [
           {
            "type": "text",
+           "text": "Browser integration"
+          }
+         ],
+         "to": {
+          "page": "browser"
+         }
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager"
+        }
+       ]
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "reference",
+     "content": [
+      {
+       "type": "text",
+       "text": "Reference"
+      }
+     ]
+    },
+    {
+     "type": "table",
+     "head": [
+      [
+       {
+        "type": "text",
+        "text": "Guide"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "What it covers"
+       }
+      ]
+     ],
+     "rows": [
+      [
+       [
+        {
+         "type": "link",
+         "content": [
+          {
+           "type": "text",
            "text": "Settings"
           }
          ],
@@ -251,21 +405,51 @@
          "content": [
           {
            "type": "text",
-           "text": "Browser integration"
+           "text": "Protocols and limits"
           }
          ],
          "to": {
-          "page": "browser"
+          "page": "protocols"
          }
         }
        ],
        [
         {
          "type": "text",
-         "text": "Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager"
+         "text": "What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do"
         }
        ]
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "help",
+     "content": [
+      {
+       "type": "text",
+       "text": "Help"
+      }
+     ]
+    },
+    {
+     "type": "table",
+     "head": [
+      [
+       {
+        "type": "text",
+        "text": "Guide"
+       }
       ],
+      [
+       {
+        "type": "text",
+        "text": "What it covers"
+       }
+      ]
+     ],
+     "rows": [
       [
        [
         {
@@ -311,35 +495,33 @@
        ]
       ]
      ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": ""
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Apollo Download Manager is still in development."
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " The guides describe what this version does. Where something isn't there yet, the guide says so."
-      }
-     ]
     }
    ],
    "sections": [
     {
      "anchor": "apollo-download-manager-user-guide",
      "heading": "Apollo Download Manager: user guide",
-     "text": "These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open Help (the ? in the title bar), then User guide. How Apollo Download Manager is built and tested is in the developer documents. Apollo Download Manager is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other (Beside Velocity Download Manager). Guide What it covers Installing The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager Downloads Adding downloads, the download list, the details panel, the history, files and folders, logins Protocols and limits What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do Torrents Adding torrents and magnet links, choosing files, seeding, trackers Categories Sorting downloads by file type into folders Settings Every section of the Settings screen, including the proxy Browser integration Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager Troubleshooting Common problems, the diagnostics report, and what error messages mean Beside Velocity Download Manager Using both side by side, and what is different Apollo Download Manager is still in development. The guides describe what this version does. Where something isn't there yet, the guide says so."
+     "text": "These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open Help (the ? in the title bar), then User guide. How Apollo Download Manager is built and tested is in the developer documents. Apollo Download Manager is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other (Beside Velocity Download Manager). Apollo Download Manager is still in development. The guides describe what this version does. Where something isn't there yet, the guide says so. The guides are in four groups, here and in the sidebar, in the app and on the website alike."
+    },
+    {
+     "anchor": "getting-started",
+     "heading": "Getting started",
+     "text": "Guide What it covers Installing The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager"
+    },
+    {
+     "anchor": "using-the-app",
+     "heading": "Using the app",
+     "text": "Guide What it covers Downloads Adding downloads, the download list, the details panel, the history, files and folders, logins Torrents Adding torrents and magnet links, choosing files, seeding, trackers Categories Sorting downloads by file type into folders Browser integration Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager"
+    },
+    {
+     "anchor": "reference",
+     "heading": "Reference",
+     "text": "Guide What it covers Settings Every section of the Settings screen, including the proxy Protocols and limits What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do"
+    },
+    {
+     "anchor": "help",
+     "heading": "Help",
+     "text": "Guide What it covers Troubleshooting Common problems, the diagnostics report, and what error messages mean Beside Velocity Download Manager Using both side by side, and what is different"
     }
    ],
    "file": "README.md"
@@ -3820,993 +4002,6 @@
    "file": "downloads.md"
   },
   {
-   "id": "protocols",
-   "title": "Protocols and limits",
-   "headings": [
-    {
-     "id": "protocols-and-limits",
-     "level": 1,
-     "text": "Protocols and limits"
-    },
-    {
-     "id": "direct-downloads",
-     "level": 2,
-     "text": "Direct downloads"
-    },
-    {
-     "id": "metalink",
-     "level": 2,
-     "text": "Metalink"
-    },
-    {
-     "id": "bittorrent",
-     "level": 2,
-     "text": "BitTorrent"
-    },
-    {
-     "id": "not-supported",
-     "level": 2,
-     "text": "Not supported"
-    }
-   ],
-   "blocks": [
-    {
-     "type": "heading",
-     "level": 1,
-     "id": "protocols-and-limits",
-     "content": [
-      {
-       "type": "text",
-       "text": "Protocols and limits"
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "What Apollo Download Manager downloads, and what it can do for each kind of link. The tables below are checked against what Apollo Download Manager's download engine reports about itself, so they change only when the engine does ("
-      },
-      {
-       "type": "code",
-       "text": "crates/velocity-transfer/tests/user_guide.rs"
-      },
-      {
-       "type": "text",
-       "text": ")."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "direct-downloads",
-     "content": [
-      {
-       "type": "text",
-       "text": "Direct downloads"
-      }
-     ]
-    },
-    {
-     "type": "table",
-     "head": [
-      [
-       {
-        "type": "text",
-        "text": "Protocol"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "Links"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "Several connections"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "Resumes"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "Resume checked against the file"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "HTTP/2"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "Encrypted"
-       }
-      ]
-     ],
-     "rows": [
-      [
-       [
-        {
-         "type": "text",
-         "text": "HTTP and HTTPS"
-        }
-       ],
-       [
-        {
-         "type": "code",
-         "text": "http://"
-        },
-        {
-         "type": "text",
-         "text": ", "
-        },
-        {
-         "type": "code",
-         "text": "https://"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ]
-      ],
-      [
-       [
-        {
-         "type": "text",
-         "text": "FTP and FTPS"
-        }
-       ],
-       [
-        {
-         "type": "code",
-         "text": "ftp://"
-        },
-        {
-         "type": "text",
-         "text": ", "
-        },
-        {
-         "type": "code",
-         "text": "ftps://"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "No"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "No"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ]
-      ],
-      [
-       [
-        {
-         "type": "text",
-         "text": "SFTP"
-        }
-       ],
-       [
-        {
-         "type": "code",
-         "text": "sftp://"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "No"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "No"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ]
-      ]
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "What the columns mean:"
-      }
-     ]
-    },
-    {
-     "type": "list",
-     "ordered": false,
-     "items": [
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Several connections:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " Apollo Download Manager splits the file and downloads its parts over several connections at once. It starts with all the connections a download may use (8 by default) and keeps only those that make it faster. FTP and SFTP use one connection per download for now."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Resumes:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " a paused download, or one interrupted by a restart, a crash or a power cut, goes on from the last progress Apollo Download Manager saved, not from the start."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Resume checked against the file:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " before resuming, Apollo Download Manager checks the file on the server is still the same one (its ETag or modification time). If it changed, Apollo Download Manager starts over rather than mix two versions."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "HTTP/2:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " with a server that speaks HTTP/2, several parts share one connection. Apollo Download Manager tries separate connections too, and keeps whichever is faster."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Encrypted:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": ""
-         }
-        ]
-       },
-       {
-        "type": "list",
-        "ordered": false,
-        "items": [
-         [
-          {
-           "type": "paragraph",
-           "content": [
-            {
-             "type": "text",
-             "text": ""
-            },
-            {
-             "type": "strong",
-             "content": [
-              {
-               "type": "text",
-               "text": "HTTPS:"
-              }
-             ]
-            },
-            {
-             "type": "text",
-             "text": " always, and the server's certificate is always checked. There is no way to turn that check off."
-            }
-           ]
-          }
-         ],
-         [
-          {
-           "type": "paragraph",
-           "content": [
-            {
-             "type": "text",
-             "text": ""
-            },
-            {
-             "type": "strong",
-             "content": [
-              {
-               "type": "text",
-               "text": "FTP:"
-              }
-             ]
-            },
-            {
-             "type": "text",
-             "text": " an "
-            },
-            {
-             "type": "code",
-             "text": "ftps://"
-            },
-            {
-             "type": "text",
-             "text": " link is encrypted. A plain "
-            },
-            {
-             "type": "code",
-             "text": "ftp://"
-            },
-            {
-             "type": "text",
-             "text": " link is encrypted only when you tick \"Require encryption (FTPS)\" when adding it. Without that, the Add dialog warns that the login and the file can be read on the network."
-            }
-           ]
-          }
-         ],
-         [
-          {
-           "type": "paragraph",
-           "content": [
-            {
-             "type": "text",
-             "text": ""
-            },
-            {
-             "type": "strong",
-             "content": [
-              {
-               "type": "text",
-               "text": "SFTP:"
-              }
-             ]
-            },
-            {
-             "type": "text",
-             "text": " always. The first time you download from a server, Apollo Download Manager asks you to confirm the server's identity ("
-            },
-            {
-             "type": "link",
-             "content": [
-              {
-               "type": "text",
-               "text": "Downloads"
-              }
-             ],
-             "to": {
-              "page": "downloads",
-              "anchor": "sftp-servers"
-             }
-            },
-            {
-             "type": "text",
-             "text": ")."
-            }
-           ]
-          }
-         ]
-        ]
-       }
-      ]
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": ""
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Limits that apply to every direct download:"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": ""
-      }
-     ]
-    },
-    {
-     "type": "list",
-     "ordered": false,
-     "items": [
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Redirects"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " are followed only to "
-         },
-         {
-          "type": "code",
-          "text": "http://"
-         },
-         {
-          "type": "text",
-          "text": " and "
-         },
-         {
-          "type": "code",
-          "text": "https://"
-         },
-         {
-          "type": "text",
-          "text": " links, at most 10. A redirect from "
-         },
-         {
-          "type": "code",
-          "text": "https://"
-         },
-         {
-          "type": "text",
-          "text": " to "
-         },
-         {
-          "type": "code",
-          "text": "http://"
-         },
-         {
-          "type": "text",
-          "text": " stops and asks first ("
-         },
-         {
-          "type": "link",
-          "content": [
-           {
-            "type": "text",
-            "text": "Troubleshooting"
-           }
-          ],
-          "to": {
-           "page": "troubleshooting",
-           "anchor": "a-download-stopped-and-asks-something"
-          }
-         },
-         {
-          "type": "text",
-          "text": ")."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "No proxy or "
-           },
-           {
-            "type": "code",
-            "text": ".netrc"
-           },
-           {
-            "type": "text",
-            "text": " from the system:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " Apollo Download Manager uses only the proxy set in its own Settings ("
-         },
-         {
-          "type": "link",
-          "content": [
-           {
-            "type": "text",
-            "text": "Settings"
-           }
-          ],
-          "to": {
-           "page": "settings",
-           "anchor": "proxy"
-          }
-         },
-         {
-          "type": "text",
-          "text": ")."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Checksums:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " when you give one (MD5, SHA-1, SHA-224, SHA-256, SHA-384 or SHA-512), the finished file is checked against it, and the download is marked verified."
-         }
-        ]
-       }
-      ]
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "metalink",
-     "content": [
-      {
-       "type": "text",
-       "text": "Metalink"
-      }
-     ]
-    },
-    {
-     "type": "table",
-     "head": [
-      [
-       {
-        "type": "text",
-        "text": "Feature"
-       }
-      ],
-      [
-       {
-        "type": "text",
-        "text": "Supported"
-       }
-      ]
-     ],
-     "rows": [
-      [
-       [
-        {
-         "type": "text",
-         "text": "Metalink files"
-        }
-       ],
-       [
-        {
-         "type": "text",
-         "text": "Yes"
-        }
-       ]
-      ]
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "A Metalink file lists one or more files, with their mirrors and checksums. When the Metalink switch is on (Settings, Advanced; off by default, as in V1), a link to a "
-      },
-      {
-       "type": "code",
-       "text": ".metalink"
-      },
-      {
-       "type": "text",
-       "text": " or "
-      },
-      {
-       "type": "code",
-       "text": ".meta4"
-      },
-      {
-       "type": "text",
-       "text": " file adds the files it describes, and Apollo Download Manager downloads each from its mirrors and checks it against the checksums the Metalink file gives."
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": ""
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "A Metalink file on your computer:"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " in the Add dialog, "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Choose Metalink files…"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " adds every file each one lists, in the folder you choose, or the default one (#222)."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "bittorrent",
-     "content": [
-      {
-       "type": "text",
-       "text": "BitTorrent"
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "Torrents and magnet links are downloaded by a separate program, the torrent helper, which uses libtorrent. It supports BitTorrent v1, v2 and hybrid torrents, magnet links, DHT, peer exchange, choosing files, and seeding. The "
-      },
-      {
-       "type": "link",
-       "content": [
-        {
-         "type": "text",
-         "text": "Torrents"
-        }
-       ],
-       "to": {
-        "page": "torrents"
-       }
-      },
-      {
-       "type": "text",
-       "text": " guide covers them. Unlike the table above, this part isn't checked against the engine automatically."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "not-supported",
-     "content": [
-      {
-       "type": "text",
-       "text": "Not supported"
-      }
-     ]
-    },
-    {
-     "type": "list",
-     "ordered": false,
-     "items": [
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Other links,"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " such as "
-         },
-         {
-          "type": "code",
-          "text": "file://"
-         },
-         {
-          "type": "text",
-          "text": ", "
-         },
-         {
-          "type": "code",
-          "text": "data:"
-         },
-         {
-          "type": "text",
-          "text": " or "
-         },
-         {
-          "type": "code",
-          "text": "scp://"
-         },
-         {
-          "type": "text",
-          "text": ", are refused in the Add dialog, with the reason."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Several connections for FTP and SFTP:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " each downloads over one connection for now."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "An HTTPS proxy for SFTP and torrents:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " choose an HTTP or SOCKS5 proxy for those ("
-         },
-         {
-          "type": "link",
-          "content": [
-           {
-            "type": "text",
-            "text": "Settings"
-           }
-          ],
-          "to": {
-           "page": "settings",
-           "anchor": "proxy"
-          }
-         },
-         {
-          "type": "text",
-          "text": ")."
-         }
-        ]
-       }
-      ]
-     ]
-    }
-   ],
-   "sections": [
-    {
-     "anchor": "protocols-and-limits",
-     "heading": "Protocols and limits",
-     "text": "What Apollo Download Manager downloads, and what it can do for each kind of link. The tables below are checked against what Apollo Download Manager's download engine reports about itself, so they change only when the engine does (crates/velocity-transfer/tests/user_guide.rs)."
-    },
-    {
-     "anchor": "direct-downloads",
-     "heading": "Direct downloads",
-     "text": "Protocol Links Several connections Resumes Resume checked against the file HTTP/2 Encrypted HTTP and HTTPS http://, https:// Yes Yes Yes Yes Yes FTP and FTPS ftp://, ftps:// No Yes Yes No Yes SFTP sftp:// No Yes Yes No Yes What the columns mean: Several connections: Apollo Download Manager splits the file and downloads its parts over several connections at once. It starts with all the connections a download may use (8 by default) and keeps only those that make it faster. FTP and SFTP use one connection per download for now. Resumes: a paused download, or one interrupted by a restart, a crash or a power cut, goes on from the last progress Apollo Download Manager saved, not from the start. Resume checked against the file: before resuming, Apollo Download Manager checks the file on the server is still the same one (its ETag or modification time). If it changed, Apollo Download Manager starts over rather than mix two versions. HTTP/2: with a server that speaks HTTP/2, several parts share one connection. Apollo Download Manager tries separate connections too, and keeps whichever is faster. Encrypted: HTTPS: always, and the server's certificate is always checked. There is no way to turn that check off. FTP: an ftps:// link is encrypted. A plain ftp:// link is encrypted only when you tick \"Require encryption (FTPS)\" when adding it. Without that, the Add dialog warns that the login and the file can be read on the network. SFTP: always. The first time you download from a server, Apollo Download Manager asks you to confirm the server's identity (Downloads). Limits that apply to every direct download: Redirects are followed only to http:// and https:// links, at most 10. A redirect from https:// to http:// stops and asks first (Troubleshooting). No proxy or .netrc from the system: Apollo Download Manager uses only the proxy set in its own Settings (Settings). Checksums: when you give one (MD5, SHA-1, SHA-224, SHA-256, SHA-384 or SHA-512), the finished file is checked against it, and the download is marked verified."
-    },
-    {
-     "anchor": "metalink",
-     "heading": "Metalink",
-     "text": "Feature Supported Metalink files Yes A Metalink file lists one or more files, with their mirrors and checksums. When the Metalink switch is on (Settings, Advanced; off by default, as in V1), a link to a .metalink or .meta4 file adds the files it describes, and Apollo Download Manager downloads each from its mirrors and checks it against the checksums the Metalink file gives. A Metalink file on your computer: in the Add dialog, Choose Metalink files… adds every file each one lists, in the folder you choose, or the default one (#222)."
-    },
-    {
-     "anchor": "bittorrent",
-     "heading": "BitTorrent",
-     "text": "Torrents and magnet links are downloaded by a separate program, the torrent helper, which uses libtorrent. It supports BitTorrent v1, v2 and hybrid torrents, magnet links, DHT, peer exchange, choosing files, and seeding. The Torrents guide covers them. Unlike the table above, this part isn't checked against the engine automatically."
-    },
-    {
-     "anchor": "not-supported",
-     "heading": "Not supported",
-     "text": "Other links, such as file://, data: or scp://, are refused in the Add dialog, with the reason. Several connections for FTP and SFTP: each downloads over one connection for now. An HTTPS proxy for SFTP and torrents: choose an HTTP or SOCKS5 proxy for those (Settings)."
-    }
-   ],
-   "file": "protocols.md"
-  },
-  {
    "id": "torrents",
    "title": "Torrents",
    "headings": [
@@ -6333,6 +5528,1026 @@
     }
    ],
    "file": "categories.md"
+  },
+  {
+   "id": "browser",
+   "title": "Browser integration",
+   "headings": [
+    {
+     "id": "browser-integration",
+     "level": 1,
+     "text": "Browser integration"
+    },
+    {
+     "id": "beside-v1",
+     "level": 2,
+     "text": "Beside V1"
+    },
+    {
+     "id": "installing-the-extension",
+     "level": 2,
+     "text": "Installing the extension"
+    },
+    {
+     "id": "connecting-it-to-apollo-download-manager",
+     "level": 2,
+     "text": "Connecting it to Apollo Download Manager"
+    },
+    {
+     "id": "what-the-extension-does",
+     "level": 2,
+     "text": "What the extension does"
+    },
+    {
+     "id": "what-apollo-download-manager-does-with-a-link",
+     "level": 2,
+     "text": "What Apollo Download Manager does with a link"
+    },
+    {
+     "id": "when-apollo-download-manager-cant-take-a-link",
+     "level": 2,
+     "text": "When Apollo Download Manager can't take a link"
+    }
+   ],
+   "blocks": [
+    {
+     "type": "heading",
+     "level": 1,
+     "id": "browser-integration",
+     "content": [
+      {
+       "type": "text",
+       "text": "Browser integration"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Apollo Download Manager's browser extension sends downloads from your browser to Apollo Download Manager. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later)."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "beside-v1",
+     "content": [
+      {
+       "type": "text",
+       "text": "Beside V1"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Apollo Download Manager's extension is its own: it is named "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Apollo Download Manager"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " ("
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Apollo DM"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " for short), its menu item is "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Download with Apollo Download Manager"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ", and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering Apollo Download Manager never touches V1's."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "installing-the-extension",
+     "content": [
+      {
+       "type": "text",
+       "text": "Installing the extension"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Chrome and Brave:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " install it from the "
+         },
+         {
+          "type": "link",
+          "content": [
+           {
+            "type": "text",
+            "text": "Chrome Web Store"
+           }
+          ],
+          "to": {
+           "url": "https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld"
+          }
+         },
+         {
+          "type": "text",
+          "text": ". In Apollo Download Manager, "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Get the extension"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in Settings, Browser opens that page in the browser."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Firefox:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " install it from "
+         },
+         {
+          "type": "link",
+          "content": [
+           {
+            "type": "text",
+            "text": "Firefox Add-ons"
+           }
+          ],
+          "to": {
+           "url": "https://addons.mozilla.org/firefox/addon/apollo-download-manager/"
+          }
+         },
+         {
+          "type": "text",
+          "text": ". "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Get the extension"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in Settings, Browser opens that page in Firefox."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Edge: not in its store yet."
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Get the extension"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "The installers don't set the extension up for you. To load it by hand:"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Chrome, Edge, Brave:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " open "
+         },
+         {
+          "type": "code",
+          "text": "chrome://extensions"
+         },
+         {
+          "type": "text",
+          "text": " (or "
+         },
+         {
+          "type": "code",
+          "text": "edge://extensions"
+         },
+         {
+          "type": "text",
+          "text": ", "
+         },
+         {
+          "type": "code",
+          "text": "brave://extensions"
+         },
+         {
+          "type": "text",
+          "text": "), turn on developer mode, choose "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Load unpacked"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ", and pick the extension's "
+         },
+         {
+          "type": "code",
+          "text": "chrome"
+         },
+         {
+          "type": "text",
+          "text": " folder."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Firefox:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " open "
+         },
+         {
+          "type": "code",
+          "text": "about:debugging"
+         },
+         {
+          "type": "text",
+          "text": ", "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "This Firefox"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ", "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Load Temporary Add-on"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ", and pick the "
+         },
+         {
+          "type": "code",
+          "text": "manifest.json"
+         },
+         {
+          "type": "text",
+          "text": " in the extension's "
+         },
+         {
+          "type": "code",
+          "text": "firefox"
+         },
+         {
+          "type": "text",
+          "text": " folder. Firefox removes a temporary add-on when it closes."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "How to build the extension is in the developer documents."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "connecting-it-to-apollo-download-manager",
+     "content": [
+      {
+       "type": "text",
+       "text": "Connecting it to Apollo Download Manager"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "In Apollo Download Manager, open "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Settings, Browser"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ". Each browser (Chrome, Chromium, Edge, Brave, Firefox) has "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Register"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " or "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Unregister"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ". Registering is for your user only and needs no administrator rights. The first-run setup offers the same."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "\"Registered for another copy\" means the registration points to a copy of Apollo Download Manager that was moved or reinstalled elsewhere: "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Register"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " again fixes it."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": ""
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Before removing Apollo Download Manager on Linux,"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " unregister the browsers: a package can't remove registrations from your home folder ("
+      },
+      {
+       "type": "link",
+       "content": [
+        {
+         "type": "text",
+         "text": "Installing"
+        }
+       ],
+       "to": {
+        "page": "installing",
+        "anchor": "removing-apollo-download-manager"
+       }
+      },
+      {
+       "type": "text",
+       "text": ")."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "what-the-extension-does",
+     "content": [
+      {
+       "type": "text",
+       "text": "What the extension does"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "It takes over matching downloads:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Modes,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Rules,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The right-click menu"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " on links, images, video and audio: "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Download with Apollo Download Manager"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": "."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Magnet links and "
+           },
+           {
+            "type": "code",
+            "text": ".torrent"
+           },
+           {
+            "type": "text",
+            "text": " downloads:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "What it never sends:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "what-apollo-download-manager-does-with-a-link",
+     "content": [
+      {
+       "type": "text",
+       "text": "What Apollo Download Manager does with a link"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Settings, Browser has two switches, both on by default:"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Ask before adding:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the Add dialog opens, filled in, and Apollo Download Manager's window comes forward. Off, the link is added at once to the automatic folder. A taken name, a link added before, a torrent or a magnet link still opens the dialog."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Take links from the browser:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " off, Apollo Download Manager refuses every link, and the browser downloads it itself."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": ""
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "A link to this computer or your local network"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " (such as "
+      },
+      {
+       "type": "code",
+       "text": "127.0.0.1"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "192.168.x.x"
+      },
+      {
+       "type": "text",
+       "text": " or "
+      },
+      {
+       "type": "code",
+       "text": "10.x.x.x"
+      },
+      {
+       "type": "text",
+       "text": ") waits in the list before anything is sent: "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Download anyway"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " in its details panel goes on. A link you type or paste yourself isn't held."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "when-apollo-download-manager-cant-take-a-link",
+     "content": [
+      {
+       "type": "text",
+       "text": "When Apollo Download Manager can't take a link"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "If Apollo Download Manager isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with \"!\", and its popup says why:"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "\"Apollo Download Manager is not running\":"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " Apollo Download Manager starts by itself in the tray when a link arrives. If it couldn't, start it yourself."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "\"Apollo Download Manager was started but didn't answer in time\":"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " it took longer than 10 seconds to start. Try the link again."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "\"The connection to Apollo DM is not set up\":"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " register that browser in Apollo Download Manager's Settings, Browser, then reload the extension."
+         }
+        ]
+       }
+      ]
+     ]
+    }
+   ],
+   "sections": [
+    {
+     "anchor": "browser-integration",
+     "heading": "Browser integration",
+     "text": "Apollo Download Manager's browser extension sends downloads from your browser to Apollo Download Manager. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later)."
+    },
+    {
+     "anchor": "beside-v1",
+     "heading": "Beside V1",
+     "text": "Apollo Download Manager's extension is its own: it is named Apollo Download Manager (Apollo DM for short), its menu item is Download with Apollo Download Manager, and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering Apollo Download Manager never touches V1's."
+    },
+    {
+     "anchor": "installing-the-extension",
+     "heading": "Installing the extension",
+     "text": "Chrome and Brave: install it from the Chrome Web Store. In Apollo Download Manager, Get the extension in Settings, Browser opens that page in the browser. Firefox: install it from Firefox Add-ons. Get the extension in Settings, Browser opens that page in Firefox. Edge: not in its store yet. Get the extension stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below. The installers don't set the extension up for you. To load it by hand: Chrome, Edge, Brave: open chrome://extensions (or edge://extensions, brave://extensions), turn on developer mode, choose Load unpacked, and pick the extension's chrome folder. Firefox: open about:debugging, This Firefox, Load Temporary Add-on, and pick the manifest.json in the extension's firefox folder. Firefox removes a temporary add-on when it closes. How to build the extension is in the developer documents."
+    },
+    {
+     "anchor": "connecting-it-to-apollo-download-manager",
+     "heading": "Connecting it to Apollo Download Manager",
+     "text": "In Apollo Download Manager, open Settings, Browser. Each browser (Chrome, Chromium, Edge, Brave, Firefox) has Register or Unregister. Registering is for your user only and needs no administrator rights. The first-run setup offers the same. \"Registered for another copy\" means the registration points to a copy of Apollo Download Manager that was moved or reinstalled elsewhere: Register again fixes it. Before removing Apollo Download Manager on Linux, unregister the browsers: a package can't remove registrations from your home folder (Installing)."
+    },
+    {
+     "anchor": "what-the-extension-does",
+     "heading": "What the extension does",
+     "text": "It takes over matching downloads: by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link. Modes, in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser. Rules, in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default). The right-click menu on links, images, video and audio: Download with Apollo Download Manager. Magnet links and .torrent downloads: off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent. What it never sends: cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
+    },
+    {
+     "anchor": "what-apollo-download-manager-does-with-a-link",
+     "heading": "What Apollo Download Manager does with a link",
+     "text": "Settings, Browser has two switches, both on by default: Ask before adding: the Add dialog opens, filled in, and Apollo Download Manager's window comes forward. Off, the link is added at once to the automatic folder. A taken name, a link added before, a torrent or a magnet link still opens the dialog. Take links from the browser: off, Apollo Download Manager refuses every link, and the browser downloads it itself. A link to this computer or your local network (such as 127.0.0.1, 192.168.x.x or 10.x.x.x) waits in the list before anything is sent: Download anyway in its details panel goes on. A link you type or paste yourself isn't held."
+    },
+    {
+     "anchor": "when-apollo-download-manager-cant-take-a-link",
+     "heading": "When Apollo Download Manager can't take a link",
+     "text": "If Apollo Download Manager isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with \"!\", and its popup says why: \"Apollo Download Manager is not running\": Apollo Download Manager starts by itself in the tray when a link arrives. If it couldn't, start it yourself. \"Apollo Download Manager was started but didn't answer in time\": it took longer than 10 seconds to start. Try the link again. \"The connection to Apollo DM is not set up\": register that browser in Apollo Download Manager's Settings, Browser, then reload the extension."
+    }
+   ],
+   "file": "browser.md"
   },
   {
    "id": "settings",
@@ -8400,54 +8615,44 @@
    "file": "settings.md"
   },
   {
-   "id": "browser",
-   "title": "Browser integration",
+   "id": "protocols",
+   "title": "Protocols and limits",
    "headings": [
     {
-     "id": "browser-integration",
+     "id": "protocols-and-limits",
      "level": 1,
-     "text": "Browser integration"
+     "text": "Protocols and limits"
     },
     {
-     "id": "beside-v1",
+     "id": "direct-downloads",
      "level": 2,
-     "text": "Beside V1"
+     "text": "Direct downloads"
     },
     {
-     "id": "installing-the-extension",
+     "id": "metalink",
      "level": 2,
-     "text": "Installing the extension"
+     "text": "Metalink"
     },
     {
-     "id": "connecting-it-to-apollo-download-manager",
+     "id": "bittorrent",
      "level": 2,
-     "text": "Connecting it to Apollo Download Manager"
+     "text": "BitTorrent"
     },
     {
-     "id": "what-the-extension-does",
+     "id": "not-supported",
      "level": 2,
-     "text": "What the extension does"
-    },
-    {
-     "id": "what-apollo-download-manager-does-with-a-link",
-     "level": 2,
-     "text": "What Apollo Download Manager does with a link"
-    },
-    {
-     "id": "when-apollo-download-manager-cant-take-a-link",
-     "level": 2,
-     "text": "When Apollo Download Manager can't take a link"
+     "text": "Not supported"
     }
    ],
    "blocks": [
     {
      "type": "heading",
      "level": 1,
-     "id": "browser-integration",
+     "id": "protocols-and-limits",
      "content": [
       {
        "type": "text",
-       "text": "Browser integration"
+       "text": "Protocols and limits"
       }
      ]
     },
@@ -8456,509 +8661,11 @@
      "content": [
       {
        "type": "text",
-       "text": "Apollo Download Manager's browser extension sends downloads from your browser to Apollo Download Manager. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later)."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "beside-v1",
-     "content": [
-      {
-       "type": "text",
-       "text": "Beside V1"
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "Apollo Download Manager's extension is its own: it is named "
+       "text": "What Apollo Download Manager downloads, and what it can do for each kind of link. The tables below are checked against what Apollo Download Manager's download engine reports about itself, so they change only when the engine does ("
       },
       {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Apollo Download Manager"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " ("
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Apollo DM"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " for short), its menu item is "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Download with Apollo Download Manager"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": ", and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering Apollo Download Manager never touches V1's."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "installing-the-extension",
-     "content": [
-      {
-       "type": "text",
-       "text": "Installing the extension"
-      }
-     ]
-    },
-    {
-     "type": "list",
-     "ordered": false,
-     "items": [
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Chrome and Brave:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " install it from the "
-         },
-         {
-          "type": "link",
-          "content": [
-           {
-            "type": "text",
-            "text": "Chrome Web Store"
-           }
-          ],
-          "to": {
-           "url": "https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld"
-          }
-         },
-         {
-          "type": "text",
-          "text": ". In Apollo Download Manager, "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Get the extension"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " in Settings, Browser opens that page in the browser."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Firefox:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " install it from "
-         },
-         {
-          "type": "link",
-          "content": [
-           {
-            "type": "text",
-            "text": "Firefox Add-ons"
-           }
-          ],
-          "to": {
-           "url": "https://addons.mozilla.org/firefox/addon/apollo-download-manager/"
-          }
-         },
-         {
-          "type": "text",
-          "text": ". "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Get the extension"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " in Settings, Browser opens that page in Firefox."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Edge: not in its store yet."
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Get the extension"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below."
-         }
-        ]
-       }
-      ]
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "The installers don't set the extension up for you. To load it by hand:"
-      }
-     ]
-    },
-    {
-     "type": "list",
-     "ordered": false,
-     "items": [
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Chrome, Edge, Brave:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " open "
-         },
-         {
-          "type": "code",
-          "text": "chrome://extensions"
-         },
-         {
-          "type": "text",
-          "text": " (or "
-         },
-         {
-          "type": "code",
-          "text": "edge://extensions"
-         },
-         {
-          "type": "text",
-          "text": ", "
-         },
-         {
-          "type": "code",
-          "text": "brave://extensions"
-         },
-         {
-          "type": "text",
-          "text": "), turn on developer mode, choose "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Load unpacked"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": ", and pick the extension's "
-         },
-         {
-          "type": "code",
-          "text": "chrome"
-         },
-         {
-          "type": "text",
-          "text": " folder."
-         }
-        ]
-       }
-      ],
-      [
-       {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Firefox:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " open "
-         },
-         {
-          "type": "code",
-          "text": "about:debugging"
-         },
-         {
-          "type": "text",
-          "text": ", "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "This Firefox"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": ", "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Load Temporary Add-on"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": ", and pick the "
-         },
-         {
-          "type": "code",
-          "text": "manifest.json"
-         },
-         {
-          "type": "text",
-          "text": " in the extension's "
-         },
-         {
-          "type": "code",
-          "text": "firefox"
-         },
-         {
-          "type": "text",
-          "text": " folder. Firefox removes a temporary add-on when it closes."
-         }
-        ]
-       }
-      ]
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "How to build the extension is in the developer documents."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "connecting-it-to-apollo-download-manager",
-     "content": [
-      {
-       "type": "text",
-       "text": "Connecting it to Apollo Download Manager"
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "In Apollo Download Manager, open "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Settings, Browser"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": ". Each browser (Chrome, Chromium, Edge, Brave, Firefox) has "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Register"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " or "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Unregister"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": ". Registering is for your user only and needs no administrator rights. The first-run setup offers the same."
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "\"Registered for another copy\" means the registration points to a copy of Apollo Download Manager that was moved or reinstalled elsewhere: "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Register"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " again fixes it."
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": ""
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Before removing Apollo Download Manager on Linux,"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " unregister the browsers: a package can't remove registrations from your home folder ("
-      },
-      {
-       "type": "link",
-       "content": [
-        {
-         "type": "text",
-         "text": "Installing"
-        }
-       ],
-       "to": {
-        "page": "installing",
-        "anchor": "removing-apollo-download-manager"
-       }
+       "type": "code",
+       "text": "crates/velocity-transfer/tests/user_guide.rs"
       },
       {
        "type": "text",
@@ -8969,194 +8676,209 @@
     {
      "type": "heading",
      "level": 2,
-     "id": "what-the-extension-does",
+     "id": "direct-downloads",
      "content": [
       {
        "type": "text",
-       "text": "What the extension does"
+       "text": "Direct downloads"
       }
      ]
     },
     {
-     "type": "list",
-     "ordered": false,
-     "items": [
+     "type": "table",
+     "head": [
       [
        {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "It takes over matching downloads:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link."
-         }
-        ]
+        "type": "text",
+        "text": "Protocol"
        }
       ],
       [
        {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Modes,"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser."
-         }
-        ]
+        "type": "text",
+        "text": "Links"
        }
       ],
       [
        {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Rules,"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default)."
-         }
-        ]
+        "type": "text",
+        "text": "Several connections"
        }
       ],
       [
        {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "The right-click menu"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " on links, images, video and audio: "
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Download with Apollo Download Manager"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": "."
-         }
-        ]
+        "type": "text",
+        "text": "Resumes"
        }
       ],
       [
        {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "Magnet links and "
-           },
-           {
-            "type": "code",
-            "text": ".torrent"
-           },
-           {
-            "type": "text",
-            "text": " downloads:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent."
-         }
-        ]
+        "type": "text",
+        "text": "Resume checked against the file"
        }
       ],
       [
        {
-        "type": "paragraph",
-        "content": [
-         {
-          "type": "text",
-          "text": ""
-         },
-         {
-          "type": "strong",
-          "content": [
-           {
-            "type": "text",
-            "text": "What it never sends:"
-           }
-          ]
-         },
-         {
-          "type": "text",
-          "text": " cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
-         }
-        ]
+        "type": "text",
+        "text": "HTTP/2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Encrypted"
        }
       ]
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "what-apollo-download-manager-does-with-a-link",
-     "content": [
-      {
-       "type": "text",
-       "text": "What Apollo Download Manager does with a link"
-      }
+     ],
+     "rows": [
+      [
+       [
+        {
+         "type": "text",
+         "text": "HTTP and HTTPS"
+        }
+       ],
+       [
+        {
+         "type": "code",
+         "text": "http://"
+        },
+        {
+         "type": "text",
+         "text": ", "
+        },
+        {
+         "type": "code",
+         "text": "https://"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ]
+      ],
+      [
+       [
+        {
+         "type": "text",
+         "text": "FTP and FTPS"
+        }
+       ],
+       [
+        {
+         "type": "code",
+         "text": "ftp://"
+        },
+        {
+         "type": "text",
+         "text": ", "
+        },
+        {
+         "type": "code",
+         "text": "ftps://"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "No"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "No"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ]
+      ],
+      [
+       [
+        {
+         "type": "text",
+         "text": "SFTP"
+        }
+       ],
+       [
+        {
+         "type": "code",
+         "text": "sftp://"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "No"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "No"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ]
+      ]
      ]
     },
     {
@@ -9164,7 +8886,7 @@
      "content": [
       {
        "type": "text",
-       "text": "Settings, Browser has two switches, both on by default:"
+       "text": "What the columns mean:"
       }
      ]
     },
@@ -9185,13 +8907,13 @@
           "content": [
            {
             "type": "text",
-            "text": "Ask before adding:"
+            "text": "Several connections:"
            }
           ]
          },
          {
           "type": "text",
-          "text": " the Add dialog opens, filled in, and Apollo Download Manager's window comes forward. Off, the link is added at once to the automatic folder. A taken name, a link added before, a torrent or a magnet link still opens the dialog."
+          "text": " Apollo Download Manager splits the file and downloads its parts over several connections at once. It starts with all the connections a download may use (8 by default) and keeps only those that make it faster. FTP and SFTP use one connection per download for now."
          }
         ]
        }
@@ -9209,14 +8931,197 @@
           "content": [
            {
             "type": "text",
-            "text": "Take links from the browser:"
+            "text": "Resumes:"
            }
           ]
          },
          {
           "type": "text",
-          "text": " off, Apollo Download Manager refuses every link, and the browser downloads it itself."
+          "text": " a paused download, or one interrupted by a restart, a crash or a power cut, goes on from the last progress Apollo Download Manager saved, not from the start."
          }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Resume checked against the file:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " before resuming, Apollo Download Manager checks the file on the server is still the same one (its ETag or modification time). If it changed, Apollo Download Manager starts over rather than mix two versions."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "HTTP/2:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " with a server that speaks HTTP/2, several parts share one connection. Apollo Download Manager tries separate connections too, and keeps whichever is faster."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Encrypted:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ""
+         }
+        ]
+       },
+       {
+        "type": "list",
+        "ordered": false,
+        "items": [
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": ""
+            },
+            {
+             "type": "strong",
+             "content": [
+              {
+               "type": "text",
+               "text": "HTTPS:"
+              }
+             ]
+            },
+            {
+             "type": "text",
+             "text": " always, and the server's certificate is always checked. There is no way to turn that check off."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": ""
+            },
+            {
+             "type": "strong",
+             "content": [
+              {
+               "type": "text",
+               "text": "FTP:"
+              }
+             ]
+            },
+            {
+             "type": "text",
+             "text": " an "
+            },
+            {
+             "type": "code",
+             "text": "ftps://"
+            },
+            {
+             "type": "text",
+             "text": " link is encrypted. A plain "
+            },
+            {
+             "type": "code",
+             "text": "ftp://"
+            },
+            {
+             "type": "text",
+             "text": " link is encrypted only when you tick \"Require encryption (FTPS)\" when adding it. Without that, the Add dialog warns that the login and the file can be read on the network."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": ""
+            },
+            {
+             "type": "strong",
+             "content": [
+              {
+               "type": "text",
+               "text": "SFTP:"
+              }
+             ]
+            },
+            {
+             "type": "text",
+             "text": " always. The first time you download from a server, Apollo Download Manager asks you to confirm the server's identity ("
+            },
+            {
+             "type": "link",
+             "content": [
+              {
+               "type": "text",
+               "text": "Downloads"
+              }
+             ],
+             "to": {
+              "page": "downloads",
+              "anchor": "sftp-servers"
+             }
+            },
+            {
+             "type": "text",
+             "text": ")."
+            }
+           ]
+          }
+         ]
         ]
        }
       ]
@@ -9234,70 +9139,13 @@
        "content": [
         {
          "type": "text",
-         "text": "A link to this computer or your local network"
+         "text": "Limits that apply to every direct download:"
         }
        ]
       },
       {
        "type": "text",
-       "text": " (such as "
-      },
-      {
-       "type": "code",
-       "text": "127.0.0.1"
-      },
-      {
-       "type": "text",
-       "text": ", "
-      },
-      {
-       "type": "code",
-       "text": "192.168.x.x"
-      },
-      {
-       "type": "text",
-       "text": " or "
-      },
-      {
-       "type": "code",
-       "text": "10.x.x.x"
-      },
-      {
-       "type": "text",
-       "text": ") waits in the list before anything is sent: "
-      },
-      {
-       "type": "strong",
-       "content": [
-        {
-         "type": "text",
-         "text": "Download anyway"
-        }
-       ]
-      },
-      {
-       "type": "text",
-       "text": " in its details panel goes on. A link you type or paste yourself isn't held."
-      }
-     ]
-    },
-    {
-     "type": "heading",
-     "level": 2,
-     "id": "when-apollo-download-manager-cant-take-a-link",
-     "content": [
-      {
-       "type": "text",
-       "text": "When Apollo Download Manager can't take a link"
-      }
-     ]
-    },
-    {
-     "type": "paragraph",
-     "content": [
-      {
-       "type": "text",
-       "text": "If Apollo Download Manager isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with \"!\", and its popup says why:"
+       "text": ""
       }
      ]
     },
@@ -9318,13 +9166,62 @@
           "content": [
            {
             "type": "text",
-            "text": "\"Apollo Download Manager is not running\":"
+            "text": "Redirects"
            }
           ]
          },
          {
           "type": "text",
-          "text": " Apollo Download Manager starts by itself in the tray when a link arrives. If it couldn't, start it yourself."
+          "text": " are followed only to "
+         },
+         {
+          "type": "code",
+          "text": "http://"
+         },
+         {
+          "type": "text",
+          "text": " and "
+         },
+         {
+          "type": "code",
+          "text": "https://"
+         },
+         {
+          "type": "text",
+          "text": " links, at most 10. A redirect from "
+         },
+         {
+          "type": "code",
+          "text": "https://"
+         },
+         {
+          "type": "text",
+          "text": " to "
+         },
+         {
+          "type": "code",
+          "text": "http://"
+         },
+         {
+          "type": "text",
+          "text": " stops and asks first ("
+         },
+         {
+          "type": "link",
+          "content": [
+           {
+            "type": "text",
+            "text": "Troubleshooting"
+           }
+          ],
+          "to": {
+           "page": "troubleshooting",
+           "anchor": "a-download-stopped-and-asks-something"
+          }
+         },
+         {
+          "type": "text",
+          "text": ")."
          }
         ]
        }
@@ -9342,13 +9239,38 @@
           "content": [
            {
             "type": "text",
-            "text": "\"Apollo Download Manager was started but didn't answer in time\":"
+            "text": "No proxy or "
+           },
+           {
+            "type": "code",
+            "text": ".netrc"
+           },
+           {
+            "type": "text",
+            "text": " from the system:"
            }
           ]
          },
          {
           "type": "text",
-          "text": " it took longer than 10 seconds to start. Try the link again."
+          "text": " Apollo Download Manager uses only the proxy set in its own Settings ("
+         },
+         {
+          "type": "link",
+          "content": [
+           {
+            "type": "text",
+            "text": "Settings"
+           }
+          ],
+          "to": {
+           "page": "settings",
+           "anchor": "proxy"
+          }
+         },
+         {
+          "type": "text",
+          "text": ")."
          }
         ]
        }
@@ -9366,13 +9288,283 @@
           "content": [
            {
             "type": "text",
-            "text": "\"The connection to Apollo DM is not set up\":"
+            "text": "Checksums:"
            }
           ]
          },
          {
           "type": "text",
-          "text": " register that browser in Apollo Download Manager's Settings, Browser, then reload the extension."
+          "text": " when you give one (MD5, SHA-1, SHA-224, SHA-256, SHA-384 or SHA-512), the finished file is checked against it, and the download is marked verified."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "metalink",
+     "content": [
+      {
+       "type": "text",
+       "text": "Metalink"
+      }
+     ]
+    },
+    {
+     "type": "table",
+     "head": [
+      [
+       {
+        "type": "text",
+        "text": "Feature"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Supported"
+       }
+      ]
+     ],
+     "rows": [
+      [
+       [
+        {
+         "type": "text",
+         "text": "Metalink files"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Yes"
+        }
+       ]
+      ]
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "A Metalink file lists one or more files, with their mirrors and checksums. When the Metalink switch is on (Settings, Advanced; off by default, as in V1), a link to a "
+      },
+      {
+       "type": "code",
+       "text": ".metalink"
+      },
+      {
+       "type": "text",
+       "text": " or "
+      },
+      {
+       "type": "code",
+       "text": ".meta4"
+      },
+      {
+       "type": "text",
+       "text": " file adds the files it describes, and Apollo Download Manager downloads each from its mirrors and checks it against the checksums the Metalink file gives."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": ""
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "A Metalink file on your computer:"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " in the Add dialog, "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Choose Metalink files…"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " adds every file each one lists, in the folder you choose, or the default one (#222)."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "bittorrent",
+     "content": [
+      {
+       "type": "text",
+       "text": "BitTorrent"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Torrents and magnet links are downloaded by a separate program, the torrent helper, which uses libtorrent. It supports BitTorrent v1, v2 and hybrid torrents, magnet links, DHT, peer exchange, choosing files, and seeding. The "
+      },
+      {
+       "type": "link",
+       "content": [
+        {
+         "type": "text",
+         "text": "Torrents"
+        }
+       ],
+       "to": {
+        "page": "torrents"
+       }
+      },
+      {
+       "type": "text",
+       "text": " guide covers them. Unlike the table above, this part isn't checked against the engine automatically."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "not-supported",
+     "content": [
+      {
+       "type": "text",
+       "text": "Not supported"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Other links,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " such as "
+         },
+         {
+          "type": "code",
+          "text": "file://"
+         },
+         {
+          "type": "text",
+          "text": ", "
+         },
+         {
+          "type": "code",
+          "text": "data:"
+         },
+         {
+          "type": "text",
+          "text": " or "
+         },
+         {
+          "type": "code",
+          "text": "scp://"
+         },
+         {
+          "type": "text",
+          "text": ", are refused in the Add dialog, with the reason."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Several connections for FTP and SFTP:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " each downloads over one connection for now."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "An HTTPS proxy for SFTP and torrents:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " choose an HTTP or SOCKS5 proxy for those ("
+         },
+         {
+          "type": "link",
+          "content": [
+           {
+            "type": "text",
+            "text": "Settings"
+           }
+          ],
+          "to": {
+           "page": "settings",
+           "anchor": "proxy"
+          }
+         },
+         {
+          "type": "text",
+          "text": ")."
          }
         ]
        }
@@ -9382,42 +9574,32 @@
    ],
    "sections": [
     {
-     "anchor": "browser-integration",
-     "heading": "Browser integration",
-     "text": "Apollo Download Manager's browser extension sends downloads from your browser to Apollo Download Manager. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later)."
+     "anchor": "protocols-and-limits",
+     "heading": "Protocols and limits",
+     "text": "What Apollo Download Manager downloads, and what it can do for each kind of link. The tables below are checked against what Apollo Download Manager's download engine reports about itself, so they change only when the engine does (crates/velocity-transfer/tests/user_guide.rs)."
     },
     {
-     "anchor": "beside-v1",
-     "heading": "Beside V1",
-     "text": "Apollo Download Manager's extension is its own: it is named Apollo Download Manager (Apollo DM for short), its menu item is Download with Apollo Download Manager, and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering Apollo Download Manager never touches V1's."
+     "anchor": "direct-downloads",
+     "heading": "Direct downloads",
+     "text": "Protocol Links Several connections Resumes Resume checked against the file HTTP/2 Encrypted HTTP and HTTPS http://, https:// Yes Yes Yes Yes Yes FTP and FTPS ftp://, ftps:// No Yes Yes No Yes SFTP sftp:// No Yes Yes No Yes What the columns mean: Several connections: Apollo Download Manager splits the file and downloads its parts over several connections at once. It starts with all the connections a download may use (8 by default) and keeps only those that make it faster. FTP and SFTP use one connection per download for now. Resumes: a paused download, or one interrupted by a restart, a crash or a power cut, goes on from the last progress Apollo Download Manager saved, not from the start. Resume checked against the file: before resuming, Apollo Download Manager checks the file on the server is still the same one (its ETag or modification time). If it changed, Apollo Download Manager starts over rather than mix two versions. HTTP/2: with a server that speaks HTTP/2, several parts share one connection. Apollo Download Manager tries separate connections too, and keeps whichever is faster. Encrypted: HTTPS: always, and the server's certificate is always checked. There is no way to turn that check off. FTP: an ftps:// link is encrypted. A plain ftp:// link is encrypted only when you tick \"Require encryption (FTPS)\" when adding it. Without that, the Add dialog warns that the login and the file can be read on the network. SFTP: always. The first time you download from a server, Apollo Download Manager asks you to confirm the server's identity (Downloads). Limits that apply to every direct download: Redirects are followed only to http:// and https:// links, at most 10. A redirect from https:// to http:// stops and asks first (Troubleshooting). No proxy or .netrc from the system: Apollo Download Manager uses only the proxy set in its own Settings (Settings). Checksums: when you give one (MD5, SHA-1, SHA-224, SHA-256, SHA-384 or SHA-512), the finished file is checked against it, and the download is marked verified."
     },
     {
-     "anchor": "installing-the-extension",
-     "heading": "Installing the extension",
-     "text": "Chrome and Brave: install it from the Chrome Web Store. In Apollo Download Manager, Get the extension in Settings, Browser opens that page in the browser. Firefox: install it from Firefox Add-ons. Get the extension in Settings, Browser opens that page in Firefox. Edge: not in its store yet. Get the extension stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below. The installers don't set the extension up for you. To load it by hand: Chrome, Edge, Brave: open chrome://extensions (or edge://extensions, brave://extensions), turn on developer mode, choose Load unpacked, and pick the extension's chrome folder. Firefox: open about:debugging, This Firefox, Load Temporary Add-on, and pick the manifest.json in the extension's firefox folder. Firefox removes a temporary add-on when it closes. How to build the extension is in the developer documents."
+     "anchor": "metalink",
+     "heading": "Metalink",
+     "text": "Feature Supported Metalink files Yes A Metalink file lists one or more files, with their mirrors and checksums. When the Metalink switch is on (Settings, Advanced; off by default, as in V1), a link to a .metalink or .meta4 file adds the files it describes, and Apollo Download Manager downloads each from its mirrors and checks it against the checksums the Metalink file gives. A Metalink file on your computer: in the Add dialog, Choose Metalink files… adds every file each one lists, in the folder you choose, or the default one (#222)."
     },
     {
-     "anchor": "connecting-it-to-apollo-download-manager",
-     "heading": "Connecting it to Apollo Download Manager",
-     "text": "In Apollo Download Manager, open Settings, Browser. Each browser (Chrome, Chromium, Edge, Brave, Firefox) has Register or Unregister. Registering is for your user only and needs no administrator rights. The first-run setup offers the same. \"Registered for another copy\" means the registration points to a copy of Apollo Download Manager that was moved or reinstalled elsewhere: Register again fixes it. Before removing Apollo Download Manager on Linux, unregister the browsers: a package can't remove registrations from your home folder (Installing)."
+     "anchor": "bittorrent",
+     "heading": "BitTorrent",
+     "text": "Torrents and magnet links are downloaded by a separate program, the torrent helper, which uses libtorrent. It supports BitTorrent v1, v2 and hybrid torrents, magnet links, DHT, peer exchange, choosing files, and seeding. The Torrents guide covers them. Unlike the table above, this part isn't checked against the engine automatically."
     },
     {
-     "anchor": "what-the-extension-does",
-     "heading": "What the extension does",
-     "text": "It takes over matching downloads: by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link. Modes, in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser. Rules, in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default). The right-click menu on links, images, video and audio: Download with Apollo Download Manager. Magnet links and .torrent downloads: off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent. What it never sends: cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
-    },
-    {
-     "anchor": "what-apollo-download-manager-does-with-a-link",
-     "heading": "What Apollo Download Manager does with a link",
-     "text": "Settings, Browser has two switches, both on by default: Ask before adding: the Add dialog opens, filled in, and Apollo Download Manager's window comes forward. Off, the link is added at once to the automatic folder. A taken name, a link added before, a torrent or a magnet link still opens the dialog. Take links from the browser: off, Apollo Download Manager refuses every link, and the browser downloads it itself. A link to this computer or your local network (such as 127.0.0.1, 192.168.x.x or 10.x.x.x) waits in the list before anything is sent: Download anyway in its details panel goes on. A link you type or paste yourself isn't held."
-    },
-    {
-     "anchor": "when-apollo-download-manager-cant-take-a-link",
-     "heading": "When Apollo Download Manager can't take a link",
-     "text": "If Apollo Download Manager isn't running, isn't connected, or refuses the link, the browser downloads the file itself. The extension's badge turns red with \"!\", and its popup says why: \"Apollo Download Manager is not running\": Apollo Download Manager starts by itself in the tray when a link arrives. If it couldn't, start it yourself. \"Apollo Download Manager was started but didn't answer in time\": it took longer than 10 seconds to start. Try the link again. \"The connection to Apollo DM is not set up\": register that browser in Apollo Download Manager's Settings, Browser, then reload the extension."
+     "anchor": "not-supported",
+     "heading": "Not supported",
+     "text": "Other links, such as file://, data: or scp://, are refused in the Add dialog, with the reason. Several connections for FTP and SFTP: each downloads over one connection for now. An HTTPS proxy for SFTP and torrents: choose an HTTP or SOCKS5 proxy for those (Settings)."
     }
    ],
-   "file": "browser.md"
+   "file": "protocols.md"
   },
   {
    "id": "troubleshooting",
