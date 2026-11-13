@@ -30,6 +30,39 @@ pub fn plain_file(path: &Path) -> io::Result<Metadata> {
     Ok(meta)
 }
 
+/// The Mark of the Web's text (#469): the file is from the internet zone (`ZoneId=3`) and, when
+/// known, came from `host_url`. Callers give an origin only (`scheme://host/`): a login, a path
+/// or a query can carry a token, and this text stays beside the file.
+pub fn zone_identifier(host_url: Option<&str>) -> String {
+    let mut text = String::from("[ZoneTransfer]\r\nZoneId=3\r\n");
+    if let Some(url) = host_url {
+        text.push_str("HostUrl=");
+        text.push_str(url);
+        text.push_str("\r\n");
+    }
+    text
+}
+
+/// Marks the finished download at `path` as from the internet (#469), as browsers do, so
+/// SmartScreen and Office's protected view still warn before it opens: its `Zone.Identifier`
+/// stream gets [`zone_identifier`]. Only a plain file is marked, never through a link. On a file
+/// system without streams (FAT32, exFAT) the write fails, and the caller keeps the download. Does
+/// nothing outside Windows.
+pub fn mark_from_internet(path: &Path, host_url: Option<&str>) -> io::Result<()> {
+    #[cfg(windows)]
+    {
+        plain_file(path)?;
+        let mut stream = path.as_os_str().to_owned();
+        stream.push(":Zone.Identifier");
+        fs::write(std::path::PathBuf::from(stream), zone_identifier(host_url))
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (path, host_url);
+        Ok(())
+    }
+}
+
 /// The metadata of `path` when it is a folder itself, not a link to one, read without following
 /// it. Anything else is refused with `InvalidInput`.
 pub fn plain_dir(path: &Path) -> io::Result<Metadata> {
@@ -263,6 +296,56 @@ mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
+    }
+
+    /// #469: what a browser writes, so SmartScreen and Office's protected view treat the file as
+    /// from the internet. The origin only: never a login, a path or a query.
+    #[test]
+    fn the_mark_of_the_web_says_internet_and_the_origin_only() {
+        assert_eq!(
+            zone_identifier(Some("https://example.com/")),
+            "[ZoneTransfer]\r\nZoneId=3\r\nHostUrl=https://example.com/\r\n"
+        );
+        assert_eq!(zone_identifier(None), "[ZoneTransfer]\r\nZoneId=3\r\n");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn a_finished_file_is_marked_as_from_the_internet_and_a_folder_is_refused() {
+        let dir = Dir::new("motw");
+        let file = dir.0.join("f.zip");
+        fs::write(&file, b"x").unwrap();
+        mark_from_internet(&file, Some("https://example.com/")).unwrap();
+        let stream = dir.0.join("f.zip:Zone.Identifier");
+        assert_eq!(
+            fs::read_to_string(stream).unwrap(),
+            "[ZoneTransfer]\r\nZoneId=3\r\nHostUrl=https://example.com/\r\n"
+        );
+        assert_eq!(
+            fs::read(&file).unwrap(),
+            b"x",
+            "the file itself is unchanged"
+        );
+        let folder = dir.0.join("sub");
+        fs::create_dir(&folder).unwrap();
+        assert_eq!(
+            mark_from_internet(&folder, None).unwrap_err().kind(),
+            io::ErrorKind::InvalidInput
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn a_link_is_never_marked_through() {
+        let dir = Dir::new("motw-link");
+        let target = dir.0.join("target.bin");
+        fs::write(&target, b"x").unwrap();
+        let link = dir.0.join("link.bin");
+        if !file_link(&target, &link) {
+            return;
+        }
+        assert!(mark_from_internet(&link, None).is_err());
+        assert!(!dir.0.join("target.bin:Zone.Identifier").exists());
     }
 
     #[test]
