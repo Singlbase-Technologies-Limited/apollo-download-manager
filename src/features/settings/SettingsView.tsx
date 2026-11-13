@@ -479,7 +479,16 @@ function PerformanceSection({ s, patch }: { s: Settings; patch: Patch }) {
 function TorrentSection({ s, patch }: { s: Settings; patch: Patch }) {
   const t = s.torrent;
   const network = useQuery({ queryKey: ['torrent-network'], queryFn: api.torrentNetwork, retry: false });
+  const adapters = useQuery({ queryKey: ['network-adapters'], queryFn: api.networkAdapters, retry: false });
   const kib = (bps: number) => Math.round(bps / KIB);
+  // One adapter for torrents (#471): a saved one that is gone stays chosen, and says so.
+  const ANY = '__any';
+  const listed = adapters.data ?? [];
+  const adapterOptions = [
+    { value: ANY, label: 'Any adapter' },
+    ...listed.map((a) => ({ value: a.id, label: a.up ? a.name : `${a.name} (not connected)` })),
+    ...(t.networkAdapter !== null && !listed.some((a) => a.id === t.networkAdapter) ? [{ value: t.networkAdapter, label: 'The adapter chosen before (not found)' }] : []),
+  ];
   return (
     <>
       <Group title="BitTorrent" description="Torrents run in Apollo Download Manager’s torrent helper, on libtorrent.">
@@ -497,6 +506,13 @@ function TorrentSection({ s, patch }: { s: Settings; patch: Patch }) {
       <Group title="Connection">
         <Num title="Listening port (0 for any)" value={t.listenPort} min={0} max={65535} onChange={(v) => { patch((x) => ({ ...x, torrent: { ...x.torrent, listenPort: v === 0 || v >= 1024 ? v : 1024 } })); }} />
         <Toggle title="Ask the router to forward the port (UPnP, NAT-PMP)" checked={t.portMapping} onChange={(v) => { patch((x) => ({ ...x, torrent: { ...x.torrent, portMapping: v } })); }} />
+        <Choice
+          title="Network adapter"
+          description="Torrents use only this adapter, such as a VPN's. If it disconnects, they stop rather than use another."
+          value={t.networkAdapter ?? ANY}
+          options={adapterOptions}
+          onChange={(v) => { patch((x) => ({ ...x, torrent: { ...x.torrent, networkAdapter: v === ANY ? null : v } })); }}
+        />
         <div className="py-2.5 text-xs text-fg-muted">
           {network.isPending ? (
             'Asking the torrent helper…'
@@ -504,7 +520,11 @@ function TorrentSection({ s, patch }: { s: Settings; patch: Patch }) {
             toApiError(network.error).message
           ) : (
             <>
-              <p>{network.data.listenError ? `Couldn’t listen: ${network.data.listenError}` : `Listening on port ${String(network.data.listenPort)}.`}</p>
+              {network.data.adapterMissing !== null ? (
+                <p className="text-warning">The network adapter chosen for torrents isn’t connected: torrents connect through no other until it is.</p>
+              ) : (
+                <p>{network.data.listenError ? `Couldn’t listen: ${network.data.listenError}` : `Listening on port ${String(network.data.listenPort)}.`}</p>
+              )}
               <p>{portMapText(network.data)}</p>
             </>
           )}

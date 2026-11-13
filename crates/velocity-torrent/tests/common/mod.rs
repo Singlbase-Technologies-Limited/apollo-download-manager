@@ -35,6 +35,7 @@ pub const OFF: TorrentSettings = TorrentSettings {
     extra_trackers: Vec::new(),
     max_peers_per_torrent: 55,
     dht_bootstrap_nodes: Vec::new(),
+    network_adapter: None,
 };
 
 /// Where a test's own libtorrent session listens: 127.0.0.1, on a port free for TCP and UDP. Port 0

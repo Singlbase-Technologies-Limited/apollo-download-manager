@@ -50,7 +50,7 @@ Open the unfinished file in your player from its folder. Apollo Download Manager
 
 ## Limits and settings
 
-Settings, BitTorrent holds the torrent settings: DHT, peer exchange and local peer discovery, peers per torrent, the seeding limit, upload and download limits for all torrents together, extra trackers, and the listening port (6890 by default) with port mapping on your router. They are listed in [Settings](settings.md#bittorrent).
+Settings, BitTorrent holds the torrent settings: DHT, peer exchange and local peer discovery, peers per torrent, the seeding limit, upload and download limits for all torrents together, extra trackers, the listening port (6890 by default) with port mapping on your router, and the one network adapter torrents may use, such as a VPN's. They are listed in [Settings](settings.md#bittorrent).
 
 ## Not yet, or different from V1
 

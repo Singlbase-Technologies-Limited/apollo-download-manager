@@ -91,6 +91,7 @@
     "localPeerDiscovery": false,
     "maxActiveSeeds": 0,
     "maxPeersPerTorrent": 55,
+    "networkAdapter": null,
     "peerExchange": true,
     "portMapping": false,
     "uploadLimit": 0

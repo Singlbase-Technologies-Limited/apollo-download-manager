@@ -67,9 +67,12 @@ A profile sets the most a download may use. Within it, Apollo Download Manager s
 | DHT bootstrap nodes | libtorrent's own |
 | Listening port (0 for any) | 6890 |
 | Ask the router to forward the port (UPnP, NAT-PMP) | Off |
+| Network adapter: torrents use only this one, such as a VPN's | Any adapter |
 | New torrents: Choose files of magnet links before downloading | Off |
 | New torrents: Seeding after download | Don’t seed |
 | New torrents: Upload limit for each new torrent (KiB/s, 0 for none) | 0: none |
+
+**Network adapter:** choose your VPN's adapter, and torrents connect only through it. If the VPN disconnects, torrents stop finding peers rather than use your normal connection, and the screen says the adapter isn't connected; they go on once it is back. An adapter that is no longer on the computer stays chosen, shown as not found, until you choose another.
 
 If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded.
 

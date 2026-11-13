@@ -33,6 +33,8 @@ namespace {
 lt::settings_pack make_pack(SessionConfig const& cfg) {
     lt::settings_pack p;
     p.set_str(lt::settings_pack::listen_interfaces, std::string(cfg.listen_interfaces));
+    // Empty for any adapter; set every time, so choosing "any" again undoes a binding (#471).
+    p.set_str(lt::settings_pack::outgoing_interfaces, std::string(cfg.outgoing_interfaces));
     p.set_bool(lt::settings_pack::enable_dht, cfg.enable_dht);
     p.set_bool(lt::settings_pack::enable_lsd, cfg.enable_lsd);
     p.set_bool(lt::settings_pack::enable_upnp, cfg.enable_upnp);

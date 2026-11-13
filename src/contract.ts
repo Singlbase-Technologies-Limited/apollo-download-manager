@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 37;
+export const COMMAND_API_VERSION = 38;
 
 const bytes = z.number().int().nonnegative();
 
@@ -764,6 +764,8 @@ export const TorrentSettingsSchema = z.strictObject({
   extraTrackers: z.array(z.string()),
   maxPeersPerTorrent: z.number().int().min(1).max(512),
   dhtBootstrapNodes: z.array(z.string()),
+  /** The one network adapter torrents use (#471), by its id; `null` for any. */
+  networkAdapter: z.string().nullable(),
 });
 export type TorrentSettings = z.infer<typeof TorrentSettingsSchema>;
 
@@ -856,5 +858,15 @@ export const NetworkStatusSchema = z.strictObject({
     z.strictObject({ state: z.literal('failed'), message: z.string() }),
     z.strictObject({ state: z.literal('noRouter') }),
   ]),
+  /** The chosen adapter's id while it is gone or not connected (#471): torrents connect through no other. */
+  adapterMissing: z.string().nullable(),
 });
 export type NetworkStatus = z.infer<typeof NetworkStatusSchema>;
+
+/** One of this computer's network adapters (#471): `id` is what the setting stores, `name` what to show. */
+export const NetworkAdapterSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  up: z.boolean(),
+});
+export type NetworkAdapter = z.infer<typeof NetworkAdapterSchema>;
