@@ -4,9 +4,16 @@ import { buildGuide, GUIDE_OUT, guideData } from './guide-lib.mjs';
 
 const index = `# The guide
 
+## Start
+
 | Guide | What |
 |---|---|
 | [Second](b.md) | b |
+
+## More
+
+| Guide | What |
+|---|---|
 | [First](a.md) | a |
 `;
 
@@ -20,6 +27,18 @@ const files = (over = {}) => ({
 describe('the in-app guide (#354)', () => {
   it('orders the pages as the index lists them', () => {
     expect(buildGuide(files()).pages.map((p) => p.id)).toEqual(['index', 'b', 'a']);
+  });
+
+  it('groups the pages under the index’s headings, the index first, for the app and the website (#488)', () => {
+    expect(buildGuide(files()).groups).toEqual([
+      { title: 'Start', pages: ['index', 'b'] },
+      { title: 'More', pages: ['a'] },
+    ]);
+  });
+
+  it('fails on a page the index lists outside a group (#488)', () => {
+    const ungrouped = '# The guide\n\n| Guide | What |\n|---|---|\n| [First](a.md) | a |\n\n## More\n\n| Guide | What |\n|---|---|\n| [Second](b.md) | b |\n';
+    expect(() => buildGuide(files({ 'README.md': ungrouped }))).toThrow(/a\.md.*group/);
   });
 
   it('gives each heading the anchor GitHub gives it, numbering repeats', () => {

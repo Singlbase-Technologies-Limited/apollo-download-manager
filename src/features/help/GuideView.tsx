@@ -39,6 +39,16 @@ interface Page {
 
 /** The generator always writes the index page first (scripts/guide-lib.mjs), so there is at least one page. */
 const PAGES = (data as unknown as { pages: [Page, ...Page[]] }).pages;
+/** The sidebar's groups, as docs/user/README.md sets them: the website shows the same ones (#488). */
+const GROUPS = (data as unknown as { groups: { title: string; pages: string[] }[] }).groups.map((g) => ({
+  title: g.title,
+  pages: g.pages.map((id) => {
+    const page = PAGES.find((p) => p.id === id);
+    if (!page) throw new Error(`the guide's group ${g.title} lists a page it doesn't have: ${id}`);
+    return page;
+  }),
+}));
+const pageName = (p: Page) => (p.id === 'index' ? 'Introduction' : p.title);
 const pageById = (id: string): Page => PAGES.find((p) => p.id === id) ?? PAGES[0];
 /** A heading's element id: prefixed, so a guide anchor never clashes with the app's own ids. */
 const domId = (anchor: string) => `guide-${anchor}`;
@@ -229,24 +239,33 @@ export function GuideView() {
               </ul>
             </>
           ) : (
-            PAGES.map((p) => (
-              <Fragment key={p.id}>
-                <button
-                  type="button"
-                  aria-current={p.id === page.id ? 'page' : undefined}
-                  className={cn('rounded-md px-2 py-1.5 text-left text-[13px]', p.id === page.id ? 'bg-row-selected font-semibold text-accent-strong' : 'text-fg hover:bg-row-hover')}
-                  onClick={() => { go(p.id, null); }}
-                >
-                  {p.id === 'index' ? 'Introduction' : p.title}
-                </button>
-                {p.id === page.id
-                  ? p.headings.filter((h) => h.level === 2).map((h) => (
-                    <a key={h.id} href={`#${domId(h.id)}`} className="rounded-md py-1 pl-5 pr-2 text-xs text-fg-muted hover:bg-row-hover hover:text-fg" onClick={(e) => { e.preventDefault(); go(p.id, h.id); }}>
-                      {h.text}
-                    </a>
-                  ))
-                  : null}
-              </Fragment>
+            // The website's groups (#488): a small bold heading over each, which names its list for a screen reader.
+            GROUPS.map((g, gi) => (
+              <div key={g.title} className={cn(gi > 0 && 'mt-4')}>
+                <p id={`guide-group-${String(gi)}`} className="mb-1 px-2 text-xs font-bold text-fg">{g.title}</p>
+                <ul aria-labelledby={`guide-group-${String(gi)}`} className="flex flex-col gap-0.5">
+                  {g.pages.map((p) => (
+                    <li key={p.id} className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        aria-current={p.id === page.id ? 'page' : undefined}
+                        className={cn('rounded-md px-2 py-1.5 text-left text-[13px]', p.id === page.id ? 'bg-row-selected font-semibold text-accent-strong' : 'text-fg hover:bg-row-hover')}
+                        onClick={() => { go(p.id, null); }}
+                      >
+                        {pageName(p)}
+                      </button>
+                      {/* The introduction's headings are the groups themselves, so they aren't listed again. */}
+                      {p.id === page.id && p.id !== 'index'
+                        ? p.headings.filter((h) => h.level === 2).map((h) => (
+                          <a key={h.id} href={`#${domId(h.id)}`} className="rounded-md py-1 pl-5 pr-2 text-xs text-fg-muted hover:bg-row-hover hover:text-fg" onClick={(e) => { e.preventDefault(); go(p.id, h.id); }}>
+                            {h.text}
+                          </a>
+                        ))
+                        : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))
           )}
         </nav>
@@ -257,7 +276,7 @@ export function GuideView() {
           <nav aria-label="Pages" className="mx-auto mt-8 flex max-w-[44rem] justify-between gap-4 border-t border-border pt-4">
             {prev ? (
               <button type="button" className="flex items-center gap-1 text-left text-[13px] text-accent hover:underline" aria-label={`Previous: ${prev.title}`} onClick={() => { go(prev.id, null); }}>
-                <ChevronLeft className="size-4" aria-hidden /> {prev.id === 'index' ? 'Introduction' : prev.title}
+                <ChevronLeft className="size-4" aria-hidden /> {pageName(prev)}
               </button>
             ) : <span />}
             {next ? (

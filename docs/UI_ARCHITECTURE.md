@@ -128,6 +128,7 @@ The user guide (#354) is `src/features/help/`. It opens from Help, User guide, f
 
 - **Its pages are the user guides** in [docs/user/](user/README.md), which `pnpm guide` builds into `guide.generated.json` with markdown-it (`scripts/guide-lib.mjs`). A Vitest test fails when that file is older than the guides, so edit the guides and run `pnpm guide`; never edit the JSON.
 - **No HTML from the guides reaches the window:** the data is typed blocks and inlines, drawn as React elements. Raw HTML and images in a guide fail the build. A link to another guide page opens it in the guide; a web address is shown as text, since the window opens no web page.
+- **The contents are grouped as on the website** (#488): `docs/user/README.md` lists the guides under four headings (Getting started, Using the app, Reference, Help), and `pnpm guide` writes them as `groups`. The sidebar shows each group as a list named by its heading, and the page order follows the groups. The build fails if the README lists a page outside a group.
 - **Search** runs over every section's text in memory, with no network call: a section matches when it holds every word typed, with heading matches first.
 - **Layout A** (PO decision on #354): search and the contents on the left, the page on the right, previous and next at the bottom; on a narrow window the contents go above the page.
 

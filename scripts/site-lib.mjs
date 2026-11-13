@@ -20,13 +20,6 @@ const content = JSON.parse(read('site/content/screens.json'));
 const SCREEN_WIDTHS = [720, 1440];
 const SCREEN_CAPTION = 'The real app, with example downloads.';
 
-/** The user guide's sidebar, in reading order. */
-const GUIDE_GROUPS = [
-  ['Getting started', ['index', 'installing']],
-  ['Using the app', ['downloads', 'torrents', 'categories', 'browser']],
-  ['Reference', ['settings', 'protocols']],
-  ['Help', ['troubleshooting', 'v1-and-v2']],
-];
 
 /** The files the pages use besides what `buildSite` makes: where each is, and its path in the site. */
 export function siteFiles() {
@@ -330,17 +323,17 @@ function faqBody(page, hrefOf) {
 }
 
 /** The guide's sidebar, with `current` marked; `href` gives a guide page's address. */
-function guideNav(pages, current, href) {
+function guideNav(groups, pages, current, href) {
   const titleOf = (id) => {
     const page = pages.find((p) => p.id === id);
     if (!page) throw new Error(`the guide has no page ${id}`);
     return id === 'index' ? 'Introduction' : page.title;
   };
-  const groups = GUIDE_GROUPS.map(
-    ([title, ids]) =>
-      `<div class="nav-group"><p>${title}</p><ul>${ids.map((id) => `<li><a href="${esc(href({ page: id }))}"${id === current ? ' aria-current="page"' : ''}>${esc(titleOf(id))}</a></li>`).join('')}</ul></div>`,
+  const shown = groups.map(
+    ({ title, pages: ids }) =>
+      `<div class="nav-group"><p>${esc(title)}</p><ul>${ids.map((id) => `<li><a href="${esc(href({ page: id }))}"${id === current ? ' aria-current="page"' : ''}>${esc(titleOf(id))}</a></li>`).join('')}</ul></div>`,
   ).join('\n');
-  return `<nav aria-label="User guide">\n${groups}\n</nav>\n`;
+  return `<nav aria-label="User guide">\n${shown}\n</nav>\n`;
 }
 
 /**
@@ -353,7 +346,8 @@ export function buildSite({ releases }) {
       .filter((f) => f.endsWith('.md'))
       .map((f) => [f, read(`docs/user/${f}`)]),
   );
-  const guide = buildGuide(guideFiles).pages;
+  // The guide's groups and order come from docs/user/README.md, as in the app (#488).
+  const { groups: guideGroups, pages: guide } = buildGuide(guideFiles);
   const out = {};
   const pageHref = (path) => (to) => {
     const up = '../'.repeat(path.split('/').length - 1) || './';
@@ -396,7 +390,7 @@ export function buildSite({ releases }) {
     crumb: 'Legal',
   });
 
-  const order = GUIDE_GROUPS.flatMap(([, ids]) => ids);
+  const order = guideGroups.flatMap((g) => g.pages);
   for (const p of guide) {
     if (!order.includes(p.id)) throw new Error(`docs/user/${p.file}: the guide's sidebar doesn't list it`);
     const path = p.id === 'index' ? 'guide/index.html' : `guide/${p.id}/index.html`;
@@ -415,7 +409,7 @@ export function buildSite({ releases }) {
       title: p.id === 'index' ? 'User guide' : p.title,
       description: firstText(p.blocks),
       body: renderBlocks(p.blocks, href, afterHeading),
-      aside: `${searchForm({ root: guideRoot, id: 'guide-search', label: 'Search the user guide', placeholder: 'Resume, torrents, browser…' })}\n${guideNav(guide, p.id, href)}`,
+      aside: `${searchForm({ root: guideRoot, id: 'guide-search', label: 'Search the user guide', placeholder: 'Resume, torrents, browser…' })}\n${guideNav(guideGroups, guide, p.id, href)}`,
       toc: tableOfContents(p.headings),
       after: pager(neighbour(order[at - 1]), neighbour(order[at + 1])),
       crumb: 'User guide',

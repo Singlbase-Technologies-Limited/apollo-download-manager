@@ -4,16 +4,35 @@ These guides are for people who use Apollo Download Manager. The same guides are
 
 Apollo Download Manager is a separate app from V1, the download manager it grew out of. You can install and run both at once; nothing one does changes the other ([Beside V1](v1-and-v2.md)).
 
+**Apollo Download Manager is still in development.** The guides describe what this version does. Where something isn't there yet, the guide says so.
+
+The guides are in four groups, here and in the sidebar, in the app and on the website alike.
+
+## Getting started
+
 | Guide | What it covers |
 |---|---|
 | [Installing](installing.md) | The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager |
+
+## Using the app
+
+| Guide | What it covers |
+|---|---|
 | [Downloads](downloads.md) | Adding downloads, the download list, the details panel, the history, files and folders, logins |
-| [Protocols and limits](protocols.md) | What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do |
 | [Torrents](torrents.md) | Adding torrents and magnet links, choosing files, seeding, trackers |
 | [Categories](categories.md) | Sorting downloads by file type into folders |
-| [Settings](settings.md) | Every section of the Settings screen, including the proxy |
 | [Browser integration](browser.md) | Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager |
+
+## Reference
+
+| Guide | What it covers |
+|---|---|
+| [Settings](settings.md) | Every section of the Settings screen, including the proxy |
+| [Protocols and limits](protocols.md) | What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do |
+
+## Help
+
+| Guide | What it covers |
+|---|---|
 | [Troubleshooting](troubleshooting.md) | Common problems, the diagnostics report, and what error messages mean |
 | [Beside V1](v1-and-v2.md) | Using both side by side, and what is different |
-
-**Apollo Download Manager is still in development.** The guides describe what this version does. Where something isn't there yet, the guide says so.
