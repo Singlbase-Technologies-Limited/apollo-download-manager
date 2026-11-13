@@ -323,3 +323,43 @@ export function guideData() {
   );
   return `${JSON.stringify(buildGuide(files), null, 1)}\n`;
 }
+
+/** A version's heading in CHANGELOG.md: `## 0.2.0 - 2026-11-10`, a pre-release such as `0.3.0-rc.1` too. */
+const VERSION_HEADING = /^(\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?) - (\d{4}-\d{2}-\d{2})$/;
+
+/**
+ * The changelog for the app's What's new window (#496): one entry per version, newest first as the file has them,
+ * each with its date and its typed blocks, like the guide's. A web address stays a link the window shows to copy; a
+ * link to a file of the repository becomes plain text, since the window opens nothing.
+ * @param {string} text CHANGELOG.md
+ * @returns {{ versions: { version: string, date: string, blocks: object[] }[] }}
+ */
+export function buildChangelog(text) {
+  const page = parsePage('CHANGELOG.md', text);
+  resolveLinks(page, (href) => (/^https:\/\//i.test(href) ? { url: href } : null));
+  const versions = [];
+  // What has merged since the last release (docs/RELEASE_PROCESS.md) belongs to no build yet: left out.
+  let unreleased = false;
+  for (const b of page.blocks) {
+    if (b.type === 'heading' && b.level === 2) {
+      const heading = plain(b.content);
+      unreleased = heading === 'Unreleased';
+      if (unreleased) continue;
+      const m = VERSION_HEADING.exec(heading);
+      if (!m) throw new Error(`CHANGELOG.md: a version heading must read "## 1.2.3 - 2026-01-31", not "${heading}"`);
+      versions.push({ version: m[1], date: m[2], blocks: [] });
+    } else if (versions.length > 0 && !unreleased) {
+      versions[versions.length - 1].blocks.push(b);
+    }
+  }
+  return { versions };
+}
+
+/** Where `pnpm guide` writes the changelog the app bundles (#496). */
+export const CHANGELOG_OUT = new URL('../src/app/changelog.generated.json', import.meta.url);
+
+/** The changelog data as `pnpm guide` writes it, from CHANGELOG.md as it is now. */
+export function changelogData() {
+  const text = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  return `${JSON.stringify(buildChangelog(text), null, 1)}\n`;
+}

@@ -1,10 +1,12 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { contentClass, overlayClass } from '../../components/dialogStyles';
 import { useReturnFocus } from '../../components/returnFocus';
 import { cn } from '../../lib/cn';
 import { useUiStore } from '../../stores/ui';
+import { domId } from './anchors';
+import { Blocks, type Block } from './blocks';
 import data from './guide.generated.json';
 
 /*
@@ -12,22 +14,6 @@ import data from './guide.generated.json';
  * built into guide.generated.json by `pnpm guide` (scripts/guide-lib.mjs), so it works offline and says what the
  * website says. The data is typed blocks, drawn here as React elements: no HTML from the guides is ever inserted.
  */
-
-type Inline =
-  | { type: 'text'; text: string }
-  | { type: 'code'; text: string }
-  | { type: 'break' }
-  | { type: 'strong' | 'em' | 'strike'; content: Inline[] }
-  | { type: 'link'; to: { page: string; anchor?: string } | { url: string }; content: Inline[] };
-
-type Block =
-  | { type: 'heading'; level: number; id: string; content: Inline[] }
-  | { type: 'paragraph'; content: Inline[] }
-  | { type: 'list'; ordered: boolean; items: Block[][] }
-  | { type: 'quote'; content: Block[] }
-  | { type: 'codeBlock'; text: string }
-  | { type: 'table'; head: Inline[][]; rows: Inline[][][] }
-  | { type: 'rule' };
 
 interface Page {
   id: string;
@@ -50,9 +36,6 @@ const GROUPS = (data as unknown as { groups: { title: string; pages: string[] }[
 }));
 const pageName = (p: Page) => (p.id === 'index' ? 'Introduction' : p.title);
 const pageById = (id: string): Page => PAGES.find((p) => p.id === id) ?? PAGES[0];
-/** A heading's element id: prefixed, so a guide anchor never clashes with the app's own ids. */
-const domId = (anchor: string) => `guide-${anchor}`;
-
 interface Result {
   page: Page;
   anchor: string;
@@ -76,102 +59,6 @@ function search(query: string): Result[] {
     }
   }
   return hits.sort((a, b) => a.rank - b.rank).slice(0, 50);
-}
-
-function Inlines({ content, go }: { content: Inline[]; go: (page: string, anchor: string | null) => void }) {
-  return (
-    <>
-      {content.map((n, i) => {
-        switch (n.type) {
-          case 'text':
-            return <Fragment key={i}>{n.text}</Fragment>;
-          case 'code':
-            return <code key={i} className="rounded bg-surface-3 px-1 py-px font-mono text-[0.92em]">{n.text}</code>;
-          case 'break':
-            return <br key={i} />;
-          case 'strong':
-            return <strong key={i} className="font-semibold"><Inlines content={n.content} go={go} /></strong>;
-          case 'em':
-            return <em key={i}><Inlines content={n.content} go={go} /></em>;
-          case 'strike':
-            return <s key={i}><Inlines content={n.content} go={go} /></s>;
-          case 'link':
-            if ('url' in n.to) {
-              // The app opens no web page from here: the address is shown to copy.
-              return <span key={i}><Inlines content={n.content} go={go} /> (<span className="break-all font-mono text-[0.92em]">{n.to.url}</span>)</span>;
-            }
-            {
-              const to = n.to;
-              return (
-                <a
-                  key={i}
-                  href={`#${domId(to.anchor ?? to.page)}`}
-                  className="text-accent underline-offset-2 hover:underline"
-                  onClick={(e) => { e.preventDefault(); go(to.page, to.anchor ?? null); }}
-                >
-                  <Inlines content={n.content} go={go} />
-                </a>
-              );
-            }
-        }
-      })}
-    </>
-  );
-}
-
-function Blocks({ blocks, go }: { blocks: Block[]; go: (page: string, anchor: string | null) => void }) {
-  return (
-    <>
-      {blocks.map((b, i) => {
-        switch (b.type) {
-          case 'heading': {
-            const Tag = b.level <= 1 ? 'h1' : b.level === 2 ? 'h2' : b.level === 3 ? 'h3' : 'h4';
-            const size = b.level === 1 ? 'mt-0 text-2xl' : b.level === 2 ? 'mt-7 text-lg' : 'mt-5 text-[15px]';
-            return (
-              <Tag key={i} id={domId(b.id)} tabIndex={-1} className={cn('mb-2 font-semibold text-fg outline-none', size)}>
-                <Inlines content={b.content} go={go} />
-              </Tag>
-            );
-          }
-          case 'paragraph':
-            return <p key={i} className="my-2.5"><Inlines content={b.content} go={go} /></p>;
-          case 'list': {
-            const Tag = b.ordered ? 'ol' : 'ul';
-            return (
-              <Tag key={i} className={cn('my-2.5 flex flex-col gap-1 pl-5', b.ordered ? 'list-decimal' : 'list-disc')}>
-                {b.items.map((item, j) => (
-                  <li key={j} className="[&>p]:my-0"><Blocks blocks={item} go={go} /></li>
-                ))}
-              </Tag>
-            );
-          }
-          case 'quote':
-            return <blockquote key={i} className="my-3 rounded-md bg-surface-2 px-4 py-1 text-fg-muted"><Blocks blocks={b.content} go={go} /></blockquote>;
-          case 'codeBlock':
-            return <pre key={i} className="my-3 overflow-x-auto rounded-md bg-surface-3 p-3 font-mono text-xs">{b.text}</pre>;
-          case 'table':
-            return (
-              <div key={i} className="my-3 overflow-x-auto rounded-md border border-border">
-                <table className="w-full border-collapse text-left text-[13px]">
-                  <thead className="bg-surface-2">
-                    <tr>{b.head.map((c, j) => <th key={j} scope="col" className="border-b border-border px-3 py-2 font-semibold"><Inlines content={c} go={go} /></th>)}</tr>
-                  </thead>
-                  <tbody>
-                    {b.rows.map((r, j) => (
-                      <tr key={j} className="border-b border-border last:border-b-0">
-                        {r.map((c, k) => <td key={k} className="px-3 py-2 align-top"><Inlines content={c} go={go} /></td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          case 'rule':
-            return <hr key={i} className="my-5 border-border" />;
-        }
-      })}
-    </>
-  );
 }
 
 export function GuideView() {

@@ -1,0 +1,2339 @@
+{
+ "versions": [
+  {
+   "version": "0.2.0",
+   "date": "2026-11-10",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "The first version named "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Apollo Download Manager"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ", with a new look, a browser extension in the Chrome Web Store, and a user guide in the app. Install it over 0.1.x, which had an earlier name: your downloads, settings and history are kept, and on Windows the browsers keep working (Upgrading)."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "a-new-name-and-a-new-window",
+     "content": [
+      {
+       "type": "text",
+       "text": "A new name and a new window"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Apollo Download Manager:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a new name, logo, icons and colours, in the app, the installers and the browser extension (#346, #347)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A new window layout:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the app draws its own title bar, with Windows 11's snap layouts on the maximise button, and its panels float beside the list (#359, #360, #363)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Settings opens over the app,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in a window of its own, instead of replacing the list (#364)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A redesigned details panel,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " with a download's actions in its footer. Double-clicking a download opens its details, or its file once it's finished (#349)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Hovering a row"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " shows values the column cuts off, and says what the download's status means (#424)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A narrow window"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " keeps the whole toolbar: Cancel, Retry and Remove selected move into "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "More"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " (#442)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A first-run setup"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " that fits small windows and asks one thing at a time. It says at once when the download folder doesn't exist (#372, #403)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Layouts, lists, buttons, messages and pointers"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " are consistent across the window (#348)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "your-browser",
+     "content": [
+      {
+       "type": "text",
+       "text": "Your browser"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "In the Chrome Web Store:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " Chrome and Brave install the extension from its store page. "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Get the extension"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in Settings, Browser opens it (#240, #241). The Edge and Firefox store pages follow in a later version."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A redesigned extension,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " with Ask first, rules and the right-click menu (#356)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The app starts itself"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " when a link arrives while it isn't running, and the link's Add dialog opens once the window is ready (#322, #415)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Fixes:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ""
+         }
+        ]
+       },
+       {
+        "type": "list",
+        "ordered": false,
+        "items": [
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "Several links sent while Add download was open replaced each other, so only the last was kept (#365)."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "A "
+            },
+            {
+             "type": "code",
+             "text": ".zip"
+            },
+            {
+             "type": "text",
+             "text": " link without \".zip\" in it stayed in the browser (#406)."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "In Firefox, a download given back to the browser was usually lost (#408)."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "The Ask-first prompt was empty in Chrome 116 (#411)."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "Magnet links in pages open before you allowed access still went to the browser (#416)."
+            }
+           ]
+          }
+         ],
+         [
+          {
+           "type": "paragraph",
+           "content": [
+            {
+             "type": "text",
+             "text": "The popup's Recent sends label covered the site name (#412)."
+            }
+           ]
+          }
+         ]
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "downloads",
+     "content": [
+      {
+       "type": "text",
+       "text": "Downloads"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Plain error messages,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " with the technical detail behind a toggle (#252)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The login window opens"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " when a download fails because the server asks for a login (#249)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Changing a download's category moves its files"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " to that category's folder (#366)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Metalink files on your computer:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Choose Metalink files…"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the Add window adds every file they list (#222)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Faster starts:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the app remembers how many connections each server allowed, so later downloads from it start at that pace. Extra connections to a server reuse its TLS session (#325, #327, #432)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Downloads wait for the network:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a download that failed because there was no network shows "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Waiting for network"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ", and continues by itself from where it stopped when Windows or Linux says the network is back. On by default; Settings, Queue and performance (#318)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Two downloads at once by default,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " instead of 3, so each one gets more of your connection and finishes sooner. If you kept the old default of 3, updating sets it to 2 once; you can set it back in Settings, Queue and performance (#351)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Start when you sign in,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " so queued downloads and seeding carry on after a restart: on for a new install, off if you used an earlier version (#321)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Private torrents"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " get none of the extra trackers (#377)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "the-schedule",
+     "content": [
+      {
+       "type": "text",
+       "text": "The schedule"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A schedule that's easier to set and to follow:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " choose its start and stop with hour and minute boxes instead of typing them. Settings says when it next runs ("
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Next: tomorrow 02:00 to 07:00"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": "), and the list says when each scheduled download starts (#350)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A start time for each download:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the Add window, or later with "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Start at…"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in a waiting download's menu. It beats the schedule, and a time missed while the app was closed starts it as soon as the app opens (#350)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "12-hour times:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " Settings, Appearance, Time format switches every time the app shows to 12-hour with AM and PM. 24-hour stays the default (#350)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "help-and-the-website",
+     "content": [
+      {
+       "type": "text",
+       "text": "Help and the website"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A user guide in the app,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " from the same pages as the website (#79, #354)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A website"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " with downloads and the guide, and a developer site built from the project's documents (#353, #355, #379)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "fixes",
+     "content": [
+      {
+       "type": "text",
+       "text": "Fixes"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "What you type stays yours:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the window no longer remembers typed links, folders or the proxy's user name in its own autofill store, and the first start of this version clears what earlier versions kept there (#345)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Through an HTTP proxy,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a download no longer fails with \"The file changed on the server\" as soon as it opens a second connection. A proxy that wants a login none was set for says \"The proxy refused the connection\" (#344)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The login window's remember checkbox"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " says \"system keychain\", as the Add dialog does (#398)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Release builds' window title"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " no longer says \"(dev)\" (#401)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "security",
+     "content": [
+      {
+       "type": "text",
+       "text": "Security"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "SQLite 3.54.1,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " which fixes a memory-exposure advisory in the database the app keeps (RUSTSEC-2026-0459, #446)."
+         }
+        ]
+       }
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "version": "0.1.1",
+   "date": "2026-11-04",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Fixes only, found by using 0.1.0 with real downloads ("
+      },
+      {
+       "type": "link",
+       "content": [
+        {
+         "type": "text",
+         "text": "#262"
+        }
+       ],
+       "to": {
+        "url": "https://github.com/Singlbase-Technologies-Limited/velocity_download_manager_v2/issues/262"
+       }
+      },
+      {
+       "type": "text",
+       "text": "). Install it over 0.1.0: your downloads, settings and history are kept."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "large-downloads",
+     "content": [
+      {
+       "type": "text",
+       "text": "Large downloads"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "No more freezing on one connection:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " when a server cut connections mid-download, a large download could fall back to one stream, start reading from byte 0 again, and seem to stop. A cut connection now just costs that request, which is asked for again (#333)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Progress after a resume or a crash"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " counts what the download already had. It no longer starts again from a low figure, or from \"0 B of unknown size\" (#257)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A network drop"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " keeps a download's bytes, and Velocity keeps trying for about 5 minutes, so Wi-Fi dropping out, a router restarting or the computer waking from sleep is ridden out (#317)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A connection that trickles"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a few bytes now and then is treated like a silent one: the download shows \"No data received\", and the connection is reset (#292)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The speed shown"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " is measured over the last 3 seconds, so it holds steady (#246)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "retries-and-servers-that-slow-you-down",
+     "content": [
+      {
+       "type": "text",
+       "text": "Retries and servers that slow you down"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Every retry says why,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " such as \"No data arrived for 30 s, so the connection was reset\", and counts its tries, such as \"Trying again (2 of 5)\". A download whose server could never be reached isn't started again on its own (#245)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A server name that can't be found"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " says what to check: the link, a proxy's address, the internet connection, or a network without IPv6 (#250)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "No network on this computer"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " is never blamed on the server: the message says so, and the download tries again within seconds instead of waiting minutes (#335)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Servers that ask Velocity to slow down,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " such as proof.ovh.net, get fewer requests, and connections are opened a step at a time, so the server doesn't block your computer (#247)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Under a speed limit,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a download uses only the connections the limit needs, and says that the limit holds it back (#278)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "the-app",
+     "content": [
+      {
+       "type": "text",
+       "text": "The app"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Cancelling"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a download no longer shows it as Failed, \"That action isn't possible…\", for a moment (#339)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The download schedule"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " now works: while \"Use the schedule\" is on, every new download waits for its time window. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start (#340)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The app's log"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " says what each download does: added, started, retried and why, paused, completed, removed (#251, #263, #264, #274)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Delete files"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " deletes a magnet link's files, and never reports files it couldn't find as deleted (#268)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The browser extension:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " an installed Velocity writes its own name into the browser registration, so the extension finds it (#315)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "The Add download dialog"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " no longer loops between two questions, and shows a taken file name's path correctly on Windows (#266, #277)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Smaller fixes:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " long words in an error wrap inside the details panel (#248); a download without a name yet shows its link's file name, never the whole link (#275); Choose files is at the top of the details panel (#276); Ctrl+A works with Caps Lock on, and the speed limit's label and the folder icon are right (#310)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "security-1",
+     "content": [
+      {
+       "type": "text",
+       "text": "Security"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "russh 0.65.0 and pageant 0.2.5,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " for five advisories in the SFTP libraries (#255)."
+         }
+        ]
+       }
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "version": "0.1.0",
+   "date": "2026-10-31",
+   "blocks": [
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "The first version of the app now named Apollo Download Manager: a new app, not an update of V1, the download manager it grew out of. It has its own download engine, on libcurl, and uses libtorrent for torrents. It installs and runs beside V1, and shares nothing with it (V1 and V2)."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "downloads-1",
+     "content": [
+      {
+       "type": "text",
+       "text": "Downloads"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Protocols:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " HTTP, HTTPS, FTP, FTPS (explicit and implicit) and SFTP, with BitTorrent and Metalink (Protocols and limits)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Fast by default:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a download starts with every connection its performance profile allows, then keeps only those that make it faster, and changes its connections while it runs, without restarting."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Resume:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " pause and resume, and a download continues after a crash, a restart or a full disk without losing what it already had. If the file changed on the server, V2 notices and starts again rather than mixing two versions."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Checksums:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a download can be checked against a checksum, and one that can't be verified is never shown as verified."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Mirrors and Metalink:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " several sources for one file, with failover when one stops working. Metalink files can be added from a link or from your computer; Metalink is off by default, as in V1."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Queue and limits:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " how many download at once, their order, a schedule window, a global speed limit and one for each download."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Categories"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " with automatic folders. V2 never replaces an existing file: it asks about a taken name or renames the new file."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Proxy:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " new in V2. HTTP, HTTPS or SOCKS5, for every download, torrents included."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Logins:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " remembered in the system keychain only when you tick it, and never written to V2's database, logs or diagnostics."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "torrents",
+     "content": [
+      {
+       "type": "text",
+       "text": "Torrents"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "code",
+          "text": ".torrent"
+         },
+         {
+          "type": "text",
+          "text": " files and links and magnet links, with v1, v2 and hybrid torrents. A magnet is checked before anything downloads, and you choose the files."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "Seeding with limits and a seeding queue, trackers with re-announce, peers, DHT, peer exchange and local peer discovery, upload and download limits, and a listening port (6890) with optional port mapping."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "Torrents resume after a restart or a crash, and removing one deletes only its own files."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "the-app-1",
+     "content": [
+      {
+       "type": "text",
+       "text": "The app"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "The download list, a details panel (connections, errors, torrent activity, options), the History view, Categories and Settings."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "First-run setup, a tray icon with close to tray, notifications, and light and dark themes."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "Logs with secrets removed, a diagnostics export, and local crash logs. V2 sends nothing anywhere except the downloads themselves."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "Accessibility: keyboard focus returns where it was after a dialog, and text contrast meets WCAG AA."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "safer-by-default",
+     "content": [
+      {
+       "type": "text",
+       "text": "Safer by default"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "V2 asks before following a redirect from "
+         },
+         {
+          "type": "code",
+          "text": "https://"
+         },
+         {
+          "type": "text",
+          "text": " to "
+         },
+         {
+          "type": "code",
+          "text": "http://"
+         },
+         {
+          "type": "text",
+          "text": ", before downloading a browser link to this computer or your local network, and before trusting an SFTP server's key."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "TLS certificates are always verified."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "V2 deletes only files its downloads made, and never follows a link when it removes one."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "browser-integration",
+     "content": [
+      {
+       "type": "text",
+       "text": "Browser integration"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "V2's own extension for Chrome, Edge, Brave and Firefox sends the browser's downloads to V2, with modes, rules and a right-click menu. It works beside V1's extension."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "Settings, Browser connects V2 to each browser, for your user only."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Not in the stores yet:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " for this version, the extension is loaded by hand (Browser integration). Publishing it in the Chrome Web Store, Edge Add-ons and Firefox Add-ons follows (#240, #241)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "installing",
+     "content": [
+      {
+       "type": "text",
+       "text": "Installing"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Windows, 64-bit:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " an installer for your user only, with no administrator prompt. Uninstalling removes V2's browser connections; your downloads, settings and history stay unless you choose to delete them."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Linux, 64-bit:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " a "
+         },
+         {
+          "type": "code",
+          "text": ".deb"
+         },
+         {
+          "type": "text",
+          "text": " for Ubuntu 22.04 and newer and Debian 12 and newer, and an "
+         },
+         {
+          "type": "code",
+          "text": ".rpm"
+         },
+         {
+          "type": "text",
+          "text": " for Fedora and similar. Before removing V2 on Linux, disconnect the browsers in Settings, Browser."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Unsigned:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " the installers aren't code-signed yet, so Windows SmartScreen warns the first time (Installing)."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "macOS"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " isn't supported yet."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "V2 is free software under the GNU General Public License, version 3 only."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "coming-from-v1",
+     "content": [
+      {
+       "type": "text",
+       "text": "Coming from V1"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Nothing is imported from V1:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " V2 starts with no downloads, its own settings and an empty history. Finish unfinished V1 downloads in V1, or add their links to V2 again; their partial data is aria2's and can't be continued."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Settings that changed:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " \"allow mid-download tuning\", the progress polling interval, the Custom profile's \"split\" count, the torrent-engine choice and \"look for more peers below this speed\" are gone, because V2 does these by itself. File allocation and disk cache are now Preallocation and the write buffer, in Settings, Advanced (V1 and V2)."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 3,
+     "id": "known-limits",
+     "content": [
+      {
+       "type": "text",
+       "text": "Known limits"
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "FTP and SFTP download over one connection."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "SFTP and torrents can't use an HTTPS proxy; choose HTTP or SOCKS5 for them."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "A private torrent finds no peers after V2 restarts, because V2 doesn't keep tracker addresses, which can hold passkeys. Add it again from its "
+         },
+         {
+          "type": "code",
+          "text": ".torrent"
+         },
+         {
+          "type": "text",
+          "text": " file or magnet link."
+         }
+        ]
+       }
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}

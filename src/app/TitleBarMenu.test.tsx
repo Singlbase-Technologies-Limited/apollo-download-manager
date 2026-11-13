@@ -45,7 +45,7 @@ describe('the title bar', () => {
     expect(await screen.findByRole('dialog', { name: 'Settings' })).toBeTruthy();
   });
 
-  it('says where the release notes are, from What’s new', async () => {
+  it('shows this version’s changes from the changelog in What’s new, offline (#496)', async () => {
     installFakeBackend({ snapshot: emptySnapshot() });
     const user = userEvent.setup();
     render(<App client={createQueryClient()} />);
@@ -53,7 +53,11 @@ describe('the title bar', () => {
     await user.click(within(await banner()).getByRole('button', { name: 'Help' }));
     await user.click(await screen.findByRole('menuitem', { name: 'What’s new' }));
     const dialog = await screen.findByRole('dialog', { name: 'What’s new' });
-    expect(dialog.textContent).toContain('CHANGELOG');
+    // The fake app is 0.1.0: its section comes first, then nothing older.
+    const versions = within(dialog).getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    expect(versions[0]).toBe('Version 0.1.0, 2026-10-31');
+    expect(dialog.textContent).toContain('installs and runs beside V1');
+    expect(dialog.textContent).not.toContain('A later version will show them here');
   });
 
   it('opens the feedback page in the browser and sends nothing itself', async () => {

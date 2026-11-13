@@ -131,6 +131,11 @@ The user guide (#354) is `src/features/help/`. It opens from Help, User guide, f
 - **The contents are grouped as on the website** (#488): `docs/user/README.md` lists the guides under four headings (Getting started, Using the app, Reference, Help), and `pnpm guide` writes them as `groups`. The sidebar shows each group as a list named by its heading, and the page order follows the groups. The build fails if the README lists a page outside a group.
 - **Search** runs over every section's text in memory, with no network call: a section matches when it holds every word typed, with heading matches first.
 - **Layout A** (PO decision on #354): search and the contents on the left, the page on the right, previous and next at the bottom; on a narrow window the contents go above the page.
+- **The blocks are drawn by `src/features/help/blocks.tsx`,** which What's new shares.
+
+## What's new
+
+What's new (#496, `src/app/WhatsNewDialog.tsx`) opens from the **?** menu. It shows the running version's section of [`CHANGELOG.md`](../CHANGELOG.md), then every earlier one, newest first. `pnpm guide` also builds the changelog into `src/app/changelog.generated.json`, one entry per `## <version> - <date>` heading, as typed blocks (`buildChangelog` in `scripts/guide-lib.mjs`), and leaves out an `Unreleased` section. So the window works offline and inserts no HTML. A web address is shown as text; a link to a repository file becomes plain text. A version without a section of its own, such as a development build, says so and shows the latest. A Vitest test fails while the bundled copy is older than `CHANGELOG.md`.
 
 ## Settings
 
