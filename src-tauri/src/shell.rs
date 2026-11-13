@@ -16,6 +16,7 @@ use velocity_core::destination::check_folder;
 use velocity_core::domain::{DownloadsSnapshot, ErrorCode};
 use velocity_core::manager::now_ms;
 use velocity_core::notices::{active_downloads, notices};
+use velocity_core::power::{wants_awake, FinishAction, Power, SystemPower};
 use velocity_core::settings::Settings;
 use velocity_core::torrent_engine::NetworkStatus;
 
@@ -44,6 +45,10 @@ pub struct ShellState {
     active: AtomicUsize,
     /// Whether the tray icon exists: without one, closing quits and the app never starts hidden.
     pub tray: AtomicBool,
+    /// The computer's power (#467): kept awake while downloads are active.
+    power: Mutex<SystemPower>,
+    /// The keep-awake request failed: logged once, not at every snapshot.
+    power_failed: AtomicBool,
 }
 
 impl ShellState {
@@ -71,8 +76,9 @@ impl ShellState {
         before: Option<&DownloadsSnapshot>,
         after: &DownloadsSnapshot,
     ) {
-        self.active
-            .store(active_downloads(after), Ordering::Relaxed);
+        let active = active_downloads(after);
+        self.active.store(active, Ordering::Relaxed);
+        self.keep_awake(wants_awake(self.general().keep_awake, active));
         if self.has_tray() {
             tray::show_activity(app, after);
         }
@@ -87,6 +93,40 @@ impl ShellState {
                 .show();
         }
     }
+}
+
+impl ShellState {
+    /// Holds or releases the request that keeps the computer awake (#467). A failure (no logind,
+    /// say) is logged once; downloads run on either way.
+    fn keep_awake(&self, on: bool) {
+        let Ok(mut power) = self.power.lock() else {
+            return;
+        };
+        match power.keep_awake(on) {
+            Ok(()) => self.power_failed.store(false, Ordering::Relaxed),
+            Err(code) => {
+                if !self.power_failed.swap(true, Ordering::Relaxed) {
+                    tracing::warn!(
+                        "the computer can't be kept awake while downloading: {}",
+                        code.user_message()
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// Sleeps or shuts down the computer once the downloads finished, after the window's countdown
+/// (#467). The keep-awake request is released first, so it can't hold the system up.
+#[tauri::command]
+pub async fn finish_downloads(
+    shell: State<'_, ShellState>,
+    action: FinishAction,
+) -> Result<(), ErrorCode> {
+    let mut power = shell.power.lock().map_err(|_| ErrorCode::Internal)?;
+    power.keep_awake(false)?;
+    tracing::info!("downloads finished: {action:?}, as the user chose");
+    power.finish(action)
 }
 
 /// Shows the window, from the tray or a second launch.

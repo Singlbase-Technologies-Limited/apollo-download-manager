@@ -25,6 +25,7 @@ pub mod network_watch;
 pub mod notices;
 pub mod paths;
 pub mod performance;
+pub mod power;
 pub mod proxy;
 pub mod queue;
 pub mod redact;

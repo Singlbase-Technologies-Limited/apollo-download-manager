@@ -30,6 +30,7 @@ import {
   type Browser,
   type BrowserRequest,
   type ConfirmKind,
+  type FinishAction,
   type AppearanceSettings,
   type Category,
   type DownloadLogin,
@@ -97,6 +98,8 @@ export const api = {
   /** The system's folder chooser; `null` when the user cancels. */
   chooseDirectory: (initial: string | null) => call('choose_directory', { initial }, z.string().min(1).nullable()),
   quit: () => call('quit_app', undefined, nothing),
+  // Sleep or shut down once the downloads finished, after the window's countdown (#467).
+  finishDownloads: (action: FinishAction) => call('finish_downloads', { action }, nothing),
   snapshot: () => call('get_snapshot', undefined, DownloadsSnapshotSchema),
   categories: () => call('list_categories', undefined, z.array(CategorySchema)),
   createCategory: (input: CategoryInput) => call('create_category', { input }, CategorySchema),

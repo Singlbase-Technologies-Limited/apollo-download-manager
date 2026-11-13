@@ -199,6 +199,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           state.categories = state.categories.filter((c) => c.id !== args.id);
           return null;
         case 'quit_app':
+        case 'finish_downloads':
           return null;
         case 'check_destination':
           return state.destination(args as Parameters<FakeState['destination']>[0]);

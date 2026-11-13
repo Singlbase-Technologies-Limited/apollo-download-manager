@@ -5,6 +5,7 @@ import { countByView } from '../downloads/views';
 import { cn } from '../lib/cn';
 import { ERROR_MESSAGES } from '../lib/errors';
 import { formatSpeed } from '../lib/format';
+import { WhenFinished } from '../features/downloads/WhenFinished';
 import { useDownloadsStore } from '../stores/downloads';
 
 /** What an engine is doing, for the status bar: a label, a dot and, when unavailable, why. */
@@ -51,6 +52,7 @@ export function StatusBar() {
         </span>
       ) : null}
       <div className="flex-1" />
+      <WhenFinished />
       <span className="flex min-w-24 items-center justify-end gap-1 font-medium tabular-nums text-fg" title="Total download speed">
         <ArrowDown className="size-3.5 text-accent" aria-hidden />
         {formatSpeed(speed)}
