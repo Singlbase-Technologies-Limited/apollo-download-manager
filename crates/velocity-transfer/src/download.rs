@@ -89,6 +89,11 @@ type TypedFn = Box<dyn Fn(&str) + Send + Sync>;
 type StartOverFn = Box<dyn Fn(&str) + Send + Sync>;
 
 /// Why a download dropped the bytes it had and started again, as the user is told (#257).
+/// Why a new link the user gave was refused (#466): it points to another file than the one
+/// downloading. Every byte so far is kept.
+pub const NEW_LINK_OTHER_FILE: &str = "The new link is for another file: its size isn't the one \
+    this download had. Nothing was changed. Use another link, or start it as a new download.";
+
 pub mod started_over {
     /// Another version of the file: its bytes are never mixed with the old ones (#45).
     pub const CHANGED: &str = "The file on the server changed, so the download started again.";
@@ -707,12 +712,14 @@ pub fn download_from(
         Sources::single(&urls[0])
     };
     // A checkpoint names the source it came from; the download resumes from that one.
-    let resumed_from = match resume {
-        Some(Resume::Checkpoint { checkpoint }) => urls
+    let resumed_from = match resume.and_then(Resume::checkpoint) {
+        Some(checkpoint) => urls
             .iter()
             .position(|url| trusted(checkpoint, url).is_some()),
-        _ => None,
+        None => None,
     };
+    // A new link the user gave for the same file (#466): another file is refused, not started over.
+    let new_link = matches!(resume, Some(Resume::NewLink { .. }));
     if let Some(i) = resumed_from.filter(|&i| i > 0) {
         sources.make_lead(SourceId(i));
     }
@@ -738,7 +745,7 @@ pub fn download_from(
             let path = part_path(destination);
             // Why bytes the user saw counted are dropped, if they are (#257).
             let mut why = None;
-            if let Some(Resume::Checkpoint { checkpoint }) = resume {
+            if let Some(checkpoint) = resume.and_then(Resume::checkpoint) {
                 let kept = !checkpoint.durable.is_empty();
                 if let Some(durable) = trusted(checkpoint, url) {
                     match files::open_part(&path) {
@@ -813,6 +820,20 @@ pub fn download_from(
         Err(DownloadError::EncodingChanged(_)) => Some(true),
         _ => None,
     };
+    if start_over.is_some() && new_link && ck.resumed {
+        // The user said the new link is for the same file, and it isn't: nothing is discarded,
+        // and the user decides (#466).
+        let status = match &outcome {
+            Err(DownloadError::Changed(t) | DownloadError::EncodingChanged(t)) => t.http_status,
+            _ => None,
+        };
+        part.keep = true;
+        return Err(DownloadError::Changed(TransferError::new(
+            FailureClass::Permanent,
+            status,
+            NEW_LINK_OTHER_FILE,
+        )));
+    }
     if let Some(one_stream) = start_over {
         // The file changed on the server, during the download or since its checkpoint: its old
         // bytes are never mixed with the new ones, and it starts over once with the new file;

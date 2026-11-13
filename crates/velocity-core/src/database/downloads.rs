@@ -362,6 +362,45 @@ impl Database {
         Ok(())
     }
 
+    /// Gives a download a new link the user gave for the same file (#466), in one transaction with
+    /// the checkpoint rewritten for it, so the two never disagree. The link loses any login, as
+    /// when a download is added; `checkpoint` is `None` for a download that has none.
+    pub fn use_new_link(
+        &self,
+        id: &str,
+        link: &str,
+        checkpoint: Option<&Checkpoint>,
+        now_ms: u64,
+    ) -> Result<(), DatabaseError> {
+        let (source_url, _) = without_login(link);
+        let document = checkpoint
+            .map(serde_json::to_string)
+            .transpose()
+            .map_err(|e| DatabaseError::new(ErrorCode::Internal, e.to_string()))?;
+        let mut conn = self.conn();
+        let tx = conn.transaction()?;
+        let changed = tx.execute(
+            "UPDATE downloads SET source_url = ?2 WHERE id = ?1",
+            rusqlite::params![id, source_url],
+        )?;
+        if changed != 1 {
+            return Err(DatabaseError::new(
+                ErrorCode::NotFound,
+                format!("no download {id} to give a new link"),
+            ));
+        }
+        if let Some(document) = document {
+            tx.execute(
+                "INSERT INTO checkpoints (download_id, document, updated_at_ms) VALUES (?1, ?2, ?3)
+                 ON CONFLICT (download_id) DO UPDATE SET document = excluded.document,
+                                                         updated_at_ms = excluded.updated_at_ms",
+                rusqlite::params![id, document, super::to_sql_int(now_ms)?],
+            )?;
+        }
+        tx.commit()?;
+        Ok(())
+    }
+
     /// Takes a download out of the list; it stays in the history (V1's `in_list`), and out of the
     /// queue. `NotFound` for a download that isn't stored.
     pub fn hide_download(&self, id: &str) -> Result<(), DatabaseError> {

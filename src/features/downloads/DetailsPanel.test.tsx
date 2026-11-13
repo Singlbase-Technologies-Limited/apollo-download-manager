@@ -319,6 +319,20 @@ describe('the details footer', () => {
     await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
     expect(callsOf(state, 'remove_downloads')).toHaveLength(0);
   });
+
+  it('offers a new link for a failed download, and only for one that may take it (#466)', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    await user.click(within(await footer()).getByRole('button', { name: 'More actions for this download' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Use a new link…' }));
+    expect(await screen.findByRole('dialog', { name: 'Use a new link' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(await rowFor('setup.exe'));
+    await user.click(within(await footer()).getByRole('button', { name: 'More actions for this download' }));
+    expect(await screen.findByRole('menuitem', { name: 'Copy link' })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Use a new link…' })).toBeNull();
+  });
 });
 
 // #349 (PO decision): a plain click on a row opens the details panel, even when the user closed it.

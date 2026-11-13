@@ -304,6 +304,97 @@ fn a_resume_of_a_file_whose_etag_changed_starts_over() {
     );
 }
 
+/// A new link the user gave for a download whose link expired (#466): the part file holds the
+/// first 100 000 bytes of version 1, and the checkpoint knows the total but, as the manager writes
+/// it for a new link, no validator.
+fn new_link_resume(dir: &Dir, url: &str) -> (PathBuf, Resume) {
+    let dest = dir.file("out.bin");
+    std::fs::write(part_of(&dest), &version(1)[..100_000]).unwrap();
+    let checkpoint = Checkpoint {
+        format: CHECKPOINT_FORMAT,
+        source: url.to_owned(),
+        total: LEN as u64,
+        etag: None,
+        last_modified: None,
+        content_encoding: None,
+        durable: vec![(0, 100_000)],
+    };
+    (dest, Resume::NewLink { checkpoint })
+}
+
+#[test]
+fn a_new_link_to_a_file_of_another_size_is_refused_and_keeps_every_byte() {
+    let s_data = TestServer::start(
+        vec![("f.bin".into(), seeded_bytes(LEN + 1_000, 9))],
+        ServerOptions::default(),
+    );
+    let dir = Dir::new("new-link-other");
+    let (dest, resume) = new_link_resume(&dir, &s_data.url("f.bin"));
+    let (control, started_over) = recording_start_overs();
+    let err = download_resumable(
+        &curl_loop(),
+        &s_data.url("f.bin"),
+        &dest,
+        OPTIONS,
+        Some(&resume),
+        &Expected::default(),
+        &control,
+    )
+    .expect_err("another file is refused");
+    match err {
+        DownloadError::Changed(t) => {
+            assert_eq!(t.class, velocity_core::domain::FailureClass::Permanent);
+            assert!(t.message.contains("new link"), "{}", t.message);
+        }
+        other => panic!("refused as another file, not {other:?}"),
+    }
+    assert!(
+        std::fs::read(part_of(&dest)).unwrap() == version(1)[..100_000],
+        "the part file is untouched"
+    );
+    assert!(!dest.exists());
+    assert!(
+        started_over.lock().unwrap().is_empty(),
+        "it never started over"
+    );
+}
+
+#[test]
+fn a_new_link_to_the_same_size_resumes_and_is_not_verified() {
+    // The new link's server gives the file a tag of its own, as signed links often do.
+    let s_data = TestServer::start(
+        vec![("f.bin".into(), version(1))],
+        ServerOptions {
+            file_headers: etag("\"signed-2\""),
+            ..ServerOptions::default()
+        },
+    );
+    let dir = Dir::new("new-link-same");
+    let (dest, resume) = new_link_resume(&dir, &s_data.url("f.bin"));
+    let report = download_resumable(
+        &curl_loop(),
+        &s_data.url("f.bin"),
+        &dest,
+        OPTIONS,
+        Some(&resume),
+        &Expected::default(),
+        &Control::default(),
+    )
+    .expect("it resumes");
+    assert!(std::fs::read(&dest).unwrap() == version(1));
+    assert_eq!(report.resumed_bytes, 100_000, "the old bytes are kept");
+    assert_eq!(
+        report.verification,
+        velocity_core::domain::Verification::NotVerified,
+        "kept on the length alone (ADR-0010)"
+    );
+    assert_eq!(
+        asked(&s_data.counters())[0],
+        (Some("bytes=100000-299999"), None),
+        "no old tag is sent with the new link"
+    );
+}
+
 /// A control that records why the download started over (#257).
 fn recording_start_overs() -> (Control, Arc<Mutex<Vec<String>>>) {
     let seen = Arc::new(Mutex::new(Vec::new()));
@@ -587,7 +678,7 @@ fn a_link_that_stops_working_after_the_first_answer_has_expired() {
     };
     assert_eq!(
         e.message,
-        "The download link expired. Get a fresh link from the browser."
+        "The download link expired. Get a fresh link from the browser, then choose Use a new link… to continue from where it stopped."
     );
     assert!(!e.retryable);
     assert_eq!(s.counters().gets, 1, "never retried");

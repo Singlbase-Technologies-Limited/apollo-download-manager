@@ -41,6 +41,8 @@ interface UiState {
   chooseFilesId: string | null;
   /** The download whose own start time is being chosen (#350). */
   startAtId: string | null;
+  /** The download being given a new link for the same file (#466). */
+  newLinkId: string | null;
   /** The Settings screen's section shown (#30). */
   settingsSection: SettingsSection;
   /** Settings is open, in a window over the app (#364). */
@@ -60,6 +62,8 @@ interface UiState {
   openChooseFiles: (id: string) => void;
   openStartAt: (id: string) => void;
   closeStartAt: () => void;
+  openNewLink: (id: string) => void;
+  closeNewLink: () => void;
   setSettingsSection: (section: SettingsSection) => void;
   /** Opens Settings over the app, at `section` when given, else where it was left. */
   openSettings: (section?: SettingsSection) => void;
@@ -79,6 +83,7 @@ export const useUiStore = create<UiState>((set) => ({
   loginRequest: null,
   chooseFilesId: null,
   startAtId: null,
+  newLinkId: null,
   settingsSection: 'general',
   settingsOpen: false,
   guide: null,
@@ -95,6 +100,8 @@ export const useUiStore = create<UiState>((set) => ({
   openChooseFiles: (chooseFilesId) => { set({ chooseFilesId }); },
   openStartAt: (startAtId) => { set({ startAtId }); },
   closeStartAt: () => { set({ startAtId: null }); },
+  openNewLink: (newLinkId) => { set({ newLinkId }); },
+  closeNewLink: () => { set({ newLinkId: null }); },
   setSettingsSection: (settingsSection) => { set({ settingsSection }); },
   openSettings: (section) => { set((s) => ({ settingsOpen: true, settingsSection: section ?? s.settingsSection })); },
   closeSettings: () => { set({ settingsOpen: false }); },

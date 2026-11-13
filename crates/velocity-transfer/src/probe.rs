@@ -599,7 +599,7 @@ mod tests {
             }
             other => panic!("expected a refusal, got {other:?}"),
         };
-        let message = "The download link expired. Get a fresh link from the browser.";
+        let message = "The download link expired. Get a fresh link from the browser, then choose Use a new link… to continue from where it stopped.";
         let segment = check_segment(&head(403, &[]), 1000, 1999, 5000, &none());
         assert_eq!(expired(segment.map(|_| ())), message);
         let continuation = check_continuation(&head(403, &[]), 1000, &none());

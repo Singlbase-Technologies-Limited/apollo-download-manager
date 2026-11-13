@@ -111,6 +111,15 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 - **Changing a download:** its category, its speed limit, and its connections, which change while it runs, with no restart.
 - **Open file** and **Open folder,** for a finished download. Double-clicking a finished download opens its file. Opening a program (an `.exe`, or an executable file on Linux) asks first. **Open folder** selects the file, or opens the folder if the file is gone.
 
+### A new link for an expired one
+
+Links from file hosts and download sites often stop working after a while. The download then fails with "The download link expired". Get a fresh link for the same file, for example by clicking the download again on the site, and copy it. Then choose **Use a new link…** in the download's right-click menu or in the details panel's menu, and paste it.
+
+- **It continues from where it stopped,** if the new link is for a file of the same size. Since a new link can't prove it's exactly the same file, the download is shown as not verified, unless you gave a checksum.
+- **A file of another size is refused:** nothing is changed, and the download says so. Use another link, or choose **Start as a new download** in the same window.
+- **Logins go only to their own server:** if the new link is on another server, the download's login, custom headers and SSH key aren't sent there, and a login saved in the keychain is deleted.
+- **For a failed or paused download** from a link, not for a torrent.
+
 ## The history
 
 **History**, in the navigation's Library, lists every finished download, newest first, 100 a page, including those removed from the list: how each ended and, for a failure, why.

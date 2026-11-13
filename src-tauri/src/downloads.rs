@@ -488,6 +488,20 @@ pub async fn remember_login(downloads: State<'_, Downloads>, id: String) -> Resu
     on_manager(&downloads, move |m| m.remember_login(&id)).await?
 }
 
+/// Gives a failed or paused download a new link for the same file (#466): the manager checks it
+/// as an added link, and the download continues from where it stopped.
+#[tauri::command]
+pub async fn use_new_link(
+    downloads: State<'_, Downloads>,
+    id: String,
+    link: String,
+) -> Result<(), ErrorCode> {
+    on_manager(&downloads, move |m| {
+        m.use_new_link(&id, &link, velocity_core::manager::now_ms())
+    })
+    .await?
+}
+
 /// Trusts the SFTP host key the user confirmed (#53); the UI then retries the download.
 #[tauri::command]
 pub async fn trust_host_key(
