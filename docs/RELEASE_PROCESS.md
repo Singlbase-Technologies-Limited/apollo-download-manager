@@ -66,7 +66,7 @@ The [`/release-candidate`](../.claude/skills/release-candidate/SKILL.md) skill w
 
 1. `main` is green: the latest *Main checks* run on the commit passed.
 2. `package.json` has the version to release, and the version test passes.
-3. `CHANGELOG.md`'s section for it is written: `pnpm changelog <last tag or start> --heading "<version> - <date>"`, edited.
+3. `CHANGELOG.md`'s section for it is written: `pnpm changelog <last tag or start> --heading "<version> - <date>"`, edited. Then `pnpm guide` bundles it into the app, so the version's What's new window shows it (#496); a test fails while the bundled copy is older than `CHANGELOG.md`.
 4. The PO tags `v<version>-rc.<N>` on that commit, or starts the workflow by hand ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md#starting-one)).
 5. The candidate's `build-info.json` and `SHA256SUMS` match the commit, and the PO tests it beside V1.
 
