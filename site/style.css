@@ -258,7 +258,9 @@ code { font-family: var(--mono); font-size: 0.875em; background: var(--surface-3
   .toc-small { display: none; }
 }
 
-.prose { font-size: 1.0313rem; line-height: 1.72; }
+/* A word too long for the line, such as a web address written as text, breaks rather than widening the page; it
+ * doesn't narrow table columns, as `anywhere` would (#485). */
+.prose { font-size: 1.0313rem; line-height: 1.72; overflow-wrap: break-word; }
 .prose h1 { font-size: clamp(2rem, 3.6vw, 2.5rem); letter-spacing: -0.025em; margin: 0 0 20px; }
 .prose h2 { font-size: 1.5rem; margin: 52px 0 12px; padding-top: 28px; border-top: 1px solid var(--border); }
 .prose h3 { font-size: 1.175rem; margin: 36px 0 8px; }
@@ -280,6 +282,9 @@ table { border-collapse: collapse; width: 100%; font-size: 0.925rem; line-height
 th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--border); }
 tbody tr:last-child td { border-bottom: 0; }
 th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+/* A name in a table breaks only after a slash or hyphen, never between two letters; a table too wide for the
+ * page scrolls in its box (#485). */
+th code, td code { overflow-wrap: normal; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 56px; }
 .pager a { display: block; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent-strong); text-decoration: none; font-weight: 600; line-height: 1.35; }
 .pager a:hover { border-color: var(--accent); }

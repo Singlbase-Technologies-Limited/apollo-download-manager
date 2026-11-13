@@ -79,6 +79,7 @@ pnpm site -- --releases releases.json      # with the download page made from a 
 - the menus, the theme switch and that it's remembered, the screen switcher, the FAQ, and previous and next;
 - both searches (#422): the label, the typed text and the documents list share one left edge; the box has a placeholder; a result opens the right page by mouse and by keyboard alone (focus, type, Tab, Enter); and no match says "Nothing found.";
 - tables at desktop width (#422): no cell wraps to more than 8 lines. The pages whose tables hold paragraphs rather than values are listed in `TALL_TABLES` in `scripts/site-check.mjs`, for the content audit (#425) to rewrite; a page leaves the list once it passes.
+- names in tables (#485), at every width: no file, folder or crate name in a table cell breaks between two letters or digits. The site lets code break only after `/`, `\`, `.`, `_` or `:`, and a table too wide for the page scrolls in its own box.
 - the home page on a slow line (about 1.6 Mbit/s, 150 ms latency, #423): a placeholder in the screenshot's frame while it loads, a screenshot (never an empty frame) 100 ms after the theme switch, and the dark one once it arrives; on a fast line, the dark screenshot within 100 ms of the switch; a phone fetching the 720 px copy; and, on a phone on the same slow line, a layout shift (CLS) under 0.01.
 
 `pnpm site:check -- --shots <folder>` also saves full-page screenshots to look at. It runs locally, before a change to the site's look is pushed.
