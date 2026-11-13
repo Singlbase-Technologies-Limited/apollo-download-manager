@@ -13,6 +13,7 @@
     "userName": "me"
   },
   "directory": "/home/user/Downloads",
+  "endsFirst": false,
   "fileChoices": [
     {
       "files": [
@@ -30,6 +31,7 @@
       "value": "session=1"
     }
   ],
+  "inOrder": false,
   "links": [
     "https://example.com/files/archive.zip"
   ],

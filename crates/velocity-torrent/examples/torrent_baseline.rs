@@ -213,6 +213,8 @@ fn run(
             seeding: SeedPolicy::Never {},
             upload_limit: 0,
             download_limit: 0,
+            in_order: false,
+            ends_first: false,
         })
         .map_err(|e| format!("the torrent wasn't added: {e:?}"))?;
     let mut samples = Vec::new();

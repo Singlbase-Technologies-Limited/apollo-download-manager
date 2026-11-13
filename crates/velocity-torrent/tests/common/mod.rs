@@ -394,6 +394,8 @@ pub fn spec(source: TorrentSource, dir: &Path, trackers: Vec<String>) -> Torrent
         seeding: SeedPolicy::Never {},
         upload_limit: 0,
         download_limit: 0,
+        in_order: false,
+        ends_first: false,
     }
 }
 

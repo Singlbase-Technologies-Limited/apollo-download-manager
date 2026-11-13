@@ -83,7 +83,9 @@ use serde::Serialize;
 /// Version 34 (#415): the `browser-request` event only says a link waits; the window takes the
 /// waiting links with `take_browser_requests`.
 /// Version 35 (#466) added `use_new_link`: a failed or paused download continues with a new link.
-pub const COMMAND_API_VERSION: u32 = 35;
+/// Version 36 (#470) added `set_torrent_order`, `inOrder` and `endsFirst` in the Add request and
+/// in `TorrentDetails`: a torrent downloads in order, its files' ends first.
+pub const COMMAND_API_VERSION: u32 = 36;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

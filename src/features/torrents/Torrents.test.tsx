@@ -125,6 +125,23 @@ describe('adding torrents (V1)', () => {
     expect(requests(state)[0]).toMatchObject({ torrentFiles: ['/t/album.torrent'], links: [], fileChoices: [], seeding: { mode: 'ratio', ratio: 2 }, uploadLimitKib: 64 });
   });
 
+  it('adds a torrent to download in order, with its files’ ends first, each switch alone (#470)', async () => {
+    state.chosenTorrents = ['/t/album.torrent'];
+    const user = userEvent.setup();
+    renderApp();
+    await screen.findByText('No downloads yet');
+    act(() => { useUiStore.getState().openAdd(); });
+    await user.click(await screen.findByRole('button', { name: /Choose .torrent files/ }));
+    expect(await screen.findByText('3 of 3 files · 3.1 MiB')).toBeTruthy();
+    const inOrder = screen.getByRole('checkbox', { name: /Download in order/ });
+    const ends = screen.getByRole('checkbox', { name: /First and last pieces first/ });
+    expect((inOrder as HTMLInputElement).checked || (ends as HTMLInputElement).checked).toBe(false);
+    await user.click(ends);
+    await user.click(screen.getByRole('button', { name: 'Start download' }));
+    await waitFor(() => { expect(requests(state)).toHaveLength(1); });
+    expect(requests(state)[0]).toMatchObject({ inOrder: false, endsFirst: true });
+  });
+
   it('sends no torrent options for ordinary links', async () => {
     const user = userEvent.setup();
     renderApp();
@@ -271,6 +288,23 @@ describe('trackers, peers and limits in the details (V1)', () => {
     await user.type(limit, '128');
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => { expect(callsOf(state, 'set_torrent_upload_limit').at(-1)?.args).toEqual({ id: 'u', kib: 128 }); });
+  });
+
+  it('shows the order and changes each switch alone from the Edit dialog (#470)', async () => {
+    const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [torrent({ id: 'u', status: 'downloading' })] }, torrentDetails: () => ({ ...details(), inOrder: true, endsFirst: false }) });
+    const user = userEvent.setup();
+    const p = await openDetails('u');
+    expect(await within(p).findByText('In order')).toBeTruthy();
+    await user.click(within(p).getByRole('button', { name: 'Edit…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit download' });
+    const inOrder = await within(dialog).findByRole<HTMLInputElement>('checkbox', { name: /Download in order/ });
+    const ends = within(dialog).getByRole<HTMLInputElement>('checkbox', { name: /First and last pieces first/ });
+    expect([inOrder.checked, ends.checked]).toEqual([true, false]);
+    await user.click(inOrder);
+    await user.click(ends);
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => { expect(callsOf(state, 'set_torrent_order').at(-1)?.args).toEqual({ id: 'u', inOrder: false, endsFirst: true }); });
+    expect(callsOf(state, 'set_torrent_upload_limit')).toHaveLength(0);
   });
 
   it('says why the trackers can’t be shown while the helper doesn’t have the torrent', async () => {

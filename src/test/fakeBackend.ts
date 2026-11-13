@@ -269,6 +269,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           return [];
         case 'reannounce_torrent':
         case 'set_torrent_upload_limit':
+        case 'set_torrent_order':
           return null;
         case 'open_download_file':
           // eslint-disable-next-line @typescript-eslint/only-throw-error

@@ -84,6 +84,11 @@ pub struct AddRequest {
     pub seeding: Option<SeedPolicy>,
     /// KiB/s each torrent uploads at most (#63); 0 for no limit.
     pub upload_limit_kib: u64,
+    /// Each torrent downloads its pieces in order, and its files' ends first (#470).
+    #[serde(default)]
+    pub in_order: bool,
+    #[serde(default)]
+    pub ends_first: bool,
     /// The browser extension sent the links (#65): a direct download that reaches this computer
     /// or a private network waits for the user's confirmation (#67, ADR-0006). Typed and pasted
     /// links don't.
@@ -158,6 +163,8 @@ impl AddRequest {
     pub fn sample() -> Self {
         AddRequest {
             start_at: None,
+            in_order: false,
+            ends_first: false,
             links: vec!["https://example.com/files/archive.zip".to_owned()],
             torrent_files: vec!["/home/user/album.torrent".to_owned()],
             metalink_files: vec!["/home/user/release.meta4".to_owned()],
@@ -686,6 +693,8 @@ impl Manager {
             seeding: shared.seeding,
             upload_limit: shared.upload_limit,
             download_limit: shared.limits.max_download_bps.unwrap_or(0),
+            in_order: request.in_order,
+            ends_first: request.ends_first,
         };
         let options = Self::options(request, place.category_id);
         let id = self.add_torrent(added, options, now_ms)?;

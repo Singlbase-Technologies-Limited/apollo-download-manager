@@ -35,6 +35,9 @@ public:
     void pause(std::uint64_t id) const;
     void resume(std::uint64_t id) const;
     void set_file_priorities(std::uint64_t id, rust::Slice<std::uint8_t const> priorities) const;
+    void set_sequential(std::uint64_t id, bool on) const;
+    void set_file_ends_first(std::uint64_t id, bool on) const;
+    rust::Vec<std::uint8_t> piece_priorities(std::uint64_t id) const;
     void set_limits(std::uint64_t id, std::int32_t upload, std::int32_t download) const;
     void force_reannounce(std::uint64_t id) const;
     void force_recheck(std::uint64_t id) const;

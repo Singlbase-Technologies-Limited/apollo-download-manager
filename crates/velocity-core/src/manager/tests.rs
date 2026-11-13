@@ -3706,6 +3706,8 @@ mod torrents {
             seeding: SeedPolicy::Never {},
             upload_limit: 0,
             download_limit: 0,
+            in_order: false,
+            ends_first: false,
         }
     }
 
@@ -4226,6 +4228,82 @@ mod torrents {
         assert_eq!(s.m.torrent_peers(&id), Err(ErrorCode::InvalidState));
         assert_eq!(s.m.reannounce(&id), Err(ErrorCode::InvalidState));
         fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_torrent_is_added_to_download_in_order_with_its_files_ends_first() {
+        // #470 (PO decision: two separate switches).
+        let dir = folder("in-order-add");
+        let mut s = setup(3);
+        let id =
+            s.m.add_torrent(
+                TorrentRequest {
+                    in_order: true,
+                    ends_first: true,
+                    ..request(&dir)
+                },
+                AddOptions::default(),
+                T0,
+            )
+            .unwrap();
+        let spec = s.torrents.spec(TorrentId(1));
+        assert!(spec.in_order && spec.ends_first);
+        let stored =
+            s.db.torrent(&id)
+                .unwrap()
+                .unwrap()
+                .options
+                .known()
+                .unwrap()
+                .clone();
+        assert!(
+            stored.in_order && stored.ends_first,
+            "added again with them"
+        );
+        let details = s.m.torrent_details(&id).unwrap();
+        assert!(details.in_order && details.ends_first);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn the_order_changes_live_each_switch_alone_and_is_stored() {
+        let dir = folder("in-order-live");
+        let mut s = setup(3);
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        assert!(!s.torrents.spec(TorrentId(1)).in_order, "off by default");
+        s.m.set_torrent_order(&id, true, false).unwrap();
+        assert!(s
+            .torrents
+            .log()
+            .contains(&"set_order 1 true false".to_owned()));
+        s.m.set_torrent_order(&id, false, true).unwrap();
+        assert!(s
+            .torrents
+            .log()
+            .contains(&"set_order 1 false true".to_owned()));
+        let stored =
+            s.db.torrent(&id)
+                .unwrap()
+                .unwrap()
+                .options
+                .known()
+                .unwrap()
+                .clone();
+        assert!(!stored.in_order && stored.ends_first);
+        let details = s.m.torrent_details(&id).unwrap();
+        assert!(!details.in_order && details.ends_first);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn the_order_is_only_for_a_torrent() {
+        let mut s = setup(3);
+        assert_eq!(
+            s.m.set_torrent_order("nope", true, true),
+            Err(ErrorCode::NotFound)
+        );
     }
 
     #[test]

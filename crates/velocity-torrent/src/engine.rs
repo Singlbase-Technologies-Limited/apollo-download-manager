@@ -537,6 +537,10 @@ struct Torrent {
     user_paused: bool,
     /// Its own trackers, without the settings' extra ones: all a private torrent may use (#377).
     own_trackers: Vec<String>,
+    /// Its files' first and last pieces come first (#470).
+    ends_first: bool,
+    /// The libtorrent id they were put first for: a torrent added again gets them again.
+    ends_applied: Option<u64>,
 }
 
 struct State {
@@ -586,6 +590,8 @@ struct Seen {
     user_paused: bool,
     /// Its own trackers, without the settings' extra ones: all a private torrent may use (#377).
     own_trackers: Vec<String>,
+    ends_first: bool,
+    ends_applied: Option<u64>,
 }
 
 impl Shared {
@@ -640,6 +646,8 @@ impl Shared {
                 resume_asked: t.resume_asked,
                 user_paused: t.user_paused,
                 own_trackers: t.own_trackers.clone(),
+                ends_first: t.ends_first,
+                ends_applied: t.ends_applied,
             })
             .collect();
         self.send_resume_data(&alerts);
@@ -937,6 +945,18 @@ impl Shared {
                 }
             }
         }
+        // Its files' ends first (#470), once its files are wanted and known, before it is done.
+        let ends_applied = if seen.ends_first
+            && seen.ends_applied != Some(lt)
+            && phase == Phase::Wanted
+            && status.has_metadata
+            && !finish.complete()
+            && self.session.set_file_ends_first(lt, true).is_ok()
+        {
+            Some(lt)
+        } else {
+            seen.ends_applied
+        };
         // Just completed: its files are marked before anyone hears it completed (#469).
         let completed = finish.complete() && !seen.finish.complete();
         if completed {
@@ -963,6 +983,7 @@ impl Shared {
         }
         torrent.phase = phase;
         torrent.finish = finish;
+        torrent.ends_applied = ends_applied;
         if let Some((files, bytes, trackers)) = checked {
             torrent.files = Some(files);
             torrent.metadata = Some(bytes);
@@ -1142,6 +1163,8 @@ impl LtEngine {
             upload_limit: rate(spec.upload_limit),
             download_limit: rate(spec.download_limit),
             max_connections: i32::try_from(settings.max_peers_per_torrent).unwrap_or(i32::MAX),
+            // In order (#470): kept in `base`, so adding it again keeps it.
+            sequential: spec.in_order,
             ..Default::default()
         };
         let mut own_trackers = spec.trackers.clone();
@@ -1284,6 +1307,8 @@ impl LtEngine {
                 resume_asked: None,
                 user_paused: spec.paused,
                 own_trackers,
+                ends_first: spec.ends_first,
+                ends_applied: None,
             },
         );
         Ok(id)
@@ -1553,6 +1578,30 @@ impl TorrentEngine for LtEngine {
         if let Some(t) = self.shared.state().torrents.get_mut(&id) {
             t.base.upload_limit = rate(upload);
             t.base.download_limit = rate(download);
+        }
+        Ok(())
+    }
+
+    fn set_order(
+        &mut self,
+        id: TorrentId,
+        in_order: bool,
+        ends_first: bool,
+    ) -> Result<(), ErrorCode> {
+        let (lt, _) = self.shared.lt_of(id)?;
+        self.shared
+            .session
+            .set_sequential(lt, in_order)
+            .map_err(|_| ErrorCode::NotFound)?;
+        if !ends_first {
+            // Back to the files' priorities; without metadata there is nothing to put back.
+            let _ = self.shared.session.set_file_ends_first(lt, false);
+        }
+        // Kept for when it is added again; the poll puts the ends first.
+        if let Some(t) = self.shared.state().torrents.get_mut(&id) {
+            t.base.sequential = in_order;
+            t.ends_first = ends_first;
+            t.ends_applied = None;
         }
         Ok(())
     }

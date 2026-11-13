@@ -357,6 +357,56 @@ fn moved(s: &Session, id: u64) -> velocity_lt::AlertEntry {
 
 /// #366: a torrent moves to another folder and keeps seeding; a move onto a name that is taken
 /// there fails and leaves both sides as they were.
+/// In order (#470): a torrent can download its pieces in order, set when it is added and switched
+/// while it runs, and each wanted file's first and last pieces can come first, for a player to read
+/// a file's start and end early.
+#[test]
+fn a_torrent_downloads_in_order_and_its_files_ends_can_come_first() {
+    let name = "v1-multi";
+    let bytes = std::fs::read(corpus().join(format!("{name}.torrent"))).unwrap();
+    let dir = Dir::new("in-order");
+    let s = session();
+    let id = s
+        .add(&AddParams {
+            torrent: bytes,
+            save_path: dir.path().to_string_lossy().into_owned(),
+            paused: true,
+            sequential: true,
+            ..Default::default()
+        })
+        .unwrap();
+    assert!(s.status(id).unwrap().sequential, "set when added");
+    s.set_sequential(id, false).unwrap();
+    assert!(!s.status(id).unwrap().sequential);
+    s.set_sequential(id, true).unwrap();
+    assert!(s.status(id).unwrap().sequential, "switched while it runs");
+
+    let normal = s.piece_priorities(id).unwrap();
+    assert!(normal.iter().all(|&p| p == 4), "{normal:?}");
+    s.set_file_ends_first(id, true).unwrap();
+    let ends = s.piece_priorities(id).unwrap();
+    assert_eq!(ends.first(), Some(&7), "the first file's first piece");
+    assert_eq!(ends.last(), Some(&7), "the last file's last piece");
+    assert!(ends.iter().all(|&p| p == 4 || p == 7), "{ends:?}");
+    // Off puts every piece back to its file's priority.
+    s.set_file_ends_first(id, false).unwrap();
+    assert_eq!(s.piece_priorities(id).unwrap(), normal);
+    // A file not wanted keeps its pieces at 0, ends first or not.
+    let files = s.files(id).unwrap().len();
+    let mut skip_first = vec![4; files];
+    skip_first[0] = 0;
+    s.set_file_priorities(id, &skip_first).unwrap();
+    // libtorrent applies file priorities through its disk thread, a moment later.
+    wait("the first file is skipped", 10, || {
+        s.files(id).unwrap()[0].priority == 0
+    });
+    s.set_file_ends_first(id, true).unwrap();
+    assert_eq!(s.piece_priorities(id).unwrap().first(), Some(&0));
+    s.set_file_ends_first(id, false).unwrap();
+    assert_eq!(s.piece_priorities(id).unwrap().first(), Some(&0));
+    assert!(s.remove(id));
+}
+
 #[test]
 fn a_torrent_moves_and_never_replaces_anything() {
     let name = "v1-multi";

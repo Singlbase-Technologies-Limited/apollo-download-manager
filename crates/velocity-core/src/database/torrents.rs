@@ -41,6 +41,12 @@ pub struct TorrentOptions {
     /// Bytes per second; 0 for no limit.
     pub upload_limit: u64,
     pub download_limit: u64,
+    /// Its pieces download in order, and its files' ends first (#470); off in options stored
+    /// before these existed, so no migration is needed.
+    #[serde(default)]
+    pub in_order: bool,
+    #[serde(default)]
+    pub ends_first: bool,
 }
 
 /// A torrent read back.
