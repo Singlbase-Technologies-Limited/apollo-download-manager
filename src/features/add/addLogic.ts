@@ -11,7 +11,91 @@ export function splitLinks(text: string): string[] {
   return [...new Set(text.split(/\s+/).filter((s) => s !== ''))];
 }
 
-const SCHEMES: Record<string, DownloadKind> = { 'http:': 'http', 'https:': 'http', 'ftp:': 'ftp', 'ftps:': 'ftp', 'sftp:': 'sftp' };
+/** A pattern link and what it makes (#468), for the dialog to show before adding. */
+export interface PatternExpansion {
+  link: string;
+  count: number;
+  first: string;
+  last: string;
+}
+
+/** `[1-10]`, `[001-100]`, `[0-100:5]`, `[a-z]` or `[A-Z]`. Longer numbers are left alone, so counts stay exact. */
+const RANGE = /\[(?:(\d{1,15})-(\d{1,15})(?::(\d{1,15}))?|([a-z])-([a-z])|([A-Z])-([A-Z]))\]/g;
+
+interface Range {
+  at: number;
+  length: number;
+  count: number;
+  value: (i: number) => string;
+}
+
+/** Where a link's path is: after `scheme://host`, up to `?` or `#`. `null` for a link without one, such as a magnet link. */
+function pathSpan(link: string): [number, number] | null {
+  const scheme = link.indexOf('://');
+  if (scheme < 0) return null;
+  const start = link.indexOf('/', scheme + 3);
+  if (start < 0) return null;
+  const ends = ['?', '#'].map((c) => link.indexOf(c, start)).filter((i) => i >= 0);
+  return [start, Math.min(link.length, ...ends)];
+}
+
+/** The range in `link`'s path, if there is one, or why it can't be used. */
+function rangeIn(link: string): { range: Range | null; error: string | null } {
+  const span = pathSpan(link);
+  if (span === null) return { range: null, error: null };
+  const found = [...link.slice(span[0], span[1]).matchAll(RANGE)];
+  const m = found[0];
+  if (m === undefined) return { range: null, error: null };
+  if (found.length > 1) return { range: null, error: `${link}: only one range, such as [1-10], can be in a link.` };
+  const at = span[0] + m.index;
+  const goesDown = `${link}: the range goes down. Write it from the smaller end, such as [1-10] or [a-z].`;
+  const [, from, to, step, lowFrom, lowTo, upFrom, upTo] = m;
+  if (from !== undefined && to !== undefined) {
+    const [a, b, s] = [Number(from), Number(to), step === undefined ? 1 : Number(step)];
+    if (s === 0) return { range: null, error: `${link}: the step after ":" can’t be 0.` };
+    if (b < a) return { range: null, error: goesDown };
+    // A leading zero keeps every number as wide as the first: [001-100] makes 001 to 100.
+    const width = from.length;
+    return { range: { at, length: m[0].length, count: Math.floor((b - a) / s) + 1, value: (i) => String(a + i * s).padStart(width, '0') }, error: null };
+  }
+  const first = (lowFrom ?? upFrom ?? '').charCodeAt(0);
+  const last = (lowTo ?? upTo ?? '').charCodeAt(0);
+  if (last < first) return { range: null, error: goesDown };
+  return { range: { at, length: m[0].length, count: last - first + 1, value: (i) => String.fromCharCode(first + i) }, error: null };
+}
+
+/**
+ * Pattern links (#468): a link with one range in its path, such as `file[001-100].zip`, becomes one link per value.
+ * Other links stay as they are; every link is kept once, in order. A range that can't be used, or more than `MAX_ADD`
+ * links in all, is an error, and nothing is made. Brackets outside the path (an IPv6 host, a query) are left alone.
+ */
+export function expandLinks(links: readonly string[]): { links: string[]; patterns: PatternExpansion[]; error: string | null } {
+  const planned: [string, Range | null][] = [];
+  let total = 0;
+  for (const link of links) {
+    const { range, error } = rangeIn(link);
+    if (error !== null) return { links: [], patterns: [], error };
+    planned.push([link, range]);
+    total += range === null ? 1 : range.count;
+  }
+  if (total > MAX_ADD) {
+    return { links: [], patterns: [], error: `These links make ${total.toLocaleString('en')} downloads. At most ${String(MAX_ADD)} can be added at once.` };
+  }
+  const out = new Set<string>();
+  const patterns: PatternExpansion[] = [];
+  for (const [link, range] of planned) {
+    if (range === null) {
+      out.add(link);
+      continue;
+    }
+    const make = (i: number) => link.slice(0, range.at) + range.value(i) + link.slice(range.at + range.length);
+    for (let i = 0; i < range.count; i++) out.add(make(i));
+    patterns.push({ link, count: range.count, first: make(0), last: make(range.count - 1) });
+  }
+  return { links: [...out], patterns, error: null };
+}
+
+const SCHEMES: Record<string, DownloadKind> ={ 'http:': 'http', 'https:': 'http', 'ftp:': 'ftp', 'ftps:': 'ftp', 'sftp:': 'sftp' };
 
 const isMagnet = (link: string) => link.slice(0, 7).toLowerCase() === 'magnet:';
 

@@ -24,7 +24,7 @@ import { SeedingFields } from '../torrents/SeedingFields';
 import { fileChoice, selectedSize, VERSION_LABEL } from '../torrents/torrentLogic';
 import { AddOutcomeFooter, AddOutcomeView } from './AddOutcomeView';
 import { plural, sortOutcome, type Outcome } from './outcome';
-import { linkKind, linkProblem, MAX_ADD, parseChecksum, parseHeaders, splitLinks } from './addLogic';
+import { expandLinks, linkKind, linkProblem, MAX_ADD, parseChecksum, parseHeaders, splitLinks } from './addLogic';
 import { StartAtFields } from '../../components/StartAtFields';
 import { nextFullHour } from '../../lib/format';
 
@@ -94,7 +94,10 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   const files = torrentFiles.length + metalinkFiles.length;
-  const links = useMemo(() => (files > 0 ? [] : splitLinks(text)), [text, files]);
+  // Pattern links such as file[001-100].zip become one link per value (#468).
+  const expanded = useMemo(() => expandLinks(files > 0 ? [] : splitLinks(text)), [text, files]);
+  const links = expanded.links;
+  const pattern = expanded.patterns[0];
   const kinds = links.map(linkKind);
   const invalid = links.filter((l) => linkProblem(l, capabilities) !== null);
   const firstInvalid = invalid[0];
@@ -141,7 +144,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const choice = fileChoice(torrentFilesOf, chosen);
 
   const nothing = links.length === 0 && files === 0;
-  const blocked = nothing || invalid.length > 0 || tooMany || headers.error !== null || checksum.error !== null || (missingChosen && !createDirectory);
+  const blocked = nothing || expanded.error !== null || invalid.length > 0 || tooMany || headers.error !== null || checksum.error !== null || (missingChosen && !createDirectory);
 
   const browse = async () => {
     try {
@@ -400,7 +403,9 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
               <Field
                 label="Links"
                 error={
-                  firstInvalid !== undefined
+                  expanded.error !== null
+                    ? expanded.error
+                    : firstInvalid !== undefined
                     ? `${invalid.length === 1 ? '' : `${String(invalid.length)} links can’t be added. `}${firstInvalid}: ${linkProblem(firstInvalid, capabilities) ?? ''}`
                     : tooMany
                       ? `At most ${String(MAX_ADD)} links can be added at once.`
@@ -409,7 +414,9 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                 hint={
                   kinds.includes('torrentLink')
                     ? 'Apollo Download Manager fetches the .torrent file first, then adds the torrent.'
-                    : links.length > 1
+                    : pattern !== undefined
+                      ? `${String(links.length)} links: ${pattern.first} to ${pattern.last}`
+                      : links.length > 1
                       ? `${String(links.length)} links`
                       : 'HTTP, HTTPS, FTP, FTPS and SFTP links, magnet links and links to .torrent files.'
                 }
