@@ -8275,7 +8275,60 @@
           "content": [
            {
             "type": "text",
-            "text": "Edge and Firefox: not in their stores yet."
+            "text": "Firefox:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " install it from "
+         },
+         {
+          "type": "link",
+          "content": [
+           {
+            "type": "text",
+            "text": "Firefox Add-ons"
+           }
+          ],
+          "to": {
+           "url": "https://addons.mozilla.org/firefox/addon/apollo-download-manager/"
+          }
+         },
+         {
+          "type": "text",
+          "text": ". "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Get the extension"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in Settings, Browser opens that page in Firefox."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Edge: not in its store yet."
            }
           ]
          },
@@ -8294,7 +8347,7 @@
          },
          {
           "type": "text",
-          "text": " stays off for them until their store pages are live, and a note in Settings, Browser says so. Until then, load the extension by hand from a build, as below. Edge can also install extensions from the Chrome Web Store, once you allow extensions from other stores."
+          "text": " stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below."
          }
         ]
        }
@@ -9016,7 +9069,7 @@
     {
      "anchor": "installing-the-extension",
      "heading": "Installing the extension",
-     "text": "Chrome and Brave: install it from the Chrome Web Store. In Apollo Download Manager, Get the extension in Settings, Browser opens that page in the browser. Edge and Firefox: not in their stores yet. Get the extension stays off for them until their store pages are live, and a note in Settings, Browser says so. Until then, load the extension by hand from a build, as below. Edge can also install extensions from the Chrome Web Store, once you allow extensions from other stores. The installers don't set the extension up for you. To load it by hand: Chrome, Edge, Brave: open chrome://extensions (or edge://extensions, brave://extensions), turn on developer mode, choose Load unpacked, and pick the extension's chrome folder. Firefox: open about:debugging, This Firefox, Load Temporary Add-on, and pick the manifest.json in the extension's firefox folder. Firefox removes a temporary add-on when it closes. How to build the extension is in the developer documents."
+     "text": "Chrome and Brave: install it from the Chrome Web Store. In Apollo Download Manager, Get the extension in Settings, Browser opens that page in the browser. Firefox: install it from Firefox Add-ons. Get the extension in Settings, Browser opens that page in Firefox. Edge: not in its store yet. Get the extension stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below. The installers don't set the extension up for you. To load it by hand: Chrome, Edge, Brave: open chrome://extensions (or edge://extensions, brave://extensions), turn on developer mode, choose Load unpacked, and pick the extension's chrome folder. Firefox: open about:debugging, This Firefox, Load Temporary Add-on, and pick the manifest.json in the extension's firefox folder. Firefox removes a temporary add-on when it closes. How to build the extension is in the developer documents."
     },
     {
      "anchor": "connecting-it-to-apollo-download-manager",

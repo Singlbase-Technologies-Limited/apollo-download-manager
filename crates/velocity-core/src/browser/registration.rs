@@ -846,8 +846,9 @@ mod tests {
     }
 
     /// #241: each row says whether the browser is installed here, and carries its store's link
-    /// once that store publishes the extension (#240): in v0.2.0 the Chrome Web Store only, for
-    /// Chrome, Chromium and Brave (PO decision, 2026-11-10).
+    /// once that store publishes the extension (#240): the Chrome Web Store for Chrome, Chromium
+    /// and Brave since v0.2.0 (PO decision, 2026-11-10), and Firefox Add-ons for Firefox since
+    /// v0.3.0. Edge waits for its store.
     #[test]
     fn the_integration_shows_which_browsers_are_installed() {
         let f = Fixture::new("found");
@@ -865,11 +866,8 @@ mod tests {
                 "{:?}: nothing is installed in the fixture",
                 r.browser
             );
-            let chrome_store = matches!(
-                r.browser,
-                Browser::Chrome | Browser::Chromium | Browser::Brave
-            );
-            assert_eq!(r.store_url.is_some(), chrome_store, "{:?}", r.browser);
+            let published = r.browser != Browser::Edge;
+            assert_eq!(r.store_url.is_some(), published, "{:?}", r.browser);
             assert_eq!(
                 r.store_url.as_deref(),
                 r.browser.store_url(),

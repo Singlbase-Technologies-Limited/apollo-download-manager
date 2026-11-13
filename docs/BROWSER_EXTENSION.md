@@ -28,7 +28,7 @@ Apollo Download Manager's extension uses none of V1's names or IDs ([ADR-0003](d
 
 - **Telling them apart:** Apollo Download Manager's name, toolbar title and context-menu item say "Apollo Download Manager", and its short name and messages "Apollo DM" (the short form, docs/BRANDING.md).
 - **The Chrome key:** the manifest's `key` is the Chrome Web Store item's public key (#240), and it pins the Chrome extension ID, so a build loaded by hand has the store's ID. Google holds the private half; until 0.2.0 the key was one generated for Apollo Download Manager in #64. The repository ignores `*.pem` and `*.key` files. A test derives the ID from the key and checks it against `branding.json` (`scripts/extension-lib.test.mjs`).
-- **Store publication:** the stores and their links are below ([Publishing in the stores](#publishing-in-the-stores)). Since 0.2.0 the Chrome Web Store link is set; the Edge and Firefox links follow in a later release, once each store approves (PO decision on #240, 2026-11-10).
+- **Store publication:** the stores and their links are below ([Publishing in the stores](#publishing-in-the-stores)). The Chrome Web Store link is set since 0.2.0 and the Firefox Add-ons link since 0.3.0; the Edge link follows once its store approves (PO decision on #240, 2026-11-10).
 
 ## Protocol
 

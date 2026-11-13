@@ -230,11 +230,20 @@ mod tests {
         );
         #[cfg(target_os = "linux")]
         {
-            d.program("usr/bin/firefox");
-            // No store has the extension yet (#240).
+            // Edge's store hasn't published the extension yet (#240).
+            d.program("usr/bin/microsoft-edge");
+            assert_eq!(
+                store_page_launch(&d.finder(), Browser::Edge),
+                Err(ErrorCode::Unsupported)
+            );
+            // Firefox Add-ons has, since 2026-11-12: Firefox opens its listing.
+            let firefox = d.program("usr/bin/firefox");
             assert_eq!(
                 store_page_launch(&d.finder(), Browser::Firefox),
-                Err(ErrorCode::Unsupported)
+                Ok((
+                    firefox,
+                    Browser::Firefox.store_url().expect("published").to_owned()
+                ))
             );
         }
     }
