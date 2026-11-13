@@ -11,5 +11,5 @@
   "firefoxExtensionId": "apollo-download-manager@singlbase.com",
   "chromeExtensionKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsRLbIcpO5myv/mKODZPr9cMYeyZfasOiGM7JVUepIa5jg38I8BUjm1tOhhgJrC5dYqzgObwXsA/Ldl1dzfsFZh6fINwP/+6sSjsije6qGGnmdyo0FW7oR0Zchp/Ck/L8ln/UEhH5Y9U6/CCS7nLcWWPw0hKXxeAXt3tTi1RZFl6lqaHSqfpRFeNCpnGXG+Q3HfW6p/XtZU+gxlw79zslqO6CnIsl1vmhStyanNqutdUW0wAHQOL01rhlr1xumAU2f3+gHrYm6DkneWwIzKMn5RqLN95inCTPyWv4gorAGiHK9lU0U4SOLhMPt9YDhEAvw+wDtEIAZnveESce1+hrgQIDAQAB",
   "chromeExtensionIds": ["fhhohpcahhmlijibcpppoddcklobfpld"],
-  "extensionStoreUrls": { "chrome": "https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld", "edge": null, "firefox": null }
+  "extensionStoreUrls": { "chrome": "https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld", "edge": null, "firefox": "https://addons.mozilla.org/firefox/addon/apollo-download-manager/" }
 }

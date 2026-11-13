@@ -158,6 +158,21 @@ mod tests {
         assert!(b.chrome_extension_ids.iter().any(|id| id == item), "{url}");
     }
 
+    /// #240: Firefox Add-ons approved the add-on (2026-11-12), so the link opens its listing,
+    /// without a language in the path, so the store shows it in the user's own language.
+    #[test]
+    fn the_firefox_store_link_opens_the_add_on_listing() {
+        let url = branding()
+            .extension_store_urls
+            .firefox
+            .as_deref()
+            .expect("the Firefox Add-ons link is set");
+        assert_eq!(
+            url,
+            "https://addons.mozilla.org/firefox/addon/apollo-download-manager/"
+        );
+    }
+
     #[test]
     fn identifiers_are_well_formed() {
         let b = branding();

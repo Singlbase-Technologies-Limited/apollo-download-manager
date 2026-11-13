@@ -50,7 +50,7 @@ Get the Windows installer, or the `.deb` (Ubuntu, Debian) or `.rpm` (Fedora, ope
 > [!NOTE]
 > **Still in development.** The releases are test builds made by the project's CI, and they aren't signed yet, so Windows SmartScreen warns on first run. The [user guide](docs/user/README.md) says what this version does.
 
-The browser extension is set up from the app: Settings, Browser ([Browser integration](docs/user/browser.md)). Chrome and Brave get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld); the Edge and Firefox store pages follow.
+The browser extension is set up from the app: Settings, Browser ([Browser integration](docs/user/browser.md)). Chrome and Brave get it from the [Chrome Web Store](https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld), and Firefox from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/apollo-download-manager/); the Edge store page follows.
 
 ## Build from source
 

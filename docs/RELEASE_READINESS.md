@@ -84,7 +84,7 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 |---|---|---|---|
 | Chrome Web Store | PO | PASS for 0.2.0 | The item is ready to publish; the PO publishes it with v0.2.0. The app allows its ID and links to it (#240, PR 445) |
 | Microsoft Edge Add-ons | PO | BLOCKED | The store account isn't approved yet (#240) |
-| Firefox Add-ons | PO | BLOCKED | Submitted, in review (#240). It follows in a later release (PO decision, 2026-11-10) |
+| Firefox Add-ons | PO | PASS for 0.3.0 | Approved on 2026-11-12 and public ([listing](https://addons.mozilla.org/firefox/addon/apollo-download-manager/)). The app links to it from 0.3.0 (#240) |
 
 ## Rollback
 
@@ -97,7 +97,7 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 What users meet in this version, with where it is documented:
 
 - **The Windows installer isn't signed:** SmartScreen warns on first run ([PACKAGING.md](PACKAGING.md#signing)).
-- **The extension is only in the Chrome Web Store** in 0.2.0. Edge and Firefox users load it by hand until their stores approve it ([Browser integration](user/browser.md#installing-the-extension)).
+- **The extension is only in the Chrome Web Store** in 0.2.0. Edge and Firefox users load it by hand until their stores approve it ([Browser integration](user/browser.md#installing-the-extension)). Firefox Add-ons approved it on 2026-11-12, and the app links to it from 0.3.0.
 - **Nothing is imported from V1** ([V1 and Apollo Download Manager](user/v1-and-v2.md)).
 - **Protocols:** FTP and SFTP use one connection each, and SFTP and torrents can't use an HTTPS proxy ([Protocols](user/protocols.md#not-supported)).
 - **Torrents through a proxy** have limits ([Torrents](user/torrents.md#not-yet-or-different-from-v1)).
@@ -118,4 +118,4 @@ Each item here needs the PO's decision before the release it blocks: accept it f
 | Unsigned Windows installer and unsigned Linux checksums (#428, #429) | 1.0.0 | Open |
 | Ramp and speed field testing (#330) | 1.0.0 | Open |
 | Guide and developer-site audit (#425) | 1.0.0 | Open |
-| Edge and Firefox store listings (#240, #241) | Not 0.2.0 (PO decision, 2026-11-10); 1.0.0 | Open |
+| Edge store listing (#240, #241); Firefox's is public since 2026-11-12 | Not 0.2.0 (PO decision, 2026-11-10); 1.0.0 | Open |

@@ -9,7 +9,8 @@ Apollo Download Manager's extension is its own: it is named **Apollo Download Ma
 ## Installing the extension
 
 - **Chrome and Brave:** install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld). In Apollo Download Manager, **Get the extension** in Settings, Browser opens that page in the browser.
-- **Edge and Firefox: not in their stores yet.** **Get the extension** stays off for them until their store pages are live, and a note in Settings, Browser says so. Until then, load the extension by hand from a build, as below. Edge can also install extensions from the Chrome Web Store, once you allow extensions from other stores.
+- **Firefox:** install it from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/apollo-download-manager/). **Get the extension** in Settings, Browser opens that page in Firefox.
+- **Edge: not in its store yet.** **Get the extension** stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below.
 
 The installers don't set the extension up for you. To load it by hand:
 
