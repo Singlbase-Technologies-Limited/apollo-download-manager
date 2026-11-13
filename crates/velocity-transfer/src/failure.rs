@@ -80,7 +80,7 @@ pub(crate) fn later_status_failure(status: u16) -> Option<TransferError> {
         return Some(TransferError::new(
             FailureClass::Permanent,
             Some(403),
-            "The download link expired. Get a fresh link from the browser.",
+            "The download link expired. Get a fresh link from the browser, then choose Use a new link… to continue from where it stopped.",
         ));
     }
     status_failure(status)

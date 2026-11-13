@@ -1220,6 +1220,7 @@ mod finished;
 mod history;
 mod lifecycle;
 mod network;
+mod new_link;
 mod opening;
 mod options;
 mod persist;

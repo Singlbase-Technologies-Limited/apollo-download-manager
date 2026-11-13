@@ -113,7 +113,7 @@ impl Manager {
         Ok(d.transfer())
     }
 
-    fn store_options(&mut self, id: &str) {
+    pub(super) fn store_options(&mut self, id: &str) {
         let Some(job) = self.downloads[id].direct() else {
             return;
         };

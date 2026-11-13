@@ -82,7 +82,8 @@ use serde::Serialize;
 /// store page; `open_extension_page`.
 /// Version 34 (#415): the `browser-request` event only says a link waits; the window takes the
 /// waiting links with `take_browser_requests`.
-pub const COMMAND_API_VERSION: u32 = 34;
+/// Version 35 (#466) added `use_new_link`: a failed or paused download continues with a new link.
+pub const COMMAND_API_VERSION: u32 = 35;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
