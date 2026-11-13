@@ -21,7 +21,7 @@ An architecture decision record (ADR) states one decision, why it was taken and 
 | [0013](0013-sftp-russh.md) | SFTP uses russh, in its own crate behind a shared transport interface | Accepted | 2026-10-24 |
 | [0014](0014-torrent-helper-child-process.md) | libtorrent runs in a supervised helper process, on a child-process layer shared with the engine | Accepted | 2026-10-26 |
 | [0015](0015-keychain-with-consent.md) | Logins are saved in the system keychain only when the user asks, one download at a time | Accepted | 2026-10-29 |
-| [0016](0016-release-product-name-v2.md) | The released app is named "Velocity Download Manager V2" | Superseded by ADR-0018 | 2026-10-30 |
+| [0016](0016-release-product-name-v2.md) | The released app is named after V1, with a version number added | Superseded by ADR-0018 | 2026-10-30 |
 | [0017](0017-gpl-3-licence.md) | Apollo DM is licensed GPL-3.0-only, owned by Singlbase Technologies Limited, with contributions under a CLA | Accepted | 2026-10-31 |
 | [0018](0018-product-name-apollo.md) | The released app is named "Apollo Download Manager" | Accepted | 2026-11-05 |
 | [0019](0019-waiting-for-network-status.md) | A download can wait for the network | Accepted | 2026-11-05 |
