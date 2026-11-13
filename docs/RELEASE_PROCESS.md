@@ -34,9 +34,10 @@ The PO decides each version, from what the release contains (PO decisions on #25
   |---|---|---|
   | 0.1.0 | The first release, Windows and Linux | Released 2026-10-31, as a pre-release |
   | 0.1.1 | Fixes only: the download log (#251), connections (#221), the battle test (#77) and the bugs it and the PO's testing found | Released 2026-11-04, as a pre-release |
-  | 0.2.0 | The new name, Apollo Download Manager, with its new window; the browser extension in the Chrome Web Store; the user guide in the app and the website; and features such as a local `.metalink` file (#222), the login window (#249) and plain error messages (#252). The Edge and Firefox store pages follow in a later version (#240, #241) | This version |
-  | 0.3.0 | The load and long-run field test (#337), the ramp field test (#330), mirrors (#324), the extension finding the files on a page (#426), the guide audit (#425), research on other download managers (#427), release signing (#428, #429) and legal due diligence (#441) | Next |
-  | 1.0.0 | The first production release, after the release-readiness review ([RELEASE_READINESS.md](RELEASE_READINESS.md), #78), with the PO's decision on each of its gaps | Later |
+  | 0.2.0 | The new name, Apollo Download Manager, with its new window; the browser extension in the Chrome Web Store; the user guide in the app and the website; and features such as a local `.metalink` file (#222), the login window (#249) and plain error messages (#252). The Edge and Firefox store pages follow in a later version (#240, #241) | Released 2026-11-10, as a pre-release |
+  | 0.3.0 | The load and long-run field test (#337), the ramp field test (#330), mirrors (#324), the extension finding the files on a page (#426), the guide audit (#425), research on other download managers (#427), release signing (#428, #429) and legal due diligence (#441); and, from the feature research (#427), #466 to #472 | Next |
+  | 0.4.0 | Fuzzing (#73), the OpenSSF Scorecard as the security gate (#473), the security response promise and support channel (#476), and the research's v0.4.0 features ([ROADMAP_TO_1.0.md](ROADMAP_TO_1.0.md#the-versions-on-the-way)) | Planned |
+  | 1.0.0 | The first production release, once every condition in [the road to 1.0.0](ROADMAP_TO_1.0.md) (#461) passes or the PO accepts its gap, after the release-readiness review ([RELEASE_READINESS.md](RELEASE_READINESS.md), #78) | Later |
 
   Every release before 1.0.0 is published as a pre-release.
 
