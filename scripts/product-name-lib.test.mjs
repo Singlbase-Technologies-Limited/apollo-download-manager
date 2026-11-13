@@ -24,9 +24,9 @@ describe('oldNames (#421)', () => {
     expect(lines('docs/user/torrents.md', 'BitTorrent v1, v2 and hybrid; Info hash (v2).\n')).toEqual([]);
   });
 
-  it('allows the quoted 0.1.x product name only in decision records, which stay as written (PO decisions on #486)', () => {
+  it('no longer allows the quoted 0.1.x product name anywhere, decision records included (PO decisions on #486)', () => {
     expect(lines('docs/user/installing.md', 'From 0.1.x, which was named "Velocity Download Manager V2": install it.\n')).toEqual([1]);
-    expect(lines('docs/decisions/0018-product-name-apollo.md', 'It replaces ADR-0016\'s "Velocity Download Manager V2" as the name.\n')).toEqual([]);
+    expect(lines('docs/decisions/0018-product-name-apollo.md', 'It replaces ADR-0016\'s "Velocity Download Manager V2" as the name.\n')).toEqual([1]);
   });
 
   it('allows the title of a decision record, but not its running text (PO, 2026-11-09)', () => {
@@ -74,9 +74,9 @@ describe('fullNames (#486)', () => {
     expect(at('docs/X.md', 'The `velocity-core` crate, `VELOCITY_V2_DATA_DIR` and `com.velocity.downloadmanager.v2`.\n')).toEqual([]);
   });
 
-  it('keeps decision records and research copies as written (PO decision on #486)', () => {
-    expect(at('docs/decisions/0016-release-product-name-v2.md', '# ADR-0016: The released app is named "Velocity Download Manager V2"\n')).toEqual([]);
-    expect(at('docs/research/2026-10-21-libcurl-engine-research-r2.md', 'The original Velocity Download Manager (V1).\n')).toEqual([]);
+  it('finds the name in decision records and research copies too, reworded once (PO decision on #486, 2026-11-13)', () => {
+    expect(at('docs/decisions/0016-release-product-name-v2.md', '# ADR-0016: The released app is named "Velocity Download Manager V2"\n')).toEqual([1]);
+    expect(at('docs/research/2026-10-21-libcurl-engine-research-r2.md', 'The original Velocity Download Manager (V1).\n')).toEqual([1]);
   });
 
   it("finds the name in a source file's strings, not in its comments", () => {

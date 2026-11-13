@@ -5,9 +5,11 @@
 - **Decided by:** the Product Owner
 - **Issue:** #11
 
+> **Edited on 2026-11-13 (#486, PO decision):** V1's full product name, and Apollo Download Manager's 0.1.x name that contained it, are replaced with descriptions. Nothing else in this record changed.
+
 ## Context
 
-The new app will replace the original Velocity Download Manager (V1) under the same product name (PO decision, 2026-10-21, #11). V1's technical identity decides several things:
+The new app will replace V1, the download manager it grew out of, under the same product name (PO decision, 2026-10-21, #11). V1's technical identity decides several things:
 
 - **Its data directory:** derived from the bundle identifier `com.velocity.downloadmanager`.
 - **Its single-instance lock and IPC pipe names.**
@@ -22,7 +24,7 @@ If Apollo Download Manager reused any of these, it would open V1's database or i
 
 | Identifier | V1 (reference) | Apollo DM release builds | Apollo DM development builds |
 |---|---|---|---|
-| Product name | Velocity Download Manager | Velocity Download Manager | Velocity Download Manager (dev) |
+| Product name | V1's product name | V1's product name | V1's product name (dev) |
 | App identifier: decides the data directory, IPC names and single instance | `com.velocity.downloadmanager` | `com.velocity.downloadmanager.v2` | `dev.velocity.downloadmanager.v2` |
 | Native-messaging host | `com.velocity.download_manager` | `com.velocity.download_manager_v2` | a dev variant, set in #65 |
 | Firefox extension ID | `velocity-download-manager@velocity.local` | `velocity-download-manager-v2@velocity.local` | set in #64 |

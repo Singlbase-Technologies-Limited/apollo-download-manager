@@ -5,9 +5,11 @@
 - **Decided by:** the Product Owner
 - **Issue:** #346
 
+> **Edited on 2026-11-13 (#486, PO decision):** V1's full product name, and Apollo Download Manager's 0.1.x name that contained it, are replaced with descriptions. Nothing else in this record changed.
+
 ## Context
 
-[ADR-0016](0016-release-product-name-v2.md) named the released app "Velocity Download Manager V2", so that it would install beside V1 with its own folder and uninstall entry. The PO wants a distinctive name of its own for v0.2.0 (#346). "Velocity" is a common word in software and hard to search for, and the current name carries a version number.
+[ADR-0016](0016-release-product-name-v2.md) named the released app V1's product name with a version number added, so that it would install beside V1 with its own folder and uninstall entry. The PO wants a distinctive name of its own for v0.2.0 (#346). "Velocity" is a common word in software and hard to search for, and the current name carries a version number.
 
 The PO's direction for the name (on #346, 2026-11-05): a completely new name, not "Velocity" plus a word; every candidate ends with "Download Manager"; domain availability doesn't remove a name.
 
@@ -20,7 +22,7 @@ The [product name shortlist](../research/2026-11-05-product-name-shortlist.md) c
 
 ## Decision
 
-**The released app's product name is "Apollo Download Manager".** It replaces ADR-0016's "Velocity Download Manager V2" as the name of the install folder, the Apps & features entry, the Start menu shortcut and the window title, from the release that applies it (#347, planned for v0.2.0).
+**The released app's product name is "Apollo Download Manager".** It replaces ADR-0016's name as the name of the install folder, the Apps & features entry, the Start menu shortcut and the window title, from the release that applies it (#347, planned for v0.2.0).
 
 Everything in [ADR-0003](0003-v2-app-identity.md) other than the product name stands. The app identifier `com.velocity.downloadmanager.v2`, the data folders, the IPC and native-messaging host names and the extension IDs don't change, because they decide where users' data and registrations live.
 
@@ -33,7 +35,7 @@ The PO chose from these, on the multiple-choice question of 2026-11-05.
 | **"Apollo Download Manager" (chosen)** | No download app with the name; a well-known word that reads the same in most languages; the full phrase is unique today | "Apollo" alone is used by many software products and is hard to search for on its own |
 | "Astra Download Manager" | No download app with the name; full-phrase domains free | Many software products use "Astra" (a WordPress theme on 1.8 million sites); at least 7 live US class 9 ASTRA marks |
 | "Sleek Download Manager" | A plain adjective; no live software mark on SLEEK found | Less distinctive as a brand |
-| Keep "Velocity Download Manager V2" | No rename and no upgrade work | A common, hard-to-search name with a version in it |
+| Keep the 0.1.x name | No rename and no upgrade work | A common, hard-to-search name with a version in it |
 
 Rejected during the research: Atlas (an active download manager already has that name) and Orion (a torrent client named Orion exists). The full list and the reasons are in the [shortlist](../research/2026-11-05-product-name-shortlist.md).
 
