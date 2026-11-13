@@ -86,6 +86,27 @@ const FAST_RETRY: RetryPolicy = RetryPolicy {
     ..RetryPolicy::DEFAULT
 };
 
+/// #469: a finished download on Windows is marked as from the internet, with the server's origin
+/// only, never the path, which can carry a token.
+#[cfg(windows)]
+#[test]
+fn a_finished_download_is_marked_as_from_the_internet() {
+    let (s, data) = serve(10_000, RangeMode::Honour);
+    let dir = Dir::new("motw");
+    let dest = dir.file("out.bin");
+    download(&curl_loop(), &s.url("f.bin"), &dest, OPTIONS).expect("the download succeeds");
+    assert!(std::fs::read(&dest).unwrap() == data);
+    let mut stream = dest.as_os_str().to_owned();
+    stream.push(":Zone.Identifier");
+    let mark = std::fs::read_to_string(PathBuf::from(stream)).expect("the file is marked");
+    let origin = s.url("");
+    assert_eq!(
+        mark,
+        format!("[ZoneTransfer]\r\nZoneId=3\r\nHostUrl={origin}\r\n")
+    );
+    assert!(!mark.contains("f.bin"), "{mark}");
+}
+
 #[test]
 fn downloads_with_several_connections_when_ranges_work() {
     let (s, data) = serve(1_000_000, RangeMode::Honour);

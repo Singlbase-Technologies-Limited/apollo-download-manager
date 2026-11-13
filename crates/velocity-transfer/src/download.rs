@@ -872,6 +872,7 @@ pub fn download_from(
                 }
                 return Err(e);
             }
+            mark_downloaded(&destination, sources.url(sources.lead()));
             Ok(DownloadReport {
                 mode: fetched.mode,
                 total: fetched.total,
@@ -3494,6 +3495,29 @@ impl Drop for PartFile {
             // failure here leaves it behind, and the next download refuses to reuse it.
             let _ = files::remove_part(&self.path);
         }
+    }
+}
+
+/// Marks the finished file at `path` as from the internet (#469), with only the origin of `link`:
+/// its path or query can carry a token. A file system without streams (FAT32, exFAT) can't hold
+/// the mark; the download is kept, and the engine's log says so.
+fn mark_downloaded(path: &Path, link: &str) {
+    let origin = velocity_curl::origin(link).map(|o| {
+        let default = matches!(
+            (o.scheme.as_str(), o.port),
+            ("http", 80) | ("https", 443) | ("ftp", 21) | ("ftps", 990) | ("sftp", 22)
+        );
+        if default {
+            format!("{}://{}/", o.scheme, o.host)
+        } else {
+            format!("{}://{}:{}/", o.scheme, o.host, o.port)
+        }
+    });
+    if let Err(e) = velocity_core::fs_safety::mark_from_internet(path, origin.as_deref()) {
+        eprintln!(
+            "WARN {} couldn't be marked as downloaded from the internet: {e}",
+            path.display()
+        );
     }
 }
 

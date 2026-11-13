@@ -125,6 +125,7 @@ Open it by double-clicking a download that isn't finished, pressing **Enter**, t
 - **While downloading,** the data goes to `<name>.vdmpart` beside the final file, which gets its name only once the download is complete and, with a checksum, verified.
 - **Look-alike names:** two names that look the same but are typed differently are two files. On Windows, names that differ only in upper and lower case are the same file.
 - **Long paths:** downloads into folders deeper than Windows' old 260-character limit work.
+- **Marked as from the internet (Windows):** a finished direct download is marked as downloaded from the internet, as browsers mark theirs, so Windows SmartScreen and Office still warn before opening it. The mark names only the server (for example `https://example.com/`), never the rest of the link. On a drive that can't hold the mark, such as a FAT32 or exFAT USB stick, the download finishes without it. Torrent files aren't marked yet.
 - **Delete files** removes only that download's own file and its unfinished part, inside its folder. A link in their place (a symbolic link or a junction) is never followed, and what it points to is never touched.
 - **Cloud-sync folders** such as OneDrive work as ordinary folders.
 
