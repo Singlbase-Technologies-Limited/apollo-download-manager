@@ -172,6 +172,9 @@ export function actionsFor(d: DownloadRecord): ActionAvailability {
 /** Only a finished download has a file to open (#61); its folder can always be shown. */
 export const canOpenFile = (d: DownloadRecord) => d.status === 'completed' || d.status === 'seeding';
 
+/** A failed or paused direct download may be given a new link for the same file (#466); a torrent never. */
+export const canUseNewLink = (d: DownloadRecord) => d.kind !== 'torrent' && d.kind !== 'magnet' && (d.status === 'failed' || d.status === 'paused');
+
 const NONE: ActionAvailability = { pause: false, resume: false, cancel: false, retry: false, move: false, remove: false, deleteFiles: false, stopSeeding: false };
 
 /** An action is offered when any selected download allows it; moving takes exactly one. */

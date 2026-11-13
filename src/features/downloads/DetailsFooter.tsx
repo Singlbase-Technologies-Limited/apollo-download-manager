@@ -1,10 +1,10 @@
-import { Copy, FileSearch, FolderOpen, ListChecks, MoreHorizontal, Pause, Play, Radio, RotateCcw, SlidersHorizontal, UploadCloud, X } from 'lucide-react';
+import { Copy, FileSearch, FolderOpen, Link2, ListChecks,MoreHorizontal, Pause, Play, Radio, RotateCcw, SlidersHorizontal, UploadCloud, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '../../components/Button';
 import { DropdownMenu, type MenuSpec } from '../../components/Menu';
 import { Tooltip } from '../../components/Tooltip';
 import type { DownloadRecord } from '../../contract';
-import { actionsFor, canOpenFile, FINISHED } from '../../downloads/list';
+import { actionsFor, canOpenFile, canUseNewLink, FINISHED } from '../../downloads/list';
 import { useSwarm } from '../../lib/queries';
 import { useUiStore } from '../../stores/ui';
 import type { DownloadActions } from './useDownloadActions';
@@ -35,6 +35,7 @@ function mainAction(d: DownloadRecord, actions: DownloadActions, chooseFiles: (i
  */
 export function DetailsFooter({ d, actions, busy, onEdit }: { d: DownloadRecord; actions: DownloadActions; busy: boolean; onEdit: () => void }) {
   const chooseFiles = useUiStore((s) => s.openChooseFiles);
+  const openNewLink = useUiStore((s) => s.openNewLink);
   const torrent = d.kind === 'torrent' || d.kind === 'magnet';
   const live = torrent && !FINISHED.includes(d.status);
   // Shared with the torrent section's query: Re-announce needs the helper to have the torrent.
@@ -45,6 +46,8 @@ export function DetailsFooter({ d, actions, busy, onEdit }: { d: DownloadRecord;
 
   const menu: MenuSpec = [
     { label: 'Copy link', icon: <Copy />, onSelect: () => void actions.copyLink(d) },
+    // A fresh link for the same file (#466).
+    ...(canUseNewLink(d) ? [{ label: 'Use a new link…', icon: <Link2 />, disabled: busy, onSelect: () => { openNewLink(d.id); } }] : []),
     ...(main?.label !== 'Pause' && can.pause && !can.stopSeeding ? [{ label: 'Pause', icon: <Pause />, disabled: busy, onSelect: () => void actions.pause([d.id]) }] : []),
     ...(can.stopSeeding ? [{ label: queued ? 'Leave seeding queue' : 'Stop seeding', icon: <UploadCloud />, disabled: busy, onSelect: () => void actions.stopSeeding([d.id]) }] : []),
     ...(live && trackers.isSuccess && d.status !== 'paused' ? [{ label: 'Re-announce', icon: <Radio />, disabled: busy, onSelect: () => void actions.reannounce(d.id) }] : []),

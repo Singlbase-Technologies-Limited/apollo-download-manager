@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { buildGuide, GUIDE_OUT, guideData } from './guide-lib.mjs';
+import { buildChangelog, buildGuide, CHANGELOG_OUT, changelogData, GUIDE_OUT, guideData } from './guide-lib.mjs';
 
 const index = `# The guide
 
@@ -102,5 +102,57 @@ describe('the in-app guide (#354)', () => {
 describe('the committed guide data', () => {
   it('is what docs/user/ gives now (run `pnpm guide` after editing a guide)', () => {
     expect(readFileSync(GUIDE_OUT, 'utf8').replace(/\r\n/g, '\n')).toBe(guideData());
+  });
+});
+
+// What's new (#496): the changelog, bundled as typed blocks like the guide, one entry per version.
+describe('the changelog for What is new (#496)', () => {
+  const changelog = [
+    '# Changelog',
+    '',
+    'What changed in each version.',
+    '',
+    '## 0.2.0 - 2026-11-10',
+    '',
+    'The first version named **Apollo Download Manager**. See [Upgrading](docs/user/installing.md#upgrading) and [the site](https://example.org/).',
+    '',
+    '### Fixes',
+    '',
+    '- One fix.',
+    '',
+    '## 0.1.0 - 2026-10-31',
+    '',
+    'The first version.',
+    '',
+  ].join('\n');
+
+  it('splits it into one entry per version, newest first, with its date and blocks', () => {
+    const { versions } = buildChangelog(changelog);
+    expect(versions.map((v) => [v.version, v.date])).toEqual([
+      ['0.2.0', '2026-11-10'],
+      ['0.1.0', '2026-10-31'],
+    ]);
+    expect(versions[0].blocks.map((b) => b.type)).toEqual(['paragraph', 'heading', 'list']);
+    expect(versions[1].blocks).toEqual([{ type: 'paragraph', content: [{ type: 'text', text: 'The first version.' }] }]);
+  });
+
+  it('keeps web addresses and makes links to the repository plain text', () => {
+    const [p] = buildChangelog(changelog).versions[0].blocks;
+    expect(p.content).toContainEqual({ type: 'link', to: { url: 'https://example.org/' }, content: [{ type: 'text', text: 'the site' }] });
+    expect(p.content.some((n) => n.type === 'link' && 'url' in n.to && n.to.url.includes('installing'))).toBe(false);
+    expect(p.content.filter((n) => n.type === 'text').map((n) => n.text).join('')).toContain('See Upgrading and ');
+  });
+
+  it('leaves out the Unreleased section, which no build has yet (docs/RELEASE_PROCESS.md)', () => {
+    const withUnreleased = changelog.replace('## 0.2.0', '## Unreleased\n\n- Coming soon.\n\n## 0.2.0');
+    expect(buildChangelog(withUnreleased).versions.map((v) => v.version)).toEqual(['0.2.0', '0.1.0']);
+  });
+
+  it('fails on a version heading it cannot read', () => {
+    expect(() => buildChangelog('# Changelog\n\n## Next\n\nSoon.\n')).toThrow(/version heading/);
+  });
+
+  it('is committed as the changelog gives it now (run `pnpm guide` after editing CHANGELOG.md)', () => {
+    expect(readFileSync(CHANGELOG_OUT, 'utf8').replace(/\r\n/g, '\n')).toBe(changelogData());
   });
 });

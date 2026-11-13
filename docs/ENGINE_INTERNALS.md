@@ -566,6 +566,7 @@ The app hands back what it saved, in `TransferSpec::resume`:
 | `resume` | The engine |
 |---|---|
 | `checkpoint` | Trusts the checkpoint only if it fits: this format, this download's source, and ranges that are sorted, disjoint, non-empty and inside the total. If it fits, the part file is reopened (never through a link), only D is trusted, and only the rest is fetched, with the recorded validator in `If-Range`. Another validator, total or encoding, or a `416` inside the old total, means the file on the server changed: the old bytes are discarded and the download [starts over once](#what-a-change-does). If it doesn't fit, or the part file is gone, the download starts over |
+| `newLink` | As `checkpoint`, with a new link the user gave for the same file (#466). The manager writes the checkpoint for the new link without the old tags, so it continues on the size alone and ends "not verified" (ADR-0010). A file of another size isn't started over: the download fails as permanent ("The new link is for another file…"), and the part file is kept |
 | `discardPartFile` | The part file is the download's own but has no usable checkpoint: it is deleted and the download starts over (PO decision). A link, or anything that isn't a plain file, is refused and never touched |
 | none | A new download. An existing part file is never reused: the download fails |
 

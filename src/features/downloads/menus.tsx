@@ -1,13 +1,13 @@
-import { AlarmClock, ArrowDownToLine, ArrowUpToLine, ChevronDown, ChevronUp, Copy, FileSearch, FolderOpen, Info, ListChecks, Pause, Play, RotateCcw, Square, Trash2, UploadCloud, X } from 'lucide-react';
+import { AlarmClock, ArrowDownToLine, Link2,ArrowUpToLine, ChevronDown, ChevronUp, Copy, FileSearch, FolderOpen, Info, ListChecks, Pause, Play, RotateCcw, Square, Trash2, UploadCloud, X } from 'lucide-react';
 import type { MenuSpec } from '../../components/Menu';
 import type { DownloadRecord } from '../../contract';
-import { actionsForSelection, canOpenFile } from '../../downloads/list';
+import { actionsForSelection, canOpenFile, canUseNewLink } from '../../downloads/list';
 import type { DownloadActions } from './useDownloadActions';
 
 /**
  * The right-click menu for a selection (V1's menus.tsx). An action the selection doesn't allow is shown disabled.
  */
-export function buildMenu(selection: DownloadRecord[], a: DownloadActions, busy: boolean, ui: { showDetails: (id: string) => void; chooseFiles: (id: string) => void; startAt: (id: string) => void }): MenuSpec {
+export function buildMenu(selection: DownloadRecord[], a: DownloadActions, busy: boolean, ui: { showDetails: (id: string) => void; chooseFiles: (id: string) => void; startAt: (id: string) => void; newLink: (id: string) => void }): MenuSpec {
   const can = actionsForSelection(selection);
   const ids = selection.map((d) => d.id);
   const one = selection.length === 1 ? selection[0] : undefined;
@@ -20,6 +20,8 @@ export function buildMenu(selection: DownloadRecord[], a: DownloadActions, busy:
     { label: 'Pause', icon: <Pause />, disabled: busy || !can.pause, onSelect: () => void a.pause(ids) },
     { label: 'Cancel', icon: <Square />, disabled: busy || !can.cancel, onSelect: () => void a.cancel(ids) },
     { label: 'Retry', icon: <RotateCcw />, disabled: busy || !can.retry, onSelect: () => void a.retry(ids) },
+    // A fresh link for the same file (#466): one failed or paused direct download.
+    { label: 'Use a new link…', icon: <Link2 />, disabled: busy || !one || !canUseNewLink(one), onSelect: () => { if (one) ui.newLink(one.id); } },
     // Its own start time (#350): for one download waiting in the queue, paused or not.
     { label: 'Start at…', icon: <AlarmClock />, disabled: busy || !one || (one.status !== 'queued' && one.status !== 'paused'), onSelect: () => { if (one) ui.startAt(one.id); } },
     ...(can.stopSeeding ? (['separator', { label: 'Stop seeding', icon: <UploadCloud />, disabled: busy, onSelect: () => void a.stopSeeding(ids) }] as MenuSpec) : []),

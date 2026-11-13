@@ -7572,3 +7572,227 @@ mod start_at {
         );
     }
 }
+
+/// A new link for a download whose link expired (#466, PO decisions on #466): it continues from its
+/// checkpoint with the new link, validated as a new one, and a login goes only to its own server.
+mod new_link {
+    use super::*;
+    use crate::keychain::MemoryKeychain;
+    use crate::transfer::{Checkpoint, Credentials, Header};
+
+    const OLD: &str = "https://example.com/files/a.zip?token=old";
+
+    fn open(db: &Arc<Database>, keychain: &MemoryKeychain) -> (Manager, FakeControl) {
+        let fake = FakeTransfer::new();
+        let control = fake.control();
+        let m =
+            Manager::open_with_keychain(Box::new(fake), Arc::clone(db), Box::new(keychain.clone()))
+                .unwrap();
+        (m, control)
+    }
+
+    fn checkpoint() -> Checkpoint {
+        Checkpoint {
+            format: crate::transfer::CHECKPOINT_FORMAT,
+            source: "https://example.com/files/a.zip".to_owned(),
+            total: 4096,
+            etag: Some("\"v1\"".to_owned()),
+            last_modified: Some("Sun, 06 Nov 1994 08:49:37 GMT".to_owned()),
+            content_encoding: None,
+            durable: vec![(0, 1024)],
+        }
+    }
+
+    /// A download that got 1 KiB, was checkpointed, and failed as an expired link does.
+    fn expired(m: &mut Manager, control: &FakeControl, request: TransferSpec) -> String {
+        let id = m
+            .add(
+                DownloadKind::Http,
+                TransferSpec {
+                    urls: vec![OLD.to_owned()],
+                    ..request
+                },
+                T0,
+            )
+            .unwrap();
+        control.emit(TransferEvent::Checkpoint {
+            id: TransferId(1),
+            checkpoint: checkpoint(),
+        });
+        m.pump(T0 + 1);
+        control.fail(
+            TransferId(1),
+            TransferError::new(FailureClass::Permanent, Some(403), "The link expired."),
+        );
+        m.pump(T0 + 2);
+        assert_eq!(status(m, &id), DownloadStatus::Failed);
+        id
+    }
+
+    fn with_login() -> TransferSpec {
+        TransferSpec {
+            credentials: Some(Credentials {
+                user_name: "alice".to_owned(),
+                password: "NEW-LINK-466".into(),
+            }),
+            headers: vec![Header {
+                name: "Cookie".to_owned(),
+                value: "session=NEW-LINK-COOKIE".into(),
+            }],
+            referrer: Some("https://example.com/page".to_owned()),
+            ..spec()
+        }
+    }
+
+    #[test]
+    fn a_failed_download_continues_from_its_checkpoint_with_the_new_link() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let (mut m, control) = open(&db, &MemoryKeychain::default());
+        let id = expired(&mut m, &control, spec());
+        let new = "https://example.com/files/a.zip?token=new";
+        m.use_new_link(&id, new, T0 + 3).unwrap();
+        m.pump(T0 + 4);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.urls, [new]);
+        // The old tags are dropped: a new link may tag the same file anew (PO decision on #466).
+        let expected = Checkpoint {
+            etag: None,
+            last_modified: None,
+            ..checkpoint()
+        };
+        assert_eq!(
+            again.resume,
+            Some(Resume::NewLink {
+                checkpoint: expected.clone()
+            })
+        );
+        assert_eq!(db.checkpoint(&id), Ok(Some(Stored::Known(expected))));
+        let stored = db.downloads().unwrap();
+        assert_eq!(
+            stored[0].source_url, new,
+            "the new link is kept for later retries"
+        );
+        assert_eq!(m.get(&id).unwrap().source_url, new);
+        assert_eq!(m.get(&id).unwrap().error, None);
+    }
+
+    #[test]
+    fn a_paused_download_takes_a_new_link_too() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let (mut m, control) = open(&db, &MemoryKeychain::default());
+        let id = m.add(DownloadKind::Http, spec(), T0).unwrap();
+        control.emit(TransferEvent::Checkpoint {
+            id: TransferId(1),
+            checkpoint: checkpoint(),
+        });
+        m.pump(T0 + 1);
+        m.pause(&id).unwrap();
+        m.pump(T0 + 2);
+        m.use_new_link(&id, "https://example.com/files/a.zip?token=new", T0 + 3)
+            .unwrap();
+        m.pump(T0 + 4);
+        assert!(matches!(
+            control.spec(TransferId(2)).resume,
+            Some(Resume::NewLink { .. })
+        ));
+    }
+
+    #[test]
+    fn the_login_stays_on_the_same_server() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let keychain = MemoryKeychain::default();
+        let (mut m, control) = open(&db, &keychain);
+        let id = expired(&mut m, &control, with_login());
+        m.remember_login(&id).unwrap();
+        m.use_new_link(&id, "https://example.com/files/a.zip?token=new", T0 + 3)
+            .unwrap();
+        m.pump(T0 + 4);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.credentials, with_login().credentials);
+        assert_eq!(again.headers, with_login().headers);
+        assert_eq!(again.referrer, with_login().referrer);
+        assert_eq!(keychain.ids(), std::slice::from_ref(&id));
+    }
+
+    #[test]
+    fn another_server_gets_no_login_and_the_saved_one_is_deleted() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let keychain = MemoryKeychain::default();
+        let (mut m, control) = open(&db, &keychain);
+        let id = expired(&mut m, &control, with_login());
+        m.remember_login(&id).unwrap();
+        m.use_new_link(&id, "https://mirror.other.net/a.zip", T0 + 3)
+            .unwrap();
+        m.pump(T0 + 4);
+        let again = control.spec(TransferId(2));
+        assert_eq!(again.credentials, None);
+        assert_eq!(again.headers, Vec::new());
+        assert_eq!(again.referrer, None);
+        assert!(
+            keychain.ids().is_empty(),
+            "the old server's login is deleted"
+        );
+        // Another port is another server too.
+        let (mut m, control) = open(&Arc::new(Database::open_in_memory().unwrap()), &keychain);
+        let id = expired(&mut m, &control, with_login());
+        m.use_new_link(&id, "https://example.com:8443/files/a.zip", T0 + 3)
+            .unwrap();
+        m.pump(T0 + 4);
+        assert_eq!(control.spec(TransferId(2)).credentials, None);
+    }
+
+    #[test]
+    fn the_new_link_is_checked_as_an_added_one_and_nothing_changes_when_it_is_refused() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let (mut m, control) = open(&db, &MemoryKeychain::default());
+        let id = expired(&mut m, &control, spec());
+        for link in [
+            "not a link",
+            "https://user:pw@example.com/a.zip",
+            "ftp://example.com/a.zip",
+            "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567",
+            "https://example.com/a\nb.zip",
+        ] {
+            assert_eq!(
+                m.use_new_link(&id, link, T0 + 3),
+                Err(ErrorCode::InvalidUrl),
+                "{link}"
+            );
+        }
+        let long = format!(
+            "https://example.com/{}",
+            "a".repeat(crate::request::MAX_URL_BYTES)
+        );
+        assert_eq!(
+            m.use_new_link(&id, &long, T0 + 3),
+            Err(ErrorCode::InvalidUrl)
+        );
+        assert_eq!(status(&m, &id), DownloadStatus::Failed, "nothing changed");
+        assert_eq!(m.get(&id).unwrap().source_url, OLD);
+        assert_eq!(db.checkpoint(&id), Ok(Some(Stored::Known(checkpoint()))));
+    }
+
+    #[test]
+    fn only_a_failed_or_paused_direct_download_takes_a_new_link() {
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let (mut m, control) = open(&db, &MemoryKeychain::default());
+        let running = m.add(DownloadKind::Http, spec(), T0).unwrap();
+        control.progress(TransferId(1), 10, Some(4096));
+        m.pump(T0 + 1);
+        let new = "https://example.com/files/a.zip?token=new";
+        assert_eq!(
+            m.use_new_link(&running, new, T0 + 2),
+            Err(ErrorCode::InvalidState)
+        );
+        control.complete(TransferId(1));
+        m.pump(T0 + 3);
+        assert_eq!(
+            m.use_new_link(&running, new, T0 + 4),
+            Err(ErrorCode::InvalidState)
+        );
+        assert_eq!(
+            m.use_new_link("nope", new, T0 + 4),
+            Err(ErrorCode::NotFound)
+        );
+    }
+}

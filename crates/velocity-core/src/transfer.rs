@@ -63,7 +63,9 @@ use std::sync::mpsc::Receiver;
 /// part file, so the app can move it to another folder.
 /// Version 23 (#325) added [`HostMemory`], [`TransferEvent::HostLearned`] and
 /// [`DirectTransfer::set_host_memory`]: what the engine learned about a server outlives it.
-pub const TRANSFER_CONTRACT_VERSION: u32 = 23;
+/// Version 24 (#466) added [`Resume::NewLink`]: a download continues with a new link the user
+/// gave, and a file that isn't the same one fails it instead of starting over.
+pub const TRANSFER_CONTRACT_VERSION: u32 = 24;
 
 /// What the engine learned about one server (#325): the host name and port its connections go
 /// to, lowercase and without a login, the count an earlier download settled at, and the most
@@ -596,9 +598,23 @@ impl Checkpoint {
 pub enum Resume {
     /// Continue from this checkpoint. The part file is the download's own.
     Checkpoint { checkpoint: Checkpoint },
+    /// Continue from this checkpoint with a new link the user gave for the same file (#466). A
+    /// file of another size, or one the engine otherwise sees as changed, fails the download with
+    /// every byte kept, instead of starting over: the user said it was the same file.
+    NewLink { checkpoint: Checkpoint },
     /// The part file is the download's own but has no usable checkpoint: discard it and start
     /// over.
     DiscardPartFile {},
+}
+
+impl Resume {
+    /// The checkpoint to continue from, with the download's own link or a new one.
+    pub fn checkpoint(&self) -> Option<&Checkpoint> {
+        match self {
+            Resume::Checkpoint { checkpoint } | Resume::NewLink { checkpoint } => Some(checkpoint),
+            Resume::DiscardPartFile {} => None,
+        }
+    }
 }
 
 /// The state of one transfer as its engine reports it.
@@ -634,8 +650,9 @@ impl TransferSnapshot {
     /// starts with what the checkpoint kept and the file's size, not "0 B of unknown size", which
     /// replaced the progress the app had saved (#257).
     pub fn queued(id: TransferId, spec: &TransferSpec) -> Self {
-        let (completed_bytes, total_bytes) = match &spec.resume {
-            Some(Resume::Checkpoint { checkpoint }) => (
+        let (completed_bytes, total_bytes) = match spec.resume.as_ref().and_then(Resume::checkpoint)
+        {
+            Some(checkpoint) => (
                 checkpoint
                     .durable
                     .iter()
@@ -1306,6 +1323,16 @@ mod tests {
             serde_json::to_string(&Resume::DiscardPartFile {}).unwrap(),
             r#"{"from":"discardPartFile"}"#
         );
+        // A new link for the same file (#466).
+        let new_link = Resume::NewLink {
+            checkpoint: checkpoint(),
+        };
+        round_trip(&new_link);
+        assert!(serde_json::to_string(&new_link)
+            .unwrap()
+            .starts_with(r#"{"from":"newLink","checkpoint":"#));
+        assert_eq!(new_link.checkpoint(), Some(&checkpoint()));
+        assert_eq!(Resume::DiscardPartFile {}.checkpoint(), None);
     }
 
     #[test]

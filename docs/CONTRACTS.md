@@ -66,13 +66,14 @@ The commands of [`src-tauri/src/downloads.rs`](../src-tauri/src/downloads.rs) (#
 | `trust_host_key` | `host`, `port`, `fingerprint` | nothing; the UI then retries the download |
 | `allow_download` | `id`, `kind`: `insecureRedirect` or `localAddress` | nothing. Allows what the download's `error.confirm` asked for, for that download only, stores it, and retries the download. `INVALID_STATE` unless it failed waiting for that confirmation. Since contract version 18 (#67) |
 | `remember_login` | `id` | nothing. Saves the download's login, custom headers and SSH key in the system keychain, at the user's request; `INVALID_STATE` for one without any, `KEYCHAIN_UNAVAILABLE` when there is no keychain or it refused. Since contract version 20 (#70) |
+| `use_new_link` | `id`, `link` | nothing. Gives a failed or paused direct download a new link for the same file, and queues it to continue from its checkpoint (#466). The link is checked as an added one: `INVALID_URL` for one that isn't valid, has a login in it, or is of another kind; `INVALID_STATE` for another status; `UNSUPPORTED` for a torrent. On another server the login, headers, referrer and SSH key are dropped, and a saved login is deleted. Since contract version 35 |
 | `choose_torrent_files` | `id`, `files` (indexes, at least one), `deleteDropped` | the files kept, each a `KeptFile`. With `deleteDropped`, the torrent's own files no longer chosen are deleted, by the rules torrents use; otherwise they stay (#63) |
 | `get_torrent_details` | `id` | `TorrentDetails`; `UNSUPPORTED` for a direct download (#63) |
 | `preview_torrent_file` | `path` (absolute) | `TorrentPreview`, read as adding reads the file: never through a link, at most the size limit (#63) |
 | `get_torrent_trackers`, `get_torrent_peers` | `id` | the helper's `TrackerStatus` or `PeerStatus` list; `INVALID_STATE` while the helper doesn't have the torrent (#63) |
 | `reannounce_torrent` | `id` | nothing; `INVALID_STATE` while the helper doesn't have the torrent (#63) |
 | `set_torrent_upload_limit` | `id`, `kib` (KiB/s; 0 for no limit) | nothing (#63) |
-| `set_torrent_order` | `id`, `inOrder`, `endsFirst` | nothing. The torrent downloads its pieces in order, or not, and each wanted file's first and last pieces first, or not, while it runs and after a restart (#470). `UNSUPPORTED` for a direct download. Since contract version 35; `TorrentDetails` and the Add request carry `inOrder` and `endsFirst` too |
+| `set_torrent_order` | `id`, `inOrder`, `endsFirst` | nothing. The torrent downloads its pieces in order, or not, and each wanted file's first and last pieces first, or not, while it runs and after a restart (#470). `UNSUPPORTED` for a direct download. Since contract version 36; `TorrentDetails` and the Add request carry `inOrder` and `endsFirst` too |
 | `set_torrent_seeding` | `id`, `seeding` (a seeding policy; `{ "mode": "never" }` stops seeding) | nothing |
 | `restart_torrent_helper` | — | `EngineHealth` |
 
