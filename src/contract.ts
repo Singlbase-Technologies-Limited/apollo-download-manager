@@ -685,7 +685,11 @@ export type PeerStatus = z.infer<typeof PeerStatusSchema>;
 // The Settings screen's settings (#30): every section, checked again in Rust whatever the window sends
 // (crates/velocity-core/src/settings.rs). The bounds below mirror Rust's, for the screen to say.
 
-export const GeneralSettingsSchema = z.strictObject({ closeToTray: z.boolean(), startMinimized: z.boolean(), confirmExitWithActive: z.boolean(), /** Start the app at sign-in (#321). */ startAtLogin: z.boolean() });
+export const GeneralSettingsSchema = z.strictObject({ closeToTray: z.boolean(), startMinimized: z.boolean(), confirmExitWithActive: z.boolean(), /** Start the app at sign-in (#321). */ startAtLogin: z.boolean(), /** Keep the computer awake while downloading (#467). */ keepAwake: z.boolean() });
+
+/** What the computer does once the downloads finish (#467): `finish_downloads`' argument. */
+export const FinishActionSchema = z.enum(['sleep', 'shutDown']);
+export type FinishAction = z.infer<typeof FinishActionSchema>;
 export const NotificationSettingsSchema = z.strictObject({ onComplete: z.boolean(), onFailure: z.boolean(), onStart: z.boolean(), onEngineFailure: z.boolean() });
 export const FolderSettingsSchema = z.strictObject({ defaultDirectory: z.string(), autoCategorize: z.boolean(), categorySubfolders: z.boolean() });
 

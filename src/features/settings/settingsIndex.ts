@@ -5,7 +5,7 @@ import type { SettingsSection } from '../../stores/ui';
  * checks that each name here is really shown there, so the search can't point at a setting that moved or went.
  */
 export const SETTINGS_INDEX: Record<Exclude<SettingsSection, 'about'>, readonly string[]> = {
-  general: ['Close to tray', 'Start minimized', 'Confirm before quitting with active downloads'],
+  general: ['Close to tray', 'Start minimized', 'Keep the computer awake while downloading', 'Confirm before quitting with active downloads'],
   downloads: ['Sort into categories by file type', 'A folder for each category'],
   performance: [
     'Simultaneous downloads',

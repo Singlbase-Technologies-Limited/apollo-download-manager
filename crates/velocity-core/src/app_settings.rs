@@ -22,6 +22,9 @@ pub struct GeneralSettings {
     /// Start the app when the user signs in (#321). Off until set: finishing the first-run setup
     /// turns it on in a released build (PO decision), so users from before it keep it off.
     pub start_at_login: bool,
+    /// Keep the computer from sleeping on its own while downloads are active (#467). On by
+    /// default; settings saved before it get it on too.
+    pub keep_awake: bool,
 }
 
 impl Default for GeneralSettings {
@@ -32,6 +35,7 @@ impl Default for GeneralSettings {
             start_minimized: false,
             confirm_exit_with_active: true,
             start_at_login: false,
+            keep_awake: true,
         }
     }
 }
@@ -419,6 +423,21 @@ mod tests {
             "visibleColumns": ["name", "gid"]
         }));
         assert!(unknown.is_err());
+    }
+
+    #[test]
+    fn keeping_the_computer_awake_is_on_and_settings_from_before_it_turn_it_on() {
+        assert!(GeneralSettings::default().keep_awake, "#467: on by default");
+        // 0.2.0 saved the general settings without the field.
+        let saved: GeneralSettings = serde_json::from_value(serde_json::json!({
+            "closeToTray": false,
+            "startMinimized": false,
+            "confirmExitWithActive": true,
+            "startAtLogin": true
+        }))
+        .unwrap();
+        assert!(saved.keep_awake);
+        assert!(!saved.close_to_tray && saved.start_at_login);
     }
 
     #[test]

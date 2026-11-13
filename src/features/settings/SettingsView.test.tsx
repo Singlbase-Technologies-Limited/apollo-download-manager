@@ -47,6 +47,16 @@ describe('settings (V1)', () => {
     expect(state.appSettings.general.startMinimized).toBe(true);
   });
 
+  it('keeps the computer awake while downloading, on by default, and can be switched off (#467)', async () => {
+    const state = installFakeBackend();
+    const user = await openSettings();
+    const box = await screen.findByRole<HTMLInputElement>('checkbox', { name: 'Keep the computer awake while downloading' });
+    expect(box.checked).toBe(true);
+    await user.click(box);
+    await waitFor(() => { expect(saved(state)).toHaveLength(1); });
+    expect(state.appSettings.general.keepAwake).toBe(false);
+  });
+
   it('starts the app at sign-in when switched on (#321)', async () => {
     const state = installFakeBackend();
     const user = await openSettings();
