@@ -1,35 +1,35 @@
 {
   "sections": [
     {
-      "title": "Architecture and system design",
+      "title": "Architecture",
       "pages": ["ARCHITECTURE.md", "UI_ARCHITECTURE.md", "CONTRACTS.md", "DATA_AND_MIGRATIONS.md", "COEXISTENCE.md", "SECURITY.md", "PRIVACY.md", "ACCESSIBILITY.md"]
     },
     {
-      "title": "Repository structure",
+      "title": "Repository",
       "pages": ["REPOSITORY_MAP.md", "GLOSSARY.md"]
     },
     {
-      "title": "Setting up and building",
+      "title": "Building",
       "pages": ["DEVELOPMENT.md", "BUILDING_NATIVE.md", "PACKAGING.md"]
     },
     {
-      "title": "Running tests",
+      "title": "Testing",
       "pages": ["TESTING.md", "CI.md", "CI_DIAGNOSTICS.md"]
     },
     {
-      "title": "Engine, BitTorrent and browser extension",
+      "title": "Engine and browser",
       "pages": ["ENGINE_CONTRACT.md", "ENGINE_INTERNALS.md", "ENGINE_PROTOCOL.md", "FILE_NAMING.md", "TORRENTS.md", "BROWSER_EXTENSION.md", "BROWSER_EXTENSION_RELEASE_TEST.md"]
     },
     {
-      "title": "Configuration and settings",
+      "title": "Settings",
       "pages": ["SETTINGS.md", "DIAGNOSTICS.md"]
     },
     {
-      "title": "Standards and contributing",
+      "title": "Contributing",
       "pages": ["CONVENTIONS.md", "DEVELOPMENT_WORKFLOW.md", "REVIEWING.md", "AGENT_GUIDANCE.md", "AI_AGENT_ACCOUNT.md", "DEPENDENCIES.md", "LICENSING.md", "OPEN_SOURCE.md", "BRANDING.md", "WEBSITE.md"]
     },
     {
-      "title": "Releases and versioning",
+      "title": "Releases",
       "pages": ["RELEASE_PROCESS.md", "RELEASE_READINESS.md", "ROADMAP_TO_1.0.md", "RELEASE_CANDIDATES.md", "REPOSITORY_SETTINGS.md"]
     },
     {
@@ -41,5 +41,83 @@
       "pages": ["PARITY.md"],
       "folders": ["decisions", "research"]
     }
-  ]
+  ],
+  "names": {
+    "START_HERE.md": "Start here",
+    "ARCHITECTURE.md": "Overview",
+    "UI_ARCHITECTURE.md": "The UI",
+    "CONTRACTS.md": "UI contract",
+    "DATA_AND_MIGRATIONS.md": "Data and migrations",
+    "COEXISTENCE.md": "Beside V1",
+    "SECURITY.md": "Security",
+    "PRIVACY.md": "Privacy",
+    "ACCESSIBILITY.md": "Accessibility",
+    "REPOSITORY_MAP.md": "Repository map",
+    "GLOSSARY.md": "Glossary",
+    "DEVELOPMENT.md": "Development setup",
+    "BUILDING_NATIVE.md": "Native libraries",
+    "PACKAGING.md": "Packaging",
+    "TESTING.md": "Test levels",
+    "CI.md": "CI design",
+    "CI_DIAGNOSTICS.md": "CI diagnostics",
+    "ENGINE_CONTRACT.md": "Engine contract",
+    "ENGINE_INTERNALS.md": "Engine internals",
+    "ENGINE_PROTOCOL.md": "Engine protocol",
+    "FILE_NAMING.md": "File names",
+    "TORRENTS.md": "Torrents",
+    "BROWSER_EXTENSION.md": "Browser extension",
+    "BROWSER_EXTENSION_RELEASE_TEST.md": "Extension release test",
+    "SETTINGS.md": "Settings",
+    "DIAGNOSTICS.md": "Logs and diagnostics",
+    "CONVENTIONS.md": "Naming conventions",
+    "DEVELOPMENT_WORKFLOW.md": "Workflow",
+    "REVIEWING.md": "Reviewing",
+    "AGENT_GUIDANCE.md": "Agent guidance",
+    "AI_AGENT_ACCOUNT.md": "AI agent account",
+    "DEPENDENCIES.md": "Dependencies",
+    "LICENSING.md": "Licensing",
+    "OPEN_SOURCE.md": "Open source",
+    "BRANDING.md": "Branding",
+    "WEBSITE.md": "The website",
+    "RELEASE_PROCESS.md": "Release process",
+    "RELEASE_READINESS.md": "Release readiness",
+    "ROADMAP_TO_1.0.md": "Road to 1.0.0",
+    "RELEASE_CANDIDATES.md": "Release candidates",
+    "REPOSITORY_SETTINGS.md": "Repository settings",
+    "TROUBLESHOOTING.md": "Troubleshooting",
+    "PARITY.md": "Parity with V1",
+    "decisions/README.md": "Decisions",
+    "decisions/0000-template.md": "Template",
+    "decisions/0001-v2-direction.md": "0001 Direction",
+    "decisions/0002-engine-crate-layout.md": "0002 Engine crates",
+    "decisions/0003-v2-app-identity.md": "0003 App identity",
+    "decisions/0004-libcurl-build-path.md": "0004 libcurl build",
+    "decisions/0005-v1-features-without-aria2.md": "0005 V1 features",
+    "decisions/0006-browser-links-to-local-networks.md": "0006 Local networks",
+    "decisions/0007-no-v1-import-at-first.md": "0007 No V1 import",
+    "decisions/0008-proxy-support.md": "0008 Proxy",
+    "decisions/0009-no-aria2-benchmark-gate.md": "0009 No benchmark gate",
+    "decisions/0010-resume-without-validator.md": "0010 Resume unverified",
+    "decisions/0011-sftp-libssh2.md": "0011 SFTP on libssh2",
+    "decisions/0012-engine-child-process.md": "0012 Engine process",
+    "decisions/0013-sftp-russh.md": "0013 SFTP on russh",
+    "decisions/0014-torrent-helper-child-process.md": "0014 Torrent helper",
+    "decisions/0015-keychain-with-consent.md": "0015 Keychain",
+    "decisions/0016-release-product-name-v2.md": "0016 First name",
+    "decisions/0017-gpl-3-licence.md": "0017 GPL-3.0 licence",
+    "decisions/0018-product-name-apollo.md": "0018 Apollo DM name",
+    "decisions/0019-waiting-for-network-status.md": "0019 Wait for network",
+    "decisions/0020-extension-store-distribution.md": "0020 Extension stores",
+    "research/README.md": "Research",
+    "research/2026-10-21-libcurl-engine-research-r2.md": "libcurl engine",
+    "research/2026-11-05-product-name-shortlist.md": "Name shortlist",
+    "research/2026-11-06-torrent-performance.md": "Torrent performance",
+    "research/2026-11-13-feature-research.md": "Features: summary",
+    "research/2026-11-13-feature-research-direct.md": "Features: direct",
+    "research/2026-11-13-feature-research-site-grabber.md": "Features: site grabber",
+    "research/2026-11-13-feature-research-torrents.md": "Features: torrents",
+    "research/2026-11-13-feature-research-user-wishes.md": "Features: user wishes",
+    "research/engine-mode-costs.md": "Engine mode costs",
+    "research/engine-prototype-results.md": "Engine prototype"
+  }
 }

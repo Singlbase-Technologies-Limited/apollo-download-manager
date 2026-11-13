@@ -109,6 +109,21 @@ for (const [name, width, height] of WIDTHS) {
     if (!seen.logo.endsWith('logo-light.svg') || !seen.logoShown) problem(where, 'the logo is missing');
     for (const image of seen.broken) problem(where, `broken image: ${image}`);
     if (seen.noAlt) problem(where, `${String(seen.noAlt)} images without alt`);
+    // The sidebars' headings and names fit on one line on a desktop (#487).
+    if (name === 'desktop') {
+      const wrapped = await page.evaluate(() =>
+        [...document.querySelectorAll('.docs-side .nav-group > p, .docs-side nav a, .docs-side summary')]
+          .filter((e) => e.getBoundingClientRect().height > 0)
+          .filter((e) => {
+            const range = document.createRange();
+            range.selectNodeContents(e);
+            const tops = new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top)));
+            return tops.size > 1;
+          })
+          .map((e) => e.textContent.trim()),
+      );
+      for (const w of wrapped.slice(0, 3)) problem(where, `a sidebar entry wraps: ${w}`);
+    }
     // Tables stay readable on a desktop (#422): no cell wraps into a tall, narrow column. The pages whose tables
     // hold paragraphs rather than values are listed in TALL_TABLES, for the content audit (#425).
     if (name === 'desktop' && !TALL_TABLES.includes(route)) {

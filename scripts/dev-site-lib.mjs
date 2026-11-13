@@ -16,21 +16,32 @@ export function pagePath(file) {
   return `${file.replace(/\.md$/, '').toLowerCase().replace(/_/g, '-')}/`;
 }
 
-/** The contents as sections of files: a folder lists its README first, then its documents by name. */
+/** The longest sidebar name: one line at the sidebar's narrowest desktop width (#487). */
+const NAME_LENGTH = 24;
+
+/**
+ * The contents as sections: each has its own documents, then its folders, each folder listing its README first and
+ * then its documents by name. `pages` is every document of the section, in that order.
+ */
 function sectionsOf(nav, files) {
   const known = Object.keys(files);
   const sections = nav.sections.map((s) => {
-    const pages = [...(s.pages ?? [])];
-    for (const folder of s.folders ?? []) {
+    const folders = (s.folders ?? []).map((folder) => {
       const inside = known.filter((f) => f.startsWith(`${folder}/`)).sort();
-      pages.push(...inside.filter((f) => f.endsWith('/README.md')), ...inside.filter((f) => !f.endsWith('/README.md')));
-    }
-    return { title: s.title, pages };
+      return [...inside.filter((f) => f.endsWith('/README.md')), ...inside.filter((f) => !f.endsWith('/README.md'))];
+    });
+    const own = [...(s.pages ?? [])];
+    return { title: s.title, own, folders, pages: [...own, ...folders.flat()] };
   });
   const listed = new Set([START, ...sections.flatMap((s) => s.pages)]);
   for (const f of listed) if (!(f in files)) throw new Error(`site/content/developers.json lists ${f}, which isn't in docs/`);
   for (const f of known) {
     if (f !== 'README.md' && !f.startsWith('user/') && !listed.has(f)) throw new Error(`docs/${f} isn't in site/content/developers.json`);
+  }
+  for (const f of listed) {
+    const name = nav.names?.[f];
+    if (!name) throw new Error(`site/content/developers.json: ${f} has no sidebar name (add it to "names")`);
+    if (name.length > NAME_LENGTH) throw new Error(`site/content/developers.json: the sidebar name of ${f} is longer than ${String(NAME_LENGTH)} characters`);
   }
   return sections;
 }
@@ -61,15 +72,19 @@ const linkTarget = (file, pages, repo) => (href) => {
   return { url: `${repo}/blob/main/${inRepo}${anchor ? `#${anchor}` : ''}` };
 };
 
-function contents(sections, titles, current, href) {
-  const link = (file, label) => {
-    const inFolder = file.includes('/') && !file.endsWith('/README.md');
-    return `<li${inFolder ? ' class="sub"' : ''}><a href="${esc(href(file))}"${file === current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
-  };
-  const folds = sections
-    .map((s) => `<details${s.pages.includes(current) ? ' open' : ''}><summary>${esc(s.title)}</summary><ul>${s.pages.map((f) => link(f, titles.get(f))).join('')}</ul></details>`)
+/**
+ * The sidebar, in the user guide's style (#487): each section a headed group of short names, and each folder in it
+ * folded under its README's name unless it holds the open page.
+ */
+function contents(sections, names, current, href) {
+  const link = (file, label = names[file]) => `<li><a href="${esc(href(file))}"${file === current ? ' aria-current="page"' : ''}>${esc(label)}</a></li>`;
+  // The folder is named after its README, which is listed in it as its overview.
+  const folder = ([readme, ...rest]) =>
+    `<details${[readme, ...rest].includes(current) ? ' open' : ''}><summary>${esc(names[readme])}</summary><ul>${link(readme, 'Overview')}${rest.map((f) => link(f)).join('')}</ul></details>`;
+  const groups = sections
+    .map((s) => `<div class="nav-group"><p>${esc(s.title)}</p>${s.own.length ? `<ul>${s.own.map((f) => link(f)).join('')}</ul>` : ''}${s.folders.map(folder).join('')}</div>`)
     .join('\n');
-  return `<nav aria-label="Developer documents"><ul>${link(START, 'Start here')}</ul>\n${folds}</nav>`;
+  return `<nav aria-label="Developer documents"><ul class="nav-start">${link(START)}</ul>\n${groups}</nav>`;
 }
 
 /** The first page's map of every section, for someone new. */
@@ -90,7 +105,8 @@ const devSearch = (root) => searchForm({ root, id: 'dev-search', label: 'Search 
  * Every file of the developer site, by its path in the website.
  * @param {object} input
  * @param {Record<string, string>} input.files the Markdown files of docs/, by their path in it
- * @param {{ sections: { title: string, pages?: string[], folders?: string[] }[] }} input.nav site/content/developers.json
+ * @param {{ sections: { title: string, pages?: string[], folders?: string[] }[], names: Record<string, string> }} input.nav
+ *   site/content/developers.json: the sections, and each document's short name for the sidebar
  * @param {(page: object) => string} input.layout the website's page frame
  * @param {(blocks: object[], hrefOf: (to: object) => string) => string} input.renderBlocks
  * @param {string} input.repo the repository's address
@@ -120,7 +136,7 @@ export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
       title: file === START ? 'Developers' : `${page.title} · Developers`,
       description: first.length > 155 ? `${first.slice(0, 152).replace(/\s+\S*$/, '')}…` : first.padEnd(20, '.'),
       body: renderBlocks(page.blocks, hrefOf) + (file === START ? topics(sections, titles, root) : ''),
-      aside: `${devSearch(root)}\n${contents(sections, titles, file, (f) => `${root}${pagePath(f)}`)}\n`,
+      aside: `${devSearch(root)}\n${contents(sections, nav.names, file, (f) => `${root}${pagePath(f)}`)}\n`,
       toc: tableOfContents(page.headings),
       after: pager(neighbour(docs[at - 1]), neighbour(docs[at + 1])),
       crumb: 'Developer documents',

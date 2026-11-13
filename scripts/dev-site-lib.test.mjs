@@ -4,7 +4,10 @@ import { buildDevSite, pagePath } from './dev-site-lib.mjs';
 import { buildSite, renderBlocks, siteFiles } from './site-lib.mjs';
 
 const layout = ({ path, title, body, aside, head }) => `<title>${title}</title>${head ?? ''}${aside ?? ''}<main data-path="${path}">${body}</main>`;
-const nav = { sections: [{ title: 'Architecture', pages: ['ARCHITECTURE.md'] }, { title: 'Decisions', folders: ['decisions'] }] };
+const nav = {
+  sections: [{ title: 'Architecture', pages: ['ARCHITECTURE.md'] }, { title: 'Decisions', folders: ['decisions'] }],
+  names: { 'START_HERE.md': 'Start here', 'ARCHITECTURE.md': 'Overview', 'decisions/README.md': 'All decisions', 'decisions/0001-first.md': '0001 First' },
+};
 const files = {
   'START_HERE.md': '# Start here\n\nRead [the architecture](ARCHITECTURE.md#the-parts).\n',
   'ARCHITECTURE.md': '# Architecture\n\n## The parts\n\nThe manager, see [the rules](../AGENTS.md), [a crate](../crates/velocity-core/) and [the guide](user/torrents.md#seeding).\n',
@@ -57,12 +60,26 @@ describe('the developer site (#355)', () => {
     expect(() => build({}, { sections: [...nav.sections, { title: 'Gone', pages: ['GONE.md'] }] })).toThrow(/GONE\.md/);
   });
 
-  it('lists the sections in order, with the open page’s section unfolded', () => {
-    const page = build()['developers/decisions/0001-first/index.html'];
-    expect(page.indexOf('<summary>Architecture</summary>')).toBeLessThan(page.indexOf('<summary>Decisions</summary>'));
-    expect(page).toContain('<details open><summary>Decisions</summary>');
-    expect(page).toContain('<details><summary>Architecture</summary>');
-    expect(page).toMatch(/aria-current="page">ADR-0001/);
+  it('lists the sections in order as headed groups, with a folder folded unless it holds the open page (#487)', () => {
+    const inFolder = build()['developers/decisions/0001-first/index.html'];
+    expect(inFolder.indexOf('<p>Architecture</p>')).toBeLessThan(inFolder.indexOf('<p>Decisions</p>'));
+    expect(inFolder).toContain('<div class="nav-group"><p>Architecture</p><ul><li><a href="../../architecture/">Overview</a></li></ul></div>');
+    expect(inFolder).toMatch(/<details open><summary>All decisions<\/summary><ul><li><a href="[./]*decisions\/">Overview<\/a><\/li>/);
+    expect(inFolder).toMatch(/aria-current="page">0001 First</);
+    expect(build()['developers/architecture/index.html']).toContain('<details><summary>All decisions</summary>');
+  });
+
+  it('shows each page’s short sidebar name, and keeps its full title on the page and in the search (#487)', () => {
+    const out = build();
+    expect(out['developers/architecture/index.html']).toMatch(/aria-current="page">Overview</);
+    expect(out['developers/architecture/index.html']).toContain('<h1 id="architecture">Architecture</h1>');
+    expect(JSON.parse(out['developers/search-index.json']).map((e) => e.page)).toContain('ADR-0001');
+  });
+
+  it('fails the build on a page without a sidebar name, or with one too long for a line (#487)', () => {
+    const without = Object.fromEntries(Object.entries(nav.names).filter(([f]) => f !== 'decisions/0001-first.md'));
+    expect(() => build({}, { ...nav, names: without })).toThrow(/decisions\/0001-first\.md.*sidebar name/);
+    expect(() => build({}, { ...nav, names: { ...nav.names, 'ARCHITECTURE.md': 'A name far too long for the sidebar' } })).toThrow(/ARCHITECTURE\.md.*24/);
   });
 
   it('shows a document’s own images, and refuses one from another site', () => {
@@ -110,7 +127,7 @@ describe('the developer site, built from docs/ (#355)', () => {
   const site = buildSite({ releases: null });
 
   it('has the issue’s sections, in order, and every document', () => {
-    const sections = [...site['developers/index.html'].matchAll(/<summary>([^<]+)<\/summary>/g)].map((m) => m[1]);
+    const sections = [...site['developers/index.html'].matchAll(/<div class="nav-group"><p>([^<]+)<\/p>/g)].map((m) => m[1]);
     expect(sections).toHaveLength(10);
     expect(sections[0]).toMatch(/^Architecture/);
     expect(sections[9]).toMatch(/^Decisions/);
