@@ -11,8 +11,8 @@ const V2 = /\bV2\b/;
  */
 const ALLOWED = [
   {
-    why: 'the 0.1.x product name, quoted, which users may still have installed',
-    test: (line) => !V2.test(line.replace(/"Velocity Download Manager V2"/g, '')),
+    why: 'the 0.1.x product name, quoted, in a decision record: records stay as written (PO decision on #486)',
+    test: (line, path) => path.startsWith('docs/decisions/') && !V2.test(line.replace(/"Velocity Download Manager V2"/g, '')),
   },
   {
     why: 'an issue title quoted after its number: titles are kept verbatim',
@@ -87,6 +87,32 @@ export function oldNames(path, text) {
     if (!V2.test(line)) return;
     if (ALLOWED.some((a) => a.test(line, path, i + 1))) return;
     found.push({ line: i + 1, text: original[i].trim() });
+  });
+  return found;
+}
+
+// V1's full name, "Velocity Download Manager", may be another company's product name, so it leaves public texts,
+// and so does Apollo DM's 0.1.x name, "Velocity Download Manager V2" (PO decisions on #486). "velocity" alone, in
+// crate names, identifiers and code, stays (PO comment on #486). Unlike "V2", the name counts in code spans too:
+// a path such as `%LOCALAPPDATA%\Velocity Download Manager` shows it as plainly as the text.
+const FULL_NAME = /velocity\s+download\s+manager/i;
+
+/** Decision records and research copies stay as written (AGENTS.md; PO decision on #486). */
+const records = (path) => path.startsWith('docs/decisions/') || path.startsWith('docs/research/');
+
+/**
+ * The lines of `text` (the file at `path`, relative to the repository) that name V1 or Apollo DM 0.1.x in full.
+ * @param {string} path
+ * @param {string} text
+ * @returns {{ line: number, text: string }[]}
+ */
+export function fullNames(path, text) {
+  if (skipped(path) || records(path)) return [];
+  const read = /\.[cm]?[jt]sx?$/.test(path) ? sourceText(text) : /\.html?$/i.test(path) ? htmlText(text) : text;
+  const original = text.split('\n');
+  const found = [];
+  read.split('\n').forEach((line, i) => {
+    if (FULL_NAME.test(line)) found.push({ line: i + 1, text: original[i].trim() });
   });
   return found;
 }

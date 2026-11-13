@@ -98,13 +98,13 @@ Then install Node.js and pnpm.
 
 Run `pnpm check:fast` before every pull request. [TESTING.md](TESTING.md) describes each level, how `check:pr` picks checks, and the build settings that keep feedback fast.
 
-## Running beside the original Velocity Download Manager
+## Running beside V1
 
 The app is named Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md)), and runs beside V1, during development and after release:
 
 | | V1 | Apollo DM development build |
 |---|---|---|
-| Product name | Velocity Download Manager | Apollo Download Manager (dev) |
+| Product name | V1's product name | Apollo Download Manager (dev) |
 | Bundle identifier | `com.velocity.downloadmanager` | `dev.velocity.downloadmanager.v2` (release builds will use `com.velocity.downloadmanager.v2`; [ADR-0003](decisions/0003-v2-app-identity.md)) |
 | Dev server port | 1420 | 1430 |
 

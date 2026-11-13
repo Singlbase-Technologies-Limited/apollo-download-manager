@@ -80,4 +80,4 @@ Work is planned as issues on the [project board](https://github.com/orgs/Singlba
 
 Copyright (C) 2026 Singlbase Technologies Limited. Apollo Download Manager is free software under the [GNU General Public License, version 3 only](LICENSE) (`GPL-3.0-only`), without any warranty ([ADR-0017](docs/decisions/0017-gpl-3-licence.md)). The third-party components it contains, and their licences, are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Apollo Download Manager is a separate app from the original Velocity Download Manager, and installs beside it. Until 0.2.0 it was named "Velocity Download Manager V2" ([ADR-0018](docs/decisions/0018-product-name-apollo.md)).
+Apollo Download Manager is a separate app from V1, the download manager it grew out of, and installs beside it. Versions before 0.2.0 had an earlier name ([ADR-0018](docs/decisions/0018-product-name-apollo.md)).

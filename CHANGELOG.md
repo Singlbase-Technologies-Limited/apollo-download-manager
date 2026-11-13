@@ -1,10 +1,10 @@
 # Changelog
 
-What changed in each version of Apollo Download Manager, named Velocity Download Manager V2 until 0.2.0. Versions follow [Semantic Versioning](https://semver.org/); while V2 is below 1.0.0, a minor version may change things that break. How sections are drafted from the merged pull requests, and edited into release notes, is in [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
+What changed in each version of Apollo Download Manager, which had an earlier name until 0.2.0. Versions follow [Semantic Versioning](https://semver.org/); while V2 is below 1.0.0, a minor version may change things that break. How sections are drafted from the merged pull requests, and edited into release notes, is in [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
 
 ## 0.2.0 - 2026-11-10
 
-The first version named **Apollo Download Manager**, with a new look, a browser extension in the Chrome Web Store, and a user guide in the app. Install it over 0.1.x, which was named "Velocity Download Manager V2": your downloads, settings and history are kept, and on Windows the browsers keep working ([Upgrading](docs/user/installing.md#upgrading)).
+The first version named **Apollo Download Manager**, with a new look, a browser extension in the Chrome Web Store, and a user guide in the app. Install it over 0.1.x, which had an earlier name: your downloads, settings and history are kept, and on Windows the browsers keep working ([Upgrading](docs/user/installing.md#upgrading)).
 
 ### A new name and a new window
 
@@ -100,7 +100,7 @@ Fixes only, found by using 0.1.0 with real downloads ([#262](https://github.com/
 
 ## 0.1.0 - 2026-10-31
 
-The first version of Velocity Download Manager V2: a new app, not an update of the original Velocity Download Manager (V1). V2 has its own download engine, on libcurl, and uses libtorrent for torrents. It installs and runs beside V1, and shares nothing with it ([V1 and V2](docs/user/v1-and-v2.md)).
+The first version of the app now named Apollo Download Manager: a new app, not an update of V1, the download manager it grew out of. It has its own download engine, on libcurl, and uses libtorrent for torrents. It installs and runs beside V1, and shares nothing with it ([V1 and V2](docs/user/v1-and-v2.md)).
 
 ### Downloads
 
