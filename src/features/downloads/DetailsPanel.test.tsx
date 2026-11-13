@@ -551,3 +551,49 @@ describe('the details panel (#61)', () => {
     expect(torrent.textContent).toContain('Not reported yet');
   });
 });
+
+describe('the row the details panel shows (#464)', () => {
+  // The selected row's look (PO decision on #464): its background and the accent bar, without its checkbox.
+  const looksSelected = (row: HTMLElement) => row.className.includes('bg-row-selected') && row.className.includes('shadow-[inset_2px_0_0_var(--accent)]');
+
+  it('is highlighted when the panel opens with the window, before any row is clicked', async () => {
+    const state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken]) });
+    state.settings.appearance.layout.detailsVisible = true;
+    renderApp();
+    // Newest first: broken.iso is the first row, and the panel shows it.
+    expect(heading(await panel())).toBe('broken.iso');
+    const shown = await rowFor('broken.iso');
+    expect(shown.getAttribute('aria-current')).toBe('true');
+    expect(looksSelected(shown)).toBe(true);
+    expect(shown.getAttribute('aria-selected')).toBe('false');
+    for (const name of ['movie.mp4', 'archive.zip']) {
+      const other = await rowFor(name);
+      expect(other.getAttribute('aria-current')).toBeNull();
+      expect(looksSelected(other)).toBe(false);
+    }
+  });
+
+  it('moves with the panel when another row is clicked, and follows it when the selection is cleared', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: withDownloads([archive, movie, broken]) });
+    state.settings.appearance.layout.detailsVisible = true;
+    renderApp();
+    await user.click(await rowFor('movie.mp4'));
+    await waitFor(() => { expect(heading(screen.getByRole('complementary', { name: 'Download details' }))).toBe('movie.mp4'); });
+    expect((await rowFor('movie.mp4')).getAttribute('aria-current')).toBe('true');
+    expect((await rowFor('broken.iso')).getAttribute('aria-current')).toBeNull();
+    // With no row selected or focused, the panel falls back to a download of its own; that row is the one highlighted.
+    act(() => { useDownloadsStore.getState().clearSelection(); });
+    const name = heading(await panel());
+    const shown = await rowFor(name);
+    expect(shown.getAttribute('aria-current')).toBe('true');
+    expect(looksSelected(shown)).toBe(true);
+    expect(document.querySelectorAll('[role="row"][aria-current="true"]')).toHaveLength(1);
+  });
+
+  it('marks no row while the panel is closed', async () => {
+    installFakeBackend({ snapshot: withDownloads([archive, movie, broken]) });
+    renderApp();
+    for (const name of ['broken.iso', 'movie.mp4', 'archive.zip']) expect((await rowFor(name)).getAttribute('aria-current')).toBeNull();
+  });
+});

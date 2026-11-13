@@ -682,6 +682,18 @@ describe('the SFTP host key', () => {
     await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
   });
 
+  it('connects again when the engine no longer has the key, rather than failing (#459)', async () => {
+    // After the transfer engine restarts, it hasn't seen the key, so trusting it is refused with NOT_FOUND.
+    const user = userEvent.setup();
+    const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [hostKey(null)] }, failures: { trust_host_key: 'NOT_FOUND' } });
+    renderApp();
+    const ask = await screen.findByRole('dialog', { name: 'Trust this server?' });
+    await user.click(within(ask).getByRole('button', { name: 'Trust and continue' }));
+    await waitFor(() => { expect(callsOf(state, 'retry_downloads')[0]?.args).toEqual({ ids: ['d-0007'] }); });
+    await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
+    expect(screen.queryByText(ERROR_MESSAGES.NOT_FOUND)).toBeNull();
+  });
+
   it('Cancel trusts nothing and doesn’t ask again for that download', async () => {
     const user = userEvent.setup();
     const state = installFakeBackend({ snapshot: { ...emptySnapshot(), downloads: [hostKey(null)] } });
@@ -720,5 +732,29 @@ describe('a start time when adding', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
     await waitFor(() => { expect(requests(state)).toHaveLength(1); });
     expect(requests(state)[0]?.startAt).toBe('2030-01-05T22:00');
+  });
+});
+
+describe('pattern links (#468)', () => {
+  it('adds one link per number, and shows how many and the first and last before adding', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/file[001-003].zip');
+    expect(await within(dialog).findByText('3 links: https://example.com/file001.zip to https://example.com/file003.zip')).toBeTruthy();
+    await user.click(within(dialog).getByRole('button', { name: /^Start download/ }));
+    await waitFor(() => { expect(requests(state)[0]?.links).toEqual(['https://example.com/file001.zip', 'https://example.com/file002.zip', 'https://example.com/file003.zip']); });
+  });
+
+  it('refuses a pattern that makes too many links, and adds nothing', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.com/f[1-1000].zip');
+    expect(await within(dialog).findByText('These links make 1,000 downloads. At most 500 can be added at once.')).toBeTruthy();
+    expect(within(dialog).getByRole<HTMLButtonElement>('button', { name: /^Start download/ }).disabled).toBe(true);
+    expect(requests(state)).toEqual([]);
   });
 });

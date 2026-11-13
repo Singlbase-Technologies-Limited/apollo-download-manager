@@ -98,10 +98,12 @@ interface Props {
   categories: readonly Category[];
   needsLogin: ReadonlySet<string>;
   now: number;
+  /** The download the details panel shows, if it's open: its row looks selected (PO decision on #464). */
+  current: string | null;
 }
 
 /** The virtualised, keyboard-operable download grid (V1's): only the rows in view are drawn. */
-export function DownloadTable({ rows, columns, widths: saved, onResize, sort, onSort, actions, busy, density, categories, needsLogin, now }: Props) {
+export function DownloadTable({ rows, columns, widths: saved, onResize, sort, onSort, actions, busy, density, categories, needsLogin, now, current }: Props) {
   // For the status help of a download waiting its turn (#424).
   const maxConcurrent = useSettings().data?.queue.maxConcurrentDownloads;
   const parentRef = useRef<HTMLDivElement>(null);
@@ -281,6 +283,7 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
                   id={`row-${d.id}`}
                   role="row"
                   aria-selected={selected}
+                  aria-current={current === d.id ? 'true' : undefined}
                   aria-rowindex={vi.index + 1}
                   // The status help, for screen readers and keyboard users, who don't hover (#424).
                   aria-describedby={columns.some((c) => c.id === 'status') ? statusHelpId(d.id) : undefined}
@@ -300,8 +303,8 @@ export function DownloadTable({ rows, columns, widths: saved, onResize, sort, on
                   }}
                   className={cn(
                     'absolute left-0 top-0 grid w-full cursor-pointer items-center gap-3 border-b border-border/60 px-4 text-[12.5px] text-fg-muted',
-                    selected ? 'bg-row-selected' : 'hover:bg-row-hover',
-                    focus === d.id && 'shadow-[inset_2px_0_0_var(--accent)]',
+                    selected || current === d.id ? 'bg-row-selected' : 'hover:bg-row-hover',
+                    (focus === d.id || current === d.id) && 'shadow-[inset_2px_0_0_var(--accent)]',
                   )}
                   style={{ gridTemplateColumns: template, height: vi.size, transform: `translateY(${String(vi.start)}px)` }}
                 >
