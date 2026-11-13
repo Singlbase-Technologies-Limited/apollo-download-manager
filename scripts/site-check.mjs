@@ -29,6 +29,11 @@ const TALL_TABLES = [
   'developers/engine-internals/',
   'developers/parity/',
   'developers/research/2026-10-21-libcurl-engine-research-r2/',
+  // Up to ten columns of findings; they fitted only while names in them broke between letters (#485).
+  'developers/research/2026-11-13-feature-research-direct/',
+  'developers/research/2026-11-13-feature-research-site-grabber/',
+  'developers/research/2026-11-13-feature-research-torrents/',
+  'developers/research/2026-11-13-feature-research-user-wishes/',
   'developers/testing/',
 ];
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.xml': 'application/xml' };
@@ -109,6 +114,21 @@ for (const [name, width, height] of WIDTHS) {
     if (!seen.logo.endsWith('logo-light.svg') || !seen.logoShown) problem(where, 'the logo is missing');
     for (const image of seen.broken) problem(where, `broken image: ${image}`);
     if (seen.noAlt) problem(where, `${String(seen.noAlt)} images without alt`);
+    // The sidebars' headings and names fit on one line on a desktop (#487).
+    if (name === 'desktop') {
+      const wrapped = await page.evaluate(() =>
+        [...document.querySelectorAll('.docs-side .nav-group > p, .docs-side nav a, .docs-side summary')]
+          .filter((e) => e.getBoundingClientRect().height > 0)
+          .filter((e) => {
+            const range = document.createRange();
+            range.selectNodeContents(e);
+            const tops = new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top)));
+            return tops.size > 1;
+          })
+          .map((e) => e.textContent.trim()),
+      );
+      for (const w of wrapped.slice(0, 3)) problem(where, `a sidebar entry wraps: ${w}`);
+    }
     // Tables stay readable on a desktop (#422): no cell wraps into a tall, narrow column. The pages whose tables
     // hold paragraphs rather than values are listed in TALL_TABLES, for the content audit (#425).
     if (name === 'desktop' && !TALL_TABLES.includes(route)) {
@@ -123,6 +143,32 @@ for (const [name, width, height] of WIDTHS) {
       }, TABLE_LINES);
       for (const t of tall.slice(0, 3)) problem(where, `a table cell wraps to ${t}`);
     }
+    // A file, folder or crate name in a table never breaks between two letters (#485): a line break inside the
+    // code is where one character's box starts on a lower line than the one before it.
+    const split = await page.evaluate(() => {
+      const found = [];
+      for (const code of document.querySelectorAll('.prose td code, .prose th code')) {
+        const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
+        const chars = [];
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          for (let i = 0; i < node.data.length; i++) {
+            const range = document.createRange();
+            range.setStart(node, i);
+            range.setEnd(node, i + 1);
+            const box = range.getClientRects()[0];
+            if (box) chars.push({ c: node.data[i], top: box.top, bottom: box.bottom });
+          }
+        }
+        for (let i = 1; i < chars.length; i++) {
+          if (chars[i].top >= chars[i - 1].bottom - 1 && /[\p{L}\p{N}]/u.test(chars[i - 1].c) && /[\p{L}\p{N}]/u.test(chars[i].c)) {
+            found.push(code.textContent.trim().slice(0, 50));
+            break;
+          }
+        }
+      }
+      return found;
+    });
+    for (const s of split.slice(0, 3)) problem(where, `a name in a table breaks mid-word: ${s}`);
     for (const link of seen.links) if (link.startsWith(origin)) links.add(link.split('#')[0]);
     if (shots && (route.split('/').length <= 2 || ['guide/torrents/', 'developers/testing/', 'developers/decisions/'].includes(route))) {
       await page.screenshot({ path: join(shots, `${name}-${route.replace(/\//g, '-') || 'home-'}page.png`), fullPage: true });

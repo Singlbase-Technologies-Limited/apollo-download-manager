@@ -16,9 +16,9 @@ The installer isn't signed yet, so Windows SmartScreen says "Windows protected y
 
 No. It has no telemetry and no analytics, and connects only to the servers you download from. The [privacy page](/privacy/) lists what it keeps on your computer.
 
-## Can I use it next to the original Velocity Download Manager?
+## Can I use it next to V1, the version it grew out of?
 
-Yes. Apollo Download Manager has its own programs, menu entries and data, and installing or removing one never changes the other. See [Beside Velocity Download Manager](/guide/v1-and-v2/).
+Yes. Apollo Download Manager has its own programs, menu entries and data, and installing or removing one never changes the other. See [Beside V1](/guide/v1-and-v2/).
 
 ## How do I send downloads from my browser?
 

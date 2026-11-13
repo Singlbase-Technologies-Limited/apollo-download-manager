@@ -127,14 +127,14 @@
      "content": [
       {
        "type": "text",
-       "text": "Apollo Download Manager is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other ("
+       "text": "Apollo Download Manager is a separate app from V1, the download manager it grew out of. You can install and run both at once; nothing one does changes the other ("
       },
       {
        "type": "link",
        "content": [
         {
          "type": "text",
-         "text": "Beside Velocity Download Manager"
+         "text": "Beside V1"
         }
        ],
        "to": {
@@ -479,7 +479,7 @@
          "content": [
           {
            "type": "text",
-           "text": "Beside Velocity Download Manager"
+           "text": "Beside V1"
           }
          ],
          "to": {
@@ -501,7 +501,7 @@
     {
      "anchor": "apollo-download-manager-user-guide",
      "heading": "Apollo Download Manager: user guide",
-     "text": "These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open Help (the ? in the title bar), then User guide. How Apollo Download Manager is built and tested is in the developer documents. Apollo Download Manager is a separate app from the original Velocity Download Manager (V1). You can install and run both at once; nothing one does changes the other (Beside Velocity Download Manager). Apollo Download Manager is still in development. The guides describe what this version does. Where something isn't there yet, the guide says so. The guides are in four groups, here and in the sidebar, in the app and on the website alike."
+     "text": "These guides are for people who use Apollo Download Manager. The same guides are in the app, and work offline: open Help (the ? in the title bar), then User guide. How Apollo Download Manager is built and tested is in the developer documents. Apollo Download Manager is a separate app from V1, the download manager it grew out of. You can install and run both at once; nothing one does changes the other (Beside V1). Apollo Download Manager is still in development. The guides describe what this version does. Where something isn't there yet, the guide says so. The guides are in four groups, here and in the sidebar, in the app and on the website alike."
     },
     {
      "anchor": "getting-started",
@@ -521,7 +521,7 @@
     {
      "anchor": "help",
      "heading": "Help",
-     "text": "Guide What it covers Troubleshooting Common problems, the diagnostics report, and what error messages mean Beside Velocity Download Manager Using both side by side, and what is different"
+     "text": "Guide What it covers Troubleshooting Common problems, the diagnostics report, and what error messages mean Beside V1 Using both side by side, and what is different"
     }
    ],
    "file": "README.md"
@@ -573,7 +573,7 @@
      "content": [
       {
        "type": "text",
-       "text": "Apollo Download Manager installs beside the original Velocity Download Manager (V1): each has its own programs, menu entries and data, and installing or removing one never changes the other ("
+       "text": "Apollo Download Manager installs beside V1, the download manager it grew out of: each has its own programs, menu entries and data, and installing or removing one never changes the other ("
       },
       {
        "type": "link",
@@ -1003,7 +1003,7 @@
       },
       {
        "type": "text",
-       "text": " which was named \"Velocity Download Manager V2\": install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed."
+       "text": " which had an earlier name: install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed."
       }
      ]
     },
@@ -1128,7 +1128,7 @@
     {
      "anchor": "installing",
      "heading": "Installing",
-     "text": "Apollo Download Manager installs beside the original Velocity Download Manager (V1): each has its own programs, menu entries and data, and installing or removing one never changes the other (V1 and Apollo Download Manager). No signed release yet: Apollo Download Manager's installers are test builds, made by its CI and not signed."
+     "text": "Apollo Download Manager installs beside V1, the download manager it grew out of: each has its own programs, menu entries and data, and installing or removing one never changes the other (V1 and Apollo Download Manager). No signed release yet: Apollo Download Manager's installers are test builds, made by its CI and not signed."
     },
     {
      "anchor": "windows",
@@ -1143,7 +1143,7 @@
     {
      "anchor": "upgrading",
      "heading": "Upgrading",
-     "text": "Install a newer version over the old one: run the newer Windows installer, or install the newer Linux package. Your downloads, settings, history and browser registrations are kept. From 0.1.x, which was named \"Velocity Download Manager V2\": install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed."
+     "text": "Install a newer version over the old one: run the newer Windows installer, or install the newer Linux package. Your downloads, settings, history and browser registrations are kept. From 0.1.x, which had an earlier name: install the new version the same way. It replaces the old one, so you have one Apollo Download Manager in Apps & features or in your package manager, and it keeps everything above. On Windows the browsers keep working: the app points them at its new folder the first time it starts. V1 isn't changed."
     },
     {
      "anchor": "removing-apollo-download-manager",
@@ -11042,12 +11042,12 @@
   },
   {
    "id": "v1-and-v2",
-   "title": "Beside Velocity Download Manager",
+   "title": "Beside V1",
    "headings": [
     {
-     "id": "beside-velocity-download-manager",
+     "id": "beside-v1",
      "level": 1,
-     "text": "Beside Velocity Download Manager"
+     "text": "Beside V1"
     },
     {
      "id": "using-both-side-by-side",
@@ -11074,11 +11074,11 @@
     {
      "type": "heading",
      "level": 1,
-     "id": "beside-velocity-download-manager",
+     "id": "beside-v1",
      "content": [
       {
        "type": "text",
-       "text": "Beside Velocity Download Manager"
+       "text": "Beside V1"
       }
      ]
     },
@@ -11087,7 +11087,7 @@
      "content": [
       {
        "type": "text",
-       "text": "Apollo Download Manager is a new app, not an update of the original Velocity Download Manager (V1). V1 downloads with aria2; Apollo Download Manager has its own download engine, and libtorrent for torrents. The aim is to keep every V1 feature, and where a feature had to change without aria2, the change was decided and is listed below."
+       "text": "Apollo Download Manager is a new app, not an update of V1, the download manager it grew out of, which installs separately. V1 downloads with aria2; Apollo Download Manager has its own download engine, and libtorrent for torrents. The aim is to keep every V1 feature, and where a feature had to change without aria2, the change was decided and is listed below."
       }
      ]
     },
@@ -11139,13 +11139,13 @@
        [
         {
          "type": "text",
-         "text": "Apollo Download Manager (\"Velocity Download Manager V2\" until 0.2.0)"
+         "text": "Apollo Download Manager (from 0.2.0; versions 0.1.x had an earlier name)"
         }
        ],
        [
         {
          "type": "text",
-         "text": "Velocity Download Manager"
+         "text": "V1's own name"
         }
        ]
       ],
@@ -11205,7 +11205,7 @@
        [
         {
          "type": "text",
-         "text": "Velocity Download Manager"
+         "text": "V1's own extension"
         }
        ]
       ],
@@ -11752,14 +11752,14 @@
    ],
    "sections": [
     {
-     "anchor": "beside-velocity-download-manager",
-     "heading": "Beside Velocity Download Manager",
-     "text": "Apollo Download Manager is a new app, not an update of the original Velocity Download Manager (V1). V1 downloads with aria2; Apollo Download Manager has its own download engine, and libtorrent for torrents. The aim is to keep every V1 feature, and where a feature had to change without aria2, the change was decided and is listed below."
+     "anchor": "beside-v1",
+     "heading": "Beside V1",
+     "text": "Apollo Download Manager is a new app, not an update of V1, the download manager it grew out of, which installs separately. V1 downloads with aria2; Apollo Download Manager has its own download engine, and libtorrent for torrents. The aim is to keep every V1 feature, and where a feature had to change without aria2, the change was decided and is listed below."
     },
     {
      "anchor": "using-both-side-by-side",
      "heading": "Using both side by side",
-     "text": "You can install and run V1 and Apollo Download Manager at the same time. They share nothing: Apollo Download Manager V1 Name in menus and in Apps & features Apollo Download Manager (\"Velocity Download Manager V2\" until 0.2.0) Velocity Download Manager Data (Windows) %APPDATA%\\com.velocity.downloadmanager.v2 %APPDATA%\\com.velocity.downloadmanager Data (Linux) ~/.local/share/com.velocity.downloadmanager.v2 ~/.local/share/com.velocity.downloadmanager Browser extension Apollo Download Manager, \"Download with Apollo Download Manager\" Velocity Download Manager Torrent listening port 6890 6881, 6882 Downloads, settings and history are separate. Apollo Download Manager doesn't read V1's, and V1 doesn't read Apollo Download Manager's. Files: if both download to the same folder, neither replaces a file the other made. Apollo Download Manager stops a download whose name another program took while it ran (Downloads). Browsers: each extension sends links only to its own app (Browser integration)."
+     "text": "You can install and run V1 and Apollo Download Manager at the same time. They share nothing: Apollo Download Manager V1 Name in menus and in Apps & features Apollo Download Manager (from 0.2.0; versions 0.1.x had an earlier name) V1's own name Data (Windows) %APPDATA%\\com.velocity.downloadmanager.v2 %APPDATA%\\com.velocity.downloadmanager Data (Linux) ~/.local/share/com.velocity.downloadmanager.v2 ~/.local/share/com.velocity.downloadmanager Browser extension Apollo Download Manager, \"Download with Apollo Download Manager\" V1's own extension Torrent listening port 6890 6881, 6882 Downloads, settings and history are separate. Apollo Download Manager doesn't read V1's, and V1 doesn't read Apollo Download Manager's. Files: if both download to the same folder, neither replaces a file the other made. Apollo Download Manager stops a download whose name another program took while it ran (Downloads). Browsers: each extension sends links only to its own app (Browser integration)."
     },
     {
      "anchor": "moving-from-v1",

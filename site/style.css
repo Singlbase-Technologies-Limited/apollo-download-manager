@@ -211,16 +211,17 @@ code { font-family: var(--mono); font-size: 0.875em; background: var(--surface-3
 .docs-side a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--fg-muted); text-decoration: none; line-height: 1.4; }
 .docs-side a:hover { color: var(--fg); background: var(--surface-3); }
 .docs-side a[aria-current] { color: var(--accent-strong); background: var(--accent-soft); font-weight: 600; }
-.docs-side li.sub a { padding-left: 22px; font-size: 0.875rem; }
 .nav-group { margin-bottom: 22px; }
 .nav-group > p { margin: 0 0 6px; padding: 0 10px; color: var(--fg); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.02em; }
-.docs-side details { margin-top: 2px; }
-.docs-side summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 6px; color: var(--fg); font-weight: 600; cursor: pointer; list-style: none; line-height: 1.35; }
+.docs-side .nav-start { margin-bottom: 18px; }
+/* A folder inside a group, such as the decision records, folds under its README's name (#487). */
+.docs-side details { margin-top: 1px; }
+.docs-side summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 10px; border-radius: 6px; color: var(--fg-muted); cursor: pointer; list-style: none; line-height: 1.4; }
 .docs-side summary::-webkit-details-marker { display: none; }
 .docs-side summary::after { content: "›"; color: var(--fg-subtle); font-size: 1.15rem; line-height: 1; }
 .docs-side details[open] > summary::after { transform: rotate(90deg); }
 .docs-side summary:hover { background: var(--surface-3); }
-.docs-side details ul { padding: 2px 0 8px 8px; }
+.docs-side details ul { padding: 2px 0 6px 12px; font-size: 0.875rem; }
 
 .search { margin: 0 0 16px; }
 .search[hidden] { display: none; }
@@ -258,7 +259,9 @@ code { font-family: var(--mono); font-size: 0.875em; background: var(--surface-3
   .toc-small { display: none; }
 }
 
-.prose { font-size: 1.0313rem; line-height: 1.72; }
+/* A word too long for the line, such as a web address written as text, breaks rather than widening the page; it
+ * doesn't narrow table columns, as `anywhere` would (#485). */
+.prose { font-size: 1.0313rem; line-height: 1.72; overflow-wrap: break-word; }
 .prose h1 { font-size: clamp(2rem, 3.6vw, 2.5rem); letter-spacing: -0.025em; margin: 0 0 20px; }
 .prose h2 { font-size: 1.5rem; margin: 52px 0 12px; padding-top: 28px; border-top: 1px solid var(--border); }
 .prose h3 { font-size: 1.175rem; margin: 36px 0 8px; }
@@ -280,6 +283,9 @@ table { border-collapse: collapse; width: 100%; font-size: 0.925rem; line-height
 th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--border); }
 tbody tr:last-child td { border-bottom: 0; }
 th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+/* A name in a table breaks only after a slash or hyphen, never between two letters; a table too wide for the
+ * page scrolls in its box (#485). */
+th code, td code { overflow-wrap: normal; }
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 56px; }
 .pager a { display: block; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--accent-strong); text-decoration: none; font-weight: 600; line-height: 1.35; }
 .pager a:hover { border-color: var(--accent); }

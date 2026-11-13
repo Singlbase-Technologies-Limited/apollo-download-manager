@@ -1,6 +1,6 @@
 # Running Apollo Download Manager beside V1
 
-Apollo Download Manager and the original Velocity Download Manager (V1) can be installed and run at the same time without sharing anything. Each has its own data, database, single-instance lock, IPC endpoint and browser registration (#27, [ADR-0003](decisions/0003-v2-app-identity.md)).
+Apollo Download Manager and V1, the download manager it grew out of, can be installed and run at the same time without sharing anything. Each has its own data, database, single-instance lock, IPC endpoint and browser registration (#27, [ADR-0003](decisions/0003-v2-app-identity.md)).
 
 ## One source of identity
 
@@ -8,13 +8,13 @@ Apollo Download Manager and the original Velocity Download Manager (V1) can be i
 
 | Field | Development builds | Release builds (packaging: Windows since #81, Linux since #82; macOS is #83) | V1, for comparison |
 |---|---|---|---|
-| Product name: window title, install folder, Apps & features entry | Apollo Download Manager (dev) | Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md); "Velocity Download Manager V2" until 0.2.0) | Velocity Download Manager |
+| Product name: window title, install folder, Apps & features entry | Apollo Download Manager (dev) | Apollo Download Manager ([ADR-0018](decisions/0018-product-name-apollo.md); an earlier name until 0.2.0) | V1's product name |
 | Identifier: data folder, single-instance key, pipe name | `dev.velocity.downloadmanager.v2` | `com.velocity.downloadmanager.v2` | `com.velocity.downloadmanager` |
 | Native-messaging host (#65) | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 | Native host program and its registration (#65) | `velocity-native-host-v2`; manifests and, on Windows, `HKCU` keys named after Apollo DM's host ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#registering-with-each-browser)) | the same | `velocity-native-host`, named after V1's host |
 | Firefox extension ID (#64, #240) | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |
 | Chrome extension IDs (#64, #240) | `fhhohpcahhmlijibcpppoddcklobfpld`, the Chrome Web Store's item, pinned by its key ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#identity)) | the same | `eecopkg…` |
-| Browser extension name (#64) | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
+| Browser extension name (#64) | Apollo Download Manager (dev) | Apollo Download Manager | V1's product name |
 
 ## What derives from the identifier
 

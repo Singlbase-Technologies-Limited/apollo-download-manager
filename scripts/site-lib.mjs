@@ -42,7 +42,9 @@ function inlineHtml(content, hrefOf) {
         case 'text':
           return esc(n.text);
         case 'code':
-          return `<code>${esc(n.text)}</code>`;
+          // Code may break after a separator such as a slash, dot or underscore, and never between two letters (#485;
+          // site/style.css keeps code in tables from breaking anywhere else). Not before the end, so no empty break.
+          return `<code>${esc(n.text).replace(/([/\\._:])(?=.)/g, '$1<wbr>')}</code>`;
         case 'break':
           return '<br>';
         case 'image':

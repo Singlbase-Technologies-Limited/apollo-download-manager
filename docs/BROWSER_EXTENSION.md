@@ -21,7 +21,7 @@ Apollo Download Manager's extension uses none of V1's names or IDs ([ADR-0003](d
 
 | | Apollo DM development build | Apollo DM release build | V1 |
 |---|---|---|---|
-| Name | Apollo Download Manager (dev) | Apollo Download Manager | Velocity Download Manager |
+| Name | Apollo Download Manager (dev) | Apollo Download Manager | V1's product name |
 | Native host it talks to | `dev.velocity.download_manager_v2` | `com.velocity.download_manager_v2` | `com.velocity.download_manager` |
 | Chrome extension ID | `fhhohpcahhmlijibcpppoddcklobfpld`, the Chrome Web Store's item ID (`adhefdmekgeafmopfbiappajaolcbhkc` until 0.2.0) | the same | `eecopkgfiffjgmngfmjmdaejbkbbippo` |
 | Firefox add-on ID | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |

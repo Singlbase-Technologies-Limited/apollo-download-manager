@@ -26,6 +26,14 @@ describe('the website (#353)', () => {
     expect(html).toBe('<p>&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;q&quot;<code>&lt;b&gt;</code></p>');
   });
 
+  it('lets code break only after a separator, so a table never splits a name between two letters (#485)', () => {
+    const cell = (text) => renderBlocks([{ type: 'table', head: [[{ type: 'text', text: 'Name' }]], rows: [[[{ type: 'code', text }]]] }], () => '');
+    expect(cell('crates/velocity-core/')).toContain('<td><code>crates/<wbr>velocity-core/</code></td>');
+    expect(cell('performance.allow_mid')).toContain('<td><code>performance.<wbr>allow_<wbr>mid</code></td>');
+    expect(cell('%APPDATA%\\dev.v2')).toContain('<td><code>%APPDATA%\\<wbr>dev.<wbr>v2</code></td>');
+    expect(cell('"a":true')).toContain('<td><code>&quot;a&quot;:<wbr>true</code></td>');
+  });
+
   it('turns guide links into links between the site’s pages', () => {
     const html = renderBlocks(
       [{ type: 'paragraph', content: [{ type: 'link', to: { page: 'torrents', anchor: 'seeding' }, content: [{ type: 'text', text: 'seeding' }] }, { type: 'link', to: { url: 'https://example.org/a?b=1&c=2' }, content: [{ type: 'text', text: 'site' }] }] }],

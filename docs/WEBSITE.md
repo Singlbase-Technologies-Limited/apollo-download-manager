@@ -21,9 +21,12 @@ The pages are never copied: `scripts/site-lib.mjs` renders them at build time th
 
 Each document in `docs/` is a page, rendered by `scripts/dev-site-lib.mjs`, except the user guides and the [documentation map](README.md). [START_HERE.md](START_HERE.md) is the first page. `site/content/developers.json` sets the sections and their order; a folder listed there adds its documents by itself.
 
+The sidebar has the user guide's look (#487): each section is a group with a short heading, and lists its documents by a short name of at most 24 characters, set in `names` in `developers.json`. A page's own heading, which the page and the search show, stays as it is. A folder, such as the decision records, folds under its README's name, and is open on its own pages.
+
 A pull request that touches `docs/` builds the site, and the build fails on:
 
 - a document missing from `developers.json`, or a file listed there that doesn't exist;
+- a document without a sidebar name, or with one longer than 24 characters;
 - a link to a heading that doesn't exist.
 
 A link to another document stays a link on the site, one to a user guide goes to that guide's page, and one to any other file goes to it on GitHub. These pages may show images from `docs/images/`, and text such as `<Name>` stays text. The user guides allow neither.
@@ -78,7 +81,9 @@ pnpm site -- --releases releases.json      # with the download page made from a 
 - every internal link;
 - the menus, the theme switch and that it's remembered, the screen switcher, the FAQ, and previous and next;
 - both searches (#422): the label, the typed text and the documents list share one left edge; the box has a placeholder; a result opens the right page by mouse and by keyboard alone (focus, type, Tab, Enter); and no match says "Nothing found.";
+- both sidebars at desktop width (#487): no group heading, page name or folder name wraps onto a second line;
 - tables at desktop width (#422): no cell wraps to more than 8 lines. The pages whose tables hold paragraphs rather than values are listed in `TALL_TABLES` in `scripts/site-check.mjs`, for the content audit (#425) to rewrite; a page leaves the list once it passes.
+- names in tables (#485), at every width: no file, folder or crate name in a table cell breaks between two letters or digits. The site lets code break only after `/`, `\`, `.`, `_` or `:`, and a table too wide for the page scrolls in its own box.
 - the home page on a slow line (about 1.6 Mbit/s, 150 ms latency, #423): a placeholder in the screenshot's frame while it loads, a screenshot (never an empty frame) 100 ms after the theme switch, and the dark one once it arrives; on a fast line, the dark screenshot within 100 ms of the switch; a phone fetching the 720 px copy; and, on a phone on the same slow line, a layout shift (CLS) under 0.01.
 
 `pnpm site:check -- --shots <folder>` also saves full-page screenshots to look at. It runs locally, before a change to the site's look is pushed.

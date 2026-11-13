@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { oldNames } from './product-name-lib.mjs';
+import { fullNames, oldNames } from './product-name-lib.mjs';
 
 const lines = (path, text) => oldNames(path, text).map((f) => f.line);
 
@@ -24,8 +24,9 @@ describe('oldNames (#421)', () => {
     expect(lines('docs/user/torrents.md', 'BitTorrent v1, v2 and hybrid; Info hash (v2).\n')).toEqual([]);
   });
 
-  it('allows the 0.1.x product name, quoted, which users may still have installed', () => {
-    expect(lines('docs/user/installing.md', 'From 0.1.x, which was named "Velocity Download Manager V2": install it.\n')).toEqual([]);
+  it('allows the quoted 0.1.x product name only in decision records, which stay as written (PO decisions on #486)', () => {
+    expect(lines('docs/user/installing.md', 'From 0.1.x, which was named "Velocity Download Manager V2": install it.\n')).toEqual([1]);
+    expect(lines('docs/decisions/0018-product-name-apollo.md', 'It replaces ADR-0016\'s "Velocity Download Manager V2" as the name.\n')).toEqual([]);
   });
 
   it('allows the title of a decision record, but not its running text (PO, 2026-11-09)', () => {
@@ -54,5 +55,36 @@ describe('oldNames (#421)', () => {
   it('skips tests and generated files, whose text is checked at the source', () => {
     expect(lines('src/app/X.test.tsx', "it('V2 works', () => {});\n")).toEqual([]);
     expect(lines('src/features/help/guide.generated.json', '{"t":"V2"}')).toEqual([]);
+  });
+});
+
+describe('fullNames (#486)', () => {
+  const at = (path, text) => fullNames(path, text).map((f) => f.line);
+
+  it('finds V1 and 0.1.x full names in any case, including in code spans', () => {
+    const text = 'Beside the original Velocity Download Manager.\n\nIn `%LOCALAPPDATA%\\Velocity Download Manager V2`.\n\nvelocity download manager\n';
+    expect(fullNames('docs/user/README.md', text)).toEqual([
+      { line: 1, text: 'Beside the original Velocity Download Manager.' },
+      { line: 3, text: 'In `%LOCALAPPDATA%\\Velocity Download Manager V2`.' },
+      { line: 5, text: 'velocity download manager' },
+    ]);
+  });
+
+  it('allows the word velocity alone, in crate names, identifiers and package names (PO comment on #486)', () => {
+    expect(at('docs/X.md', 'The `velocity-core` crate, `VELOCITY_V2_DATA_DIR` and `com.velocity.downloadmanager.v2`.\n')).toEqual([]);
+  });
+
+  it('keeps decision records and research copies as written (PO decision on #486)', () => {
+    expect(at('docs/decisions/0016-release-product-name-v2.md', '# ADR-0016: The released app is named "Velocity Download Manager V2"\n')).toEqual([]);
+    expect(at('docs/research/2026-10-21-libcurl-engine-research-r2.md', 'The original Velocity Download Manager (V1).\n')).toEqual([]);
+  });
+
+  it("finds the name in a source file's strings, not in its comments", () => {
+    expect(at('src/app/X.tsx', "// Velocity Download Manager\nconst t = 'Velocity Download Manager';\n")).toEqual([2]);
+  });
+
+  it('skips tests and generated files, whose text is checked at the source', () => {
+    expect(at('src/app/X.test.tsx', "const v1 = 'Velocity Download Manager';\n")).toEqual([]);
+    expect(at('src/features/help/guide.generated.json', '{"t":"Velocity Download Manager"}')).toEqual([]);
   });
 });

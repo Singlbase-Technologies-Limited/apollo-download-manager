@@ -23,4 +23,4 @@ Apollo Download Manager: the app, the transfer engine, the torrent helper, the b
 
 Vulnerabilities in a library V2 uses, such as libcurl, OpenSSL or libtorrent, are best reported to that project. Tell us too if V2 is affected; V2 tracks its libraries' advisories ([docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)).
 
-The original Velocity Download Manager (V1) is a separate project.
+V1, the download manager Apollo Download Manager grew out of, is a separate project.
