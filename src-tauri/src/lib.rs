@@ -155,6 +155,7 @@ pub fn run() {
             shell::get_proxy_password_set,
             shell::set_proxy_password,
             shell::get_torrent_network,
+            shell::list_network_adapters,
             shell::choose_directory,
             shell::quit_app,
         ])

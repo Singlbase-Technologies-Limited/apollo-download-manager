@@ -35,7 +35,9 @@ use crate::seeding::{SeedPolicy, MAX_ACTIVE_SEEDS};
 /// [`TorrentEvent::MoveFailed`]; a torrent's files move to another folder.
 /// Version 7 (#470): [`TorrentSpec::in_order`], [`TorrentSpec::ends_first`] and
 /// [`TorrentCommand::SetOrder`]; a torrent downloads in order, its files' ends first.
-pub const TORRENT_CONTRACT_VERSION: u32 = 7;
+/// Version 8 (#471): [`TorrentSettings::network_adapter`] and
+/// [`NetworkStatus::adapter_missing`]; torrents use one network adapter, such as a VPN's.
+pub const TORRENT_CONTRACT_VERSION: u32 = 8;
 
 /// The port the torrent helper listens on unless the user sets another (PO decision on #62):
 /// not V1's 6881 or 6882.
@@ -194,6 +196,10 @@ pub struct TorrentSettings {
     /// Where DHT starts from, as `host:port` (V1's `dht_entry_point`); empty for libtorrent's own
     /// default nodes. At most [`MAX_DHT_NODES`].
     pub dht_bootstrap_nodes: Vec<String>,
+    /// The one network adapter torrents use (#471), such as a VPN's, by its id ([`crate::adapters`]);
+    /// `None` for any. While it is missing, torrents connect through no other.
+    #[serde(default)]
+    pub network_adapter: Option<String>,
 }
 
 impl Default for TorrentSettings {
@@ -210,6 +216,7 @@ impl Default for TorrentSettings {
             extra_trackers: Vec::new(),
             max_peers_per_torrent: DEFAULT_MAX_PEERS,
             dht_bootstrap_nodes: Vec::new(),
+            network_adapter: None,
         }
     }
 }
@@ -225,7 +232,11 @@ impl TorrentSettings {
             && self.download_limit <= MAX_RATE_LIMIT
             && self.extra_trackers.len() <= crate::torrent::MAX_TRACKERS
             && self.dht_bootstrap_nodes.len() <= MAX_DHT_NODES
-            && self.dht_bootstrap_nodes.iter().all(|n| is_host_port(n));
+            && self.dht_bootstrap_nodes.iter().all(|n| is_host_port(n))
+            && self
+                .network_adapter
+                .as_deref()
+                .is_none_or(crate::adapters::is_adapter_id);
         if !in_range {
             return Err(ErrorCode::InvalidInput);
         }
@@ -345,6 +356,10 @@ pub struct NetworkStatus {
     /// Why the helper couldn't listen on the port asked for, if it couldn't.
     pub listen_error: Option<String>,
     pub port_mapping: PortMapState,
+    /// The chosen network adapter's id while it is gone or not connected (#471): torrents then
+    /// connect through no other.
+    #[serde(default)]
+    pub adapter_missing: Option<String>,
 }
 
 /// Part of a byte string too large for one message: a torrent's metadata (`d4:info…e`, which the
@@ -872,7 +887,7 @@ mod tests {
         );
         assert_eq!(
             serde_json::to_string(&TorrentSettings::default()).unwrap(),
-            r#"{"dht":true,"peerExchange":true,"localPeerDiscovery":false,"maxActiveSeeds":0,"listenPort":6890,"portMapping":false,"uploadLimit":0,"downloadLimit":0,"extraTrackers":[],"maxPeersPerTorrent":55,"dhtBootstrapNodes":[]}"#
+            r#"{"dht":true,"peerExchange":true,"localPeerDiscovery":false,"maxActiveSeeds":0,"listenPort":6890,"portMapping":false,"uploadLimit":0,"downloadLimit":0,"extraTrackers":[],"maxPeersPerTorrent":55,"dhtBootstrapNodes":[],"networkAdapter":null}"#
         );
         assert_eq!(
             serde_json::to_string(&TorrentCommand::SetLimits {
@@ -983,10 +998,11 @@ mod tests {
             listen_port: 6890,
             listen_error: None,
             port_mapping: PortMapState::Off {},
+            adapter_missing: None,
         };
         assert_eq!(
             serde_json::to_value(&network).unwrap(),
-            serde_json::json!({"listenPort": 6890, "listenError": null, "portMapping": {"state": "off"}})
+            serde_json::json!({"listenPort": 6890, "listenError": null, "portMapping": {"state": "off"}, "adapterMissing": null})
         );
         let tracker = TrackerStatus {
             url: "http://t.test/…".into(),
@@ -1026,6 +1042,28 @@ mod tests {
             change(&mut s);
             s.check()
         };
+        // The network adapter (#471): an adapter's id, as Windows (its GUID) or Linux (its name)
+        // gives it; libtorrent reads it in a comma-separated `name:port` list.
+        assert_eq!(with(&|s| s.network_adapter = None), Ok(()), "any adapter");
+        for id in [
+            "{921A8483-F16D-4CC1-959B-8A85B6BFEC1C}",
+            "tun0",
+            "wg0",
+            "enp3s0",
+        ] {
+            assert_eq!(
+                with(&|s| s.network_adapter = Some(id.to_owned())),
+                Ok(()),
+                "{id}"
+            );
+        }
+        for bad in ["", " ", "a,b", "a:b", "tun0\n", "[x]", &"a".repeat(257)] {
+            assert_eq!(
+                with(&|s| s.network_adapter = Some(bad.to_owned())),
+                Err(ErrorCode::InvalidInput),
+                "{bad:?}"
+            );
+        }
         assert_eq!(with(&|s| s.listen_port = 0), Ok(()), "random");
         assert_eq!(with(&|s| s.listen_port = 1024), Ok(()));
         assert_eq!(

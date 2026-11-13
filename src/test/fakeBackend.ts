@@ -22,6 +22,7 @@ import {
   type HistoryQuery,
   type ErrorCode,
   type PeerStatus,
+  type NetworkAdapter,
   type NetworkStatus,
   type Settings,
   type ShellSettings,
@@ -67,6 +68,8 @@ export interface FakeState {
   /** Links from the browser waiting for the window, as `take_browser_requests` hands them over (#415). */
   browserRequests: unknown[];
   network: NetworkStatus;
+  /** This computer's network adapters (#471). */
+  adapters: NetworkAdapter[];
   /** What `set_download_category` answers (#366); by default, nothing moved. */
   categoryMove: (args: { id: string; categoryId: string | null }) => CategoryMove;
   /** Commands that fail, with the code they fail with. */
@@ -143,7 +146,8 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
     proxyPassword: null,
     browser: fixture('browser-integration.json') as BrowserIntegration,
     browserRequests: [],
-    network: { listenPort: 6890, listenError: null, portMapping: { state: 'off' } },
+    network: { listenPort: 6890, listenError: null, portMapping: { state: 'off' }, adapterMissing: null },
+    adapters: [],
     categoryMove: () => ({ kind: 'unchanged' }),
     failures: {},
     programs: [],
@@ -294,6 +298,8 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           return null;
         case 'get_torrent_network':
           return state.network;
+        case 'list_network_adapters':
+          return state.adapters;
         case 'get_diagnostics':
           return state.diagnostics();
         case 'export_diagnostics':

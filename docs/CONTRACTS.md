@@ -135,7 +135,8 @@ The commands of [`src-tauri/src/shell.rs`](../src-tauri/src/shell.rs) (#29). A c
 | `forget_learned_servers` | — | nothing; forgets what downloads learned about servers, in the database and in the engine (#325). Since contract version 32 |
 | `get_proxy_password_set` | — | whether the proxy has a password, typed this session or remembered; the password never comes to the window. Since contract version 21 (#192) |
 | `set_proxy_password` | `password` (`null` clears it) | nothing. Gives both engines the proxy with it, and keeps it in the system keychain when `proxy.rememberPassword` is on; `INVALID_INPUT` for one a login can't have, `KEYCHAIN_UNAVAILABLE` when the keychain refused (it is still used). Since contract version 21 (#192) |
-| `get_torrent_network` | — | the torrent helper's `NetworkStatus`: `listenPort`, `listenError` and `portMapping` |
+| `get_torrent_network` | — | the torrent helper's `NetworkStatus`: `listenPort`, `listenError`, `portMapping`, and `adapterMissing`, the chosen network adapter's id while it is gone or not connected (#471, since contract version 37) |
+| `list_network_adapters` | — | this computer's network adapters, each `{ id, name, up }`, without loopback: `id` is what the torrent setting `networkAdapter` stores (#471). `UNSUPPORTED` on a system without a list. Since contract version 37 |
 
 **The `maximize-button` event** carries `idle`, `hover` or `pressed`: on Windows a native window has the mouse over the maximise button, so it says what the button should show (#359).
 

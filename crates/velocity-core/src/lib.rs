@@ -3,6 +3,7 @@
 //! The application identity and the engine-neutral domain types shared with the UI
 //! (`domain`, docs/CONTRACTS.md).
 
+pub mod adapters;
 pub mod app_settings;
 pub mod autostart;
 pub mod branding;
@@ -85,7 +86,9 @@ use serde::Serialize;
 /// Version 35 (#466) added `use_new_link`: a failed or paused download continues with a new link.
 /// Version 36 (#470) added `set_torrent_order`, `inOrder` and `endsFirst` in the Add request and
 /// in `TorrentDetails`: a torrent downloads in order, its files' ends first.
-pub const COMMAND_API_VERSION: u32 = 36;
+/// Version 37 (#471) added `list_network_adapters`, the torrent setting `networkAdapter` and the
+/// torrent network status's `adapterMissing`.
+pub const COMMAND_API_VERSION: u32 = 37;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

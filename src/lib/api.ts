@@ -19,6 +19,7 @@ import {
   HistoryPageSchema,
   KeptFileSchema,
   PeerStatusSchema,
+  NetworkAdapterSchema,
   NetworkStatusSchema,
   SettingsSchema,
   ShellSettingsSchema,
@@ -94,6 +95,8 @@ export const api = {
   /** Sets the proxy's password, or clears it with `null` (#192). */
   setProxyPassword: (password: string | null) => call('set_proxy_password', { password }, nothing),
   torrentNetwork: () => call('get_torrent_network', undefined, NetworkStatusSchema),
+  /** This computer's network adapters, to bind torrents to one (#471). */
+  networkAdapters: () => call('list_network_adapters', undefined, z.array(NetworkAdapterSchema)),
   completeOnboarding: (directory: string) => call('complete_onboarding', { directory }, ShellSettingsSchema),
   /** The system's folder chooser; `null` when the user cancels. */
   chooseDirectory: (initial: string | null) => call('choose_directory', { initial }, z.string().min(1).nullable()),

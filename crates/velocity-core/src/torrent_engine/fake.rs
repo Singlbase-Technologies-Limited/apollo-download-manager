@@ -453,6 +453,7 @@ impl TorrentEngine for FakeTorrentEngine {
             listen_port: 6890,
             listen_error: None,
             port_mapping: PortMapState::Off {},
+            adapter_missing: None,
         })
     }
 

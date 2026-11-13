@@ -244,6 +244,16 @@ pub async fn get_torrent_network(
     on_manager(&downloads, |m| m.torrent_network()).await?
 }
 
+/// This computer's network adapters, to bind torrents to one (#471): read from the system on a
+/// blocking thread, nothing else.
+#[tauri::command]
+pub async fn list_network_adapters(
+) -> Result<Vec<velocity_core::adapters::NetworkAdapter>, ErrorCode> {
+    tauri::async_runtime::spawn_blocking(velocity_core::adapters::network_adapters)
+        .await
+        .map_err(|_| ErrorCode::Internal)?
+}
+
 /// What closing and notifications do, from the settings just saved.
 fn follow(app: &AppHandle, settings: &Settings) {
     let shell = app.state::<ShellState>();
