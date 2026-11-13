@@ -3866,6 +3866,151 @@ mod torrents {
         fs::remove_dir_all(&dir).unwrap();
     }
 
+    /// A manager with a keychain, for remembered trackers (#472, ADR-0021).
+    fn with_keychain(db: &Arc<Database>, keychain: &crate::keychain::MemoryKeychain) -> Setup {
+        let fake = FakeTransfer::new();
+        let direct = fake.control();
+        let lt = FakeTorrentEngine::new();
+        let torrents = lt.control();
+        let m =
+            Manager::open_with_keychain(Box::new(fake), Arc::clone(db), Box::new(keychain.clone()))
+                .unwrap()
+                .with_torrents(Box::new(lt));
+        Setup {
+            m,
+            torrents,
+            direct,
+            db: Arc::clone(db),
+        }
+    }
+
+    const PASSKEY_TRACKER: &str = "https://tracker.example/announce?passkey=secret-key";
+    const TYPED_TRACKER: &str = "udp://typed.example:6969";
+
+    #[test]
+    fn remembered_trackers_come_back_after_a_restart_and_never_reach_the_database() {
+        let dir = folder("trackers-restart");
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let keychain =
+            crate::keychain::MemoryKeychain::with_limit(crate::keychain::WINDOWS_ENTRY_CHARS);
+        let id = {
+            let mut s = with_keychain(&db, &keychain);
+            let id =
+                s.m.add_torrent(
+                    TorrentRequest {
+                        trackers: vec![TYPED_TRACKER.to_owned()],
+                        ..request(&dir)
+                    },
+                    AddOptions::default(),
+                    T0,
+                )
+                .unwrap();
+            // Its file's own trackers come with its resume data, and are stripped before saving.
+            s.torrents.resume_data(TorrentId(1), &resume_data());
+            s.m.pump(T0 + 1);
+            assert!(!s.m.torrent_details(&id).unwrap().trackers_saved);
+            s.m.remember_trackers(&id).unwrap();
+            assert!(s.m.torrent_details(&id).unwrap().trackers_saved);
+            id
+        };
+        let saved = keychain.load_trackers(&id).unwrap().unwrap();
+        assert!(
+            saved.contains(&PASSKEY_TRACKER.to_owned())
+                && saved.contains(&TYPED_TRACKER.to_owned()),
+            "{saved:?}"
+        );
+        // Nothing of them in the database.
+        for d in db.downloads().unwrap() {
+            assert!(!format!("{d:?}").contains("secret-key"));
+        }
+        assert!(!format!("{:?}", db.torrent(&id).unwrap()).contains("secret-key"));
+
+        let mut s = with_keychain(&db, &keychain);
+        s.m.pump(T0 + 2);
+        let trackers = s.torrents.spec(TorrentId(1)).trackers;
+        assert!(
+            trackers.contains(&PASSKEY_TRACKER.to_owned()),
+            "{trackers:?}"
+        );
+        assert!(trackers.contains(&TYPED_TRACKER.to_owned()), "{trackers:?}");
+        let details = s.m.torrent_details(&id).unwrap();
+        assert!(details.trackers_saved && !details.trackers_missing);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn trackers_not_remembered_or_lost_from_the_keychain_say_so_after_a_restart() {
+        let dir = folder("trackers-lost");
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let keychain = crate::keychain::MemoryKeychain::default();
+        let (kept, lost) = {
+            let mut s = with_keychain(&db, &keychain);
+            let kept =
+                s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                    .unwrap();
+            let lost =
+                s.m.add_torrent(
+                    request(&folder("trackers-lost-2")),
+                    AddOptions::default(),
+                    T0,
+                )
+                .unwrap();
+            s.torrents.resume_data(TorrentId(2), &resume_data());
+            s.m.pump(T0 + 1);
+            s.m.remember_trackers(&lost).unwrap();
+            (kept, lost)
+        };
+        keychain.delete_trackers(&lost).unwrap();
+        let s = with_keychain(&db, &keychain);
+        // Never remembered: as before, nothing to say.
+        assert!(!s.m.torrent_details(&kept).unwrap().trackers_missing);
+        // Remembered, and gone from the keychain: its details say why it has none.
+        assert!(s.m.torrent_details(&lost).unwrap().trackers_missing);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn trackers_are_forgotten_on_request_and_with_their_download() {
+        let dir = folder("trackers-forget");
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let keychain = crate::keychain::MemoryKeychain::default();
+        let mut s = with_keychain(&db, &keychain);
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        s.torrents.resume_data(TorrentId(1), &resume_data());
+        s.m.pump(T0 + 1);
+        s.m.remember_trackers(&id).unwrap();
+        s.m.forget_trackers(&id).unwrap();
+        assert_eq!(keychain.load_trackers(&id), Ok(None));
+        assert!(!s.m.torrent_details(&id).unwrap().trackers_saved);
+        s.m.remember_trackers(&id).unwrap();
+        s.m.remove(&id, false).unwrap();
+        assert!(keychain.ids().is_empty(), "removed with its download");
+        assert_eq!(
+            crate::keychain::MemoryKeychain::refusing().save_trackers("x", &[]),
+            Err(ErrorCode::KeychainUnavailable)
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_refused_remember_keeps_nothing_and_says_so() {
+        let dir = folder("trackers-refused");
+        let db = Arc::new(Database::open_in_memory().unwrap());
+        let mut s = with_keychain(&db, &crate::keychain::MemoryKeychain::refusing());
+        let id =
+            s.m.add_torrent(request(&dir), AddOptions::default(), T0)
+                .unwrap();
+        assert_eq!(
+            s.m.remember_trackers(&id),
+            Err(ErrorCode::KeychainUnavailable)
+        );
+        assert!(!s.m.torrent_details(&id).unwrap().trackers_saved);
+        assert_eq!(s.m.remember_trackers("nope"), Err(ErrorCode::NotFound));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
     #[test]
     fn torrents_wait_for_a_slot_and_free_it_to_seed_or_choose_files() {
         let dir = folder("queue");

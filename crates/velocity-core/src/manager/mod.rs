@@ -1226,6 +1226,7 @@ mod options;
 mod persist;
 mod proxy;
 mod recovery;
+mod remembered_trackers;
 mod service;
 mod settings;
 mod start_time;

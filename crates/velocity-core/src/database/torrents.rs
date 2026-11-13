@@ -41,6 +41,10 @@ pub struct TorrentOptions {
     /// Bytes per second; 0 for no limit.
     pub upload_limit: u64,
     pub download_limit: u64,
+    /// Its trackers are saved in the system keychain, at the user's request (#472, ADR-0021);
+    /// never the trackers themselves. Off in options stored before this existed.
+    #[serde(default)]
+    pub trackers_saved: bool,
 }
 
 /// A torrent read back.

@@ -67,8 +67,14 @@ pub(super) struct TorrentJob {
     pub(super) options: TorrentOptions,
     /// Where it came from this session, with any trackers in it; `None` after a restart.
     origin: Option<TorrentOrigin>,
-    /// Extra trackers given this session; empty after a restart (#70).
-    trackers: Vec<String>,
+    /// Extra trackers given this session; after a restart, those remembered in the keychain
+    /// (#472), else none (#70).
+    pub(super) trackers: Vec<String>,
+    /// The trackers its resume data had, stripped before saving it (#472): a `.torrent` file's
+    /// own, which may carry a passkey. In memory only.
+    pub(super) seen_trackers: Vec<String>,
+    /// Its trackers were remembered, but couldn't be read back from the keychain (#472).
+    pub(super) trackers_missing: bool,
     /// `None` until the helper is given the torrent, and once it has forgotten it.
     pub(super) torrent: Option<TorrentId>,
     /// Resume data being put together from the helper's chunks: its total and the bytes so far.
@@ -87,11 +93,36 @@ pub(super) struct TorrentJob {
 }
 
 impl TorrentJob {
+    /// Every tracker it is known to have, each once (#472): given, in its magnet link, and from
+    /// its resume data.
+    pub(super) fn known_trackers(&self) -> Vec<String> {
+        let magnet = match &self.origin {
+            Some(TorrentOrigin::Magnet { uri }) => {
+                parse_magnet(uri).map(|m| m.trackers).unwrap_or_default()
+            }
+            _ => Vec::new(),
+        };
+        let mut all: Vec<String> = Vec::new();
+        for t in self
+            .trackers
+            .iter()
+            .chain(&magnet)
+            .chain(&self.seen_trackers)
+        {
+            if !all.contains(t) {
+                all.push(t.clone());
+            }
+        }
+        all
+    }
+
     pub(super) fn new(options: TorrentOptions, origin: Option<TorrentOrigin>) -> Self {
         TorrentJob {
             options,
             origin,
             trackers: Vec::new(),
+            seen_trackers: Vec::new(),
+            trackers_missing: false,
             torrent: None,
             incoming: None,
             resume_saved: 0,
@@ -179,6 +210,7 @@ impl Manager {
             seeding: request.seeding,
             upload_limit: request.upload_limit,
             download_limit: request.download_limit,
+            trackers_saved: false,
         };
         let category_id = self.known_category(options.category_id.as_deref())?;
         let paused = options.start_paused
@@ -793,9 +825,10 @@ impl Manager {
             return;
         }
         let whole = job.incoming.take().map(|(_, b)| b).unwrap_or_default();
-        let Ok((without, _trackers)) = strip_trackers(&whole) else {
+        let Ok((without, trackers)) = strip_trackers(&whole) else {
             return;
         };
+        self.note_trackers(id, trackers);
         match self.database.save_torrent_resume(id, &without, now_ms) {
             Ok(()) => {
                 if let Ok(job) = self.torrent_job_mut(id) {

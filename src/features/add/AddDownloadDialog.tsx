@@ -6,6 +6,7 @@ import { availability, cleartextWarning } from '../../capabilities';
 import { Button } from '../../components/Button';
 import { Tooltip } from '../../components/Tooltip';
 import { Checkbox } from '../../components/Checkbox';
+import { RememberTrackers } from '../torrents/RememberTrackers';
 import { Dialog } from '../../components/Dialog';
 import { Field } from '../../components/Field';
 import { Input } from '../../components/Input';
@@ -88,6 +89,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const [passphrase, setPassphrase] = useState('');
   // Saving the login in the system keychain needs the user's consent each time (PO decision on #70).
   const [remember, setRemember] = useState(false);
+  // A torrent's trackers in the keychain (#472, ADR-0021), off by default.
+  const [rememberTrackers, setRememberTrackers] = useState(false);
   const [checksumText, setChecksumText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -216,6 +219,14 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     if (first) toast.error(`The login wasn’t remembered: ${first}`);
   };
 
+  /** Saves the trackers of each torrent just added in the system keychain (#472); a refusal is said, and the torrents stay. */
+  const rememberTrackersOf = async (results: AddResult[]) => {
+    const added = results.flatMap((r) => (r.outcome.kind === 'added' ? [r.outcome.id] : []));
+    const refused = await Promise.all(added.map((id) => api.rememberTrackers(id).then(() => null, (e: unknown) => toApiError(e).message)));
+    const first = refused.find((m) => m !== null);
+    if (first) toast.error(`The trackers weren’t remembered: ${first}`);
+  };
+
   /** Sends `req`; closes when everything was added, otherwise shows what happened to each. */
   const run = async (req: AddRequest, addedBefore: number) => {
     setFormError(null);
@@ -223,6 +234,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     try {
       const results: AddResult[] = await api.addDownloads(req);
       if (remember && hasLogin(req)) await rememberLogins(results);
+      if (rememberTrackers && torrentMode) await rememberTrackersOf(results);
       const next = sortOutcome(results, req, addedBefore);
       if (next.conflicts.length === 0 && next.duplicates.length === 0 && next.errors.length === 0) {
         toast.success(next.added === 1 ? 'Download added' : `${plural(next.added, 'download')} added`);
@@ -539,6 +551,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
                   Choose files before downloading
                 </Checkbox>
               )}
+              <RememberTrackers checked={rememberTrackers} onChange={setRememberTrackers} />
               <div className="flex flex-wrap items-start gap-3">
                 <SeedingFields value={seeding} onChange={setSeeding} />
                 <Field label="Upload limit (KiB/s)" hint="Empty or 0 means no limit.">

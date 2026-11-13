@@ -217,6 +217,8 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'allow_download':
         case 'remember_login':
         case 'use_new_link':
+        case 'remember_trackers':
+        case 'forget_trackers':
           return null;
         case 'get_browser_integration':
           return state.browser;

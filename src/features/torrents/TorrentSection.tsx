@@ -80,6 +80,15 @@ export function TorrentSection({ d, actions, busy }: { d: DownloadRecord; action
         {t ? <Row label="Seeding">{seedingSummary(t.seeding)}</Row> : null}
         {/* Changed in the Edit dialog (#349). */}
         {t ? <Row label="Upload limit">{t.uploadLimitBps > 0 ? formatSpeed(t.uploadLimitBps) : 'None'}</Row> : null}
+        {t ? (
+          <Row label="Trackers">
+            {t.trackersMissing
+              ? 'Remembered, but they couldn’t be read from the system keychain after the restart: add the torrent again to get them back.'
+              : t.trackersSaved
+                ? 'Remembered in the system keychain'
+                : 'Not remembered after a restart'}
+          </Row>
+        ) : null}
         {queued ? <Row label="Seeding queue">Waiting for a free seeding slot: only so many torrents seed at once.</Row> : null}
       </dl>
 

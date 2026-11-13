@@ -55,6 +55,10 @@ pub struct TorrentDetails {
     pub seeding: SeedPolicy,
     /// Bytes per second; 0 for no limit.
     pub upload_limit_bps: u64,
+    /// Its trackers are remembered in the system keychain (#472, ADR-0021).
+    pub trackers_saved: bool,
+    /// They were remembered, but couldn't be read back after a restart: it has none.
+    pub trackers_missing: bool,
     /// `None` until its metadata is known.
     pub contents: Option<TorrentContents>,
     /// The files chosen, by index; `None` for every file.
@@ -76,6 +80,8 @@ impl TorrentDetails {
         Self {
             seeding: SeedPolicy::Ratio { ratio: 2.0 },
             upload_limit_bps: 65_536,
+            trackers_saved: true,
+            trackers_missing: false,
             contents: Some(TorrentContents::sample()),
             chosen: Some(vec![1, 3]),
         }
@@ -178,10 +184,13 @@ impl Manager {
     /// The torrent's seeding policy, upload limit, files and the files chosen. `Unsupported` for a
     /// direct download.
     pub fn torrent_details(&self, id: &str) -> Result<TorrentDetails, ErrorCode> {
-        let options = &self.torrent_job(id)?.options;
+        let job = self.torrent_job(id)?;
+        let options = &job.options;
         Ok(TorrentDetails {
             seeding: options.seeding,
             upload_limit_bps: options.upload_limit,
+            trackers_saved: options.trackers_saved,
+            trackers_missing: job.trackers_missing,
             contents: self.stored_meta(id)?.as_ref().map(TorrentContents::from),
             chosen: options.files.clone(),
         })
