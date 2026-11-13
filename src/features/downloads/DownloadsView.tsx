@@ -351,6 +351,7 @@ export function DownloadsView({ view }: { view: ListView }) {
             categories={categories ?? []}
             needsLogin={needsLogin}
             now={now}
+            current={detailsTarget}
           />
         )}
       </div>
