@@ -49,6 +49,14 @@ describe('the in-app user guide (#354)', () => {
     expect(within(contents).getByRole('button', { name: 'Torrents' }).getAttribute('aria-current')).toBe('page');
   });
 
+  it('doesn’t repeat the groups under the introduction: its headings are the groups themselves (#488)', async () => {
+    await renderApp();
+    act(() => { useUiStore.getState().openGuide(); });
+    const guide = await screen.findByRole('dialog', { name: 'User guide' });
+    const contents = within(guide).getByRole('navigation', { name: 'Guide contents' });
+    expect(within(contents).queryByRole('link', { name: 'Using the app' })).toBeNull();
+  });
+
   it('opens a page at its very top, not at its heading, which sits below the page’s margin', async () => {
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
     const user = await renderApp();

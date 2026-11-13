@@ -254,7 +254,8 @@ export function GuideView() {
                       >
                         {pageName(p)}
                       </button>
-                      {p.id === page.id
+                      {/* The introduction's headings are the groups themselves, so they aren't listed again. */}
+                      {p.id === page.id && p.id !== 'index'
                         ? p.headings.filter((h) => h.level === 2).map((h) => (
                           <a key={h.id} href={`#${domId(h.id)}`} className="rounded-md py-1 pl-5 pr-2 text-xs text-fg-muted hover:bg-row-hover hover:text-fg" onClick={(e) => { e.preventDefault(); go(p.id, h.id); }}>
                             {h.text}
