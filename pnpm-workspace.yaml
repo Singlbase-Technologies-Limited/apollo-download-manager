@@ -5,3 +5,6 @@ auditConfig:
     # minimatch 10, through ESLint only: a development tool reading the repository's own globs. Drop
     # it once ESLint moves to minimatch 11 (PO decision on #260).
     - GHSA-g3hv-75wg-m249
+    # picomatch 4.0.4, through vitest (tinyglobby, fdir) only: the test runner matching the repository's own
+    # test globs. No fixed release yet; drop it once one is out (PO decision on #506).
+    - GHSA-fc5q-39xc-vjpf
