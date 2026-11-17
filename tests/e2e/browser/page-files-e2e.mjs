@@ -190,19 +190,47 @@ try {
     await page.close();
   }
 
-  // The scanning cost: the time scripts ran on a 5,000-link page that runs none of its own until asked.
+  // The scanning cost: the time the page button's script was running, its own code and the browser's work it called,
+  // from V8's CPU profile (a sample every 50 µs), on a page with 5,000 file links, then after the page adds 20.
   {
-    const { page, cdp } = await open(context, '/page/big');
-    await cdp.send('Performance.enable');
+    const page = await context.newPage();
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('DOM.enable');
+    await cdp.send('Accessibility.enable');
+    await cdp.send('Profiler.enable');
+    await cdp.send('Profiler.setSamplingInterval', { interval: 50 });
+    /** Milliseconds of samples with pagefiles.js anywhere on the stack. */
+    const ours = (profile) => {
+      const parent = new Map();
+      const byId = new Map(profile.nodes.map((n) => [n.id, n]));
+      for (const n of profile.nodes) for (const c of n.children ?? []) parent.set(c, n.id);
+      const inScript = new Map();
+      const hit = (id) => {
+        if (inScript.has(id)) return inScript.get(id);
+        const n = byId.get(id);
+        const v = String(n?.callFrame?.url ?? '').endsWith('pagefiles.js') || (parent.has(id) && hit(parent.get(id)));
+        inScript.set(id, v);
+        return v;
+      };
+      let us = 0;
+      profile.samples.forEach((id, i) => {
+        if (hit(id)) us += profile.timeDeltas[i + 1] ?? 50;
+      });
+      return us / 1000;
+    };
+    await cdp.send('Profiler.start');
+    await page.goto(`${w.base}/page/big`);
     await waitFor(() => find(cdp, 'button', 'Apollo DM: 5000 files on this page'), 15000, 'the button for 5,000 files');
-    const metric = async () => (await cdp.send('Performance.getMetrics')).metrics.find((m) => m.name === 'ScriptDuration')?.value ?? 0;
-    const first = (await metric()) * 1000;
-    const pageOwn = await page.evaluate(() => window.addMore());
+    await sleep(300);
+    const first = ours((await cdp.send('Profiler.stop')).profile);
+    await cdp.send('Profiler.start');
+    await page.evaluate(() => window.addMore());
     await waitFor(() => find(cdp, 'button', 'Apollo DM: 5020 files on this page'), 15000, 'the rescan');
-    const rescan = (await metric()) * 1000 - first - pageOwn;
-    console.log(`measured: first scan (all scripts on the page) ${first.toFixed(1)} ms; rescan after the page added 20 links ${rescan.toFixed(1)} ms`);
-    check('the first scan of 5,000 links takes under 50 ms', first < 50, `${first.toFixed(1)} ms`);
-    check('a rescan of 20 added links takes under 10 ms', rescan < 10, `${rescan.toFixed(1)} ms`);
+    await sleep(300);
+    const rescan = ours((await cdp.send('Profiler.stop')).profile);
+    console.log(`measured (V8 CPU profile, 50 µs samples): first scan of 5,000 links ${first.toFixed(1)} ms; rescan after the page added 20 links ${rescan.toFixed(1)} ms`);
+    check('the first scan of 5,000 links takes under 50 ms', first > 0 && first < 50, `${first.toFixed(1)} ms`);
+    check('a rescan of 20 added links takes under 10 ms', rescan > 0 && rescan < 10, `${rescan.toFixed(1)} ms`);
     await page.close();
   }
 } catch (e) {

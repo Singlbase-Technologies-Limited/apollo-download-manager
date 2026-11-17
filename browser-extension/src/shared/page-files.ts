@@ -4,7 +4,7 @@
  */
 import { SHORT_NAME } from './branding';
 import type { BatchOutcome } from './protocol';
-import { decide, extensionOf, hostMatches } from './rules';
+import { decideAt, extensionOf, hostMatches } from './rules';
 import type { ExtensionSettings } from './settings';
 
 /** A link as the page has it: its `href`, and its `download` attribute when it names the file. */
@@ -56,24 +56,33 @@ const MAX_URL = 8192;
 
 /** The link as one address: resolved against the page, without its `#…` part; `null` unless it is http or https. */
 export function normalizeLink(href: string, base: string): string | null {
+  return parseLink(href, base)?.href ?? null;
+}
+
+function parseLink(href: string, base: string): URL | null {
   try {
     const u = new URL(href, base);
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
     u.hash = '';
-    return u.href.length <= MAX_URL ? u.href : null;
+    return u.href.length <= MAX_URL ? u : null;
   } catch {
     return null;
   }
 }
 
-function nameOf(url: string, download: string | null | undefined): string {
+/**
+ * The file's name: the `download` attribute's, else the link's last path segment, read from the link as written so
+ * that links that aren't files are passed over without parsing them (#426: a page can have thousands).
+ */
+export function nameOf(href: string, download: string | null | undefined): string {
   const given = download?.trim();
   if (given) return given.split(/[\\/]/).pop() ?? given;
+  const path = href.split(/[?#]/, 1)[0] ?? '';
+  const seg = path.slice(path.lastIndexOf('/') + 1);
   try {
-    const seg = new URL(url).pathname.split('/').filter(Boolean).pop() ?? '';
     return decodeURIComponent(seg);
   } catch {
-    return '';
+    return seg;
   }
 }
 
@@ -84,17 +93,20 @@ function nameOf(url: string, download: string | null | undefined): string {
  * parts lists each once.
  */
 export function findPageFiles(links: Iterable<LinkSeen>, base: string, s: ExtensionSettings, seen = new Set<string>()): PageFiles {
-  // The page list follows the file rules whatever the browser-download mode, and its links have no size yet.
-  const rules: ExtensionSettings = { ...s, mode: 'auto', minSizeMib: 0, includePrivate: true, captureTorrents: true };
+  // The page list follows the file rules whatever the browser-download mode or window, and its links have no size
+  // yet: `decideAt` applies the address, site and type rules only.
+  const rules: ExtensionSettings = { ...s, minSizeMib: 0, captureTorrents: true };
   const out: PageFiles = { files: [], skipped: [] };
+  const types = new Set([...s.fileTypes, 'torrent']);
   for (const link of links) {
-    const url = normalizeLink(link.href, base);
-    if (url === null || seen.has(url)) continue;
-    const name = nameOf(url, link.download);
-    const ext = extensionOf(name);
-    if (!ext || !(s.fileTypes.includes(ext) || ext === 'torrent')) continue;
+    const name = nameOf(link.href, link.download);
+    if (!types.has(extensionOf(name))) continue;
+    const parsed = parseLink(link.href, base);
+    if (parsed === null || seen.has(parsed.href)) continue;
+    const url = parsed.href;
     seen.add(url);
-    const d = decide({ url, filename: name }, rules, '');
+    const ext = extensionOf(name);
+    const d = decideAt(parsed, { url, filename: name }, rules);
     if (d.intercept) out.files.push({ url, name, group: groupOf(ext) });
     else out.skipped.push({ url, name, reason: d.reason });
   }

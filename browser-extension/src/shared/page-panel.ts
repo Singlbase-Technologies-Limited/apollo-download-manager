@@ -285,7 +285,9 @@ export function mountPagePanel(root: ShadowRoot | HTMLElement, doc: Document, si
     const n = found.files.filter((f) => chosen.has(f.url)).length;
     chosenText.textContent = `${String(n)} chosen`;
     sendBtn.textContent = n > 0 ? `Send ${String(n)} to ${SHORT_NAME}` : `Send to ${SHORT_NAME}`;
-    sendBtn.disabled = n === 0 || sending;
+    // Kept focusable while sending, so the keyboard stays in the panel; a click then does nothing.
+    sendBtn.disabled = n === 0;
+    sendBtn.setAttribute('aria-disabled', String(sending));
     const vis = shown();
     const on = vis.filter((f) => chosen.has(f.url)).length;
     all.checked = vis.length > 0 && on === vis.length;
@@ -302,11 +304,14 @@ export function mountPagePanel(root: ShadowRoot | HTMLElement, doc: Document, si
         .filter((g) => counts.has(g))
         .map((g) => {
           const c = button('chip', `${g} ${String(counts.get(g) ?? 0)}`);
+          c.dataset.group = g;
           c.setAttribute('aria-pressed', String(filter === g));
           c.addEventListener('click', () => {
             filter = g;
             renderChips();
             renderList();
+            // The chips are drawn again: the keyboard stays on the one chosen.
+            chips.querySelector<HTMLButtonElement>(`[data-group="${g}"]`)?.focus();
           });
           return c;
         }),
@@ -338,11 +343,12 @@ export function mountPagePanel(root: ShadowRoot | HTMLElement, doc: Document, si
     }
     if (vis.length === 0) rows.push(el('p', 'empty', found.files.length === 0 ? 'No files on this page.' : 'No file matches.'));
     if (found.skipped.length > 0) {
-      const toggle = button('link', showSkipped ? `Hide ${plural(found.skipped.length, 'skipped link', 'skipped links')}` : `Show ${plural(found.skipped.length, 'skipped link', 'skipped links')}`);
+      const toggle = button('link skip-toggle', showSkipped ? `Hide ${plural(found.skipped.length, 'skipped link', 'skipped links')}` : `Show ${plural(found.skipped.length, 'skipped link', 'skipped links')}`);
       toggle.setAttribute('aria-expanded', String(showSkipped));
       toggle.addEventListener('click', () => {
         showSkipped = !showSkipped;
         renderList();
+        list.querySelector<HTMLButtonElement>('.skip-toggle')?.focus();
       });
       rows.push(toggle);
       if (showSkipped) {
@@ -396,6 +402,10 @@ export function mountPagePanel(root: ShadowRoot | HTMLElement, doc: Document, si
       .finally(() => {
         sending = false;
         renderList();
+        // With nothing left to send the button is off, and the browser takes the focus off it: the keyboard goes
+        // back to the search, inside the panel.
+        const active = 'activeElement' in root ? root.activeElement : doc.activeElement;
+        if (!panel.hidden && (active === sendBtn ? sendBtn.disabled : !(active && panel.contains(active)))) search.focus();
       });
   });
 

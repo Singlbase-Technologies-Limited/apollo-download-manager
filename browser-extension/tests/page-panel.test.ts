@@ -166,6 +166,20 @@ describe('the page button and panel (#426)', () => {
     });
     expect(sent).toEqual([[{ url: `${BASE}f0.iso`, filename: 'f0.iso' }, { url: `${BASE}notes.pdf`, filename: 'notes.pdf' }]]);
     expect(q('.count')?.textContent).toBe('0 chosen');
+    // The keyboard stays in the panel, so Escape still closes it.
+    expect(root.activeElement).toBe(q('input[type="search"]'));
+  });
+
+  it('keeps the keyboard on a type filter and the skipped toggle when they are drawn again', () => {
+    const { store } = fakeStore({ tipSeen: true });
+    const ui = mountPagePanel(root, document, 'mirror.example.org', store);
+    ui.update({ files: [...files(1).files, { url: `${BASE}n.pdf`, name: 'n.pdf', group: 'Documents' }], skipped: [{ url: 'https://x.example/a.iso', name: 'a.iso', reason: 'domain is excluded' }] });
+    ui.open();
+    button('Documents 1')?.focus();
+    button('Documents 1')?.click();
+    expect(root.activeElement?.textContent).toBe('Documents 1');
+    button('Show 1 skipped link')?.click();
+    expect(root.activeElement?.textContent).toBe('Hide 1 skipped link');
   });
 
   it('says what failed and keeps the choice', async () => {
