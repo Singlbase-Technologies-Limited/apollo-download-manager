@@ -98,6 +98,8 @@ export const api = {
   /** This computer's network adapters, to bind torrents to one (#471). */
   networkAdapters: () => call('list_network_adapters', undefined, z.array(NetworkAdapterSchema)),
   completeOnboarding: (directory: string) => call('complete_onboarding', { directory }, ShellSettingsSchema),
+  /** Saves that the guide after Get started was gone through or skipped (#463). */
+  setGuideState: (state: 'finished' | 'skipped') => call('set_guide_state', { state }, ShellSettingsSchema),
   /** The system's folder chooser; `null` when the user cancels. */
   chooseDirectory: (initial: string | null) => call('choose_directory', { initial }, z.string().min(1).nullable()),
   quit: () => call('quit_app', undefined, nothing),

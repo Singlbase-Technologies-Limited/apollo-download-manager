@@ -257,11 +257,27 @@ impl Section for AppearanceSettings {
     }
 }
 
-/// Whether the first-run setup was finished (V1's `onboardingCompleted`).
+/// Whether the first-run setup was finished (V1's `onboardingCompleted`), and where the user is with
+/// the guide after it (#463).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct OnboardingSettings {
     pub completed: bool,
+    /// The guide on the main window: offered once, while `Unseen`.
+    pub guide: GuideState,
+    /// The setup was finished in a version with the guide, so its offer says "Welcome". Someone who
+    /// finished it before (0.2.0 and earlier) is offered it as a new quick tour (PO decision on #463).
+    pub welcome: bool,
+}
+
+/// The guide after Get started (#463): not seen yet, gone through to the end, or skipped.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum GuideState {
+    #[default]
+    Unseen,
+    Finished,
+    Skipped,
 }
 
 impl Section for OnboardingSettings {
@@ -288,6 +304,10 @@ impl Section for UpkeepSettings {
 pub struct ShellSettings {
     pub appearance: AppearanceSettings,
     pub onboarding_completed: bool,
+    /// Where the user is with the guide after Get started (#463).
+    pub guide: GuideState,
+    /// The guide's offer says "Welcome", or presents it as new to someone who set up before it.
+    pub guide_welcome: bool,
     /// The default folder as it applies now: the setting, else the system's Downloads folder;
     /// `None` when there is neither.
     pub default_directory: Option<String>,
@@ -310,6 +330,8 @@ impl ShellSettings {
                 ..AppearanceSettings::default()
             },
             onboarding_completed: true,
+            guide: GuideState::Unseen,
+            guide_welcome: true,
             default_directory: Some("/home/user/Downloads".to_owned()),
         }
     }
@@ -338,6 +360,25 @@ mod tests {
         assert!(look.layout.sidebar_visible && !look.layout.sidebar_collapsed);
         assert!(!look.layout.details_visible);
         assert!(!OnboardingSettings::default().completed);
+        assert_eq!(OnboardingSettings::default().guide, GuideState::Unseen);
+    }
+
+    // #463: settings saved before the guide existed still load, as someone who set up before it.
+    #[test]
+    fn onboarding_saved_before_the_guide_still_loads() {
+        let old: OnboardingSettings = serde_json::from_str(r#"{"completed":true}"#).unwrap();
+        assert_eq!(
+            old,
+            OnboardingSettings {
+                completed: true,
+                guide: GuideState::Unseen,
+                welcome: false
+            }
+        );
+        let now: OnboardingSettings =
+            serde_json::from_str(r#"{"completed":true,"guide":"skipped","welcome":true}"#).unwrap();
+        assert_eq!(now.guide, GuideState::Skipped);
+        assert!(serde_json::from_str::<OnboardingSettings>(r#"{"guide":"later"}"#).is_err());
     }
 
     #[test]

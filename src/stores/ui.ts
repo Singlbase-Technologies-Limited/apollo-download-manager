@@ -72,6 +72,11 @@ interface UiState {
   openGuide: (page?: string, anchor?: string) => void;
   closeGuide: () => void;
   closeChooseFiles: () => void;
+  /** The step of the guide after Get started on screen (#463), from 0; `null` when it isn't running. */
+  tourStep: number | null;
+  startTour: () => void;
+  setTourStep: (step: number) => void;
+  endTour: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -108,4 +113,8 @@ export const useUiStore = create<UiState>((set) => ({
   openGuide: (page, anchor) => { set({ guide: { page: page ?? 'index', anchor: anchor ?? null } }); },
   closeGuide: () => { set({ guide: null }); },
   closeChooseFiles: () => { set({ chooseFilesId: null }); },
+  tourStep: null,
+  startTour: () => { set({ tourStep: 0 }); },
+  setTourStep: (tourStep) => { set({ tourStep }); },
+  endTour: () => { set({ tourStep: null }); },
 }));

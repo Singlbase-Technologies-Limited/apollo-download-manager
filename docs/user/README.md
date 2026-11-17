@@ -12,7 +12,7 @@ The guides are in four groups, here and in the sidebar, in the app and on the we
 
 | Guide | What it covers |
 |---|---|
-| [Installing](installing.md) | The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager |
+| [Installing](installing.md) | The Windows installer and the Linux packages, the first start and its short guide, upgrading and removing Apollo Download Manager |
 
 ## Using the app
 

@@ -180,7 +180,7 @@ export function DownloadsView({ view }: { view: ListView }) {
     <div className="flex min-h-0 min-w-0 flex-1">
       {/* The list and its toolbar are one panel, and the details panel another beside it. */}
       <div className={cn(PANEL, '@container flex min-h-0 min-w-0 flex-1 flex-col bg-bg')}>
-      <div ref={toolbarRef} className="flex h-12 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-3" role="toolbar" aria-label="Download actions">
+      <div ref={toolbarRef} className="flex h-12 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-3" role="toolbar" aria-label="Download actions" data-tour="toolbar">
         <Tooltip label="Resume selected" canBeDisabled>
           <Button variant="ghost" size="icon" aria-label="Resume selected" disabled={busy || !can.resume} onClick={() => void actions.resume(ids)}>
             <Play />

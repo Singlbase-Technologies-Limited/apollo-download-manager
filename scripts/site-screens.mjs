@@ -158,6 +158,8 @@ const shellSettings = (theme, onboardingCompleted) => ({
     timeFormat: 'twentyFourHour',
   },
   onboardingCompleted,
+  guide: 'finished',
+  guideWelcome: true,
   defaultDirectory: FOLDER,
 });
 

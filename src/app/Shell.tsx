@@ -18,6 +18,8 @@ import { PANEL } from '../layout/panel';
 import { cn } from '../lib/cn';
 import { useUiStore } from '../stores/ui';
 import { quitQuestion } from './quitQuestion';
+import { GuideOffer, GuideTour } from '../features/guide/GuideTour';
+import { useShellSettings } from '../lib/queries';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
 
@@ -51,9 +53,13 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
   const layout = useUiStore((s) => s.layout);
   const setLayout = useUiStore((s) => s.setLayout);
   const viewport = useViewportWidth();
+  const { data: shellSettings } = useShellSettings();
+  // The guide after Get started shows a hidden sidebar while it runs, without saving that (PO decision on #463).
+  const touring = useUiStore((s) => s.tourStep !== null);
+  const shown = useMemo(() => (touring && !layout.sidebarVisible ? { ...layout, sidebarVisible: true } : layout), [touring, layout]);
   // The details panel belongs to the download lists (#61).
   const detailsOpen = layout.detailsVisible && view !== 'categories' && view !== 'history';
-  const resolved = useMemo(() => resolveLayout(layout, viewport, detailsOpen), [layout, viewport, detailsOpen]);
+  const resolved = useMemo(() => resolveLayout(shown, viewport, detailsOpen), [shown, viewport, detailsOpen]);
   const rootRef = useRef<HTMLDivElement>(null);
 
   // The panels' widths live in CSS variables, so a drag updates them without a React render.
@@ -112,6 +118,7 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
           </>
         ) : null}
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden" aria-label="Main content">
+          {shellSettings ? <GuideOffer settings={shellSettings} /> : null}
           <ShellLayoutContext.Provider value={shellLayout}>{content}</ShellLayoutContext.Provider>
         </main>
       </div>
@@ -120,6 +127,7 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
       <ChooseFilesDialog />
       <HostKeyPrompt />
       <SettingsDialog />
+      <GuideTour />
     </div>
   );
 }
