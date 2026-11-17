@@ -97,13 +97,15 @@ export function firstRun(): ShellSettings {
       timeFormat: 'twentyFourHour',
     },
     onboardingCompleted: false,
+    guide: 'unseen',
+    guideWelcome: false,
     defaultDirectory: '/home/user/Downloads',
   };
 }
 
-/** Settings after the first-run setup, with the default layout. */
+/** Settings after the first-run setup and the guide (#463), with the default layout. */
 export function setUp(): ShellSettings {
-  return { ...firstRun(), onboardingCompleted: true };
+  return { ...firstRun(), onboardingCompleted: true, guide: 'finished', guideWelcome: true };
 }
 
 export function emptySnapshot(): DownloadsSnapshot {
@@ -180,7 +182,12 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
           state.settings = { ...state.settings, appearance: args.appearance as ShellSettings['appearance'] };
           return state.settings.appearance;
         case 'complete_onboarding':
-          state.settings = { ...state.settings, onboardingCompleted: true, defaultDirectory: (args.directory as string).trim() };
+          state.settings = { ...state.settings, onboardingCompleted: true, guideWelcome: true, defaultDirectory: (args.directory as string).trim() };
+          return state.settings;
+        case 'set_guide_state':
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          if (args.state !== 'finished' && args.state !== 'skipped') throw 'INVALID_INPUT';
+          state.settings = { ...state.settings, guide: args.state };
           return state.settings;
         case 'choose_directory':
           return state.chosenDirectory;

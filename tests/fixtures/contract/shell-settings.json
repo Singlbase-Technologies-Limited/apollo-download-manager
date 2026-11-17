@@ -23,5 +23,7 @@
     ]
   },
   "defaultDirectory": "/home/user/Downloads",
+  "guide": "unseen",
+  "guideWelcome": true,
   "onboardingCompleted": true
 }

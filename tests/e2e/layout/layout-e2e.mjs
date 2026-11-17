@@ -147,9 +147,52 @@ async function guideSidebar() {
   }
 }
 
+// The guide after Get started (#463): at each of its 6 steps, the bubble is inside the window and the lit area is on
+// the step's control, at the narrowest window (the sidebar a rail) and a wide one, and with the sidebar hidden, which
+// the guide shows while it runs (PO decision).
+async function tourChecks() {
+  for (const theme of ['light', 'dark']) {
+    for (const [label, w, h, sidebar] of [
+      ['min-960x600', 960, 600, 'full'],
+      ['laptop-1366x768-rail', 1366, 768, 'rail'],
+      ['laptop-1366x768-hidden', 1366, 768, 'hidden'],
+    ]) {
+      const { ctx, page } = await newPage(w, h);
+      await open(page, `fresh=1&theme=${theme}&guide=unseen&sidebar=${sidebar}`);
+      await page.getByRole('button', { name: 'Show me around' }).click();
+      const problems = [];
+      for (let step = 1; step <= 6; step += 1) {
+        const dialog = page.getByRole('dialog').filter({ hasText: `Step ${String(step)} of 6` });
+        await dialog.waitFor();
+        await page.waitForTimeout(350);
+        const shape = await page.evaluate(() => {
+          const bubble = document.querySelector('[data-testid="guide-tour"] [role="dialog"]')?.getBoundingClientRect();
+          const ring = document.querySelector('[data-testid="guide-tour"] .ring-2')?.getBoundingClientRect();
+          const id = document.querySelector('#guide-step-title')?.textContent ?? '';
+          return { bubble: bubble && { l: bubble.left, t: bubble.top, r: bubble.right, b: bubble.bottom }, ring: ring && { l: ring.left, t: ring.top, r: ring.right, b: ring.bottom }, id, vw: innerWidth, vh: innerHeight };
+        });
+        const target = ['add', 'toolbar', 'nav', 'settings', 'settings', 'help'][step - 1];
+        const t = await page.locator(`[data-tour="${target}"]`).first().boundingBox();
+        const b = shape.bubble;
+        if (!b || b.l < 0 || b.t < 0 || b.r > shape.vw || b.b > shape.vh) problems.push(`step ${String(step)}: the bubble leaves the window`);
+        const r = shape.ring;
+        if (!t || !r || !(r.l <= t.x + 1 && r.t <= t.y + 1 && r.r >= t.x + t.width - 1 && r.b >= t.y + t.height - 1)) problems.push(`step ${String(step)} (${shape.id}): the light isn't on the control`);
+        if (b && r && !(b.r <= r.l || b.l >= r.r || b.b <= r.t || b.t >= r.b) && target !== 'toolbar' && target !== 'nav') problems.push(`step ${String(step)}: the bubble covers the control`);
+        if (step === 1 || step === 6) await shot(page, `guide-${label}-${theme}-step${String(step)}`);
+        await dialog.getByRole('button', { name: step === 6 ? 'Done' : 'Next' }).click();
+      }
+      check(`guide ${label} ${theme}: each step's bubble is in the window and its control lit`, problems.length === 0, problems.slice(0, 3).join('; '));
+      const sidebarAfter = await page.getByRole('navigation', { name: 'Primary' }).count();
+      check(`guide ${label} ${theme}: the sidebar is as it was afterwards`, (sidebarAfter === 0) === (sidebar === 'hidden'), `${String(sidebarAfter)} navigation(s)`);
+      await ctx.close();
+    }
+  }
+}
+
 try {
   // First, so it reports even when a later check stops the run.
   await hoverHelp();
+  await tourChecks();
   await guideSidebar();
   const { runChecks } = await import('./layout-checks.mjs');
   await runChecks({ open, shot, row, newPage, check, BASE });

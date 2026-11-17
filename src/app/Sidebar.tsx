@@ -82,6 +82,7 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
     <button
       type="button"
       onClick={() => { openAdd(); }}
+      data-tour="add"
       aria-keyshortcuts="Control+N"
       className={cn(
         'flex h-8 w-full cursor-pointer items-center gap-2 rounded-md bg-accent text-[13px] font-medium text-accent-fg shadow-sm transition-colors hover:bg-accent-strong',
@@ -108,7 +109,7 @@ export function Sidebar({ app, compact, autoCompact }: { app: AppInfo; compact: 
   );
 
   return (
-    <nav id="app-sidebar" aria-label="Primary" data-mode={compact ? 'rail' : 'full'} className={cn(PANEL, 'flex shrink-0 flex-col bg-sidebar')} style={{ width: 'var(--sidebar-w)' }}>
+    <nav id="app-sidebar" aria-label="Primary" data-tour="nav" data-mode={compact ? 'rail' : 'full'} className={cn(PANEL, 'flex shrink-0 flex-col bg-sidebar')} style={{ width: 'var(--sidebar-w)' }}>
       {/* The logo is no longer here: only on the loader, the first-run screens and the title bar (#363). The button
           stays put while the list below it scrolls; a line marks where the scrolling starts. */}
       <div className={cn('shrink-0 border-b border-border-strong pb-3 pt-3', compact ? 'px-2' : 'px-2.5')}>

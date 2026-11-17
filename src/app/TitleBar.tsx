@@ -1,4 +1,4 @@
-import { BookOpen, Copy, HelpCircle, Info, MessageSquare, Minus, ScrollText, Settings, Square, X } from 'lucide-react';
+import { BookOpen, Compass, Copy, HelpCircle, Info, MessageSquare, Minus, ScrollText, Settings, Square, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { BrandIcon } from '../components/BrandIcon';
@@ -44,6 +44,7 @@ function WindowButton({ label, onClick, danger, children, ref, native }: { label
 function AppButtons({ app }: { app: AppInfo }) {
   const openSettings = useUiStore((s) => s.openSettings);
   const openGuide = useUiStore((s) => s.openGuide);
+  const startTour = useUiStore((s) => s.startTour);
   const [whatsNew, setWhatsNew] = useState(false);
   const feedback = () => {
     api.openFeedbackPage().catch((e: unknown) => { toast.error(`The feedback page couldn’t be opened: ${toApiError(e).message}`); });
@@ -54,13 +55,15 @@ function AppButtons({ app }: { app: AppInfo }) {
       <DropdownMenu
         trigger={
           <Tooltip label="Help" side="bottom">
-            <button type="button" aria-label="Help" className={iconButton}>
+            <button type="button" aria-label="Help" data-tour="help" className={iconButton}>
               <HelpCircle className="size-4" aria-hidden />
             </button>
           </Tooltip>
         }
         items={[
           { label: 'User guide', icon: <BookOpen />, onSelect: () => { openGuide(); } },
+          // The guide after Get started, again (#463).
+          { label: 'Show the guide again', icon: <Compass />, onSelect: startTour },
           { label: 'What’s new', icon: <ScrollText />, onSelect: () => { setWhatsNew(true); } },
           { label: 'Send feedback…', icon: <MessageSquare />, onSelect: feedback },
           'separator',
@@ -68,7 +71,7 @@ function AppButtons({ app }: { app: AppInfo }) {
         ]}
       />
       <Tooltip label="Settings" shortcut="Ctrl+," side="bottom">
-        <button type="button" aria-label="Settings" className={iconButton} onClick={() => { openSettings(); }}>
+        <button type="button" aria-label="Settings" data-tour="settings" className={iconButton} onClick={() => { openSettings(); }}>
           <Settings className="size-4" aria-hidden />
         </button>
       </Tooltip>

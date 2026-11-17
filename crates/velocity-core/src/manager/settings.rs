@@ -2,7 +2,7 @@
 //! reads. Their screen is #30's.
 
 use super::Manager;
-use crate::app_settings::{AppearanceSettings, OnboardingSettings, ShellSettings};
+use crate::app_settings::{AppearanceSettings, GuideState, OnboardingSettings, ShellSettings};
 use crate::database::settings::Section;
 use crate::destination::{check_folder, system_downloads, FolderSettings};
 use crate::domain::ErrorCode;
@@ -22,9 +22,12 @@ impl Manager {
             "" => system_downloads().map(|p| p.to_string_lossy().into_owned()),
             dir => Some(dir.to_owned()),
         };
+        let onboarding = self.settings_section::<OnboardingSettings>()?;
         Ok(ShellSettings {
             appearance: self.settings_section()?,
-            onboarding_completed: self.settings_section::<OnboardingSettings>()?.completed,
+            onboarding_completed: onboarding.completed,
+            guide: onboarding.guide,
+            guide_welcome: onboarding.welcome,
             default_directory,
         })
     }
@@ -83,8 +86,34 @@ impl Manager {
                 .save_section(&general, now_ms)
                 .map_err(|e| e.code)?;
         }
+        let onboarding = OnboardingSettings {
+            completed: true,
+            welcome: true,
+            ..self.settings_section()?
+        };
         self.database
-            .save_section(&OnboardingSettings { completed: true }, now_ms)
+            .save_section(&onboarding, now_ms)
+            .map_err(|e| e.code)?;
+        self.shell_settings()
+    }
+
+    /// Saves that the guide after Get started (#463) was gone through or skipped, so it isn't
+    /// offered again. `InvalidInput` for `Unseen`: the guide is never offered twice by itself;
+    /// Help replays it.
+    pub fn set_guide_state(
+        &mut self,
+        state: GuideState,
+        now_ms: u64,
+    ) -> Result<ShellSettings, ErrorCode> {
+        if state == GuideState::Unseen {
+            return Err(ErrorCode::InvalidInput);
+        }
+        let onboarding = OnboardingSettings {
+            guide: state,
+            ..self.settings_section()?
+        };
+        self.database
+            .save_section(&onboarding, now_ms)
             .map_err(|e| e.code)?;
         self.shell_settings()
     }
@@ -311,6 +340,32 @@ mod tests {
                 .join("Apollo Download Manager")
                 .join("apollo"),
         }
+    }
+
+    // #463: the guide is offered once, with "Welcome" after this version's setup.
+    #[test]
+    fn the_guide_is_offered_once_and_greets_a_new_setup() {
+        let (mut m, _db) = manager();
+        let before = m.shell_settings().unwrap();
+        assert_eq!(
+            (before.guide, before.guide_welcome),
+            (GuideState::Unseen, false)
+        );
+        let dir = std::env::temp_dir();
+        let after = m.complete_onboarding(&dir.to_string_lossy(), T0).unwrap();
+        assert!(after.onboarding_completed && after.guide_welcome);
+        assert_eq!(after.guide, GuideState::Unseen, "offered on the first view");
+        let skipped = m.set_guide_state(GuideState::Skipped, T0).unwrap();
+        assert_eq!(skipped.guide, GuideState::Skipped);
+        assert!(skipped.onboarding_completed && skipped.guide_welcome);
+        assert_eq!(
+            m.set_guide_state(GuideState::Unseen, T0),
+            Err(ErrorCode::InvalidInput)
+        );
+        assert_eq!(
+            m.set_guide_state(GuideState::Finished, T0).unwrap().guide,
+            GuideState::Finished
+        );
     }
 
     #[test]
