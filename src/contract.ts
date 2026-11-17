@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 38;
+export const COMMAND_API_VERSION = 39;
 
 const bytes = z.number().int().nonnegative();
 
@@ -827,7 +827,7 @@ export const BrowserRequestSchema = z.strictObject({
   referrer: z.string().nullable(),
   fileSize: z.number().int().nonnegative().nullable(),
   mime: z.string().nullable(),
-  source: z.enum(['intercept', 'contextMenu', 'popup']),
+  source: z.enum(['intercept', 'contextMenu', 'popup', 'page']),
 });
 export type BrowserRequest = z.infer<typeof BrowserRequestSchema>;
 
