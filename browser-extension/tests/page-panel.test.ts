@@ -240,3 +240,43 @@ describe('where the button and panel sit (#426)', () => {
     expect(panelPlace(rect(20, 20), size, view)).toEqual({ left: 20, top: 72 });
   });
 });
+
+describe('a choice larger than the app takes at once (#426)', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('says so, and sends nothing until it is within the limit', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = host.attachShadow({ mode: 'open' });
+    const { store, sent } = fakeStore({ tipSeen: true });
+    const ui = mountPagePanel(root, document, 'mirror.example.org', store);
+    ui.update(files(501));
+    ui.open();
+    root.querySelector<HTMLInputElement>('.tools input[type="checkbox"]')?.click();
+    expect(root.querySelector('.count')?.textContent).toBe('501 chosen · at most 500 at a time');
+    const send = [...root.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent.startsWith('Send'));
+    expect(send?.disabled).toBe(true);
+    send?.click();
+    expect(sent).toEqual([]);
+    root.querySelector<HTMLInputElement>('.file input')?.click();
+    expect(root.querySelector('.count')?.textContent).toBe('500 chosen');
+    expect(send?.disabled).toBe(false);
+  });
+
+  it('shows an error, not a stuck "Sending…", when the answer is unusable', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = host.attachShadow({ mode: 'open' });
+    const { store } = fakeStore({ tipSeen: true, send: () => Promise.resolve(undefined as unknown as BatchOutcome) });
+    const ui = mountPagePanel(root, document, 'mirror.example.org', store);
+    ui.update(files(1));
+    ui.open();
+    root.querySelector<HTMLInputElement>('.file input')?.click();
+    [...root.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent.startsWith('Send'))?.click();
+    await vi.waitFor(() => {
+      expect(root.querySelector('.status')?.textContent).toBe("The files couldn't be sent to Apollo DM.");
+    });
+  });
+});

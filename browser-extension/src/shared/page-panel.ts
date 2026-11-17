@@ -40,6 +40,8 @@ export interface PagePanelUi {
 }
 
 const DEFAULT_POINT: Point = { right: 24, bottom: 24 };
+/** As many files as one send takes: the Add dialog's limit (`MAX_ADD`), which the background checks again. */
+export const MAX_SEND = 500;
 const MIN_SIZE: Size = { width: 300, height: 320 };
 const DEFAULT_SIZE: Size = { width: 380, height: 520 };
 const MARGIN = 8;
@@ -283,10 +285,10 @@ export function mountPagePanel(root: ShadowRoot | HTMLElement, doc: Document, si
 
   const renderFoot = () => {
     const n = found.files.filter((f) => chosen.has(f.url)).length;
-    chosenText.textContent = `${String(n)} chosen`;
+    chosenText.textContent = n > MAX_SEND ? `${String(n)} chosen · at most ${String(MAX_SEND)} at a time` : `${String(n)} chosen`;
     sendBtn.textContent = n > 0 ? `Send ${String(n)} to ${SHORT_NAME}` : `Send to ${SHORT_NAME}`;
     // Kept focusable while sending, so the keyboard stays in the panel; a click then does nothing.
-    sendBtn.disabled = n === 0;
+    sendBtn.disabled = n === 0 || n > MAX_SEND;
     sendBtn.setAttribute('aria-disabled', String(sending));
     const vis = shown();
     const on = vis.filter((f) => chosen.has(f.url)).length;
@@ -380,25 +382,26 @@ export function mountPagePanel(root: ShadowRoot | HTMLElement, doc: Document, si
 
   sendBtn.addEventListener('click', () => {
     const links = found.files.filter((f) => chosen.has(f.url)).map((f) => ({ url: f.url, filename: f.name }));
-    if (links.length === 0 || sending) return;
+    if (links.length === 0 || links.length > MAX_SEND || sending) return;
     sending = true;
     status.className = 'status';
     status.textContent = `Sending ${plural(links.length, 'file', 'files')}…`;
     renderFoot();
     void store
       .send(links)
-      .then(
-        (o) => {
-          const v = outcomeText(o);
-          status.className = `status ${v.tone}`;
-          status.textContent = v.text;
-          if (v.tone === 'ok') chosen.clear();
-        },
-        () => {
-          status.className = 'status err';
-          status.textContent = `The files couldn't be sent to ${SHORT_NAME}.`;
-        },
-      )
+      .then((o: BatchOutcome | undefined) => {
+        // The background didn't answer with what happened, such as when it refused the message.
+        if (typeof o !== 'object' || typeof o.added !== 'number' || !Array.isArray(o.failed)) throw new Error('no answer');
+        const v = outcomeText(o);
+        status.className = `status ${v.tone}`;
+        status.textContent = v.text;
+        if (v.tone === 'ok') chosen.clear();
+      })
+      // A failed send, or no usable answer: never a "Sending…" that stays.
+      .catch(() => {
+        status.className = 'status err';
+        status.textContent = `The files couldn't be sent to ${SHORT_NAME}.`;
+      })
       .finally(() => {
         sending = false;
         renderList();
