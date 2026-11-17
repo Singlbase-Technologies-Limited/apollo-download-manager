@@ -4,7 +4,7 @@
  * unit tested with a fake.
  */
 import { decide, RecentUrls, type DownloadCandidate } from './shared/rules';
-import { browserCanDownload, buildAdd, canSend, isMagnet, newId, PROTOCOL_VERSION, type AddPayload, type Response } from './shared/protocol';
+import { addToOutcome, browserCanDownload, buildAdd, buildAddMany, canSend, EMPTY_OUTCOME, isMagnet, newId, PROTOCOL_VERSION, type AddPayload, type BatchOutcome, type PageLinkPayload, type Response } from './shared/protocol';
 import { sendNative, type NativeApi } from './shared/native';
 import { DEFAULT_SETTINGS, sanitizeSettings, type ExtensionSettings } from './shared/settings';
 import { SHORT_NAME } from './shared/branding';
@@ -229,6 +229,20 @@ export function createBackground(api: ExtApi) {
       if (pageUrl) payload.referrer = pageUrl;
       const r = await handOff(payload);
       return r.ok ? 'handed-off' : 'failed';
+    },
+
+    /**
+     * Files the user chose on a page (#426), sent in as few messages as the app's limits allow. Once a message is
+     * refused as a whole, such as with the app closed, the rest aren't sent and count as not sent.
+     */
+    async onPageFiles(links: readonly PageLinkPayload[], pageUrl: string | undefined): Promise<BatchOutcome> {
+      let o = EMPTY_OUTCOME;
+      for (const req of buildAddMany(links, pageUrl)) {
+        const n = req.type === 'download.addMany' ? req.payload.links.length : 0;
+        o = o.error ? { ...o, notSent: o.notSent + n } : addToOutcome(o, await sendNative(api, req), n);
+      }
+      await report(o.error ? { v: PROTOCOL_VERSION, id: '', ok: false, error: o.error } : { v: PROTOCOL_VERSION, id: '', ok: true, result: {} });
+      return o;
     },
 
     async onPageMessage(msg: PageMessage): Promise<unknown> {

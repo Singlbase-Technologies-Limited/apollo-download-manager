@@ -22,6 +22,13 @@ export interface ExtensionSettings {
    * magnet capture also needs the optional permission to read pages.
    */
   captureTorrents: boolean;
+  /**
+   * Show a download button on pages with files (#426). On by default (PO decision, 2026-11-17); it needs the
+   * optional permission to read pages, and its first appearance says how to turn it off.
+   */
+  pageButton: boolean;
+  /** Sites (and their subdomains) where the user hid the page button. */
+  pageButtonHiddenSites: string[];
 }
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
@@ -33,6 +40,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   includePrivate: false,
   contextMenu: true,
   captureTorrents: false,
+  pageButton: true,
+  pageButtonHiddenSites: [],
 };
 
 const EXT_RE = /^[a-z0-9]{1,16}$/;
@@ -62,5 +71,7 @@ export function sanitizeSettings(raw: unknown): ExtensionSettings {
     includePrivate: typeof r.includePrivate === 'boolean' ? r.includePrivate : DEFAULT_SETTINGS.includePrivate,
     contextMenu: typeof r.contextMenu === 'boolean' ? r.contextMenu : DEFAULT_SETTINGS.contextMenu,
     captureTorrents: typeof r.captureTorrents === 'boolean' ? r.captureTorrents : DEFAULT_SETTINGS.captureTorrents,
+    pageButton: typeof r.pageButton === 'boolean' ? r.pageButton : DEFAULT_SETTINGS.pageButton,
+    pageButtonHiddenSites: list(r.pageButtonHiddenSites, normalizeDomain, 500) ?? [],
   };
 }

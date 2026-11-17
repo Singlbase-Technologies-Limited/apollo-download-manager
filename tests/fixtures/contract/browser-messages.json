@@ -8,7 +8,13 @@
       "type": "download.add",
       "payload": { "url": "https://example.com/file.zip", "source": "contextMenu", "referrer": "https://example.com/page", "filename": "file.zip", "fileSize": 1024, "mime": "application/zip" }
     },
-    { "v": 1, "id": "b3", "type": "download.add", "payload": { "url": "https://example.com/file.zip", "source": "intercept" } }
+    { "v": 1, "id": "b3", "type": "download.add", "payload": { "url": "https://example.com/file.zip", "source": "intercept" } },
+    {
+      "v": 1,
+      "id": "c1",
+      "type": "download.addMany",
+      "payload": { "referrer": "https://example.com/files/", "links": [{ "url": "https://example.com/a.iso", "fileSize": 1024 }, { "url": "https://example.com/b.pdf", "filename": "b.pdf", "mime": "application/pdf" }] }
+    }
   ],
   "invalid": [
     { "v": 2, "id": "x1", "type": "ping" },
@@ -20,6 +26,9 @@
     { "v": 1, "id": "x5", "type": "download.add", "payload": { "url": "https://example.com/a", "source": "popup", "directory": "/tmp" } },
     { "v": 1, "id": "x6", "type": "download.add", "payload": { "url": "https://example.com/a", "source": "elsewhere" } },
     { "v": 1, "id": "x7", "type": "download.add", "payload": { "url": "https://example.com/a", "source": "popup", "referrer": "javascript:alert(1)" } },
-    { "v": 1, "id": "x8", "type": "download.add", "payload": { "url": "https://example.com/a", "source": "popup" }, "extra": true }
+    { "v": 1, "id": "x8", "type": "download.add", "payload": { "url": "https://example.com/a", "source": "popup" }, "extra": true },
+    { "v": 1, "id": "x9", "type": "download.addMany", "payload": { "links": [] } },
+    { "v": 1, "id": "x10", "type": "download.addMany", "payload": { "links": [{ "url": "https://example.com/a.iso" }, { "url": "file:///etc/passwd" }] } },
+    { "v": 1, "id": "x11", "type": "download.addMany", "payload": { "links": [{ "url": "https://example.com/a.iso", "headers": { "Cookie": "x" } }] } }
   ]
 }

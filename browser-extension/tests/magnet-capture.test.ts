@@ -62,3 +62,19 @@ describe('magnet capture (#416)', () => {
     expect(added).toEqual(['click']);
   });
 });
+
+describe('the page button’s script (#426)', () => {
+  it('is registered while the button is on and pages may be read, and goes when it is turned off', async () => {
+    const { syncPageButton } = await import('../src/shared/magnet-capture');
+    const on = fakeApi({ captureTorrents: false, tabs: [{ id: 3, url: 'https://e.example/' }] });
+    await syncPageButton(on.api);
+    expect(on.log).toEqual(['register', 'inject:3']);
+    const off = fakeApi({ registered: true });
+    off.api.getSettings = () => Promise.resolve({ ...DEFAULT_SETTINGS, pageButton: false });
+    await syncPageButton(off.api);
+    expect(off.log).toEqual(['unregister']);
+    const noAccess = fakeApi({ granted: false });
+    await syncPageButton(noAccess.api);
+    expect(noAccess.log).toEqual([]);
+  });
+});
