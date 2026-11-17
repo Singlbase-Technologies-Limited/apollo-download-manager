@@ -88,6 +88,39 @@ process.stdin.on('data', (chunk) => {
   return { path, entries };
 }
 
+const fileLinks = (n, prefix, ext = 'iso') => Array.from({ length: n }, (_, i) => `<a href="/files/${prefix}-${String(i)}.${ext}">${prefix} ${String(i)}</a>`).join('<br>');
+
+/**
+ * The pages the page-button test opens (#426): 12 files; the same under styles that try to break the button; none;
+ * 20 added 2 s after loading; 5,000, and 20 more on request, for the scanning cost.
+ */
+export function pageFixture(url) {
+  const page = (body, head = '') => `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>${body}</body></html>`;
+  switch (url) {
+    case '/page/files':
+      return page(`<h1>Files</h1>${fileLinks(12, 'page')}<a href="/about.html">About</a>`);
+    case '/page/hostile':
+      return page(
+        `<h1>Files</h1>${fileLinks(12, 'hostile')}<div id="overlay"></div><footer id="bar">A fixed footer</footer>`,
+        '<style>* { all: unset !important; } html, body { display: block !important; } #overlay { position: fixed !important; inset: 0 !important; z-index: 2147483647 !important; pointer-events: none !important; } apollo-dm-page-files { display: none !important; transform: scale(3) !important; } button { background: red !important; font-size: 40px !important; }</style>',
+      );
+    case '/page/none':
+      return page('<h1>No files</h1><a href="/about.html">About</a><a href="https://example.invalid/blog/post">A post</a>');
+    case '/page/late':
+      return page(
+        '<h1>Later</h1><div id="later"></div>',
+        `<script>setTimeout(() => { document.getElementById('later').innerHTML = ${JSON.stringify(fileLinks(20, 'late', 'pdf'))}; }, 2000);</script>`,
+      );
+    case '/page/big':
+      return page(
+        `<h1>Big</h1>${fileLinks(5000, 'big', 'zip')}<div id="more"></div>`,
+        `<script>window.addMore = () => { const t0 = performance.now(); document.getElementById('more').innerHTML = ${JSON.stringify(fileLinks(20, 'more', 'zip'))}; return performance.now() - t0; };</script>`,
+      );
+    default:
+      return null;
+  }
+}
+
 export async function setup(prefix, required) {
   for (const p of [APP, HOST, ...required]) if (!existsSync(p)) throw new Error(`missing ${p}; build it first (docs/BROWSER_EXTENSION.md#tests)`);
   const D = mkdtempSync(join(tmpdir(), prefix));
@@ -103,7 +136,11 @@ export async function setup(prefix, required) {
   const fileRequests = [];
   const server = http.createServer((req, res) => {
     if (req.url === '/files/e2e-archive.zip') fileRequests.push(req.headers['user-agent'] ?? '');
-    if (req.url === '/') {
+    const fixture = pageFixture(req.url ?? '');
+    if (fixture !== null) {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end(fixture);
+    } else if (req.url === '/') {
       res.writeHead(200, { 'content-type': 'text/html' });
       res.end('<!doctype html><a id="dl" href="/files/e2e-archive.zip">download</a>');
     } else if (req.url === '/files/e2e-archive.zip') {
@@ -217,7 +254,7 @@ db.commit()
     }
   };
 
-  return { D, env, downloads, base, stub, startPreseeded, checkV2Held, checkV1Isolated, teardown };
+  return { D, env, downloads, base, stub, query, startPreseeded, checkV2Held, checkV1Isolated, teardown };
 }
 
 export function finish() {

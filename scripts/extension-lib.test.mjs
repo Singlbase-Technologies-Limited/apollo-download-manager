@@ -31,6 +31,12 @@ describe('manifest', () => {
     }
   });
 
+  it('offers Alt+Shift+D for the page file panel, in both browsers (#426)', () => {
+    for (const target of ['chrome', 'firefox']) {
+      expect(dev(target).commands).toEqual({ 'open-page-files': { suggested_key: { default: 'Alt+Shift+D' }, description: 'Choose files on this page to download' } });
+    }
+  });
+
   it("pins V2's Chrome key and a service worker for Chromium", () => {
     const m = dev('chrome');
     expect(m.key).toBe(branding.chromeExtensionKey);

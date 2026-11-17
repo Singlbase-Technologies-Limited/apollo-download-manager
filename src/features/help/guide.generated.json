@@ -6581,6 +6581,95 @@
           "content": [
            {
             "type": "text",
+            "text": "Files on a page:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " on a page that links to files, such as a list of downloads, a button shows how many there are (\"12 files\"). Click it to choose some or all of them, by type or by name, then "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Send"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " them to Apollo Download Manager together. Drag the button anywhere it's out of the way, and resize the list by its corner. "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Alt+Shift+D"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " opens the list too, and so does "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Files on this page"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the extension's popup. The button is on from the start, but needs access to pages: the popup asks for it. The first time it appears, a tip shows how to turn it off: "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Hide on this site"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ", or "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Show a download button on pages with files"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the extension's options. Video streams aren't listed."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
             "text": "What it never sends:"
            }
           ]
@@ -6850,7 +6939,7 @@
     {
      "anchor": "what-the-extension-does",
      "heading": "What the extension does",
-     "text": "It takes over matching downloads: by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link. Modes, in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser. Rules, in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default). The right-click menu on links, images, video and audio: Download with Apollo Download Manager. Magnet links and .torrent downloads: off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent. What it never sends: cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
+     "text": "It takes over matching downloads: by default, archives, disk images, installers, video, audio, PDF and e-books, and files of 20 MiB or more when the browser knows the size. The browser's own copy is cancelled once Apollo Download Manager has the link. Modes, in the extension's popup: send matching downloads to Apollo Download Manager (the default), ask first, or leave every download to the browser. Rules, in the extension's options: the file types, the size, sites to always or never send, and private windows (off by default). The right-click menu on links, images, video and audio: Download with Apollo Download Manager. Magnet links and .torrent downloads: off by default. Turning magnet links on asks for access to pages; once you allow it, magnet links work in the pages already open too. Apollo Download Manager always asks before adding a torrent. Files on a page: on a page that links to files, such as a list of downloads, a button shows how many there are (\"12 files\"). Click it to choose some or all of them, by type or by name, then Send them to Apollo Download Manager together. Drag the button anywhere it's out of the way, and resize the list by its corner. Alt+Shift+D opens the list too, and so does Files on this page in the extension's popup. The button is on from the start, but needs access to pages: the popup asks for it. The first time it appears, a tip shows how to turn it off: Hide on this site, or Show a download button on pages with files in the extension's options. Video streams aren't listed. What it never sends: cookies, page content or logins. A download that needs them may fail in Apollo Download Manager; the browser can then download it."
     },
     {
      "anchor": "what-apollo-download-manager-does-with-a-link",

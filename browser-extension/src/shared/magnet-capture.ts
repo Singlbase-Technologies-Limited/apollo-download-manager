@@ -4,8 +4,11 @@
  */
 import { sanitizeSettings, type ExtensionSettings } from './settings';
 
-/** What capture needs from the browser, so the rules run without one in tests. */
-export interface MagnetCaptureApi {
+/**
+ * What an optional content script needs from the browser, so the rules run without one in tests: magnet capture's,
+ * and the page button's (#426).
+ */
+export interface OptionalScriptApi {
   getSettings(): Promise<ExtensionSettings>;
   hasPageAccess(): Promise<boolean>;
   isRegistered(): Promise<boolean>;
@@ -15,17 +18,19 @@ export interface MagnetCaptureApi {
   inject(tabId: number): Promise<void>;
 }
 
+export type MagnetCaptureApi = OptionalScriptApi;
+
 /**
- * Registers the click script while capture is on and pages may be read, and removes it otherwise.
- * A registered script reaches only pages loaded afterwards, so when capture starts it is also put
+ * Registers a script while `wanted` says so and pages may be read, and removes it otherwise.
+ * A registered script reaches only pages loaded afterwards, so when it starts it is also put
  * into the web pages already open (#416). Nothing is injected when it was registered before:
  * those pages have it.
  */
-export async function syncMagnetCapture(api: MagnetCaptureApi): Promise<void> {
+export async function syncOptionalScript(api: OptionalScriptApi, wanted: (s: ExtensionSettings) => boolean): Promise<void> {
   const s = sanitizeSettings(await api.getSettings());
   const granted = await api.hasPageAccess().catch(() => false);
   const registered = await api.isRegistered().catch(() => false);
-  if (s.captureTorrents && s.mode !== 'off' && granted) {
+  if (wanted(s) && granted) {
     if (registered) return;
     await api.register();
     for (const tab of await api.openTabs().catch(() => [])) {
@@ -37,6 +42,16 @@ export async function syncMagnetCapture(api: MagnetCaptureApi): Promise<void> {
   } else if (registered) {
     await api.unregister();
   }
+}
+
+/** The magnet click script: while capture is on and pages may be read. */
+export function syncMagnetCapture(api: MagnetCaptureApi): Promise<void> {
+  return syncOptionalScript(api, (s) => s.captureTorrents && s.mode !== 'off');
+}
+
+/** The page button's script (#426): while the button is on and pages may be read. */
+export function syncPageButton(api: OptionalScriptApi): Promise<void> {
+  return syncOptionalScript(api, (s) => s.pageButton);
 }
 
 const INSTALLED = '__apolloMagnetClicks';

@@ -16,6 +16,8 @@ function fill(s: ExtensionSettings) {
   $('includePrivate', HTMLInputElement).checked = s.includePrivate;
   $('contextMenu', HTMLInputElement).checked = s.contextMenu;
   $('captureTorrents', HTMLInputElement).checked = s.captureTorrents;
+  $('pageButton', HTMLInputElement).checked = s.pageButton;
+  $('pageButtonHiddenSites', HTMLTextAreaElement).value = s.pageButtonHiddenSites.join('\n');
 }
 
 async function init() {
@@ -31,11 +33,14 @@ async function init() {
       includePrivate: $('includePrivate', HTMLInputElement).checked,
       contextMenu: $('contextMenu', HTMLInputElement).checked,
       captureTorrents: $('captureTorrents', HTMLInputElement).checked,
+      pageButton: $('pageButton', HTMLInputElement).checked,
+      pageButtonHiddenSites: lines($('pageButtonHiddenSites', HTMLTextAreaElement).value),
     });
-    // Catching magnet link clicks needs access to pages; ask only when the user turns it on.
-    const access = s.captureTorrents ? ext.permissions.request({ origins: ['<all_urls>'] }).catch(() => false) : Promise.resolve(true);
+    // Catching magnet link clicks and the page button need access to pages; ask only when one of them is on.
+    const access = s.captureTorrents || s.pageButton ? ext.permissions.request({ origins: ['<all_urls>'] }).catch(() => false) : Promise.resolve(true);
     void access.then((granted) => {
-      $('torrentAccess', HTMLElement).textContent = granted ? '' : 'Without access to pages only .torrent downloads are sent; magnet link clicks stay with the browser.';
+      $('torrentAccess', HTMLElement).textContent = granted || !s.captureTorrents ? '' : 'Without access to pages only .torrent downloads are sent; magnet link clicks stay with the browser.';
+      $('pageAccess', HTMLElement).textContent = granted || !s.pageButton ? '' : 'Without access to pages the button can’t find the files on them.';
       return ext.storage.local.set({ settings: s });
     }).then(() => {
       fill(s);
