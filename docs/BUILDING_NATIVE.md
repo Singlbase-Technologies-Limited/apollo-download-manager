@@ -76,12 +76,12 @@ Any mismatch fails the build, and no `build-info.json` is written.
 Real output of both builds (2026-10-22):
 
 ```text
-curl 8.23.0 (Windows) libcurl/8.23.0 Schannel zlib/1.3.2 nghttp2/1.70.0
+curl 8.23.0 (Windows) libcurl/8.23.0 Schannel zlib/1.4 nghttp2/1.70.0
 Release-Date: 2026-10-14
 Protocols: ftp ftps http https
 Features: alt-svc AsynchDNS HSTS HTTP2 HTTPS-proxy IPv6 Kerberos Largefile libz SPNEGO SSL SSPI threadsafe UnixSockets
 
-curl 8.23.0 (x86_64-pc-linux-gnu) libcurl/8.23.0 OpenSSL/3.5.9 zlib/1.3.2 nghttp2/1.70.0
+curl 8.23.0 (x86_64-pc-linux-gnu) libcurl/8.23.0 OpenSSL/3.5.9 zlib/1.4 nghttp2/1.70.0
 Release-Date: 2026-10-14
 Protocols: ftp ftps http https
 Features: alt-svc AsynchDNS HSTS HTTP2 HTTPS-proxy IPv6 Largefile libz SSL threadsafe UnixSockets

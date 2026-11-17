@@ -49,8 +49,9 @@ fn main() {
 fn libraries(target: &str) -> (&'static [&'static str], &'static [&'static str]) {
     match target {
         // The system libraries are the `Libs.private` curl's own build writes into libcurl.pc.
+        // zlib's CMake build names its static library `libzs.lib` with MSVC since zlib 1.4 (#506).
         "x86_64-pc-windows-msvc" => (
-            &["libcurl", "nghttp2", "zs"],
+            &["libcurl", "nghttp2", "libzs"],
             &[
                 "bcrypt", "advapi32", "crypt32", "secur32", "ws2_32", "iphlpapi",
             ],

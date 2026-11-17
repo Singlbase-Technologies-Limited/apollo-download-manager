@@ -13,7 +13,7 @@ Linked into V2's programs. The rules for each are in docs/LICENSING.md.
 | libtorrent | 2.0.15 | BSD-3-Clause | BSD-3-Clause | https://github.com/arvidn/libtorrent |
 | nghttp2 | 1.70.0 | MIT | MIT | https://github.com/nghttp2/nghttp2/releases/download/v1.70.0/nghttp2-1.70.0.tar.xz |
 | openssl | 3.5.9 | Apache-2.0 | Apache-2.0 | https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz |
-| zlib | 1.3.2 | Zlib | Zlib | https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz |
+| zlib | 1.4 | Zlib | Zlib | https://github.com/madler/zlib/releases/download/v1.4/zlib-1.4.tar.xz |
 
 ## Rust crates (577)
 
@@ -265,7 +265,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | libloading | 0.7.4 | ISC | ISC | https://github.com/nagisa/rust_libloading/ |
 | libredox | 0.1.25 | MIT | MIT | https://gitlab.redox-os.org/redox-os/libredox.git |
 | libsqlite3-sys | 0.39.1 | MIT | MIT | https://github.com/rusqlite/rusqlite |
-| libz-sys | 1.1.31 | MIT OR Apache-2.0 | MIT | https://github.com/rust-lang/libz-sys |
+| libz-sys | 1.1.33 | MIT OR Apache-2.0 | MIT | https://github.com/rust-lang/libz-sys |
 | link-cplusplus | 1.0.12 | MIT OR Apache-2.0 | MIT | https://github.com/dtolnay/link-cplusplus |
 | linux-raw-sys | 0.12.1 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | MIT | https://github.com/sunfishcode/linux-raw-sys |
 | litemap | 0.8.3 | Unicode-3.0 | Unicode-3.0 | https://github.com/unicode-org/icu4x |
@@ -387,7 +387,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | russh-sftp | 3.0.1 | Apache-2.0 | Apache-2.0 | https://github.com/AspectUnk/russh-sftp |
 | russh-util | 0.52.0 | Apache-2.0 | Apache-2.0 | https://github.com/warp-tech/russh |
 | rustc-hash | 2.1.3 | Apache-2.0 OR MIT | MIT | https://github.com/rust-lang/rustc-hash |
-| rustix | 1.1.5 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | MIT | https://github.com/bytecodealliance/rustix |
+| rustix | 1.1.6 | Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | MIT | https://github.com/bytecodealliance/rustix |
 | rustversion | 1.0.23 | MIT OR Apache-2.0 | MIT | https://github.com/dtolnay/rustversion |
 | salsa20 | 0.11.0 | MIT OR Apache-2.0 | MIT | https://github.com/RustCrypto/stream-ciphers |
 | same-file | 1.0.6 | Unlicense/MIT | MIT | https://github.com/BurntSushi/same-file |
@@ -883,7 +883,7 @@ SOFTWARE.
 
 ### 6. MIT, MIT AND Unicode-3.0
 
-Used by: adler2 2.0.1, anyhow 1.0.104, async-channel 2.5.0, async-executor 1.14.0, async-io 2.6.0, async-lock 3.4.2, async-process 2.5.0, async-recursion 1.2.0, async-signal 0.2.14, async-task 4.7.1, async-trait 0.1.92, atk 0.18.2, atk-sys 0.18.2, atomic-waker 1.1.2, blocking 1.7.0, cairo-rs 0.18.5, cairo-sys-rs 0.18.2, camino 1.2.6, cargo-platform 0.1.9, cargo_metadata 0.19.2, concurrent-queue 2.5.0, ctor 1.0.13, curve25519-dalek-derive 0.1.1, cxx 1.0.205, cxxbridge-macro 1.0.205, displaydoc 0.2.7, dtoa 1.0.11, dyn-clone 1.0.20, endi 1.1.1, erased-serde 0.4.10, event-listener 5.4.2, event-listener-strategy 0.5.4, fastrand 2.5.0, futures-lite 2.6.1, gdk 0.18.2, gdk-pixbuf 0.18.5, gdk-pixbuf-sys 0.18.0, gdk-sys 0.18.2, gdkwayland-sys 0.18.2, gdkx11 0.18.2, gdkx11-sys 0.18.2, gio 0.18.4, gio-sys 0.18.1, glib 0.18.5, glib-macros 0.18.5, glib-sys 0.18.1, gobject-sys 0.18.0, group 0.14.0, gtk 0.18.2, gtk-sys 0.18.2, gtk3-macros 0.18.2, hermit-abi 0.5.3, itoa 1.0.18, lazy_static 1.5.1, link-cplusplus 1.0.12, linux-raw-sys 0.12.1, num_enum 0.7.6, num_enum_derive 0.7.6, once_cell 1.21.4, ordered-stream 0.2.0, pango 0.18.3, pango-sys 0.18.0, parking 2.2.1, pin-project-lite 0.2.17, piper 0.2.5, polling 3.11.0, portable-atomic 1.15.0, portable-atomic-util 0.2.8, proc-macro-crate 1.3.1, proc-macro-crate 2.0.2, proc-macro-crate 3.5.0, proc-macro2 1.0.107, quote 1.0.47, rsa 0.10.0-rc.18, rustc-hash 2.1.3, rustix 1.1.5, rustversion 1.0.23, semver 1.0.28, serde 1.0.229, serde-untagged 0.1.9, serde_bytes 0.11.19, serde_core 1.0.229, serde_derive 1.0.229, serde_derive_internals 0.29.1, serde_json 1.0.154, serde_repr 0.1.21, servo_arc 0.4.3, siphasher 1.0.4, syn 1.0.109, syn 2.0.119, syn 3.0.9, thiserror 1.0.69, thiserror 2.0.21, thiserror-impl 1.0.69, thiserror-impl 2.0.21, typeid 1.0.3, unicode-ident 1.0.27, wasi 0.11.1+wasi-snapshot-preview1, wasip2 1.0.4+wasi-0.2.12, wasm-streams 0.5.0, winnow 0.5.40, winnow 1.0.4, wit-bindgen 0.57.1, x11 2.21.0, x11-dl 2.21.0, zmij 1.0.23, zvariant_utils 4.2.0.
+Used by: adler2 2.0.1, anyhow 1.0.104, async-channel 2.5.0, async-executor 1.14.0, async-io 2.6.0, async-lock 3.4.2, async-process 2.5.0, async-recursion 1.2.0, async-signal 0.2.14, async-task 4.7.1, async-trait 0.1.92, atk 0.18.2, atk-sys 0.18.2, atomic-waker 1.1.2, blocking 1.7.0, cairo-rs 0.18.5, cairo-sys-rs 0.18.2, camino 1.2.6, cargo-platform 0.1.9, cargo_metadata 0.19.2, concurrent-queue 2.5.0, ctor 1.0.13, curve25519-dalek-derive 0.1.1, cxx 1.0.205, cxxbridge-macro 1.0.205, displaydoc 0.2.7, dtoa 1.0.11, dyn-clone 1.0.20, endi 1.1.1, erased-serde 0.4.10, event-listener 5.4.2, event-listener-strategy 0.5.4, fastrand 2.5.0, futures-lite 2.6.1, gdk 0.18.2, gdk-pixbuf 0.18.5, gdk-pixbuf-sys 0.18.0, gdk-sys 0.18.2, gdkwayland-sys 0.18.2, gdkx11 0.18.2, gdkx11-sys 0.18.2, gio 0.18.4, gio-sys 0.18.1, glib 0.18.5, glib-macros 0.18.5, glib-sys 0.18.1, gobject-sys 0.18.0, group 0.14.0, gtk 0.18.2, gtk-sys 0.18.2, gtk3-macros 0.18.2, hermit-abi 0.5.3, itoa 1.0.18, lazy_static 1.5.1, link-cplusplus 1.0.12, linux-raw-sys 0.12.1, num_enum 0.7.6, num_enum_derive 0.7.6, once_cell 1.21.4, ordered-stream 0.2.0, pango 0.18.3, pango-sys 0.18.0, parking 2.2.1, pin-project-lite 0.2.17, piper 0.2.5, polling 3.11.0, portable-atomic 1.15.0, portable-atomic-util 0.2.8, proc-macro-crate 1.3.1, proc-macro-crate 2.0.2, proc-macro-crate 3.5.0, proc-macro2 1.0.107, quote 1.0.47, rsa 0.10.0-rc.18, rustc-hash 2.1.3, rustix 1.1.6, rustversion 1.0.23, semver 1.0.28, serde 1.0.229, serde-untagged 0.1.9, serde_bytes 0.11.19, serde_core 1.0.229, serde_derive 1.0.229, serde_derive_internals 0.29.1, serde_json 1.0.154, serde_repr 0.1.21, servo_arc 0.4.3, siphasher 1.0.4, syn 1.0.109, syn 2.0.119, syn 3.0.9, thiserror 1.0.69, thiserror 2.0.21, thiserror-impl 1.0.69, thiserror-impl 2.0.21, typeid 1.0.3, unicode-ident 1.0.27, wasi 0.11.1+wasi-snapshot-preview1, wasip2 1.0.4+wasi-0.2.12, wasm-streams 0.5.0, winnow 0.5.40, winnow 1.0.4, wit-bindgen 0.57.1, x11 2.21.0, x11-dl 2.21.0, zmij 1.0.23, zvariant_utils 4.2.0.
 
 ````text
 Permission is hereby granted, free of charge, to any
@@ -7018,7 +7018,7 @@ SHA-256. Adapted from LibTomCrypt. This code is Public Domain
 
 ### 141. MIT
 
-Used by: libz-sys 1.1.31.
+Used by: libz-sys 1.1.33.
 
 ````text
 Copyright (c) 2014 Alex Crichton
@@ -9326,7 +9326,7 @@ Apache License
 
 ### 188. MIT
 
-Used by: rustix 1.1.5.
+Used by: rustix 1.1.6.
 
 ````text
 Short version for non-lawyers:
@@ -11354,7 +11354,7 @@ DEALINGS IN THE SOFTWARE.
 
 ### 253. Zlib
 
-Used by: zlib 1.3.2.
+Used by: zlib 1.4.
 
 ````text
 Copyright notice:
