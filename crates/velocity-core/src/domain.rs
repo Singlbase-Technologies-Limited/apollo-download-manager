@@ -346,6 +346,10 @@ pub struct DownloadRecord {
     pub started_at_ms: Option<u64>,
     /// The bytes per second it received while it ran, once it ran for a second (#59).
     pub average_speed_bps: Option<u64>,
+    /// Its time left while it downloads, in seconds (#330): the average speed since the speed last
+    /// changed; `None` in a run's first 3 s, while it doesn't download, or with no size known.
+    #[serde(default)]
+    pub seconds_left: Option<u64>,
     /// The download's own speed limit, in bytes per second; `None` for none (#61). The global
     /// limit holds alongside it.
     pub speed_limit_bps: Option<u64>,
@@ -759,6 +763,7 @@ impl DownloadRecord {
             ),
             started_at_ms: Some(1_792_600_001_000),
             average_speed_bps: Some(262_144),
+            seconds_left: Some(1_200),
             speed_limit_bps: Some(524_288),
             requested_connections: Some(8),
             torrent: None,

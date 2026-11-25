@@ -279,10 +279,12 @@ Every received byte is either written into the part file once, or counted in `wa
 
 **Progress and speed (#246).**
 - **When progress is sent:** the engine sends a progress snapshot for every 256 KiB written (`PROGRESS_STEP`), and at once when the count goes down because the download started over.
-- **The speed:** the snapshot's download speed is the bytes written over the last 3 seconds (`SpeedMeter` in `crates/velocity-transfer/src/speed.rs`). That's a measurement, not an estimate. The list, the details panel, the time left and the status bar's total all show this figure.
+- **The speed:** the snapshot's download speed is the bytes written over the last 5 seconds (`SpeedMeter` in `crates/velocity-transfer/src/speed.rs`). That's a measurement, not an estimate. The list, the details panel and the status bar's total show this figure.
 - **Measuring starts again** at the first report after a start or resume, and when the count goes down. So the bytes already on disk never count as received.
 - **No figure** is shown until 0.5 s has been measured.
-- **Why 3 seconds:** a change in speed, such as a new speed limit, shows half within 1.5 s and fully within 3 s. A pause in one connection barely moves the figure.
+- **Why 5 seconds** (#330, PO confirmed): field tests on 19 real downloads, replayed through 3 s, 5 s, 2 s windows and smoothed averages ([round 2](https://github.com/Singlbase-Technologies-Limited/apollo-download-manager/issues/330)). Over 5 s the figure read steadier on a steady download (13.6% spread against 17.6% over 3 s) and still showed a lowered speed limit within 2.9 s (3.9 s over 3 s); a 1 s pause costs a fifth of the figure, not a third. Smoothed averages were steadier still, but took 9 s to follow. It was 3 s from #246.
+- **The time left** isn't worked out from this figure: the manager works it out from the progress it receives, the same way for direct downloads and torrents (#330, PO decision; [`manager/time_left.rs`](../crates/velocity-core/src/manager/time_left.rs)). It is the average speed since the speed last changed. A new stretch starts when the 5 s speed stays more than 25% off the stretch's average for 8 s, from where the change began, or when the download's speed limit changes; a stretch's first 8 s use the 5 s speed. There's no figure in a run's first 3 s, one a second after that, and none while no byte arrives. On the 19 downloads its median error was 4.1%, against 12.8% for the remaining bytes over the 3 s speed, and each update moved it 0.68% against 11.9%.
+- **The ramp stayed as it was** (#330): halving, halving with a loss threshold from the measured noise, and one at a time with that threshold didn't beat it on the Ubuntu image or OVH's throttling server, in two rounds of interleaved real runs.
 - **Before #246,** the speed was measured over a single 256 KiB step, about 80 ms at 3 MiB/s, and it jumped between KiB/s and GiB/s.
 
 ## Changed files (#45)

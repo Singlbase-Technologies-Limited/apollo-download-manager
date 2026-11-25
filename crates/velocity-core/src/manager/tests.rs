@@ -1347,6 +1347,33 @@ mod persistence {
     }
 
     #[test]
+    fn a_downloading_download_shows_its_time_left_after_three_seconds_and_none_once_paused() {
+        // #330: worked out here, so the window only shows it.
+        let (mut m, control, _db) = with_database();
+        let id = m.add(DownloadKind::Http, spec(), T0).unwrap();
+        m.pump(T0);
+        for s in 0..=10u64 {
+            control.progress(TransferId(1), s * 1_000_000, Some(100_000_000));
+            m.pump(T0 + 1_000 + s * 1_000);
+            if s < 3 {
+                assert_eq!(m.get(&id).unwrap().seconds_left, None, "after {s} s");
+            }
+        }
+        let left = m
+            .get(&id)
+            .unwrap()
+            .seconds_left
+            .expect("a figure after 10 s");
+        assert!(
+            (89..=91).contains(&left),
+            "{left} s left of 100 MB at 1 MB/s, 10 MB done"
+        );
+        m.pause(&id).unwrap();
+        m.pump(T0 + 12_000);
+        assert_eq!(m.get(&id).unwrap().seconds_left, None);
+    }
+
+    #[test]
     fn when_it_started_and_its_average_speed_are_shown_and_survive_a_restart() {
         // #59, V1's "Started" and "Avg. speed" columns.
         let (mut m, control, db) = with_database();

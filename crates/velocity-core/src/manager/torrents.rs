@@ -251,6 +251,7 @@ impl Manager {
                 started_over: None,
                 started_at_ms: None,
                 average_speed_bps: None,
+                seconds_left: None,
                 speed_limit_bps: None,
                 requested_connections: None,
                 torrent: None,
@@ -270,6 +271,7 @@ impl Manager {
             saved_at_ms: None,
             needs_login: false,
             activity: super::activity::Tracker::default(),
+            time_left: super::time_left::TimeLeft::default(),
             logged: None,
         };
         download.record.status = download.waiting_status();
@@ -636,9 +638,17 @@ impl Manager {
             );
         d.activity
             .observe(now_ms, running, snapshot.progress.completed_bytes);
+        d.time_left.observe(
+            now_ms,
+            status == DownloadStatus::Downloading,
+            snapshot.progress.completed_bytes,
+            snapshot.progress.total_bytes,
+            d.record.speed_limit_bps,
+        );
         let record = &mut d.record;
         record.started_at_ms = d.activity.totals.started_at_ms;
         record.average_speed_bps = d.activity.average_speed_bps();
+        record.seconds_left = d.time_left.seconds();
         record.status = status;
         record.progress = snapshot.progress.clone();
         record.error = snapshot.error.clone();
