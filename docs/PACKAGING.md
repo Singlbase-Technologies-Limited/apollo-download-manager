@@ -64,7 +64,7 @@ What #81 asks to record, on the PO's Windows PC with V1 installed:
 
 ### Signing
 
-The installer isn't signed, and stays unsigned for now (PO decision on #428, [ADR-0022](decisions/0022-release-signing.md)): no paid signing, and the free option would show another organisation as publisher. Windows SmartScreen therefore warns on first run ("Windows protected your PC"); **More info**, then **Run anyway** starts it. No certificate removes that warning on day one any more, EV included; reputation builds with downloads. Signing would set Tauri's `bundle.windows.certificateThumbprint` or `signCommand` in the release workflow. No production key is used anywhere today. Linux releases get a GPG signature instead (#429).
+The installer isn't signed yet. It will be signed through SignPath Foundation, free for open-source projects, once SignPath accepts the project (PO decision on #428, [ADR-0022](decisions/0022-release-signing.md)); SignPath Foundation is then shown as the publisher. Windows SmartScreen therefore warns on first run ("Windows protected your PC"); **More info**, then **Run anyway** starts it. No certificate removes that warning on day one any more, EV included; reputation builds with downloads. Signing sets Tauri's `bundle.windows.certificateThumbprint` or `signCommand` in the release workflow. No production key is used anywhere today. Linux releases get a GPG signature instead (#429).
 
 ## The Linux packages
 
