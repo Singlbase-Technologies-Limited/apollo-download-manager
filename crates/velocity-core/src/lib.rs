@@ -92,7 +92,9 @@ use serde::Serialize;
 /// `trackersMissing` in `TorrentDetails`: a torrent's trackers kept in the keychain.
 /// Version 39 (#426) added the browser link source `page`, files chosen on a page, and keeps up to
 /// 500 links waiting for the Add dialog.
-pub const COMMAND_API_VERSION: u32 = 39;
+/// Version 40 (#463) added `set_guide_state`, and `guide` and `guideWelcome` in `ShellSettings`:
+/// the guide after Get started.
+pub const COMMAND_API_VERSION: u32 = 40;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -27,12 +27,16 @@ const settings: ShellSettings = saved
       appearance: {
         theme: params.get('theme') === 'dark' ? 'dark' : 'light',
         density: 'compact',
-        layout: { sidebarWidth: null, sidebarCollapsed: false, sidebarVisible: true, detailsWidth: null, detailsVisible: false },
+        // `sidebar=hidden` or `sidebar=rail` for the guide's checks (#463).
+        layout: { sidebarWidth: null, sidebarCollapsed: params.get('sidebar') === 'rail', sidebarVisible: params.get('sidebar') !== 'hidden', detailsWidth: null, detailsVisible: false },
         visibleColumns: [...DEFAULT_COLUMNS],
         columnWidths: {},
         timeFormat: 'twentyFourHour',
       },
       onboardingCompleted: true,
+      // `guide=unseen` offers the guide after Get started (#463).
+      guide: params.get('guide') === 'unseen' ? 'unseen' : 'finished',
+      guideWelcome: true,
       defaultDirectory: '/home/user/Downloads',
     };
 
@@ -91,6 +95,12 @@ mockIPC(
         settings.appearance = args.appearance as ShellSettings['appearance'];
         localStorage.setItem(KEY, JSON.stringify(settings));
         return settings.appearance;
+      // No links from the browser wait in the harness (#415); `null` would fail the contract and show an error toast.
+      case 'take_browser_requests':
+        return [];
+      case 'set_guide_state':
+        settings.guide = args.state as ShellSettings['guide'];
+        return settings;
       case 'get_snapshot':
         return snapshot;
       case 'list_categories':

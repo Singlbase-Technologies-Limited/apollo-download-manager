@@ -277,6 +277,15 @@ pub async fn complete_onboarding(
     .await?
 }
 
+/// Saves that the guide after Get started was gone through or skipped (#463).
+#[tauri::command]
+pub async fn set_guide_state(
+    downloads: State<'_, Downloads>,
+    state: velocity_core::app_settings::GuideState,
+) -> Result<ShellSettings, ErrorCode> {
+    on_manager(&downloads, move |m| m.set_guide_state(state, now_ms())).await?
+}
+
 /// Asks the user for a folder with the system's chooser, starting in `initial` when it is a
 /// valid folder. `null` when they cancel.
 #[tauri::command]

@@ -34,6 +34,14 @@ Use the file name of the package you have, in quotes because it has spaces. A re
 
 No AppImage is made for now.
 
+## After installing
+
+The first time Apollo Download Manager starts, **Get started** asks where downloads go and offers to connect your browser.
+
+Then the main window offers a short guide: **Show me around** lights up, one at a time, the 6 things to know: adding downloads, the list, the lists and categories on the left, the browser extension, the queue and schedule, and torrents and help. **Next** and **Back** move through it; **Skip the guide** or **Esc** stops it. It is offered once. **Help** (the **?** in the title bar), then **Show the guide again**, shows it again.
+
+If you update from 0.2.0 or earlier, the guide is offered once too, as a quick tour of the window.
+
 ## Upgrading
 
 Install a newer version over the old one: run the newer Windows installer, or install the newer Linux package. Your downloads, settings, history and browser registrations are kept.

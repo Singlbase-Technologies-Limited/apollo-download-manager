@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 39;
+export const COMMAND_API_VERSION = 40;
 
 const bytes = z.number().int().nonnegative();
 
@@ -506,10 +506,18 @@ export const AppearanceSettingsSchema = z.strictObject({
 });
 export type AppearanceSettings = z.infer<typeof AppearanceSettingsSchema>;
 
+/** The guide after Get started (#463): not seen yet, gone through to the end, or skipped. */
+export const GuideStateSchema = z.enum(['unseen', 'finished', 'skipped']);
+export type GuideState = z.infer<typeof GuideStateSchema>;
+
 /** What the window starts with (#29), from `get_shell_settings`. */
 export const ShellSettingsSchema = z.strictObject({
   appearance: AppearanceSettingsSchema,
   onboardingCompleted: z.boolean(),
+  /** The guide after Get started (#463): offered while `unseen`. */
+  guide: GuideStateSchema,
+  /** The guide's offer says "Welcome"; otherwise it is new to someone who set up before it. */
+  guideWelcome: z.boolean(),
   /** The folder downloads go to now; `null` when the system names none. */
   defaultDirectory: z.string().min(1).nullable(),
 });

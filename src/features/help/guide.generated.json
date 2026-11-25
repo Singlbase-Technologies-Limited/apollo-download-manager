@@ -224,7 +224,7 @@
        [
         {
          "type": "text",
-         "text": "The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager"
+         "text": "The Windows installer and the Linux packages, the first start and its short guide, upgrading and removing Apollo Download Manager"
         }
        ]
       ]
@@ -506,7 +506,7 @@
     {
      "anchor": "getting-started",
      "heading": "Getting started",
-     "text": "Guide What it covers Installing The Windows installer and the Linux packages, upgrading and removing Apollo Download Manager"
+     "text": "Guide What it covers Installing The Windows installer and the Linux packages, the first start and its short guide, upgrading and removing Apollo Download Manager"
     },
     {
      "anchor": "using-the-app",
@@ -544,6 +544,11 @@
      "id": "linux",
      "level": 2,
      "text": "Linux"
+    },
+    {
+     "id": "after-installing",
+     "level": 2,
+     "text": "After installing"
     },
     {
      "id": "upgrading",
@@ -968,6 +973,161 @@
     {
      "type": "heading",
      "level": 2,
+     "id": "after-installing",
+     "content": [
+      {
+       "type": "text",
+       "text": "After installing"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "The first time Apollo Download Manager starts, "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Get started"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " asks where downloads go and offers to connect your browser."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "Then the main window offers a short guide: "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Show me around"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " lights up, one at a time, the 6 things to know: adding downloads, the list, the lists and categories on the left, the browser extension, the queue and schedule, and torrents and help. "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Next"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " and "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Back"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " move through it; "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Skip the guide"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " or "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Esc"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " stops it. It is offered once. "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Help"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " (the "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "?"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " in the title bar), then "
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Show the guide again"
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": ", shows it again."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "If you update from 0.2.0 or earlier, the guide is offered once too, as a quick tour of the window."
+      }
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
      "id": "upgrading",
      "content": [
       {
@@ -1139,6 +1299,11 @@
      "anchor": "linux",
      "heading": "Linux",
      "text": "Two packages, for 64-bit PCs: Package For .deb Ubuntu 22.04 and newer, Debian 12 and newer, and distributions based on them .rpm Fedora, openSUSE and similar distributions of the same age or newer Install it with your package manager, which also installs the WebKitGTK, GTK and AppIndicator libraries Apollo Download Manager needs: sudo apt install \"./Apollo Download Manager_<version>_amd64.deb\" # Ubuntu, Debian sudo dnf install \"./Apollo Download Manager-<version>-1.x86_64.rpm\" # Fedora Use the file name of the package you have, in quotes because it has spaces. A release candidate's files have other names, such as apollo-download-manager-0.2.0-rc.1-<commit>-<date>-linux-amd64.deb. Apollo Download Manager then appears in your applications menu as \"Apollo Download Manager\". Its data is kept in ~/.local/share/com.velocity.downloadmanager.v2, apart from V1's, and its licence and the third-party licences are in /usr/lib/Apollo Download Manager/ (LICENSE, THIRD_PARTY_NOTICES.md). No AppImage is made for now."
+    },
+    {
+     "anchor": "after-installing",
+     "heading": "After installing",
+     "text": "The first time Apollo Download Manager starts, Get started asks where downloads go and offers to connect your browser. Then the main window offers a short guide: Show me around lights up, one at a time, the 6 things to know: adding downloads, the list, the lists and categories on the left, the browser extension, the queue and schedule, and torrents and help. Next and Back move through it; Skip the guide or Esc stops it. It is offered once. Help (the ? in the title bar), then Show the guide again, shows it again. If you update from 0.2.0 or earlier, the guide is offered once too, as a quick tour of the window."
     },
     {
      "anchor": "upgrading",
