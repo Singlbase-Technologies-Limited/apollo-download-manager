@@ -2,7 +2,11 @@
 
 The browser extension offers the browser's downloads to Apollo Download Manager, and lets the browser carry on whenever the app can't take one. It is V1's extension ported with the app's own identity (#64), so V1's extension and this one can be installed side by side. It reaches the app through the app's own native host, which each browser starts once it is registered in Settings, Browser (#65). The rules for this area are in [`.claude/rules/browser-integration.md`](../.claude/rules/browser-integration.md).
 
+See also, for users: [Use with your browser](user/browser.md).
+
 ## What it does
+
+How it works inside; what a user sees and chooses is in the user guide's [Use with your browser](user/browser.md#what-the-extension-does).
 
 - **Interception:** when the browser starts a download that matches the rules, the extension pauses it and offers it to Apollo Download Manager. If Apollo Download Manager takes it, the browser's copy is cancelled and erased; on any failure the browser's download resumes.
 - **Modes:** send matching downloads to Apollo Download Manager (the default), ask first in a small window, or leave every download to the browser. Closing the ask window lets the browser continue.
@@ -60,6 +64,13 @@ pnpm build:extension -- --release # release build: talks to the release app
 Both write [`browser-extension/dist/chrome`](../browser-extension/dist/chrome/) (Chrome, Edge and Brave, Manifest V3 with a service worker; Chrome 116 or later) and [`browser-extension/dist/firefox`](../browser-extension/dist/firefox/) (Manifest V3 with a background script; Firefox 115 or later). Each script is bundled by Vite as a classic script, and the icons are the desktop app's own ([`src-tauri/icons`](../src-tauri/icons/)).
 
 To try a build: in Chrome, open `chrome://extensions`, turn on developer mode and load [`browser-extension/dist/chrome`](../browser-extension/dist/chrome/) unpacked; in Firefox, open `about:debugging`, This Firefox, and load [`browser-extension/dist/firefox/manifest.json`](../browser-extension/dist/firefox/manifest.json) as a temporary add-on. It reaches Apollo Download Manager once the native host is registered with that browser ([below](#registering-with-each-browser)).
+
+### Loading a build by hand
+
+For testing a build that isn't in a store, after [building](#building) it (moved from the user guide, #425):
+
+- **Chrome, Edge, Brave:** open `chrome://extensions` (or `edge://extensions`, `brave://extensions`), turn on developer mode, choose **Load unpacked**, and pick the extension's `chrome` folder.
+- **Firefox:** open `about:debugging`, **This Firefox**, **Load Temporary Add-on**, and pick the `manifest.json` in the extension's `firefox` folder. Firefox removes a temporary add-on when it closes.
 
 ### Store packages
 

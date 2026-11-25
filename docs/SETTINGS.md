@@ -2,6 +2,8 @@
 
 Every Apollo Download Manager setting, what it does, and its bounds. They are sections of one settings document in the database, each read and saved through `Database::section` and `Database::save_section`, and checked first (the `Section` trait). Each setting is checked in Rust before it applies, whatever the screen allows.
 
+See also, for users: [Settings](user/settings.md).
+
 ## The Settings screen
 
 The screen (#30, [`src/features/settings/SettingsView.tsx`](../src/features/settings/SettingsView.tsx)) edits every section below except the window's look, which keeps saving through `set_appearance` so it never overwrites a panel width ([the window](#the-window)).

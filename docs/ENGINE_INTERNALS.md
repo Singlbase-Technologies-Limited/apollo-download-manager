@@ -2,6 +2,8 @@
 
 How the direct-download engine in [`crates/velocity-transfer`](../crates/velocity-transfer/) fetches a file. Checked against the code at commit `9a4f484` (2026-10-30, #80). The contract the manager sees is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md), and how the engine's child process talks to the app is in [ENGINE_PROTOCOL.md](ENGINE_PROTOCOL.md). The design comes from section 5 of the [research report](research/2026-10-21-libcurl-engine-research-r2.md); the terms are in the [glossary](GLOSSARY.md).
 
+See also, for users: [Protocols and limits](user/protocols.md).
+
 ## The probe (#41)
 
 The probe is the download's first request and also its first segment, so its bytes are kept. It is `GET` with `Range: bytes=0-(S−1)`, where S is `DownloadOptions::probe_bytes`. That's 4 MiB in the engine, the report's starting value for #47 to tune.

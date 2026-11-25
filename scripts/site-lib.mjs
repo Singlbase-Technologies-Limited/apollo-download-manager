@@ -19,6 +19,10 @@ const content = JSON.parse(read('site/content/screens.json'));
 /** The smaller copies of each screenshot, made by `pnpm site:screens` (scripts/site-screens.mjs, SMALLER). */
 const SCREEN_WIDTHS = [720, 1440];
 const SCREEN_CAPTION = 'The real app, with example downloads.';
+/** User guide pages that became others (#425): their old address stays, as a page linking the new ones. */
+const MOVED_GUIDE_PAGES = {
+  downloads: { title: 'Downloads', pages: ['add-a-download', 'download-list', 'resume', 'queue-and-schedule', 'files-and-logins'] },
+};
 
 
 /** The files the pages use besides what `buildSite` makes: where each is, and its path in the site. */
@@ -429,6 +433,27 @@ export function buildSite({ releases }) {
   Object.assign(out, buildDevSite({ files, nav: JSON.parse(read('site/content/developers.json')), layout, renderBlocks, repo: REPO }));
   out['developers/search.js'] = read('site/developers/search.js');
 
+  // A guide page that became other pages (#425) keeps its address: a short page that links them, which search
+  // engines don't list, and which isn't in the sitemap.
+  for (const [id, moved] of Object.entries(MOVED_GUIDE_PAGES)) {
+    const path = `guide/${id}/index.html`;
+    const href = pageHref(path);
+    const links = moved.pages.map((to) => {
+      const page = guide.find((g) => g.id === to);
+      if (!page) throw new Error(`MOVED_GUIDE_PAGES: guide/${id}/ points to ${to}, which isn't a guide page`);
+      return `<li><a href="${href({ page: to })}">${esc(page.title)}</a></li>`;
+    });
+    out[path] = layout({
+      path,
+      title: moved.title,
+      description: `The ${moved.title} page of the user guide is now ${String(moved.pages.length)} pages.`,
+      body: `<header class="page-head"><div class="wrap"><h1>${esc(moved.title)}</h1><p class="lead">This page of the user guide became these pages:</p></div></header>\n<div class="wrap prose"><ul>${links.join('')}</ul></div>`,
+      aside: `${searchForm({ root: '../', id: 'guide-search', label: 'Search the user guide', placeholder: 'Resume, torrents, browser…' })}\n${guideNav(guideGroups, guide, id, href)}`,
+      crumb: 'User guide',
+      head: '<meta name="robots" content="noindex">\n<script type="module" src="../search.js"></script>\n',
+    });
+  }
+
   out['404.html'] = layout({
     path: '404.html',
     title: 'Page not found',
@@ -436,7 +461,8 @@ export function buildSite({ releases }) {
     body: `<header class="page-head"><div class="wrap"><h1>Page not found</h1><p class="lead">This page doesn’t exist. Try the <a href="${SITE_URL}">home page</a> or the <a href="${SITE_URL}guide/">user guide</a>.</p></div></header>`,
   });
 
-  const pages = Object.keys(out).filter((p) => p.endsWith('index.html')).sort();
+  const movedPaths = Object.keys(MOVED_GUIDE_PAGES).map((id) => `guide/${id}/index.html`);
+  const pages = Object.keys(out).filter((p) => p.endsWith('index.html') && !movedPaths.includes(p)).sort();
   out['sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages.map((p) => `<url><loc>${SITE_URL}${p.replace(/index\.html$/, '')}</loc></url>`).join('\n')}

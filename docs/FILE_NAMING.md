@@ -2,6 +2,8 @@
 
 How Apollo Download Manager names a download's file, chooses its category and folder, and what it does when the name is taken (#31, built on #40). The rules are V1's, with its fixes for V1 issues #38 and #46, adapted to names that the Apollo Download Manager engine learns from the server. The code:
 
+See also, for users: [Files, folders and logins](user/files-and-logins.md).
+
 - [`naming.rs`](../crates/velocity-core/src/naming.rs): file names.
 - [`category.rs`](../crates/velocity-core/src/category.rs): categories.
 - [`destination.rs`](../crates/velocity-core/src/destination.rs): folders, the folder settings and what is already there.

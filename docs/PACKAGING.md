@@ -2,6 +2,8 @@
 
 How Apollo Download Manager becomes an installer: Windows (#81) and Linux (#82) are built; macOS isn't planned (#83). Release candidates and releases are made from these packages by CI ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md), [RELEASE_PROCESS.md](RELEASE_PROCESS.md)). Nothing is signed ([Signing](#signing)).
 
+See also, for users: [Installing](user/installing.md).
+
 ## The Windows installer
 
 One installer, a per-user NSIS setup (`Apollo Download Manager_<version>_x64-setup.exe`), made by Tauri from [`src-tauri/tauri.release.conf.json`](../src-tauri/tauri.release.conf.json). No MSI (PO decision on #81).

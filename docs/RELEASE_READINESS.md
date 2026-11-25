@@ -100,7 +100,7 @@ What users meet in this version, with where it is documented:
 - **The extension is only in the Chrome Web Store** in 0.2.0. Edge and Firefox users load it by hand until their stores approve it ([Browser integration](user/browser.md#installing-the-extension)). Firefox Add-ons approved it on 2026-11-12, and the app links to it from 0.3.0.
 - **Nothing is imported from V1** ([V1 and Apollo Download Manager](user/v1-and-v2.md)).
 - **Protocols:** FTP and SFTP use one connection each, and SFTP and torrents can't use an HTTPS proxy ([Protocols](user/protocols.md#not-supported)).
-- **Torrents through a proxy** have limits ([Torrents](user/torrents.md#not-yet-or-different-from-v1)).
+- **Torrents through a proxy** have limits ([Torrents](user/torrents.md#different-from-v1)).
 - **Snap and Flatpak browsers** may not be able to start the browser connection. Settings, Browser warns beside such a browser; the user guide doesn't mention it yet.
 - **On Linux,** browser registrations must be removed before the package ([Installing](user/installing.md#removing-apollo-download-manager)).
 - **No macOS build.**

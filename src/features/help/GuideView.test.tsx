@@ -32,7 +32,7 @@ describe('the in-app user guide (#354)', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'User guide' }));
     const guide = await screen.findByRole('dialog', { name: 'User guide' });
     const contents = within(guide).getByRole('navigation', { name: 'Guide contents' });
-    expect(within(contents).getByRole('button', { name: 'Downloads' })).toBeTruthy();
+    expect(within(contents).getByRole('button', { name: 'Add a download' })).toBeTruthy();
     expect(within(guide).getByRole('heading', { level: 1, name: 'Apollo Download Manager: user guide' })).toBeTruthy();
   });
 
@@ -43,8 +43,9 @@ describe('the in-app user guide (#354)', () => {
     const contents = within(guide).getByRole('navigation', { name: 'Guide contents' });
     const names = (group: string) => within(within(contents).getByRole('list', { name: group })).getAllByRole('button').map((b) => b.textContent);
     expect(names('Getting started')).toEqual(['Introduction', 'Installing']);
-    expect(names('Using the app')).toEqual(['Downloads', 'Torrents', 'Categories', 'Browser integration']);
-    expect(names('Reference')).toEqual(['Settings', 'Protocols and limits']);
+    // The task pages since #425.
+    expect(names('Using the app')).toEqual(['Add a download', 'The download list', 'Resume after a break', 'Queue and schedule', 'Files, folders and logins', 'Torrents', 'Categories', 'Use with your browser']);
+    expect(names('Reference')).toEqual(['Settings', 'Protocols and limits', 'Download messages']);
     expect(names('Help')).toEqual(['Troubleshooting', expect.stringMatching(/^Beside /)]);
     expect(within(contents).getByRole('button', { name: 'Torrents' }).getAttribute('aria-current')).toBe('page');
   });
@@ -72,18 +73,18 @@ describe('the in-app user guide (#354)', () => {
     const user = await renderApp();
     act(() => { useUiStore.getState().openGuide(); });
     const guide = await screen.findByRole('dialog', { name: 'User guide' });
-    await user.click(within(guide).getByRole('button', { name: 'Downloads' }));
-    expect(within(guide).getByRole('heading', { level: 1, name: 'Downloads' })).toBeTruthy();
-    expect(within(guide).getByRole('heading', { level: 2, name: 'Adding downloads' })).toBeTruthy();
+    await user.click(within(guide).getByRole('button', { name: 'Files, folders and logins' }));
+    expect(within(guide).getByRole('heading', { level: 1, name: 'Files, folders and logins' })).toBeTruthy();
+    expect(within(guide).getByRole('heading', { level: 2, name: 'Files and folders' })).toBeTruthy();
     await user.click(within(guide).getByRole('button', { name: /Next: Torrents/ }));
     expect(within(guide).getByRole('heading', { level: 1, name: 'Torrents' })).toBeTruthy();
-    await user.click(within(guide).getByRole('button', { name: /Previous: Downloads/ }));
-    expect(within(guide).getByRole('heading', { level: 1, name: 'Downloads' })).toBeTruthy();
+    await user.click(within(guide).getByRole('button', { name: /Previous: Files, folders and logins/ }));
+    expect(within(guide).getByRole('heading', { level: 1, name: 'Files, folders and logins' })).toBeTruthy();
   });
 
   it('follows a link to another guide page', async () => {
     const user = await renderApp();
-    act(() => { useUiStore.getState().openGuide('downloads'); });
+    act(() => { useUiStore.getState().openGuide('add-a-download'); });
     const guide = await screen.findByRole('dialog', { name: 'User guide' });
     const [link] = within(guide).getAllByRole('link', { name: 'guide' });
     if (!link) throw new Error('no link to the torrents guide');

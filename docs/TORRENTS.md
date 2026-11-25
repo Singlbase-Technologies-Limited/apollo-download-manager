@@ -2,6 +2,8 @@
 
 Apollo Download Manager downloads BitTorrent v1, v2 and hybrid torrents with libtorrent 2.0.15 ([ADR-0001](decisions/0001-v2-direction.md), [ADR-0005](decisions/0005-v1-features-without-aria2.md)). This document describes how torrents work in Apollo Download Manager today. #62 delivered the port in four parts: the bridge and helper, magnets and file choice, the lifecycle and seeding, and trackers and port mapping.
 
+See also, for users: [Torrents](user/torrents.md).
+
 ## Where the code is
 
 | Part | Crate | Role |

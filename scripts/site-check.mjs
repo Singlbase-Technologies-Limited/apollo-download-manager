@@ -344,7 +344,7 @@ for (const [route, id, query, target] of [
   const page = await open(check, 'guide/installing/', 'pager');
   await page.click('.pager a[rel="next"]');
   await page.waitForLoadState();
-  if (!page.url().endsWith('/guide/downloads/')) problem('pager', `next went to ${page.url()}`);
+  if (!page.url().endsWith('/guide/add-a-download/')) problem('pager', `next went to ${page.url()}`);
   await page.close();
 }
 await check.close();

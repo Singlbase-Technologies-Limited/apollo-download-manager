@@ -51,7 +51,7 @@
       "screen": "add",
       "title": "Add one link, or five hundred",
       "text": "Paste links, one per line, or choose a .torrent file. You see the file name, category and folder before anything starts.",
-      "guide": "guide/downloads/",
+      "guide": "guide/add-a-download/",
       "home": true,
       "focus": [
         50,
@@ -63,7 +63,7 @@
       "screen": "details",
       "title": "See what each download is doing",
       "text": "Speed, time left and connections for every file. When one waits or fails, it tells you why in plain words.",
-      "guide": "guide/downloads/",
+      "guide": "guide/download-list/",
       "home": true,
       "focus": [
         100,
@@ -121,9 +121,11 @@
     }
   ],
   "guide": {
-    "downloads": {
-      "adding-downloads": "add",
-      "the-download-list": "downloads",
+    "add-a-download": {
+      "opening-the-add-dialog": "add"
+    },
+    "download-list": {
+      "the-lists": "downloads",
       "the-details-panel": "details"
     },
     "categories": {

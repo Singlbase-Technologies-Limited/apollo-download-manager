@@ -2,6 +2,8 @@
 
 What Apollo Download Manager records about itself, how secrets are kept out of it, and what the user can share (#28). Privacy as a whole is in [PRIVACY.md](PRIVACY.md).
 
+See also, for users: [Troubleshooting](user/troubleshooting.md).
+
 ## The app's log
 
 - **Where:** in memory only. `velocity_core::logs::AppLog` keeps the last 1,000 lines, each cut at 2,000 characters. Nothing is written to a log file, a terminal or the network.

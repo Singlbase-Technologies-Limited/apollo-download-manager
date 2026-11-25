@@ -2,6 +2,8 @@
 
 Apollo Download Manager and V1, the download manager it grew out of, can be installed and run at the same time without sharing anything. Each has its own data, database, single-instance lock, IPC endpoint and browser registration (#27, [ADR-0003](decisions/0003-v2-app-identity.md)).
 
+See also, for users: [Beside V1](user/v1-and-v2.md).
+
 ## One source of identity
 
 [`branding.json`](../branding.json) at the repository root holds Apollo Download Manager's identity. The core reads it (`velocity_core::branding`), and [`src-tauri/tauri.conf.json`](../src-tauri/tauri.conf.json) must carry the same identifier and product name, which a test checks. A build runs as the development identity unless it is built with the `release-identity` feature, as packaging does; then the app, the engine, the torrent helper and the native host all run as the release identity, and [`src-tauri/tauri.release.conf.json`](../src-tauri/tauri.release.conf.json) carries it ([PACKAGING.md](PACKAGING.md), #81).

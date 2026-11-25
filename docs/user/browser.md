@@ -1,23 +1,18 @@
-# Browser integration
+# Use with your browser
 
 Apollo Download Manager's browser extension sends downloads from your browser to Apollo Download Manager. It works with Chrome, Edge and Brave (Chrome 116 or later) and Firefox (115 or later).
 
-## Beside V1
-
-Apollo Download Manager's extension is its own: it is named **Apollo Download Manager** (**Apollo DM** for short), its menu item is **Download with Apollo Download Manager**, and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time; each sends links only to its own app, and registering or unregistering Apollo Download Manager never touches V1's.
+See also, for developers: [how the extension and its native host work](../BROWSER_EXTENSION.md).
 
 ## Installing the extension
 
 - **Chrome and Brave:** install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/fhhohpcahhmlijibcpppoddcklobfpld). In Apollo Download Manager, **Get the extension** in Settings, Browser opens that page in the browser.
 - **Firefox:** install it from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/apollo-download-manager/). **Get the extension** in Settings, Browser opens that page in Firefox.
-- **Edge: not in its store yet.** **Get the extension** stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores, or load it by hand from a build, as below.
+- **Edge: not in its store yet.** **Get the extension** stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores.
 
-The installers don't set the extension up for you. To load it by hand:
+The installers don't set the extension up for you. Testers can load a build of the extension by hand, as the [developer documents](../BROWSER_EXTENSION.md#loading-a-build-by-hand) say.
 
-- **Chrome, Edge, Brave:** open `chrome://extensions` (or `edge://extensions`, `brave://extensions`), turn on developer mode, choose **Load unpacked**, and pick the extension's `chrome` folder.
-- **Firefox:** open `about:debugging`, **This Firefox**, **Load Temporary Add-on**, and pick the `manifest.json` in the extension's `firefox` folder. Firefox removes a temporary add-on when it closes.
-
-How to build the extension is in the [developer documents](../BROWSER_EXTENSION.md#building).
+**Beside V1:** the extension is named **Apollo Download Manager** (**Apollo DM** for short), its menu item is **Download with Apollo Download Manager**, and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time ([Beside V1](v1-and-v2.md)).
 
 ## Connecting it to Apollo Download Manager
 

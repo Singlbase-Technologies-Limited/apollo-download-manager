@@ -9,7 +9,7 @@ import { githubSlug } from './links-lib.mjs';
 
 const md = new MarkdownIt({ html: true, linkify: false, typographer: false });
 
-/** The page id of a guide file: `downloads.md` is `downloads`, the README is `index`. */
+/** The page id of a guide file: `torrents.md` is `torrents`, the README is `index`. */
 const pageId = (file) => (file === 'README.md' ? 'index' : file.replace(/\.md$/, ''));
 
 /** Block tokens from `start` up to the matching close of `open`; returns [children, next index]. */
@@ -262,7 +262,7 @@ export function resolveLinks(page, resolve) {
 }
 
 /**
- * @param {Record<string, string>} files the guide's files by name (`README.md`, `downloads.md`, …)
+ * @param {Record<string, string>} files the guide's files by name (`README.md`, `torrents.md`, …)
  * @returns {{ groups: { title: string, pages: string[] }[], pages: { id: string, file: string, title: string, headings: { id: string, level: number, text: string }[], blocks: object[], sections: { anchor: string, heading: string, text: string }[] }[] }}
  */
 export function buildGuide(files) {
