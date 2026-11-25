@@ -350,6 +350,7 @@ fn events_for_unknown_transfers_are_ignored() {
         content_type: None,
         retry_at_ms: None,
         started_over: None,
+        announced_mirrors: Vec::new(),
     };
     stray.progress.completed_bytes = 999;
     control.emit(TransferEvent::Changed { snapshot: stray });
