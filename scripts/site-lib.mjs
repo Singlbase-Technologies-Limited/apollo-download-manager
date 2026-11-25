@@ -21,6 +21,34 @@ const SCREEN_WIDTHS = [720, 1440];
 const SCREEN_CAPTION = 'The real app, with example downloads.';
 
 
+/**
+ * A Mermaid diagram (#484): its text in a `pre.mermaid`, which site/developers/diagrams.js draws, and which stays
+ * readable as text without scripts. Its `accTitle` is the caption, and Mermaid gives the drawing that title and its
+ * `accDescr` for screen readers, as GitHub does. The site leaves out Mermaid's ELK layout (PO decision on #484), so a
+ * diagram that asks for it fails the build instead of failing in the browser.
+ */
+function diagram(text) {
+  const title = /^\s*accTitle\s*:\s*(.+?)\s*$/m.exec(text)?.[1];
+  if (!title) throw new Error(`a Mermaid diagram needs an accTitle line, its title for screen readers:\n${text}`);
+  if (/^\s*flowchart-elk\b|\blayout["']?\s*:\s*["']?elk\b|\bdefaultRenderer\b[^\n]*\belk\b/m.test(text)) {
+    throw new Error(`the website has no ELK layout (PO decision on #484); use Mermaid's default layout:\n${text}`);
+  }
+  return `<figure class="diagram"><pre class="mermaid">${esc(text)}</pre><figcaption>${esc(title)}</figcaption></figure>`;
+}
+
+/** Mermaid's browser build, without source maps or the ELK layout (EPL-2.0; PO decision on #484): its files, by path. */
+function mermaidFiles(at) {
+  const dist = 'node_modules/mermaid/dist/';
+  const chunks = 'chunks/mermaid.esm.min/';
+  return [
+    { from: at(`${dist}mermaid.esm.min.mjs`), to: 'developers/mermaid/mermaid.esm.min.mjs' },
+    { from: at('node_modules/mermaid/LICENSE'), to: 'developers/mermaid/LICENSE.txt' },
+    ...readdirSync(new URL(`${dist}${chunks}`, root))
+      .filter((f) => f.endsWith('.mjs') && !f.startsWith('elk-'))
+      .map((f) => ({ from: at(`${dist}${chunks}${f}`), to: `developers/mermaid/${chunks}${f}` })),
+  ];
+}
+
 /** The files the pages use besides what `buildSite` makes: where each is, and its path in the site. */
 export function siteFiles() {
   const at = (rel) => fileURLToPath(new URL(rel, root));
@@ -32,6 +60,7 @@ export function siteFiles() {
     { from: at(`${font}LICENSE`), to: 'fonts/LICENSE.txt' },
     ...content.screens.flatMap((s) => ['', ...SCREEN_WIDTHS.map((w) => `-${String(w)}`)].map((suffix) => ({ from: at(`site/screens/${s.id}${suffix}.webp`), to: `screens/${s.id}${suffix}.webp` }))),
     ...readdirSync(new URL('docs/images/', root)).map((f) => ({ from: at(`docs/images/${f}`), to: `developers/images/${f}` })),
+    ...mermaidFiles(at),
   ];
 }
 
@@ -88,7 +117,7 @@ export function renderBlocks(blocks, hrefOf, afterHeading = () => '') {
         case 'quote':
           return `<blockquote>${renderBlocks(b.content, hrefOf)}</blockquote>`;
         case 'codeBlock':
-          return `<pre><code>${esc(b.text)}</code></pre>`;
+          return b.lang === 'mermaid' ? diagram(b.text) : `<pre><code>${esc(b.text)}</code></pre>`;
         case 'table':
           return `<div class="table"><table><thead><tr>${b.head.map((c) => `<th scope="col">${inlineHtml(c, hrefOf)}</th>`).join('')}</tr></thead><tbody>${b.rows
             .map((r) => `<tr>${r.map((c) => `<td>${inlineHtml(c, hrefOf)}</td>`).join('')}</tr>`)
@@ -428,6 +457,7 @@ export function buildSite({ releases }) {
   const files = Object.fromEntries(docFiles('').map((f) => [f, read(`docs/${f}`)]));
   Object.assign(out, buildDevSite({ files, nav: JSON.parse(read('site/content/developers.json')), layout, renderBlocks, repo: REPO }));
   out['developers/search.js'] = read('site/developers/search.js');
+  out['developers/diagrams.js'] = read('site/developers/diagrams.js');
 
   out['404.html'] = layout({
     path: '404.html',

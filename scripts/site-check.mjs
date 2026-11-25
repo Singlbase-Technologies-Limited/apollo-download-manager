@@ -36,7 +36,7 @@ const TALL_TABLES = [
   'developers/research/2026-11-13-feature-research-user-wishes/',
   'developers/testing/',
 ];
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.xml': 'application/xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.txt': 'text/plain; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.xml': 'application/xml' };
 const at = process.argv.indexOf('--shots');
 const shots = at > 0 ? process.argv[at + 1] : null;
 if (shots) mkdirSync(shots, { recursive: true });
@@ -429,6 +429,69 @@ for (const theme of ['light', 'dark']) {
     seen.add(at.key);
   }
   if (seen.size < 20) problem('keyboard', `Tab reached only ${String(seen.size)} things`);
+  await context.close();
+}
+
+// The diagrams (#484): on every page with one, Mermaid draws each, with its title for screen readers, in the light theme
+// and again in the dark one, from the site's own files; and how much of Mermaid a page fetches.
+{
+  const diagramPages = routes.filter((r) => readFileSync(join(root, r, 'index.html'), 'utf8').includes('<figure class="diagram">'));
+  if (diagramPages.length === 0) problem('diagrams', 'no page has a diagram');
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  for (const route of diagramPages) {
+    const where = `diagrams /${route}`;
+    let mermaidBytes = 0;
+    const page = await context.newPage();
+    page.on('response', async (r) => {
+      if (r.url().includes('/developers/mermaid/')) mermaidBytes += (await r.body().catch(() => Buffer.alloc(0))).length;
+    });
+    page.on('console', (m) => {
+      if (m.type() === 'error') problem(where, `console: ${m.text()}`);
+    });
+    page.on('pageerror', (e) => problem(where, `script: ${e.message}`));
+    await page.goto(`${origin}${BASE}${route}`, { waitUntil: 'load' });
+    const drawn = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('figure.diagram')].map((f) => {
+          const svg = f.querySelector('svg');
+          const box = svg?.getBoundingClientRect();
+          return {
+            caption: f.querySelector('figcaption')?.textContent ?? '',
+            title: svg?.querySelector('title')?.textContent ?? null,
+            label: svg?.getAttribute('aria-labelledby') ?? null,
+            width: box?.width ?? 0,
+            fill: svg ? getComputedStyle(svg.querySelector('rect, path') ?? svg).fill : '',
+            // The frame stays in the page; a wider drawing scrolls inside it, which the keyboard can reach.
+            overflows: f.getBoundingClientRect().right > document.documentElement.clientWidth,
+            unreachable: f.scrollWidth > f.clientWidth && f.tabIndex !== 0,
+          };
+        }),
+      );
+    // Drawn once Mermaid has labelled each drawing; a drawing never labelled is reported below.
+    const waitDrawn = () =>
+      page
+        .waitForFunction(() => [...document.querySelectorAll('figure.diagram')].every((f) => f.querySelector('pre[data-processed] svg[aria-labelledby] title')), null, { timeout: 15_000 })
+        .catch(() => null);
+    await waitDrawn();
+    const light = await drawn();
+    for (const [i, d] of light.entries()) {
+      if (d.width < 100) problem(where, `diagram ${String(i + 1)} wasn't drawn`);
+      if (d.title !== d.caption || !d.label) problem(where, `diagram ${String(i + 1)} has no title for screen readers ("${String(d.title)}")`);
+      if (d.overflows) problem(where, `diagram ${String(i + 1)} is wider than the page`);
+      if (d.unreachable) problem(where, `diagram ${String(i + 1)} scrolls, but the keyboard can't reach it`);
+    }
+    if (shots) await page.screenshot({ path: join(shots, `diagrams-light-${route.replace(/\//g, '-')}page.png`), fullPage: true });
+    await page.click('[data-theme-toggle]');
+    await page.waitForTimeout(300);
+    await waitDrawn();
+    const dark = await drawn();
+    if (dark.length !== light.length || dark.some((d) => d.width < 100)) problem(where, 'the diagrams weren’t drawn again in the dark theme');
+    if (dark.every((d, i) => d.fill === light[i]?.fill)) problem(where, 'the diagrams kept the light theme’s colours');
+    if (shots) await page.screenshot({ path: join(shots, `diagrams-dark-${route.replace(/\//g, '-')}page.png`), fullPage: true });
+    await page.click('[data-theme-toggle]');
+    console.log(`site:check: /${route} draws ${String(light.length)} diagram(s), fetching ${(mermaidBytes / 1024).toFixed(0)} KiB of Mermaid`);
+    await page.close();
+  }
   await context.close();
 }
 

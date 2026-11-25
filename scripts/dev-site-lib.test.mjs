@@ -88,6 +88,12 @@ describe('the developer site (#355)', () => {
     expect(() => build({ 'ARCHITECTURE.md': '# Architecture\n\n## The parts\n\n![x](https://example.org/a.png)\n' })).toThrow(/image/);
   });
 
+  it('loads the diagram script only on a page with a diagram (#484)', () => {
+    const shown = build({ 'ARCHITECTURE.md': '# Architecture\n\n## The parts\n\n```mermaid\nflowchart TD\n  accTitle: Parts\n  a --> b\n```\n' });
+    expect(shown['developers/architecture/index.html']).toContain('<script type="module" src="../diagrams.js"></script>');
+    expect(shown['developers/index.html']).not.toContain('diagrams.js');
+  });
+
   it('shows text such as <Name> as text, never as markup', () => {
     const shown = build({ 'ARCHITECTURE.md': '# Architecture\n\n## The parts\n\nThe "<Name> Download Manager" names.\n' });
     expect(shown['developers/architecture/index.html']).toContain('&lt;Name&gt; Download Manager');
@@ -146,13 +152,18 @@ describe('the developer site, built from docs/ (#355)', () => {
       const scripts = body.match(/<script\b[^>]*>/gi) ?? [];
       expect(scripts[0], path).toMatch(/^<script src="(\.\/|(\.\.\/)+)theme\.js">$/);
       if (path.startsWith('developers/') || path.startsWith('guide/')) {
-        expect(scripts, path).toHaveLength(2);
+        // The diagrams' script (#484) only where a page has a diagram, and only on the developer pages.
+        const diagrams = path.startsWith('developers/') && body.includes('<figure class="diagram">');
+        expect(scripts, path).toHaveLength(diagrams ? 3 : 2);
         expect(scripts[1], path).toMatch(/^<script type="module" src="(\.\/|(\.\.\/)+)search\.js">$/);
+        if (diagrams) expect(scripts[2], path).toMatch(/^<script type="module" src="(\.\/|(\.\.\/)+)diagrams\.js">$/);
       } else {
         expect(scripts, path).toHaveLength(1);
       }
     }
     expect(site['developers/search.js']).toBeDefined();
+    expect(site['developers/diagrams.js']).toContain("from './mermaid/mermaid.esm.min.mjs'");
+    expect(site['developers/architecture/index.html']).toContain('<figure class="diagram">');
     expect(site['guide/search.js']).toBe(site['developers/search.js']);
   });
 

@@ -34,6 +34,22 @@ describe('the website (#353)', () => {
     expect(cell('"a":true')).toContain('<td><code>&quot;a&quot;:<wbr>true</code></td>');
   });
 
+  it('draws a Mermaid diagram from its text, captioned with its title, and readable as text without scripts (#484)', () => {
+    const text = 'flowchart TD\n  accTitle: The parts\n  accDescr: The shell calls the core\n  a["<shell>"] --> b\n';
+    const html = renderBlocks([{ type: 'codeBlock', lang: 'mermaid', text }], () => '');
+    expect(html).toBe(
+      '<figure class="diagram"><pre class="mermaid">flowchart TD\n  accTitle: The parts\n  accDescr: The shell calls the core\n  a[&quot;&lt;shell&gt;&quot;] --&gt; b\n</pre><figcaption>The parts</figcaption></figure>',
+    );
+  });
+
+  it('refuses a diagram without a title for screen readers, or one that needs the ELK layout the site leaves out (#484)', () => {
+    const diagram = (text) => () => renderBlocks([{ type: 'codeBlock', lang: 'mermaid', text }], () => '');
+    expect(diagram('flowchart TD\n  a --> b\n')).toThrow(/accTitle/);
+    expect(diagram('flowchart-elk TD\n  accTitle: T\n  a --> b\n')).toThrow(/ELK/);
+    expect(diagram('---\nconfig:\n  layout: elk\n---\nflowchart TD\n  accTitle: T\n  a --> b\n')).toThrow(/ELK/);
+    expect(diagram('%%{init: {"layout": "elk"}}%%\nflowchart TD\n  accTitle: T\n  a --> b\n')).toThrow(/ELK/);
+  });
+
   it('turns guide links into links between the site’s pages', () => {
     const html = renderBlocks(
       [{ type: 'paragraph', content: [{ type: 'link', to: { page: 'torrents', anchor: 'seeding' }, content: [{ type: 'text', text: 'seeding' }] }, { type: 'link', to: { url: 'https://example.org/a?b=1&c=2' }, content: [{ type: 'text', text: 'site' }] }] }],
@@ -66,7 +82,7 @@ describe('the website (#353)', () => {
       if (path !== '404.html') expect(body, path).toContain(`<link rel="canonical" href="${SITE_URL}`);
       // The canonical address is the page's own; nothing else is loaded from anywhere.
       // The site's own scripts are checked in dev-site-lib.test.mjs: nothing else may load.
-      const page = body.replace(/<script src="[./]*theme\.js"><\/script>/, '').replace(/<script type="module" src="[./]*search\.js"><\/script>/, '');
+      const page = body.replace(/<script src="[./]*theme\.js"><\/script>/, '').replace(/<script type="module" src="[./]*search\.js"><\/script>/, '').replace(/<script type="module" src="[./]*diagrams\.js"><\/script>/, '');
       expect(page, path).not.toMatch(/<script|<iframe|fonts\.googleapis|<link(?![^>]*rel="canonical")[^>]+href="https?:|<img[^>]+src="https?:/i);
       expect(body, path).toMatch(/<a class="skip" href="#main">/);
     }
@@ -173,6 +189,16 @@ describe('the website shows the real app (#353)', () => {
         expect(files, path).toContain(/screens\/[a-z-]+\.webp/.exec(tag)[0]);
       }
     }
+  });
+
+  it('serves Mermaid itself, with its licence, and without the ELK layout (PO decision on #484)', () => {
+    const files = siteFiles().filter((f) => f.to.startsWith('developers/mermaid/'));
+    const names = files.map((f) => f.to);
+    expect(names).toContain('developers/mermaid/mermaid.esm.min.mjs');
+    expect(names).toContain('developers/mermaid/LICENSE.txt');
+    expect(names.some((n) => n.startsWith('developers/mermaid/chunks/mermaid.esm.min/flowDiagram-'))).toBe(true);
+    expect(names.filter((n) => /\/elk-|\.map$/.test(n))).toEqual([]);
+    for (const f of files) expect(existsSync(f.from), f.from).toBe(true);
   });
 
   it('serves its font itself, with the font’s licence', () => {

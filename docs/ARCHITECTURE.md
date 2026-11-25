@@ -6,26 +6,23 @@ This page describes Apollo Download Manager as it is built. Checked against the 
 
 ## Components
 
-```
- Browser extension ──(native messaging, stdio)──▶ Native host ──(local IPC)──▶ ┐
-                                                                               │
- React UI (src/) ◀──(typed commands and events)──▶ Desktop shell (src-tauri/) ◀┘
-                                                          │
-                                                          ▼
-                                     velocity-core: manager, queue, policy, validation,
-                                     persistence (SQLite), settings, categories, history
-                                          │                               │
-                            DirectTransfer contract              TorrentEngine contract
-                                          │                               │
-                                          ▼                               ▼
-                  Transfer engine: probe, leases, checkpoints,     Torrent helper (child,
-                  integrity, retries, limits (child, ADR-0012)     ADR-0014) → torrent bridge
-                                          │                         → libtorrent (v1, v2,
-                                          ▼                         hybrid, magnets)
-                  libcurl layer: the only code that calls libcurl         │
-                                          │                               │
-                                          ▼                               ▼
-                         HTTP, HTTPS, FTP and SFTP servers         peers and trackers
+```mermaid
+flowchart TD
+    accTitle: The components and how they talk
+    accDescr: The browser extension talks to the native host over native messaging, and the native host to the desktop shell over local IPC. The React UI talks to the desktop shell with typed commands and events. The shell calls velocity-core. The core drives the transfer engine through the DirectTransfer contract; the engine reaches HTTP, HTTPS and FTP servers through the libcurl layer, and SFTP servers through the SFTP layer. The core drives the torrent helper through the TorrentEngine contract; the helper reaches peers and trackers through the torrent bridge and libtorrent.
+    ext["Browser extension"] -- "native messaging (stdio)" --> host["Native host"]
+    host -- "local IPC" --> shell["Desktop shell<br>src-tauri/"]
+    ui["React UI<br>src/"] <-- "typed commands and events" --> shell
+    shell --> core["velocity-core<br>manager, queue, policy, validation,<br>persistence (SQLite), settings, categories, history"]
+    core -- "DirectTransfer contract" --> engine["Transfer engine (child, ADR-0012)<br>probe, leases, checkpoints,<br>integrity, retries, limits"]
+    core -- "TorrentEngine contract" --> helper["Torrent helper (child, ADR-0014)"]
+    engine --> curl["libcurl layer<br>the only code that calls libcurl"]
+    engine --> sftp["SFTP layer<br>the only code that calls russh"]
+    curl --> servers[("HTTP, HTTPS and FTP servers")]
+    sftp --> sftpServers[("SFTP servers")]
+    helper --> bridge["Torrent bridge<br>the only code that calls libtorrent"]
+    bridge --> lt["libtorrent<br>v1, v2, hybrid, magnets"]
+    lt --> peers[("Peers and trackers")]
 ```
 
 | Component | Path | Responsibility | Today | Built in |
@@ -74,6 +71,8 @@ The details are designed and tested in the issues named in each step.
 
 ```mermaid
 sequenceDiagram
+    accTitle: A direct download, start to finish
+    accDescr: The UI asks the shell to add a download; the manager saves it and hands it to the transfer engine when a slot is free. The engine probes the server, fetches further ranges, and sends checkpoints and progress back; the manager saves them and sends snapshots to the UI. At the end the engine verifies, flushes and renames the file, and the manager saves the finished record.
     participant UI as React UI
     participant Shell as Desktop shell
     participant Manager as Manager (velocity-core)
