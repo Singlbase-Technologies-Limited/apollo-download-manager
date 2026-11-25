@@ -52,6 +52,17 @@
       <p id="torrentAccess" class="hint warn" role="status"></p>
     </section>
 
+    <section class="card section" aria-labelledby="pageTitle">
+      <h2 id="pageTitle">Files on pages</h2>
+      <label class="toggle" style="border-top:0;padding-top:0">Show a download button on pages with files <input id="pageButton" type="checkbox"></label>
+      <p class="hint">On by default. The button lists the files on a page so you can send several at once; drag it anywhere, or press Alt+Shift+D. It needs access to pages, which the browser asks you for.</p>
+      <div class="field">
+        <label for="pageButtonHiddenSites">Never show the button on these sites <span class="hint">(one per line, subdomains too)</span></label>
+        <textarea id="pageButtonHiddenSites"></textarea>
+      </div>
+      <p id="pageAccess" class="hint warn" role="status"></p>
+    </section>
+
     <section class="card section" aria-labelledby="privacyTitle">
       <h2 id="privacyTitle">Privacy</h2>
       <p class="text">The popup keeps your last 5 sends, the site and file name only, in this browser. Nothing leaves your computer except the links you send to the app.</p>

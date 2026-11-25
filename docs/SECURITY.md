@@ -193,12 +193,15 @@ What the check found or accepts, checked 2026-10-30:
 | GHSA-662x-8wvj-2276 | pageant 0.2.4: unbounded frame buffering | russh's Pageant client, Windows only, which Apollo DM doesn't use | **Fixed** in #255: pageant 0.2.5 |
 | RUSTSEC-2026-0459 (GHSA-72w2-rjgg-q729, CVE-2026-119375), Medium | libsqlite3-sys 0.38.2: SQLite 3.53.2 can return uninitialised page-cache memory when it opens a database with a crafted `-wal` file | rusqlite, the app database (WAL mode), Windows and Linux | **Fixed** in #446: rusqlite 0.41.1, libsqlite3-sys 0.39.1, SQLite 3.54.1; `rusqlite_migration`, which held rusqlite at 0.40, replaced by Apollo DM's own runner |
 | (yanked) | crypto-bigint 0.7.7: yanked by its authors | russh 0.65.0 and its elliptic-curve crates | **Listed:** a warning; moves with russh |
+| RUSTSEC-2026-0544 | zlib 1.3.1.2 to 1.3.2: a heap buffer overflow in `gz_vacate()`, writing gzip files (`gzprintf` after a write stall). Reported against libz-sys 1.1.31 | The app's own zlib, built from the native lock and linked into libcurl, Windows and Linux. libcurl only decompresses (`inflate`), so the faulty code isn't reached | **Fixed** in #506: zlib 1.4 (PO: an exception to the two-week rule, as a security fix), and libz-sys 1.1.33 |
+| RUSTSEC-2026-0486 | rustix 1.1.5: the xattr functions mark unwritten bytes as initialised for a zero-length buffer (unsound) | async-io, for zbus and notify-rust, the desktop notifications on Linux | **Fixed** in #506: rustix 1.1.6 |
 
-npm, checked 2026-11-03:
+npm, checked 2026-11-17:
 
 | Advisory | Dependency | Where it comes from | Status |
 |---|---|---|---|
 | GHSA-g3hv-75wg-m249 | minimatch 10.2.6: a denial of service through glob-pattern amplification, fixed in 11.0.1 | ESLint and typescript-eslint, development only; nothing that ships uses it | **Accepted** (PO, #260): ESLint matches only the repository's own globs and paths. Its latest releases still ask for minimatch 10; remove it from [`pnpm-workspace.yaml`](../pnpm-workspace.yaml) once ESLint moves to 11 |
+| GHSA-fc5q-39xc-vjpf, High | picomatch 4.0.4 (all versions up to 4.0.7) | vitest, through tinyglobby and fdir, development only; nothing that ships uses it | **Accepted** (PO, #506): the test runner matches only the repository's own test globs, and no fixed release exists yet. Remove it from [`pnpm-workspace.yaml`](../pnpm-workspace.yaml) once one is out |
 
 ## Proxy (#192)
 

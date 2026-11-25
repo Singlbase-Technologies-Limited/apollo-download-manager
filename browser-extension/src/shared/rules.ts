@@ -76,6 +76,14 @@ export function decide(c: DownloadCandidate, s: ExtensionSettings, selfId: strin
   } catch {
     return { intercept: false, reason: 'invalid URL' };
   }
+  return decideAt(url, c, s);
+}
+
+/**
+ * The rules for a candidate whose address is already parsed (`url`), past the mode, private-window and own-download
+ * checks. The page's file list (#426) parses thousands of links and calls this, so each is parsed once.
+ */
+export function decideAt(url: URL, c: DownloadCandidate, s: ExtensionSettings): Decision {
   // blob:, data:, file: and similar exist only inside the browser and cannot be handed off.
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return { intercept: false, reason: `unsupported scheme ${url.protocol}` };
   if (hostMatches(url.hostname, s.denyDomains)) return { intercept: false, reason: 'domain is excluded' };

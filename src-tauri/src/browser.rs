@@ -8,7 +8,8 @@ use std::time::Instant;
 
 use tauri::{AppHandle, Emitter, Manager};
 use velocity_core::browser::bridge::{
-    answer_added, prompted, route, AppStatus, BrowserPrompt, PromptInbox, RateLimiter, Route,
+    answer_added, answer_batch, prompted, prompted_many, route, AppStatus, BrowserPrompt,
+    PromptInbox, RateLimiter, Route,
 };
 use velocity_core::browser::detect::{store_page_launch, Finder};
 use velocity_core::browser::ipc::{self, Token};
@@ -96,8 +97,29 @@ async fn handle(
     match decided {
         Route::Reply(answer) => answer,
         Route::Ask { id, prompt } => {
-            ask(&app, &prompt);
+            ask(&app, std::slice::from_ref(&prompt));
             prompted(&id)
+        }
+        Route::AskMany { id, prompts } => {
+            ask(&app, &prompts);
+            prompted_many(&id, prompts.len())
+        }
+        Route::AddMany {
+            id,
+            request,
+            prompts,
+            ask: asked,
+        } => {
+            let added = on_manager(&downloads, move |m| m.add_request(&request, now_ms()))
+                .await
+                .and_then(|r| r);
+            let (answer, taken) = answer_batch(&id, added, &prompts, asked.len());
+            // Torrents, taken names and links added before: the user decides in one dialog.
+            let waiting: Vec<BrowserPrompt> = asked.into_iter().chain(taken).collect();
+            if !waiting.is_empty() {
+                ask(&app, &waiting);
+            }
+            answer
         }
         Route::Add {
             id,
@@ -109,18 +131,21 @@ async fn handle(
                 .and_then(|r| r);
             answer_added(&id, added).unwrap_or_else(|| {
                 // A taken name or a link added before: the user decides in the dialog.
-                ask(&app, &prompt);
+                ask(&app, std::slice::from_ref(&prompt));
                 prompted(&id)
             })
         }
     }
 }
 
-/// Shows the window, with the Add dialog for `prompt`. The link waits in the [`PromptInbox`] until
-/// the window takes it (#415): the event only says one is waiting, since a window still starting
-/// isn't listening yet and would miss it.
-fn ask(app: &AppHandle, prompt: &BrowserPrompt) {
-    app.state::<PromptInbox>().push(prompt.clone());
+/// Shows the window, with the Add dialog for `prompts`. The links wait in the [`PromptInbox`] until
+/// the window takes them (#415): the event only says some are waiting, since a window still
+/// starting isn't listening yet and would miss it.
+fn ask(app: &AppHandle, prompts: &[BrowserPrompt]) {
+    let inbox = app.state::<PromptInbox>();
+    for prompt in prompts {
+        inbox.push(prompt.clone());
+    }
     shell::show_main_window(app);
     // Emitting fails only once the app is closing; the link still waits for the window.
     let _ = app.emit(BROWSER_REQUEST_EVENT, ());
