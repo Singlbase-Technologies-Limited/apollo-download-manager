@@ -96,7 +96,9 @@ use serde::Serialize;
 /// Version 40 (#463) added `set_guide_state`, and `guide` and `guideWelcome` in `ShellSettings`:
 /// the guide after Get started.
 /// Version 41 (#460) added `set_tips`, `has_tray` and `tips` in `ShellSettings`: the contextual tips.
-pub const COMMAND_API_VERSION: u32 = 41;
+/// Version 42 (#324) added `find_mirrors`, `download_mirrors` and `set_mirrors`, and `mirrors` in
+/// `AddRequest`: mirrors a server announces or a project lists, used when the user chooses.
+pub const COMMAND_API_VERSION: u32 = 42;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

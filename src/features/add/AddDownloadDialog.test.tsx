@@ -758,3 +758,49 @@ describe('pattern links (#468)', () => {
     expect(requests(state)).toEqual([]);
   });
 });
+
+// #324 (PO decisions): mirrors are looked up only on a click, from the project's official list, and the user picks them.
+describe('mirrors in the Add dialog', () => {
+  const LINK = 'https://dl.fedoraproject.org/pub/f/x.iso';
+
+  it('finds a link’s mirrors on a click, and adds the ticked and pasted ones', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend({
+      foundMirrors: () => [
+        { url: 'https://m1.example.org/pub/f/x.iso', source: { kind: 'official', project: 'fedora' }, country: 'DE' },
+        { url: 'https://m2.example.org/pub/f/x.iso', source: { kind: 'official', project: 'fedora' }, country: null },
+      ],
+    });
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), LINK);
+    await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
+    expect(callsOf(state, 'find_mirrors')).toHaveLength(0);
+    await user.click(within(dialog).getByRole('button', { name: 'Find mirrors' }));
+    const first = await within(dialog).findByRole('checkbox', { name: /m1\.example\.org.*Fedora list · DE/ });
+    expect(callsOf(state, 'find_mirrors').map((c) => c.args)).toEqual([{ link: LINK }]);
+    await user.click(first);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'A mirror’s link' }), 'https://m9.example.org/x.iso');
+    await user.click(within(dialog).getByRole('button', { name: 'Add' }));
+    expect(within(dialog).getByText('2 of 8 chosen')).toBeTruthy();
+    await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
+    await waitFor(() => { expect(requests(state)).toHaveLength(1); });
+    expect(requests(state)[0]?.mirrors).toEqual(['https://m1.example.org/pub/f/x.iso', 'https://m9.example.org/x.iso']);
+  });
+
+  it('says when a link has no list it reads, and sends no mirror for several links', async () => {
+    const user = userEvent.setup();
+    const state = installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), 'https://example.org/a.iso');
+    await user.click(within(dialog).getByRole('button', { name: 'Advanced options' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Find mirrors' }));
+    expect(await within(dialog).findByText(/isn’t on a server whose project list Apollo DM reads/)).toBeTruthy();
+    await paste(user, within(dialog).getByRole('textbox', { name: 'Links' }), '\nhttps://example.org/b.iso');
+    expect(within(dialog).queryByRole('button', { name: 'Find mirrors' })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
+    await waitFor(() => { expect(requests(state)).toHaveLength(1); });
+    expect(requests(state)[0]?.mirrors).toEqual([]);
+  });
+});

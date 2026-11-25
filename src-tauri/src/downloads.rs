@@ -517,6 +517,41 @@ pub async fn use_new_link(
     .await?
 }
 
+/// The mirrors a link's project lists (#324): fetched now, only because the user asked (PO
+/// decision on #324), waiting at most `MIRROR_LIST_WAIT` off the manager's thread.
+#[tauri::command]
+pub async fn find_mirrors(
+    downloads: State<'_, Downloads>,
+    link: String,
+) -> Result<Vec<velocity_core::mirrors::MirrorCandidate>, ErrorCode> {
+    let service = Arc::clone(&downloads);
+    tauri::async_runtime::spawn_blocking(move || {
+        service.find_mirrors(link, velocity_core::manager::MIRROR_LIST_WAIT)
+    })
+    .await
+    .map_err(|_| ErrorCode::Internal)?
+}
+
+/// A download's mirrors: the chosen ones, the announced ones, and whether a project lists more
+/// (#324).
+#[tauri::command]
+pub async fn download_mirrors(
+    downloads: State<'_, Downloads>,
+    id: String,
+) -> Result<velocity_core::manager::DownloadMirrors, ErrorCode> {
+    on_manager(&downloads, move |m| m.mirrors(&id)).await?
+}
+
+/// Makes the user's choice a download's mirrors (#324); the manager checks each.
+#[tauri::command]
+pub async fn set_mirrors(
+    downloads: State<'_, Downloads>,
+    id: String,
+    mirrors: Vec<String>,
+) -> Result<(), ErrorCode> {
+    on_manager(&downloads, move |m| m.set_mirrors(&id, &mirrors)).await?
+}
+
 /// Saves a torrent's trackers in the system keychain, at the user's request (#472, ADR-0021):
 /// after a restart a private torrent gets its passkey trackers back.
 #[tauri::command]

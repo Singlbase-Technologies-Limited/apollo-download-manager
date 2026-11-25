@@ -31,6 +31,7 @@ import { DownloadTable } from './DownloadTable';
 import { LoginDialog } from './LoginDialog';
 import { useLoginPrompt } from './useLoginPrompt';
 import { NewLinkDialog } from './NewLinkDialog';
+import { MirrorsDialog } from '../mirrors/MirrorsDialog';
 import { StartAtDialog } from './StartAtDialog';
 import { useDownloadActions } from './useDownloadActions';
 
@@ -374,6 +375,7 @@ export function DownloadsView({ view }: { view: ListView }) {
       <LoginDialog />
       <StartAtDialog />
       <NewLinkDialog />
+      <MirrorsDialog />
     </div>
   );
 }

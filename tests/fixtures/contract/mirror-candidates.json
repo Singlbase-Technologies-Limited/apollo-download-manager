@@ -1,0 +1,17 @@
+[
+  {
+    "country": "DE",
+    "source": {
+      "kind": "official",
+      "project": "archLinux"
+    },
+    "url": "https://m1.example.org/x.iso"
+  },
+  {
+    "country": null,
+    "source": {
+      "kind": "announced"
+    },
+    "url": "https://m2.example.org/x.iso"
+  }
+]
