@@ -207,6 +207,21 @@ fn session_config(settings: &TorrentSettings, port: u16, proxy: Option<&Proxy>) 
     }
 }
 
+/// `config` with every network contact switched off (#521, PO decision): no listen socket, so no
+/// DHT, uTP or tracker traffic (libtorrent: "If no listen ports are configured … networking will
+/// be disabled"), and DHT, local peer discovery and port mapping off, so no bootstrap name is
+/// looked up either. The session runs so until the first torrent is added.
+fn offline(config: SessionConfig) -> SessionConfig {
+    SessionConfig {
+        listen_interfaces: String::new(),
+        enable_dht: false,
+        enable_lsd: false,
+        enable_upnp: false,
+        enable_natpmp: false,
+        ..config
+    }
+}
+
 /// A torrent's trackers, then the settings' extra ones it hasn't. A private torrent gets only its
 /// own: an extra tracker would learn its info hash and the user's address (#377).
 fn with_extra(own: &[String], extra: &[String], private: bool) -> Vec<String> {
@@ -575,6 +590,32 @@ struct State {
     portmap: PortMapTracker,
     /// The user's proxy (#192), applied with every change of the settings.
     proxy: Option<Proxy>,
+    /// Whether the session's networking is on: off until the first torrent is added or restored,
+    /// then on until the helper stops (#521).
+    online: bool,
+}
+
+impl State {
+    /// The session's configuration for the current settings, proxy and port.
+    fn config(&self) -> SessionConfig {
+        self.config_for(&self.settings, self.port, self.proxy.as_ref())
+    }
+
+    /// The session's configuration for `settings`, `port` and `proxy`, offline until the first
+    /// torrent (#521).
+    fn config_for(
+        &self,
+        settings: &TorrentSettings,
+        port: u16,
+        proxy: Option<&Proxy>,
+    ) -> SessionConfig {
+        let config = session_config(settings, port, proxy);
+        if self.online {
+            config
+        } else {
+            offline(config)
+        }
+    }
 }
 
 impl State {
@@ -1102,10 +1143,11 @@ pub struct LtEngine {
 impl LtEngine {
     /// Starts a session with `settings`; its torrent ids start at `first_id`.
     pub fn start(first_id: u64, settings: TorrentSettings) -> Result<Self, String> {
+        // Port mapping starts with the networking, at the first torrent (#521).
         let mut portmap = PortMapTracker::default();
-        portmap.reset(settings.port_mapping, Instant::now());
+        portmap.reset(false, Instant::now());
         let port = listening_port(settings.listen_port);
-        let session = velocity_lt::new_session(&session_config(&settings, port, None))
+        let session = velocity_lt::new_session(&offline(session_config(&settings, port, None)))
             .map_err(|e| format!("starting libtorrent: {}", e.what()))?;
         let shared = Arc::new(Shared {
             session,
@@ -1120,6 +1162,7 @@ impl LtEngine {
                 listen_error: None,
                 portmap,
                 proxy: None,
+                online: false,
             }),
             stop: AtomicBool::new(false),
             clock: AtomicU64::new(0),
@@ -1138,6 +1181,27 @@ impl LtEngine {
             shared,
             poller: Some(poller),
         })
+    }
+
+    /// Switches the session's networking on for the first torrent (#521); nothing once it's on.
+    fn go_online(&mut self) -> Result<(), ErrorCode> {
+        let config = {
+            let mut state = self.shared.state();
+            if state.online {
+                return Ok(());
+            }
+            state.online = true;
+            state.config()
+        };
+        if let Err(e) = self.shared.session.apply_config(&config) {
+            self.shared.state().online = false;
+            eprintln!("switching the torrent networking on: {}", e.what());
+            return Err(ErrorCode::Internal);
+        }
+        let mut state = self.shared.state();
+        let mapping = state.settings.port_mapping;
+        state.portmap.reset(mapping, Instant::now());
+        Ok(())
     }
 
     /// The TCP port libtorrent listens on, 0 before it listens.
@@ -1168,6 +1232,7 @@ impl LtEngine {
         if spec.upload_limit > MAX_RATE_LIMIT || spec.download_limit > MAX_RATE_LIMIT {
             return Err(ErrorCode::InvalidInput);
         }
+        self.go_online()?;
         let settings = self.shared.state().settings.clone();
         let mut base = AddParams {
             save_path,
@@ -1349,13 +1414,13 @@ impl TorrentEngine for LtEngine {
             };
             (moved, port)
         };
+        let config = {
+            let state = self.shared.state();
+            state.config_for(&settings, port, state.proxy.as_ref())
+        };
         self.shared
             .session
-            .apply_config(&session_config(
-                &settings,
-                port,
-                self.shared.state().proxy.as_ref(),
-            ))
+            .apply_config(&config)
             .map_err(|_| ErrorCode::InvalidInput)?;
         let mut state = self.shared.state();
         state.port = port;
@@ -1365,7 +1430,8 @@ impl TorrentEngine for LtEngine {
             state.listen_error = None;
         }
         if mapping {
-            state.portmap.reset(settings.port_mapping, Instant::now());
+            let on = settings.port_mapping && state.online;
+            state.portmap.reset(on, Instant::now());
         }
         state.settings = settings;
         Ok(())
@@ -1375,13 +1441,13 @@ impl TorrentEngine for LtEngine {
         if let Some(proxy) = &proxy {
             proxy.check()?;
         }
-        let (settings, port) = {
+        let config = {
             let state = self.shared.state();
-            (state.settings.clone(), state.port)
+            state.config_for(&state.settings, state.port, proxy.as_ref())
         };
         self.shared
             .session
-            .apply_config(&session_config(&settings, port, proxy.as_ref()))
+            .apply_config(&config)
             .map_err(|_| ErrorCode::InvalidInput)?;
         self.shared.state().proxy = proxy;
         Ok(())
@@ -1824,6 +1890,23 @@ mod tests {
             (262_144, 1024)
         );
         assert_eq!(c.outgoing_interfaces, "", "any adapter");
+    }
+
+    /// #521 (PO decision): until a torrent is added, the session listens nowhere and starts no
+    /// DHT, local peer discovery or port mapping, so the app contacts nothing for torrents.
+    #[test]
+    fn a_session_without_torrents_has_no_networking() {
+        let settings = TorrentSettings {
+            local_peer_discovery: true,
+            port_mapping: true,
+            ..TorrentSettings::default()
+        };
+        let c = offline(session_config(&settings, 6890, None));
+        assert_eq!(c.listen_interfaces, "", "no listen socket");
+        assert!(!c.enable_dht && !c.enable_lsd && !c.enable_upnp && !c.enable_natpmp);
+        // The rest stays as set, ready for the first torrent.
+        assert_eq!(c.user_agent, user_agent());
+        assert_eq!(c.dht_bootstrap_nodes, "");
     }
 
     /// One network adapter (#471): torrents listen and connect through it only.
