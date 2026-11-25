@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fullNames, oldNames } from './product-name-lib.mjs';
+import { FULL_NAME_SCANNED, SCANNED, fullNames, oldNames } from './product-name-lib.mjs';
 
 const lines = (path, text) => oldNames(path, text).map((f) => f.line);
 
@@ -86,5 +86,16 @@ describe('fullNames (#486)', () => {
   it('skips tests and generated files, whose text is checked at the source', () => {
     expect(at('src/app/X.test.tsx', "const v1 = 'Velocity Download Manager';\n")).toEqual([]);
     expect(at('src/features/help/guide.generated.json', '{"t":"Velocity Download Manager"}')).toEqual([]);
+  });
+});
+
+describe('what the check reads', () => {
+  it('reads SECURITY.md for the short name as well as the full one (#523)', () => {
+    expect(SCANNED).toContain('SECURITY.md');
+    expect(FULL_NAME_SCANNED).toContain('SECURITY.md');
+  });
+
+  it('reads every file it reads for the short name for the full name too', () => {
+    for (const pattern of SCANNED) expect(FULL_NAME_SCANNED).toContain(pattern);
   });
 });

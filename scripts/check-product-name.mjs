@@ -6,13 +6,8 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fullNames, oldNames } from './product-name-lib.mjs';
+import { FULL_NAME_SCANNED, SCANNED, fullNames, oldNames } from './product-name-lib.mjs';
 import { recordCheck, root } from './checks-runner.mjs';
-
-const SCANNED = ['README.md', 'docs/*.md', 'docs/**/*.md', 'site/content/*', 'browser-extension/static/*.html', 'src/*.ts', 'src/**/*.ts', 'src/**/*.tsx'];
-
-/** Also read for the full name "Velocity Download Manager" (#486): every public text. CLA.md waits for the legal review (#441). */
-const FULL_NAME_SCANNED = [...SCANNED, 'CHANGELOG.md', 'SECURITY.md', 'AGENTS.md', 'browser-extension/store/*.md'];
 
 /** The repository's files matching `patterns`, tracked or new. */
 function listed(patterns) {

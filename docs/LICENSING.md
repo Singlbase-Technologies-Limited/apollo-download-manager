@@ -4,16 +4,13 @@
 
 ## Status
 
-- **Apollo Download Manager's own licence hasn't been chosen** (#86, PO only; no agent selects it). There is no `LICENSE` file: all rights are reserved, [`package.json`](../package.json) says `UNLICENSED`, and the Rust workspace sets `publish = false`. Our two crates declare no licence yet.
-- **Nothing has been distributed.** Before any build goes to anyone outside the project, three things must be in place: the product licence, the third-party notices ([below](#third-party-notices), #76) and the release checks (#78).
+- **Apollo Download Manager is licensed GPL-3.0-only** (PO decision on #86, [ADR-0017](decisions/0017-gpl-3-licence.md)): [`LICENSE`](../LICENSE) holds the text, [`package.json`](../package.json) and the workspace's [`Cargo.toml`](../Cargo.toml) say `GPL-3.0-only`, and every crate inherits it (`license.workspace = true`). The Rust workspace still sets `publish = false`. Details: [below](#apollo-download-managers-own-licence).
+- **Distributed since v0.1.0** (2026-10-31): the installers on GitHub Releases, with the licence, the third-party notices ([below](#third-party-notices), #76) and `build-info.json` installed with the app.
 - **Apollo Download Manager contains no aria2** ([ADR-0001](decisions/0001-v2-direction.md)), so V1's GPL obligations for aria2 don't apply to Apollo Download Manager.
 
 ## Third-party components today
 
-Measured on 2026-10-22 at the development state of `main`:
-
-- **Rust:** `cargo tree -e normal --target all -p velocity-desktop-v2 --prefix none -f '{p}|{l}'` lists **356 third-party crates**, mostly Tauri's.
-- **npm:** `pnpm licenses list --prod` lists **4 production packages**: `react`, `react-dom` and `scheduler` (MIT), and `@tauri-apps/api` (Apache-2.0 OR MIT).
+What ships, counted by the notices on 2026-11-25 (`pnpm check:notices`: "6 native libraries, 577 crates, 62 npm packages"; #523). The crates are those of the app, the transfer engine, the torrent helper and the native host, on Windows and Linux; the npm packages are those in the window's production build. [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) lists each one with its licence. Until 2026-10-22 this section counted the app alone (356 crates, 4 npm packages).
 
 Most crates are MIT, Apache-2.0, BSD, ISC or Zlib, often as `OR` choices. These need attention:
 
