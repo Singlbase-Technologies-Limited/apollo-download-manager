@@ -67,7 +67,7 @@ Hosts, ordinary paths and queries, and SSH key fingerprints (`SHA256:…`, which
 
 **Exporting:** `export_diagnostics` asks where to save, with the system's chooser, and writes the report as indented JSON. Each string in it is redacted once more, so nothing a part missed is written, and the JSON stays whole. The test `an_export_holds_no_secret_from_any_log` plants a secret of each kind in every log and checks that none reaches the export.
 
-**Where it is shown:** [`src/features/diagnostics/DiagnosticsPanel.tsx`](../src/features/diagnostics/DiagnosticsPanel.tsx), under Settings, About and diagnostics (#30; PO decision on #28). It shows the report, both engines' "Restart" buttons, and "Export diagnostics…". It has no "Copy", unlike V1's, so the export is the only way out and it always runs the final redaction.
+**Where it is shown:** [`src/features/diagnostics/DiagnosticsPanel.tsx`](../src/features/diagnostics/DiagnosticsPanel.tsx), under Settings, About and diagnostics (#30; PO decision on #28). It shows the report, both engines' "Restart" buttons, and "Export diagnostics…", whose "Saved to" message adds that anything attached to a GitHub issue is public (#524). It has no "Copy", unlike V1's, so the export is the only way out and it always runs the final redaction.
 
 ## Crash logs
 

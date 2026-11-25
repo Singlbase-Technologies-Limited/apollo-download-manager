@@ -76,7 +76,7 @@ body:
     id: logs
     attributes:
       label: Sanitised logs or screenshots
-      description: Remove credentials, tokens, private URLs and personal information first. Screenshots should show only the app window.
+      description: This issue is public. Remove credentials, tokens, private URLs and personal information first. Screenshots should show only the app window. For a report you'd rather not make public, e-mail support@singlbase.com instead.
     validations:
       required: false
   - type: textarea

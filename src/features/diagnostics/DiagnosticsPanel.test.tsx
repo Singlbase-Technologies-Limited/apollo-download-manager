@@ -71,6 +71,8 @@ describe('the diagnostics panel (#28)', () => {
     await user.click(await screen.findByRole('button', { name: 'Export diagnostics…' }));
     await waitFor(() => { expect(callsOf(state, 'export_diagnostics')).toHaveLength(1); });
     expect(await screen.findByText('Saved to /home/user/velocity-diagnostics.json')).toBeTruthy();
+    // #524: anything attached to a GitHub issue is public.
+    expect(await screen.findByText('Anything attached to a GitHub issue is public: read it first, and leave out names, folders and screenshots with personal details.')).toBeTruthy();
   });
 
   it('restarts the transfer engine after asking, and asks for the diagnostics again', async () => {

@@ -31,4 +31,4 @@ All of it is in Apollo Download Manager's own data folder ([COEXISTENCE.md](COEX
 
 **Exporting:** "Export diagnostics…" writes a report to a file you choose. It names no download, link or folder: it counts downloads by status only. Logins, cookies, keys, tokens, magnet links and tracker passkeys are removed from every line.
 
-**Sharing:** you decide whether to share the file, and with whom.
+**Sharing:** you decide whether to share the file, and with whom. An issue on GitHub is public, with everything attached to it, so the app says so when it saves the file (#524), and so do the support page and the bug form; a report you'd rather not make public can go to support@singlbase.com.

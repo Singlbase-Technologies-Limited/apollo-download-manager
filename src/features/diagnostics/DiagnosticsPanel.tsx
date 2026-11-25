@@ -92,7 +92,8 @@ export function DiagnosticsPanel() {
   const exportReport = () =>
     run('export', async () => {
       const path = await api.exportDiagnostics();
-      if (path) toast.success(`Saved to ${path}`);
+      // Shared on GitHub, the file is public (#524).
+      if (path) toast.success(`Saved to ${path}`, { description: 'Anything attached to a GitHub issue is public: read it first, and leave out names, folders and screenshots with personal details.' });
     });
 
   if (report.isPending) {

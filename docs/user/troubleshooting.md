@@ -41,7 +41,7 @@ See [Use with your browser](browser.md#when-apollo-download-manager-cant-take-a-
 
 ## The diagnostics report
 
-**Settings, About and diagnostics** shows the versions of Apollo Download Manager and its engines, what the download engine supports, and the recent log. **Export diagnostics…** saves a report to a file you choose, to attach to a bug report.
+**Settings, About and diagnostics** shows the versions of Apollo Download Manager and its engines, what the download engine supports, and the recent log. **Export diagnostics…** saves a report to a file you choose, to attach to a bug report. A bug report on GitHub is public, and so is what you attach: read the file first, and leave out names, folders and screenshots with personal details. For a report you'd rather not make public, e-mail support@singlbase.com.
 
 - **Secrets are hidden:** passwords, cookies, tokens, tracker passkeys and keys are removed from the report and from the log before anything is kept.
 - **Crash logs** are kept on this computer only, in their own folder, newest first. Apollo Download Manager never sends anything anywhere: no telemetry, no automatic reports.
