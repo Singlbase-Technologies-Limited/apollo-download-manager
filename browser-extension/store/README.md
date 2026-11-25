@@ -43,9 +43,16 @@ Up to 132 characters (the Chrome Web Store's limit):
 
 ## Privacy
 
-- **Data collected:** none. Nothing is sent anywhere except the links you send to the app on your own computer.
+What the extension handles, declared in each store's own terms ([ADR-0023](../../docs/decisions/0023-extension-declares-browsing-activity.md), #522; the policies read on 2026-11-25):
+
+- **What it handles:** web browsing activity. The link of each download you send, the page it came from, and the file name, size and type, passed only to Apollo Download Manager on your own computer, to download them. Kept in the browser: the extension's settings and the popup's last 5 sends (file name, site, sent or failed, time). Nothing is sent off your computer, sold or shared.
+- **Chrome Web Store, privacy practices:**
+  - **Single purpose:** "Sends the downloads you choose to Apollo Download Manager, the desktop download manager on this computer."
+  - **Data:** Web history (web browsing activity), for the extension's single purpose; not sold, not used for anything else, not transferred except to the app on this computer.
+  - **Limited Use:** "The use of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements."
+- **Edge Add-ons, data usage:** the same: web browsing activity, used only to send downloads to the app on this computer ([developer policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies) §1.5.1).
+- **Firefox Add-ons:** the manifest declares `data_collection_permissions: { required: ["browsingActivity"] }`, since AMO's policy covers data sent to a native application. Firefox 140 and later show it at install. Before submitting, read the policy revised for 2026-12-01.
 - **Privacy policy:** <https://singlbase-technologies-limited.github.io/apollo-download-manager/privacy/>, the website's page for [PRIVACY.md](../../docs/PRIVACY.md).
-- **Firefox:** the manifest declares that the add-on collects no data (`data_collection_permissions: { required: ["none"] }`, [ADR-0020](../../docs/decisions/0020-extension-store-distribution.md)).
 
 ## Images
 

@@ -71,9 +71,10 @@ export function manifest(target, { release, version, branding }) {
       gecko: {
         id: String(branding.firefoxExtensionId),
         strict_min_version: MINIMUM_FIREFOX_VERSION,
-        // AMO needs this for new add-ons (since 2025-11-03): the add-on collects nothing; links go only to the app on
-        // this computer. Firefox 140 and later show it at install (#240).
-        data_collection_permissions: { required: ['none'] },
+        // AMO needs this for new add-ons (since 2025-11-03; #240). The links sent to the app on this computer are
+        // browsing activity, and AMO's policy covers data sent to a native application (#522, ADR-0023). Firefox 140
+        // and later show it at install.
+        data_collection_permissions: { required: ['browsingActivity'] },
       },
     },
   };
