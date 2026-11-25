@@ -57,10 +57,11 @@ describe('manifest', () => {
     expect(branding.firefoxExtensionId).not.toBe('velocity-download-manager@velocity.local');
   });
 
-  // #240: AMO needs the data the add-on collects declared for new add-ons (since 2025-11-03). It collects none:
-  // links go only to the app on this computer.
-  it('declares to Firefox that it collects no data', () => {
-    expect(dev('firefox').browser_specific_settings.gecko.data_collection_permissions).toEqual({ required: ['none'] });
+  // #240: AMO needs the data the add-on collects declared for new add-ons (since 2025-11-03). #522 (PO decision,
+  // ADR-0023): the links it sends to the app on this computer are browsing activity, and AMO's policy covers data
+  // sent to a native application, so it declares that instead of "none".
+  it('declares to Firefox the browsing activity it sends to the app', () => {
+    expect(dev('firefox').browser_specific_settings.gecko.data_collection_permissions).toEqual({ required: ['browsingActivity'] });
   });
 
   // #240: what the zip for a store holds: the build's files, with the store's manifest at the root.
