@@ -33,6 +33,8 @@ What the check found or accepts, checked 2026-10-30:
 | (yanked) | crypto-bigint 0.7.7: yanked by its authors | russh 0.65.0 and its elliptic-curve crates | **Listed:** a warning; moves with russh |
 | RUSTSEC-2026-0544 | zlib 1.3.1.2 to 1.3.2: a heap buffer overflow in `gz_vacate()`, writing gzip files (`gzprintf` after a write stall). Reported against libz-sys 1.1.31 | The app's own zlib, built from the native lock and linked into libcurl, Windows and Linux. libcurl only decompresses (`inflate`), so the faulty code isn't reached | **Fixed** in #506: zlib 1.4 (PO: an exception to the two-week rule, as a security fix), and libz-sys 1.1.33 |
 | RUSTSEC-2026-0486 | rustix 1.1.5: the xattr functions mark unwritten bytes as initialised for a zero-length buffer (unsound) | async-io, for zbus and notify-rust, the desktop notifications on Linux | **Fixed** in #506: rustix 1.1.6 |
+| RUSTSEC-2026-0592 | url 2.5.8: `Url::origin()` overflows the stack on a URL nested in many `blob:` prefixes | velocity-core (links, #67), and reqwest through Tauri's dialog plugin | **Fixed** in #516: url 2.5.9. Links over 8 KiB are refused, so the 50 KB chain couldn't reach `origin()` in `new_link.rs` |
+| RUSTSEC-2026-0594 | cookie 0.18.2: private cookie nonces can repeat after `fork()` without `exec()` | tauri | **Fixed** in #516: cookie 0.18.3. Apollo DM never forks without exec and uses no private cookies |
 
 npm, checked 2026-11-17:
 

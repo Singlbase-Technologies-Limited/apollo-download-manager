@@ -88,7 +88,7 @@ regex = "=1.13.1"
 # International domain names in links (PO decision on #67, 2026-10-29): `url::Host::parse` turns a
 # host into its ASCII (punycode) form, as V1 did. The version the build already brought through
 # Tauri; idna 1.1.0 with it.
-url = "=2.5.8"
+url = "=2.5.9"
 # The browser bridge's per-launch token (PO decision on #65, 2026-10-29): 32 bytes from the
 # operating system's secure random source. The version the build already brought through uuid.
 getrandom = "=0.4.3"
