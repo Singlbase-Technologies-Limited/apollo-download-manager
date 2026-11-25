@@ -84,7 +84,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | combine | 4.6.9 | MIT | MIT | https://github.com/Marwes/combine |
 | concurrent-queue | 2.5.0 | Apache-2.0 OR MIT | MIT | https://github.com/smol-rs/concurrent-queue |
 | const-oid | 0.10.2 | Apache-2.0 OR MIT | MIT | https://github.com/RustCrypto/formats |
-| cookie | 0.18.2 | MIT OR Apache-2.0 | MIT | https://github.com/SergioBenitez/cookie-rs |
+| cookie | 0.18.3 | MIT OR Apache-2.0 | MIT | https://github.com/SergioBenitez/cookie-rs |
 | core-foundation | 0.10.1 | MIT OR Apache-2.0 | MIT | https://github.com/servo/core-foundation-rs |
 | core-foundation-sys | 0.8.7 | MIT OR Apache-2.0 | MIT | https://github.com/servo/core-foundation-rs |
 | core-graphics | 0.25.0 | MIT OR Apache-2.0 | MIT | https://github.com/servo/core-foundation-rs |
@@ -162,7 +162,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | foreign-types | 0.5.0 | MIT/Apache-2.0 | MIT | https://github.com/sfackler/foreign-types |
 | foreign-types-macros | 0.2.4 | MIT/Apache-2.0 | MIT | https://github.com/sfackler/foreign-types |
 | foreign-types-shared | 0.3.1 | MIT/Apache-2.0 | MIT | https://github.com/sfackler/foreign-types |
-| form_urlencoded | 1.2.2 | MIT OR Apache-2.0 | MIT | https://github.com/servo/rust-url |
+| form_urlencoded | 1.2.3 | MIT OR Apache-2.0 | MIT | https://github.com/servo/rust-url |
 | futures | 0.3.34 | MIT OR Apache-2.0 | MIT | https://github.com/rust-lang/futures-rs |
 | futures-channel | 0.3.34 | MIT OR Apache-2.0 | MIT | https://github.com/rust-lang/futures-rs |
 | futures-core | 0.3.34 | MIT OR Apache-2.0 | MIT | https://github.com/rust-lang/futures-rs |
@@ -501,7 +501,7 @@ In the app, the transfer engine, the torrent helper and the browser's native hos
 | unicode-segmentation | 1.13.3 | MIT OR Apache-2.0 | MIT | https://github.com/unicode-rs/unicode-segmentation |
 | universal-hash | 0.6.1 | MIT OR Apache-2.0 | MIT | https://github.com/RustCrypto/traits |
 | untrusted | 0.9.0 | ISC | ISC | https://github.com/briansmith/untrusted |
-| url | 2.5.8 | MIT OR Apache-2.0 | MIT | https://github.com/servo/rust-url |
+| url | 2.5.9 | MIT OR Apache-2.0 | MIT | https://github.com/servo/rust-url |
 | urlpattern | 0.6.0 | MIT | MIT | https://github.com/denoland/rust-urlpattern |
 | utf8_iter | 1.0.4 | Apache-2.0 OR MIT | MIT | https://github.com/hsivonen/utf8_iter |
 | uuid | 1.28.0 | Apache-2.0 OR MIT | MIT | https://github.com/uuid-rs/uuid |
@@ -2878,7 +2878,7 @@ DEALINGS IN THE SOFTWARE.
 
 ### 47. MIT
 
-Used by: cookie 0.18.2.
+Used by: cookie 0.18.3.
 
 ````text
 Copyright (c) 2017 Sergio Benitez
@@ -5555,7 +5555,7 @@ SOFTWARE.
 
 ### 97. MIT
 
-Used by: form_urlencoded 1.2.2.
+Used by: form_urlencoded 1.2.3.
 
 ````text
 Copyright (c) 2013-2016 The rust-url developers
@@ -6299,7 +6299,7 @@ ICU 1.8.1 to ICU 57.1 © 1995-2016 International Business Machines Corporation a
 
 ### 121. MIT
 
-Used by: idna 1.1.0, percent-encoding 2.3.2, url 2.5.8.
+Used by: idna 1.1.0, percent-encoding 2.3.2, url 2.5.9.
 
 ````text
 Copyright (c) 2013-2025 The rust-url developers
