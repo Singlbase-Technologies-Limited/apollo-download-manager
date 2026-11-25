@@ -550,6 +550,19 @@ describe('torrents', () => {
     expect(requests(state)[0]?.chooseFiles).toBe(false);
   });
 
+  it('says a torrent uploads to others, who see the user’s address, whenever it holds one (#520)', async () => {
+    const user = userEvent.setup();
+    installFakeBackend();
+    renderApp();
+    const dialog = await openDialog(user);
+    const links = within(dialog).getByRole('textbox', { name: 'Links' });
+    const note = 'Torrents share: while it downloads, a torrent also uploads pieces to other people, and they can see your IP address.';
+    await paste(user, links, 'https://example.com/a.zip');
+    expect(within(dialog).queryByText(note)).toBeNull();
+    await paste(user, links, '\nmagnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    expect(within(dialog).getByText(note)).toBeTruthy();
+  });
+
   it('explains a torrent whose name is taken, and offers no rename', async () => {
     const user = userEvent.setup();
     const check = windowsCheck('album');

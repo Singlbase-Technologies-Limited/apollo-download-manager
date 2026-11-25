@@ -561,6 +561,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
 
           {torrentMode ? (
             <div className="space-y-3">
+              {/* Always shown for a torrent, never dismissed (PO decision on #520). */}
+              <p className="text-xs text-fg-muted">Torrents share: while it downloads, a torrent also uploads pieces to other people, and they can see your IP address.</p>
               {preview.data ? null : (
                 <Checkbox checked={chooseFiles} onChange={setChooseFiles}>
                   Choose files before downloading

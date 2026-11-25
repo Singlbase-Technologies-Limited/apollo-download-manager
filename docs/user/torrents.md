@@ -21,6 +21,8 @@ A torrent in **Choose files** waits for you: double-click it, or use its menu or
 
 ## Seeding
 
+**Torrents share.** While it downloads, a torrent also uploads the pieces it has to other people, as every BitTorrent program does, and they can see your IP address. The Add download dialog says so for every torrent. Seeding is what a torrent does after it is complete.
+
 Seeding is off by default: a torrent stops once it is complete. **Seeding after download** offers, for each torrent:
 
 | Choice | Seeds until |
