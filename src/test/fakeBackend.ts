@@ -37,6 +37,8 @@ export const fixture = (name: string): unknown =>
 export interface FakeState {
   appInfo: AppInfo;
   settings: ShellSettings;
+  /** Whether the desktop has a tray icon (#460). */
+  tray: boolean;
   snapshot: DownloadsSnapshot;
   categories: Category[];
   /** What the folder chooser returns; `null` is a cancel. */
@@ -99,6 +101,7 @@ export function firstRun(): ShellSettings {
     onboardingCompleted: false,
     guide: 'unseen',
     guideWelcome: false,
+    tips: { enabled: true, shown: [], dismissed: [] },
     defaultDirectory: '/home/user/Downloads',
   };
 }
@@ -116,6 +119,7 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
   const state: FakeState = {
     appInfo: { name: 'Apollo Download Manager (dev)', version: '0.1.0', commandApiVersion: COMMAND_API_VERSION },
     settings: setUp(),
+    tray: true,
     snapshot: emptySnapshot(),
     categories: [fixture('category.json') as Category],
     chosenDirectory: null,
@@ -184,6 +188,11 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'complete_onboarding':
           state.settings = { ...state.settings, onboardingCompleted: true, guideWelcome: true, defaultDirectory: (args.directory as string).trim() };
           return state.settings;
+        case 'set_tips':
+          state.settings = { ...state.settings, tips: args.tips as ShellSettings['tips'] };
+          return state.settings;
+        case 'has_tray':
+          return state.tray;
         case 'set_guide_state':
           // eslint-disable-next-line @typescript-eslint/only-throw-error
           if (args.state !== 'finished' && args.state !== 'skipped') throw 'INVALID_INPUT';

@@ -277,6 +277,21 @@ pub async fn complete_onboarding(
     .await?
 }
 
+/// Saves the tips' state (#460).
+#[tauri::command]
+pub async fn set_tips(
+    downloads: State<'_, Downloads>,
+    tips: velocity_core::app_settings::TipsSettings,
+) -> Result<ShellSettings, ErrorCode> {
+    on_manager(&downloads, move |m| m.set_tips(&tips, now_ms())).await?
+}
+
+/// Whether this desktop has a tray icon the window can close to (#460: the close-to-tray tip).
+#[tauri::command]
+pub fn has_tray(shell: State<'_, ShellState>) -> bool {
+    shell.has_tray()
+}
+
 /// Saves that the guide after Get started was gone through or skipped (#463).
 #[tauri::command]
 pub async fn set_guide_state(

@@ -39,6 +39,7 @@ import {
   type HistoryQuery,
   type StorageSettings,
   type MoveDirection,
+  type TipsSettings,
 } from '../contract';
 import { ApiError, ERROR_MESSAGES, toApiError } from './errors';
 
@@ -100,6 +101,10 @@ export const api = {
   completeOnboarding: (directory: string) => call('complete_onboarding', { directory }, ShellSettingsSchema),
   /** Saves that the guide after Get started was gone through or skipped (#463). */
   setGuideState: (state: 'finished' | 'skipped') => call('set_guide_state', { state }, ShellSettingsSchema),
+  /** Saves the tips' state (#460). */
+  setTips: (tips: TipsSettings) => call('set_tips', { tips }, ShellSettingsSchema),
+  /** Whether the desktop has a tray icon the window can close to (#460). */
+  hasTray: () => call('has_tray', undefined, z.boolean()),
   /** The system's folder chooser; `null` when the user cancels. */
   chooseDirectory: (initial: string | null) => call('choose_directory', { initial }, z.string().min(1).nullable()),
   quit: () => call('quit_app', undefined, nothing),

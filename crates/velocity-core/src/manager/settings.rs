@@ -2,7 +2,9 @@
 //! reads. Their screen is #30's.
 
 use super::Manager;
-use crate::app_settings::{AppearanceSettings, GuideState, OnboardingSettings, ShellSettings};
+use crate::app_settings::{
+    AppearanceSettings, GuideState, OnboardingSettings, ShellSettings, TipsSettings,
+};
 use crate::database::settings::Section;
 use crate::destination::{check_folder, system_downloads, FolderSettings};
 use crate::domain::ErrorCode;
@@ -28,6 +30,7 @@ impl Manager {
             onboarding_completed: onboarding.completed,
             guide: onboarding.guide,
             guide_welcome: onboarding.welcome,
+            tips: self.settings_section::<TipsSettings>()?.checked(),
             default_directory,
         })
     }
@@ -93,6 +96,18 @@ impl Manager {
         };
         self.database
             .save_section(&onboarding, now_ms)
+            .map_err(|e| e.code)?;
+        self.shell_settings()
+    }
+
+    /// Saves the tips' state (#460): the switch, and which tips were shown or dismissed.
+    pub fn set_tips(
+        &mut self,
+        tips: &TipsSettings,
+        now_ms: u64,
+    ) -> Result<ShellSettings, ErrorCode> {
+        self.database
+            .save_section(&tips.checked(), now_ms)
             .map_err(|e| e.code)?;
         self.shell_settings()
     }
@@ -365,6 +380,29 @@ mod tests {
         assert_eq!(
             m.set_guide_state(GuideState::Finished, T0).unwrap().guide,
             GuideState::Finished
+        );
+    }
+
+    // #460: the tips' state is saved on its own, and never by the Settings form.
+    #[test]
+    fn tips_are_saved_apart_from_the_settings() {
+        use crate::app_settings::TipId;
+        let (mut m, _db) = manager();
+        assert!(m.shell_settings().unwrap().tips.enabled);
+        let tips = TipsSettings {
+            enabled: true,
+            shown: vec![TipId::CloseToTray, TipId::CloseToTray],
+            dismissed: vec![TipId::Unknown, TipId::CloseToTray],
+        };
+        let saved = m.set_tips(&tips, T0).unwrap().tips;
+        assert_eq!(saved.shown, [TipId::CloseToTray]);
+        assert_eq!(saved.dismissed, [TipId::CloseToTray]);
+        let settings = m.settings().unwrap();
+        m.set_settings(&settings, T0).unwrap();
+        assert_eq!(
+            m.shell_settings().unwrap().tips,
+            saved,
+            "the form's save leaves them"
         );
     }
 

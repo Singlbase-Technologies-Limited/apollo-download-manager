@@ -20,6 +20,7 @@ import { formatBytes } from '../../lib/format';
 import { useCapabilities, useCategories, useSettings } from '../../lib/queries';
 import { nameForDownload } from '../../naming';
 import { useUiStore, type AddPrefill } from '../../stores/ui';
+import { useTipStore } from '../tips/tips';
 import { showDownload } from '../downloads/showDownload';
 import { FileTree } from '../torrents/FileTree';
 import { SeedingFields } from '../torrents/SeedingFields';
@@ -239,6 +240,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     setSubmitting(true);
     try {
       const results: AddResult[] = await api.addDownloads(req);
+      // A magnet link added: choosing its files first may help (#460).
+      if (req.links.some((l) => linkKind(l) === 'magnet') && results.some((r) => r.outcome.kind === 'added')) useTipStore.getState().request('chooseMagnetFiles');
       if (remember && hasLogin(req)) await rememberLogins(results);
       if (rememberTrackers && torrentMode) await rememberTrackersOf(results);
       const next = sortOutcome(results, req, addedBefore);

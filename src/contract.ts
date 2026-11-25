@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 40;
+export const COMMAND_API_VERSION = 41;
 
 const bytes = z.number().int().nonnegative();
 
@@ -510,6 +510,13 @@ export type AppearanceSettings = z.infer<typeof AppearanceSettingsSchema>;
 export const GuideStateSchema = z.enum(['unseen', 'finished', 'skipped']);
 export type GuideState = z.infer<typeof GuideStateSchema>;
 
+/** The tips (#460): each once, at the moment it helps. */
+export const TipIdSchema = z.enum(['restartOnNetwork', 'closeToTray', 'chooseMagnetFiles']);
+export type TipId = z.infer<typeof TipIdSchema>;
+/** Whether tips show, and which ones were shown or dismissed; saved by `set_tips`, apart from the Settings form. */
+export const TipsSettingsSchema = z.strictObject({ enabled: z.boolean(), shown: z.array(TipIdSchema), dismissed: z.array(TipIdSchema) });
+export type TipsSettings = z.infer<typeof TipsSettingsSchema>;
+
 /** What the window starts with (#29), from `get_shell_settings`. */
 export const ShellSettingsSchema = z.strictObject({
   appearance: AppearanceSettingsSchema,
@@ -518,6 +525,8 @@ export const ShellSettingsSchema = z.strictObject({
   guide: GuideStateSchema,
   /** The guide's offer says "Welcome"; otherwise it is new to someone who set up before it. */
   guideWelcome: z.boolean(),
+  /** The tips (#460). */
+  tips: TipsSettingsSchema,
   /** The folder downloads go to now; `null` when the system names none. */
   defaultDirectory: z.string().min(1).nullable(),
 });

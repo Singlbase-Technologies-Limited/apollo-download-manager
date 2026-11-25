@@ -19,6 +19,8 @@ import { cn } from '../lib/cn';
 import { useUiStore } from '../stores/ui';
 import { quitQuestion } from './quitQuestion';
 import { GuideOffer, GuideTour } from '../features/guide/GuideTour';
+import { TipHost, TipsPage } from '../features/tips/TipHost';
+import { useTipStore } from '../features/tips/tips';
 import { useShellSettings } from '../lib/queries';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
@@ -32,6 +34,8 @@ function useQuitRequests() {
       void confirmAction(quitQuestion(active)).then((quit) => {
         // Quitting can't fail in a way the window could show: the app is gone.
         if (quit) void api.quit();
+        // Kept open to let downloads finish: the tray would have done that by itself (#460).
+        else useTipStore.getState().request('closeToTray');
       });
     }).then((u) => {
       if (disposed) u();
@@ -128,6 +132,8 @@ export function Shell({ app, appearance }: { app: AppInfo; appearance: Appearanc
       <HostKeyPrompt />
       <SettingsDialog />
       <GuideTour />
+      <TipHost />
+      <TipsPage />
     </div>
   );
 }

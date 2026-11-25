@@ -4,17 +4,22 @@
  * screenshots taken without the desktop shell or an engine. Saved settings live in localStorage, so a reload stands in
  * for a restart. Served only by Vite's dev server; never part of a build.
  *
- * Query parameters: `theme=light|dark` for a fresh start, and `fresh=1` to forget what was saved.
+ * Query parameters: `theme=light|dark` for a fresh start, and `fresh=1` to forget what was saved; `guide=unseen` and
+ * `sidebar=hidden|rail` for the guide (#463), and `tip=<id>` to show a tip (#460), with
+ * `toast=1` to show a notification beside it.
  */
 import { mockIPC } from '@tauri-apps/api/mocks';
 import { createRoot } from 'react-dom/client';
+import { toast } from 'sonner';
 import { App } from '../../../src/app/App';
-import type { Category, DownloadRecord, DownloadsSnapshot, ShellSettings } from '../../../src/contract';
+import type { Category, DownloadRecord, DownloadsSnapshot, Settings, ShellSettings, TipId } from '../../../src/contract';
 import { COMMAND_API_VERSION, DEFAULT_COLUMNS } from '../../../src/contract';
 import '../../../src/index.css';
 import capabilities from '../../fixtures/contract/capabilities.json';
 import category from '../../fixtures/contract/category.json';
 import sample from '../../fixtures/contract/download-record.json';
+import settingsFixture from '../../fixtures/contract/settings.json';
+import { useTipStore } from '../../../src/features/tips/tips';
 
 const KEY = 'velocity-layout-harness-settings';
 const params = new URLSearchParams(location.search);
@@ -37,6 +42,7 @@ const settings: ShellSettings = saved
       // `guide=unseen` offers the guide after Get started (#463).
       guide: params.get('guide') === 'unseen' ? 'unseen' : 'finished',
       guideWelcome: true,
+      tips: { enabled: true, shown: [], dismissed: [] },
       defaultDirectory: '/home/user/Downloads',
     };
 
@@ -98,6 +104,16 @@ mockIPC(
       // No links from the browser wait in the harness (#415); `null` would fail the contract and show an error toast.
       case 'take_browser_requests':
         return [];
+      // The settings with the tips' features off, so a tip still helps (#460).
+      case 'get_settings': {
+        const s = settingsFixture as Settings;
+        return { ...s, general: { ...s.general, closeToTray: false }, queue: { ...s.queue, restartOnNetwork: false }, newTorrents: { ...s.newTorrents, chooseFilesForMagnets: false } };
+      }
+      case 'has_tray':
+        return true;
+      case 'set_tips':
+        settings.tips = args.tips as ShellSettings['tips'];
+        return settings;
       case 'set_guide_state':
         settings.guide = args.state as ShellSettings['guide'];
         return settings;
@@ -122,3 +138,6 @@ mockIPC(
 
 const root = document.getElementById('root');
 if (root) createRoot(root).render(<App />);
+const tip = params.get('tip');
+if (tip) useTipStore.getState().request(tip as TipId);
+if (params.get('toast') === '1') setTimeout(() => toast.info('A notification beside the tip'), 300);

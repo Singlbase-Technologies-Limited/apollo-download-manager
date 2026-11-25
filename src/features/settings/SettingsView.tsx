@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { ShowTipsToggle } from '../tips/TipHost';
 import { RotateCcw, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -235,6 +236,8 @@ function SectionContent({ section, s, patch }: { section: Exclude<SettingsSectio
           <Toggle title="Keep the computer awake while downloading" description="It doesn’t go to sleep on its own while downloads are active. The screen can still turn off." checked={s.general.keepAwake} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, keepAwake: v } })); }} />
           <Toggle title="Start minimized" description="Start hidden in the tray, also when it opens at sign-in." checked={s.general.startMinimized} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, startMinimized: v } })); }} />
           <Toggle title="Confirm before quitting with active downloads" checked={s.general.confirmExitWithActive} onChange={(v) => { patch((x) => ({ ...x, general: { ...x.general, confirmExitWithActive: v } })); }} />
+          {/* Saved with the tips, at once, not with this form (#460). */}
+          <ShowTipsToggle />
         </Group>
       );
     case 'downloads':
