@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:mirror="https://launchpad.net/" version="2.0">
+  <channel>
+    <title>Ubuntu CD Mirrors Status</title>
+    <link>https://launchpad.net/ubuntu/+cdmirrors-rss</link>
+    <description>Status of Ubuntu CD Mirrors</description>
+
+    <lastBuildDate>Wed, 25 Nov 2026 08:29:36 -0000</lastBuildDate>
+
+    <item>
+      <title>RackGenius</title>
+      <link>https://dtw-mirror.rackgenius.com/ubuntu-releases/</link>
+
+      <description>
+        Detroit, Michigan
+      </description>
+
+      <mirror:bandwidth>140</mirror:bandwidth>
+
+      <mirror:location>
+        <mirror:continent>North America</mirror:continent>
+        <mirror:country>United States</mirror:country>
+        <mirror:countrycode>US</mirror:countrycode>
+      </mirror:location>
+
+      <pubDate>Mon, 23 Nov 2026 18:11:05 -0000</pubDate>
+
+      <guid>https://dtw-mirror.rackgenius.com/ubuntu-releases/</guid>
+    </item>
+<item>
+      <title>ICSCoE</title>
+      <link>https://ftp.udx.icscoe.jp/Linux/ubuntu-releases/</link>
+
+      <description>
+        Industrial Cyber Security Center of Excellence
+      </description>
+
+      <mirror:bandwidth>140</mirror:bandwidth>
+
+      <mirror:location>
+        <mirror:continent>Asia</mirror:continent>
+        <mirror:country>Japan</mirror:country>
+        <mirror:countrycode>JP</mirror:countrycode>
+      </mirror:location>
+
+      <pubDate>Wed, 18 Nov 2026 13:35:48 -0000</pubDate>
+
+      <guid>https://ftp.udx.icscoe.jp/Linux/ubuntu-releases/</guid>
+    </item>
+<item>
+      <title>Fremont Cabal Internet Exchange</title>
+      <link>https://gsl-syd.mm.fcix.net/ubuntu-releases/</link>
+
+      <description>
+        Internet Exchange in Fremont, California, USA
+      </description>
+
+      <mirror:bandwidth>140</mirror:bandwidth>
+
+      <mirror:location>
+        <mirror:continent>Oceania</mirror:continent>
+        <mirror:country>Australia</mirror:country>
+        <mirror:countrycode>AU</mirror:countrycode>
+      </mirror:location>
+
+      <pubDate>Thu, 19 Nov 2026 07:28:38 -0000</pubDate>
+
+      <guid>https://gsl-syd.mm.fcix.net/ubuntu-releases/</guid>
+    </item>
+<item>
+      <title>AARNet Pty Ltd</title>
+      <link>https://mirror.aarnet.edu.au/pub/ubuntu/releases/</link>
+
+      <description>
+        AARNet Pty Ltd
+      </description>
+
+      <mirror:bandwidth>140</mirror:bandwidth>
+
+      <mirror:location>
+        <mirror:continent>Oceania</mirror:continent>
+        <mirror:country>Australia</mirror:country>
+        <mirror:countrycode>AU</mirror:countrycode>
+      </mirror:location>
+
+      <pubDate>Sun, 22 Nov 2026 10:03:58 -0000</pubDate>
+
+      <guid>https://mirror.aarnet.edu.au/pub/ubuntu/releases/</guid>
+    </item>
+  </channel>
+</rss>

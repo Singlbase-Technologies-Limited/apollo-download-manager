@@ -27,14 +27,14 @@ The audit run for #90 on 2026-10-31, on every branch's history (102 commits) and
 
 | Check | How | Result |
 |---|---|---|
-| Secrets in the git history | `git log --all -p`, searched for private keys, GitHub tokens (`ghp_`, `github_pat_`, `gho_`), AWS keys (`AKIA…`), Slack tokens (`xox…`), API keys (`sk-…`, `AIza…`) and long bearer tokens | **None.** The only private-key markers are three made-up keys in the redaction tests (`crates/velocity-core/src/redact.rs`, `diagnostics.rs`) |
+| Secrets in the git history | `git log --all -p`, searched for private keys, GitHub tokens (`ghp_`, `github_pat_`, `gho_`), AWS keys (`AKIA…`), Slack tokens (`xox…`), API keys (`sk-…`, `AIza…`) and long bearer tokens | **None.** The only private-key markers are three made-up keys in the redaction tests ([`crates/velocity-core/src/redact.rs`](../crates/velocity-core/src/redact.rs), `diagnostics.rs`) |
 | Secret files ever committed | Every file name in the history, for `.pem`, `.key`, `.p12`, `.pfx`, `id_rsa`, `id_ed25519` and `.env` | **None.** The Chrome extension's private key was never committed (`*.pem` is ignored) |
 | Secrets in issues, pull requests and comments | The same patterns, and `password=` | **None** |
 | Personal data in files | Personal names, home-folder paths | A Windows user name in a test (`paths.rs`) was replaced with `Jane Doe`; the history keeps the old commits |
 | Email addresses in commits | `git log --all --format='%ae %ce'` | 96 commits by `vincentarisawork+velocity-agent@gmail.com` and 4 by `admin@singlbase.com` become public with the repository. **Left as they are** (PO decision, 2026-10-31): the history is never rewritten |
 | Workflows a fork's pull request could abuse | `.github/workflows/*.yml` | **Safe:** no `pull_request_target`, no secrets used anywhere, every token read-only unless a job needs more, every action pinned to a commit |
 | Third-party notices | `pnpm check:notices` (#76) | Complete: every component Apollo DM ships, with its licence |
-| Test credentials | The SFTP test servers | For the tests only: a throwaway user with a random password, created on the CI runner and masked in its log (`scripts/ci-sftp-server.sh`), never a real account |
+| Test credentials | The SFTP test servers | For the tests only: a throwaway user with a random password, created on the CI runner and masked in its log ([`scripts/ci-sftp-server.sh`](../scripts/ci-sftp-server.sh)), never a real account |
 
 ### The checklist
 
@@ -44,11 +44,11 @@ The PO does these, in this order:
 
 1. **Merge #90** and everything before it, so `main` has the licence and these files.
 2. **Make the repository public:** Settings, General, Danger Zone, **Change visibility**.
-3. **Turn on, in Settings, Advanced Security** (free for public repositories): **Private vulnerability reporting** (`SECURITY.md` relies on it), **Dependabot alerts**, **Secret scanning** and **Push protection**, **Code scanning** with the default CodeQL setup. *Check:* the Security tab shows "Report a vulnerability".
+3. **Turn on, in Settings, Advanced Security** (free for public repositories): **Private vulnerability reporting** ([`SECURITY.md`](../SECURITY.md) relies on it), **Dependabot alerts**, **Secret scanning** and **Push protection**, **Code scanning** with the default CodeQL setup. *Check:* the Security tab shows "Report a vulnerability".
 4. **Actions, General:** "Require approval for first-time contributors" for fork pull requests; workflow permissions "Read repository contents". *Check:* a fork's pull request waits for approval before any workflow runs.
 5. **Branch rules for `main`** as in [REPOSITORY_SETTINGS.md](REPOSITORY_SETTINGS.md): a pull request, linear history, no force push.
 6. **Turn the pull-request checks back on,** now that minutes are free (#236). *Check:* a pull request starts PR checks.
-7. **The `release` environment,** for releases (#18): Settings, Environments, `release`, with the PO as its required reviewer, as `docs/RELEASE_PROCESS.md` describes once #18 merges. It needs the repository public on the current plan. *Check:* a release run waits for approval before its `draft` job.
+7. **The `release` environment,** for releases (#18): Settings, Environments, `release`, with the PO as its required reviewer, as [`docs/RELEASE_PROCESS.md`](RELEASE_PROCESS.md) describes once #18 merges. It needs the repository public on the current plan. *Check:* a release run waits for approval before its `draft` job.
 8. **Optional:** an [OpenSSF Scorecard](https://github.com/ossf/scorecard) run, as an outside check of the repository's practices.
 
 ## After going public

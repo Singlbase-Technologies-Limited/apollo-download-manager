@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<metalink xmlns="urn:ietf:params:xml:ns:metalink">
+  <generator>MirrorCache</generator>
+  <origin dynamic="true">https://download.opensuse.org/distribution/leap/15.6/iso/openSUSE-Leap-15.6-DVD-x86_64-Build710.3-Media.iso</origin>
+  <published>2026-11-25T08:35:34Z</published>
+  <publisher>
+    <name>openSUSE</name>
+    <url>download.opensuse.org</url>
+  </publisher>
+  <file name="openSUSE-Leap-15.6-DVD-x86_64-Build710.3-Media.iso">
+    <size>4631560192</size>
+    <!-- <mtime>1718884614</mtime> -->
+    <hash type="md5">b697d232c48b22b146cceb4fdf788401</hash>
+    <hash type="sha-1">3da3fd8159d6c8b1e133d635745ad2ea145ce0f5</hash>
+    <hash type="sha-256">a74d4072e639c75ca127df3d869c1e57bcc44a093a969550f348a3ead561fe4f</hash>
+    <hash type="sha-512">59a5c2501561e42bcc58d485b839f9da552f592e465174dfce964e6b80feea61ace0a978b4299de5e0fd245f228a33a54166182776e1a9263a733ed491e87f8b</hash>
+    <pieces length="4194304" type="sha-1">
+      <hash>0cd9a8f0bafc4ef980be9d426118031ccf94241b</hash>
+      <hash>76d180978da0020691a2cc2cd10aefc67c3c22c2</hash>
+    </pieces>
+    <!-- Mirrors which handle this country (KE):  -->
+    <url location="KE" priority="1">https://opensuse.mirror.liquidtelecom.com/distribution/leap/15.6/iso/openSUSE-Leap-15.6-DVD-x86_64-Build710.3-Media.iso</url>
+    <url location="ZA" priority="2">https://opensuse.mirror.net.za/distribution/leap/15.6/iso/openSUSE-Leap-15.6-DVD-x86_64-Build710.3-Media.iso</url>
+    <url location="ZA" priority="3">https://mirror.africloud.com/opensuse/distribution/leap/15.6/iso/openSUSE-Leap-15.6-DVD-x86_64-Build710.3-Media.iso</url>
+    <!-- File origin location:  -->
+    <!-- https://downloadcontent2.opensuse.org/distribution/leap/15.6/iso/openSUSE-Leap-15.6-DVD-x86_64-Build710.3-Media.iso -->
+  </file>
+</metalink>

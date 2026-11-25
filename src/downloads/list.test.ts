@@ -143,13 +143,12 @@ describe('what the list shows (#59)', () => {
     expect(percentOf(makeRecord({ status: 'completed', progress: { ...progress, totalBytes: null } }))).toBe(100);
   });
 
-  it('gives a time left only while bytes come, from the speed the engine reports', () => {
-    const at = (status: 'downloading' | 'stalled', speed: number, total: number | null) =>
-      makeRecord({ status, progress: { ...progress, completedBytes: 1000, totalBytes: total, downloadSpeedBps: speed } });
-    expect(etaSeconds(at('downloading', 100, 3000))).toBe(20);
-    expect(etaSeconds(at('downloading', 0, 3000))).toBeNull();
-    expect(etaSeconds(at('downloading', 100, null))).toBeNull();
-    expect(etaSeconds(at('stalled', 100, 3000))).toBeNull();
+  // #330 (PO decision): the core works time left out; the window shows it, and only while the download downloads.
+  it('shows the time left the core works out, only while it downloads', () => {
+    const at = (status: 'downloading' | 'stalled', secondsLeft: number | null) => makeRecord({ status, secondsLeft });
+    expect(etaSeconds(at('downloading', 20))).toBe(20);
+    expect(etaSeconds(at('downloading', null))).toBeNull();
+    expect(etaSeconds(at('stalled', 20))).toBeNull();
   });
 
   // #245: the field test saw "Next try: 11s ago" while the status read Retrying now.

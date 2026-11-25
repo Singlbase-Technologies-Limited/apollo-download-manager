@@ -248,6 +248,7 @@ impl Manager {
                     started_over: None,
                     started_at_ms: stored.activity.started_at_ms,
                     average_speed_bps: activity.average_speed_bps(),
+                    seconds_left: None,
                     speed_limit_bps: None,
                     requested_connections: None,
                     torrent: None,
@@ -264,6 +265,7 @@ impl Manager {
                 saved_at_ms: None,
                 needs_login,
                 activity,
+                time_left: super::time_left::TimeLeft::default(),
                 logged: None,
             };
             download.show_settings();

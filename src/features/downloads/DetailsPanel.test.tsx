@@ -333,6 +333,36 @@ describe('the details footer', () => {
     expect(await screen.findByRole('menuitem', { name: 'Copy link' })).toBeTruthy();
     expect(screen.queryByRole('menuitem', { name: 'Use a new link…' })).toBeNull();
   });
+
+  it('shows a download’s mirrors, and uses the chosen ones; a running one must be paused first (#324)', async () => {
+    const user = userEvent.setup();
+    state.mirrors.c = {
+      chosen: [],
+      announced: [{ url: 'https://m1.example.org/broken.iso', source: { kind: 'announced' }, country: null }],
+      official: 'ubuntu',
+      changeable: true,
+    };
+    state.mirrors.a = { chosen: [], announced: [{ url: 'https://m2.example.org/archive.zip', source: { kind: 'announced' }, country: null }], official: null, changeable: false };
+    renderApp();
+    await user.click(await rowFor('broken.iso'));
+    await user.click(within(await footer()).getByRole('button', { name: 'More actions for this download' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Mirrors…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Mirrors' });
+    expect(within(dialog).getByText(/Ubuntu publishes an official mirror list/)).toBeTruthy();
+    expect(callsOf(state, 'find_mirrors')).toHaveLength(0);
+    await user.click(within(dialog).getByRole('checkbox', { name: /m1\.example\.org/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Use these mirrors' }));
+    await waitFor(() => { expect(callsOf(state, 'set_mirrors').map((c) => c.args)).toEqual([{ id: 'c', mirrors: ['https://m1.example.org/broken.iso'] }]); });
+    await user.click(await rowFor('archive.zip'));
+    await user.click(within(await footer()).getByRole('button', { name: 'More actions for this download' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Mirrors…' }));
+    const running = await screen.findByRole('dialog', { name: 'Mirrors' });
+    expect(await within(running).findByText(/Pause the download to change its mirrors/)).toBeTruthy();
+    expect(within(running).getByRole<HTMLButtonElement>('button', { name: 'Use these mirrors' }).disabled).toBe(true);
+    expect(within(running).getByRole<HTMLInputElement>('checkbox', { name: /m2\.example\.org/ }).disabled).toBe(true);
+    // Closed, so the dialog doesn't stay open for the next test (the UI store outlives a render).
+    await user.click(within(running).getByRole('button', { name: 'Cancel' }));
+  });
 });
 
 // #349 (PO decision): a plain click on a row opens the details panel, even when the user closed it.

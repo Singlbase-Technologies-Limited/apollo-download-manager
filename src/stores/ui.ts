@@ -43,6 +43,8 @@ interface UiState {
   startAtId: string | null;
   /** The download being given a new link for the same file (#466). */
   newLinkId: string | null;
+  /** The download whose mirrors are open (#324). */
+  mirrorsId: string | null;
   /** The Settings screen's section shown (#30). */
   settingsSection: SettingsSection;
   /** Settings is open, in a window over the app (#364). */
@@ -64,6 +66,8 @@ interface UiState {
   closeStartAt: () => void;
   openNewLink: (id: string) => void;
   closeNewLink: () => void;
+  openMirrors: (id: string) => void;
+  closeMirrors: () => void;
   setSettingsSection: (section: SettingsSection) => void;
   /** Opens Settings over the app, at `section` when given, else where it was left. */
   openSettings: (section?: SettingsSection) => void;
@@ -89,6 +93,7 @@ export const useUiStore = create<UiState>((set) => ({
   chooseFilesId: null,
   startAtId: null,
   newLinkId: null,
+  mirrorsId: null,
   settingsSection: 'general',
   settingsOpen: false,
   guide: null,
@@ -107,6 +112,8 @@ export const useUiStore = create<UiState>((set) => ({
   closeStartAt: () => { set({ startAtId: null }); },
   openNewLink: (newLinkId) => { set({ newLinkId }); },
   closeNewLink: () => { set({ newLinkId: null }); },
+  openMirrors: (mirrorsId) => { set({ mirrorsId }); },
+  closeMirrors: () => { set({ mirrorsId: null }); },
   setSettingsSection: (settingsSection) => { set({ settingsSection }); },
   openSettings: (section) => { set((s) => ({ settingsOpen: true, settingsSection: section ?? s.settingsSection })); },
   closeSettings: () => { set({ settingsOpen: false }); },

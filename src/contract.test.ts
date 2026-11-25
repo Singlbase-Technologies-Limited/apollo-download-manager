@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  DownloadMirrorsSchema,
+  MirrorCandidateSchema,
   AddRequestSchema,
   AddResultSchema,
   AppInfoSchema,
@@ -166,6 +168,11 @@ describe('contract fixtures generated from Rust', () => {
   it('themes and densities: exactly the values the schemas know, in order (#29)', () => {
     expect(fixture('themes.json')).toEqual(ThemeSchema.options);
     expect(fixture('densities.json')).toEqual(DensitySchema.options);
+  });
+
+  it('mirrors: the candidates and a download’s mirrors (#324)', () => {
+    expect(z.array(MirrorCandidateSchema).parse(fixture('mirror-candidates.json'))).toEqual(fixture('mirror-candidates.json'));
+    expect(DownloadMirrorsSchema.parse(fixture('download-mirrors.json'))).toEqual(fixture('download-mirrors.json'));
   });
 
   it('the Add dialog request, with every field set (#60)', () => {

@@ -25,7 +25,7 @@ The full list is on #53. The options put to the PO were:
 
 1. **SFTP uses russh 0.64.1 and russh-sftp 3.0.1,** with ring as their crypto: no aws-lc-rs and no OpenSSL. The PO approved both, as shipped dependencies, with RSA support.
 2. **libssh2 is not used,** and the native build is unchanged. The decision on #53 to build OpenSSL on Windows for libssh2 lapses.
-3. **A crate of its own:** `crates/velocity-sftp` is the only crate that calls russh, just as `velocity-curl` is the only one that calls libcurl.
+3. **A crate of its own:** [`crates/velocity-sftp`](../../crates/velocity-sftp/) is the only crate that calls russh, just as `velocity-curl` is the only one that calls libcurl.
 4. **One transport interface:** the engine fetches through `velocity_curl::Transport`. libcurl's loop and the SFTP client both implement it, and both answer a fetch with the same events: a head, the body, then how it ended. So the probe, gate, checkpoints, retries and completion gate are shared, not duplicated. The SFTP client writes through a `FetchPipe`, which has the same bounded buffer, speed limits and body limit as libcurl's fetches.
 5. **The SFTP security rules of ADR-0011 stand:**
    - an unknown host key is refused until the user confirms its fingerprint;
@@ -55,8 +55,8 @@ The full list is on #53. The options put to the PO were:
   - the UI's error type grows `hostKey` (`COMMAND_API_VERSION` 6).
 - **Documents:**
   - [ARCHITECTURE.md](../ARCHITECTURE.md) names the new crate;
-  - [ENGINE_INTERNALS.md](../ENGINE_INTERNALS.md#sftp-53) describes SFTP;
-  - [SECURITY.md](../SECURITY.md#sftp-host-keys-53) describes the host-key rules.
+  - [ENGINE_INTERNALS.md](../ENGINE_FTP_SFTP.md#sftp-53) describes SFTP;
+  - [SECURITY_NETWORK.md](../SECURITY_NETWORK.md#sftp-host-keys-53) describes the host-key rules.
 
 ## Follow-up
 

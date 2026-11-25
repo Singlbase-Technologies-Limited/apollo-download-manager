@@ -87,6 +87,8 @@ type NamedFn = Box<dyn Fn(&str) + Send + Sync>;
 type TypedFn = Box<dyn Fn(&str) + Send + Sync>;
 /// Called with why the download dropped the bytes it had and started again (#257).
 type StartOverFn = Box<dyn Fn(&str) + Send + Sync>;
+/// Called with the mirrors the server announced (#324).
+type AnnouncedFn = Box<dyn Fn(&[String]) + Send + Sync>;
 
 /// Why a download dropped the bytes it had and started again, as the user is told (#257).
 /// Why a new link the user gave was refused (#466): it points to another file than the one
@@ -157,6 +159,7 @@ pub struct Control {
     named: Option<NamedFn>,
     typed: Option<TypedFn>,
     started_over: Option<StartOverFn>,
+    announced: Option<AnnouncedFn>,
 }
 
 /// Gives a request what every request of its download carries: its speed limits (#49) and its
@@ -271,6 +274,17 @@ impl Control {
     /// with the file, when it gave a valid one (#54).
     pub fn with_content_type(mut self, typed: impl Fn(&str) + Send + Sync + 'static) -> Self {
         self.typed = Some(Box::new(typed));
+        self
+    }
+
+    /// `announced` is called with the mirrors the server named in `Link: rel=duplicate` headers
+    /// (RFC 6249), checked and best first, once it answered with the file, when it named any
+    /// (#324). The download doesn't use them: the user chooses.
+    pub fn with_announced_mirrors(
+        mut self,
+        announced: impl Fn(&[String]) + Send + Sync + 'static,
+    ) -> Self {
+        self.announced = Some(Box::new(announced));
         self
     }
 
@@ -1668,6 +1682,18 @@ fn probe(
         .and_then(|s| s.content_type.clone());
     if let (Some(content_type), Some(typed)) = (content_type, &control.typed) {
         typed(&content_type);
+    }
+    let announced = name_source
+        .lock()
+        .expect("the name source lock")
+        .as_ref()
+        .map(|s| {
+            let links: Vec<&str> = s.links.iter().map(String::as_str).collect();
+            velocity_core::mirrors::announced_mirrors(&links, &s.url)
+        })
+        .unwrap_or_default();
+    if let (false, Some(report)) = (announced.is_empty(), &control.announced) {
+        report(&announced);
     }
     let file = answered.map(|a| a.file).unwrap_or_default();
     Ok(Ok(Probed::Outcome(outcome, cursor, file)))
@@ -3082,6 +3108,8 @@ struct NameSource {
     disposition: Option<String>,
     url: String,
     content_type: Option<String>,
+    /// Every `Link` header's value (#324).
+    links: Vec<String>,
 }
 
 /// A `Content-Type` value's media type, `type/subtype` in lowercase without its parameters, or
@@ -3103,6 +3131,12 @@ impl NameSource {
             disposition: head.header("content-disposition").map(str::to_owned),
             url: head.url.clone(),
             content_type: head.header("content-type").and_then(media_type),
+            links: head
+                .headers
+                .iter()
+                .filter(|(k, _)| k.eq_ignore_ascii_case("link"))
+                .map(|(_, v)| v.clone())
+                .collect(),
         }
     }
 

@@ -2,6 +2,8 @@
 
 How Apollo Download Manager becomes an installer: Windows (#81) and Linux (#82) are built; macOS isn't planned (#83). Release candidates and releases are made from these packages by CI ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md), [RELEASE_PROCESS.md](RELEASE_PROCESS.md)). Nothing is signed ([Signing](#signing)).
 
+See also, for users: [Installing](user/installing.md).
+
 ## The Windows installer
 
 One installer, a per-user NSIS setup (`Apollo Download Manager_<version>_x64-setup.exe`), made by Tauri from [`src-tauri/tauri.release.conf.json`](../src-tauri/tauri.release.conf.json). No MSI (PO decision on #81).
@@ -13,7 +15,7 @@ One installer, a per-user NSIS setup (`Apollo Download Manager_<version>_x64-set
 
 ### Beside V1
 
-V1 is installed under its own product name. The new installer uses Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md); the tests in `crates/velocity-core/src/branding.rs` check it against V1's exact name):
+V1 is installed under its own product name. The new installer uses Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md); the tests in [`crates/velocity-core/src/branding.rs`](../crates/velocity-core/src/branding.rs) check it against V1's exact name):
 
 | | Apollo DM | V1 |
 |---|---|---|
@@ -35,7 +37,7 @@ Offering to remove V1 from Apollo Download Manager's installer is left for a lat
   - It reads the old install folder from `HKCU\…\Uninstall\<the 0.1.x product name>`, runs that folder's uninstaller silently with `/UPDATE`, and waits for it. The old programs and the old Apps & features entry go; the data, the settings and the browser keys stay. One install and one entry remain.
   - Then it removes the old uninstaller and folder, the old Start menu and desktop shortcuts with that name (only when they point into the old folder), the old `HKCU\Software\Velocity Project\<the 0.1.x product name>` key, and the `Velocity Project` key only when it is empty, so V1's stays.
   - If the old uninstaller fails, the hook removes nothing more, so the old install stays whole, with its entry.
-  - The browser registrations' manifests still name the old folder's native host. On its next start the app points each Apollo Download Manager registration whose host is gone at its own host (`repair_moved_host` in `crates/velocity-core/src/browser/registration.rs`), and leaves V1's alone.
+  - The browser registrations' manifests still name the old folder's native host. On its next start the app points each Apollo Download Manager registration whose host is gone at its own host (`repair_moved_host` in [`crates/velocity-core/src/browser/registration.rs`](../crates/velocity-core/src/browser/registration.rs)), and leaves V1's alone.
 
 ### Building it
 
@@ -76,7 +78,7 @@ A deb, for Ubuntu and Debian, and an rpm, for Fedora and openSUSE, made by Tauri
   |---|---|
   | `/usr/bin/velocity-desktop-v2` | The app |
   | `/usr/bin/velocity-transfer`, `/usr/bin/velocity-torrent`, `/usr/bin/velocity-native-host-v2` | The transfer engine, the torrent helper and the browser's native host, beside the app as it expects |
-  | `/usr/lib/Apollo Download Manager/` | `LICENSE`, `THIRD_PARTY_NOTICES.md` and the native libraries' `build-info.json` |
+  | `/usr/lib/Apollo Download Manager/` | `LICENSE`, [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and the native libraries' `build-info.json` |
   | `/usr/share/applications/Apollo Download Manager.desktop` | The menu entry |
   | `/usr/share/icons/hicolor/<size>/apps/velocity-desktop-v2.png` | The icons |
 
@@ -111,7 +113,7 @@ pnpm package:linux
 
 A check whose tool is missing is reported NOT RUN; `--require-listing` makes that an error, as in CI. Built on a newer distribution than Ubuntu 22.04, the glibc check fails, as it should.
 
-**In CI:** the *Linux packages* workflow ([`package-linux.yml`](../.github/workflows/package-linux.yml)) runs the same command on an Ubuntu 22.04 runner, with caches of its own ([CI.md](CI.md#caching)), and uploads the deb, the rpm and their checksums as the `velocity-v2-linux-packages` artifact, kept 14 days. Then [`scripts/package-install-test.sh`](../scripts/package-install-test.sh) installs each package in a clean Ubuntu 22.04, Ubuntu 24.04 and Debian 12 container (the deb) and Fedora 42 container (the rpm), checks that every file is there, that every program finds its libraries and that the engine and torrent helper start, then removes the package and checks its files are gone. It is started by hand only, on the branch to package.
+**In CI:** the *Linux packages* workflow ([`package-linux.yml`](../.github/workflows/package-linux.yml)) runs the same command on an Ubuntu 22.04 runner, with caches of its own ([CI_COSTS.md](CI_COSTS.md#caching)), and uploads the deb, the rpm and their checksums as the `velocity-v2-linux-packages` artifact, kept 14 days. Then [`scripts/package-install-test.sh`](../scripts/package-install-test.sh) installs each package in a clean Ubuntu 22.04, Ubuntu 24.04 and Debian 12 container (the deb) and Fedora 42 container (the rpm), checks that every file is there, that every program finds its libraries and that the engine and torrent helper start, then removes the package and checks its files are gone. It is started by hand only, on the branch to package.
 
 ### Testing them beside V1
 

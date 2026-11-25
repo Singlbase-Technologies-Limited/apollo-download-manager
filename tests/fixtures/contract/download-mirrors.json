@@ -1,0 +1,16 @@
+{
+  "announced": [
+    {
+      "country": null,
+      "source": {
+        "kind": "announced"
+      },
+      "url": "https://m2.example.org/x.iso"
+    }
+  ],
+  "changeable": true,
+  "chosen": [
+    "https://m3.example.org/x.iso"
+  ],
+  "official": "ubuntu"
+}

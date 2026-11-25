@@ -7,7 +7,7 @@
 
 ## Context
 
-Apollo Download Manager's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the Rust `curl` and `curl-sys` crates, behind `crates/velocity-curl` ([ADR-0002](0002-engine-crate-layout.md)). The research report sets a version floor of **libcurl 8.23.0** (section 8.1). The latest `curl-sys` doesn't meet it. These facts were re-checked at decision time:
+Apollo Download Manager's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the Rust `curl` and `curl-sys` crates, behind [`crates/velocity-curl`](../../crates/velocity-curl/) ([ADR-0002](0002-engine-crate-layout.md)). The research report sets a version floor of **libcurl 8.23.0** (section 8.1). The latest `curl-sys` doesn't meet it. These facts were re-checked at decision time:
 
 | Fact (2026-10-22) | Source |
 |---|---|
@@ -24,7 +24,7 @@ Apollo Download Manager's transfer engine uses libcurl ([ADR-0001](0001-v2-direc
    - The commit, its diff review and the bundled curl version (checked at runtime with `curl_version_info`) are recorded in the PR that adds the pin.
    - The pin is for the prototype only; no release is built with it.
 2. **Releases: option A.** Apollo Download Manager builds libcurl itself from the official `curl-<version>.tar.xz`, verified by SHA-256 and the release signature, and `curl-sys` links that build.
-   - It's recorded in the native lock file and `build-info.json` ([DEPENDENCIES.md](../DEPENDENCIES.md#native-libraries)).
+   - It's recorded in the native lock file and `build-info.json` ([APPROVED_DEPENDENCIES.md](../APPROVED_DEPENDENCIES.md#native-libraries)).
    - The build options decide the TLS backend (Schannel on Windows, static OpenSSL on Linux and macOS), nghttp2, zlib and, if #52 chooses it, libssh2.
 
 ## Options considered

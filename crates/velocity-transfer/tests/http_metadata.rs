@@ -406,3 +406,39 @@ fn the_files_media_type_is_reported_without_its_parameters() {
         }
     }
 }
+
+#[test]
+fn the_mirrors_the_server_announces_are_reported_best_first() {
+    let data = seeded_bytes(50_000, 324);
+    let server = TestServer::start(
+        vec![("files".into(), data)],
+        ServerOptions {
+            file_headers: FileHeaders {
+                links: vec![
+                    "<https://m1.example.net/files>; rel=duplicate; pri=2".into(),
+                    "</mirror/files>; rel=duplicate; pri=1, <https://x.example.net/files.meta4>; rel=describedby".into(),
+                    "<rsync://m2.example.net/files>; rel=duplicate".into(),
+                ],
+                ..FileHeaders::default()
+            },
+            ..ServerOptions::default()
+        },
+    );
+    for (mode, mut engine) in engines() {
+        let dir = Dir::new(&format!("mirrors-{}", mode.replace(' ', "-")));
+        let events = engine.subscribe();
+        let id = engine
+            .add(unnamed(server.url("files"), dir.downloads()))
+            .unwrap();
+        let done = finished(&events, id);
+        completed(mode, &done);
+        assert_eq!(
+            done.announced_mirrors,
+            [
+                server.url("mirror/files"),
+                "https://m1.example.net/files".to_owned()
+            ],
+            "{mode}"
+        );
+    }
+}

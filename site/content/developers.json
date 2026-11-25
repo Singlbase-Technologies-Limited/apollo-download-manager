@@ -2,7 +2,7 @@
   "sections": [
     {
       "title": "Architecture",
-      "pages": ["ARCHITECTURE.md", "UI_ARCHITECTURE.md", "CONTRACTS.md", "DATA_AND_MIGRATIONS.md", "COEXISTENCE.md", "SECURITY.md", "PRIVACY.md", "ACCESSIBILITY.md"]
+      "pages": ["ARCHITECTURE.md", "UI_ARCHITECTURE.md", "UI_FEATURES.md", "CONTRACTS.md", "DATA_AND_MIGRATIONS.md", "COEXISTENCE.md", "SECURITY.md", "SECURITY_NETWORK.md", "SECURITY_SUPPLY_CHAIN.md", "PRIVACY.md", "ACCESSIBILITY.md"]
     },
     {
       "title": "Repository",
@@ -10,15 +10,15 @@
     },
     {
       "title": "Building",
-      "pages": ["DEVELOPMENT.md", "BUILDING_NATIVE.md", "PACKAGING.md"]
+      "pages": ["DEVELOPMENT.md", "BUILDING_NATIVE.md", "BUILDING_LIBTORRENT.md", "PACKAGING.md"]
     },
     {
       "title": "Testing",
-      "pages": ["TESTING.md", "CI.md", "CI_DIAGNOSTICS.md"]
+      "pages": ["TESTING.md", "TEST_FIXTURES.md", "CI.md", "CI_COSTS.md", "CI_DIAGNOSTICS.md"]
     },
     {
       "title": "Engine and browser",
-      "pages": ["ENGINE_CONTRACT.md", "ENGINE_INTERNALS.md", "ENGINE_PROTOCOL.md", "FILE_NAMING.md", "TORRENTS.md", "BROWSER_EXTENSION.md", "BROWSER_EXTENSION_RELEASE_TEST.md"]
+      "pages": ["ENGINE_CONTRACT.md", "ENGINE_INTERNALS.md", "ENGINE_METALINK_MIRRORS.md", "ENGINE_FTP_SFTP.md", "ENGINE_SCHEDULER.md", "ENGINE_RETRIES_LIMITS.md", "ENGINE_CONNECTIONS.md", "ENGINE_PERSISTENCE.md", "ENGINE_INTEGRITY.md", "ENGINE_TESTS.md", "ENGINE_PROTOCOL.md", "FILE_NAMING.md", "TORRENTS.md", "TORRENT_LIFECYCLE.md", "TORRENT_CONTRACT.md", "BROWSER_EXTENSION.md", "BROWSER_EXTENSION_BUILD.md", "BROWSER_EXTENSION_RELEASE_TEST.md"]
     },
     {
       "title": "Settings",
@@ -26,7 +26,7 @@
     },
     {
       "title": "Contributing",
-      "pages": ["CONVENTIONS.md", "DEVELOPMENT_WORKFLOW.md", "REVIEWING.md", "AGENT_GUIDANCE.md", "AI_AGENT_ACCOUNT.md", "DEPENDENCIES.md", "LICENSING.md", "OPEN_SOURCE.md", "BRANDING.md", "WEBSITE.md"]
+      "pages": ["CONVENTIONS.md", "DEVELOPMENT_WORKFLOW.md", "REVIEWING.md", "AGENT_GUIDANCE.md", "AI_AGENT_ACCOUNT.md", "DEPENDENCIES.md", "APPROVED_DEPENDENCIES.md", "LICENSING.md", "OPEN_SOURCE.md", "BRANDING.md", "WEBSITE.md"]
     },
     {
       "title": "Releases",
@@ -46,26 +46,43 @@
     "START_HERE.md": "Start here",
     "ARCHITECTURE.md": "Overview",
     "UI_ARCHITECTURE.md": "The UI",
+    "UI_FEATURES.md": "UI features",
     "CONTRACTS.md": "UI contract",
     "DATA_AND_MIGRATIONS.md": "Data and migrations",
     "COEXISTENCE.md": "Beside V1",
     "SECURITY.md": "Security",
+    "SECURITY_SUPPLY_CHAIN.md": "Security: supply chain",
+    "SECURITY_NETWORK.md": "Security: network",
     "PRIVACY.md": "Privacy",
     "ACCESSIBILITY.md": "Accessibility",
     "REPOSITORY_MAP.md": "Repository map",
     "GLOSSARY.md": "Glossary",
     "DEVELOPMENT.md": "Development setup",
     "BUILDING_NATIVE.md": "Native libraries",
+    "BUILDING_LIBTORRENT.md": "Building libtorrent",
     "PACKAGING.md": "Packaging",
     "TESTING.md": "Test levels",
+    "TEST_FIXTURES.md": "Test fixtures and tools",
     "CI.md": "CI design",
+    "CI_COSTS.md": "CI costs and caching",
     "CI_DIAGNOSTICS.md": "CI diagnostics",
     "ENGINE_CONTRACT.md": "Engine contract",
-    "ENGINE_INTERNALS.md": "Engine internals",
+    "ENGINE_INTERNALS.md": "Engine: protocols",
+    "ENGINE_METALINK_MIRRORS.md": "Engine: Metalink",
+    "ENGINE_FTP_SFTP.md": "Engine: FTP and SFTP",
+    "ENGINE_SCHEDULER.md": "Engine: scheduler",
+    "ENGINE_RETRIES_LIMITS.md": "Engine: retries, limits",
+    "ENGINE_CONNECTIONS.md": "Engine: connections",
+    "ENGINE_PERSISTENCE.md": "Engine: persistence",
+    "ENGINE_INTEGRITY.md": "Engine: integrity",
+    "ENGINE_TESTS.md": "Engine tests",
     "ENGINE_PROTOCOL.md": "Engine protocol",
     "FILE_NAMING.md": "File names",
     "TORRENTS.md": "Torrents",
+    "TORRENT_LIFECYCLE.md": "Torrents: seeding",
+    "TORRENT_CONTRACT.md": "Torrent contract",
     "BROWSER_EXTENSION.md": "Browser extension",
+    "BROWSER_EXTENSION_BUILD.md": "Building the extension",
     "BROWSER_EXTENSION_RELEASE_TEST.md": "Extension release test",
     "SETTINGS.md": "Settings",
     "DIAGNOSTICS.md": "Logs and diagnostics",
@@ -75,6 +92,7 @@
     "AGENT_GUIDANCE.md": "Agent guidance",
     "AI_AGENT_ACCOUNT.md": "AI agent account",
     "DEPENDENCIES.md": "Dependencies",
+    "APPROVED_DEPENDENCIES.md": "Approved dependencies",
     "LICENSING.md": "Licensing",
     "OPEN_SOURCE.md": "Open source",
     "BRANDING.md": "Branding",

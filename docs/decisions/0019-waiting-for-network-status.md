@@ -41,6 +41,6 @@ The PO's decisions on #318 (2026-11-05, multiple-choice questions):
 
 ## Consequences
 
-- **Contract:** `DownloadStatus` has 15 values in Rust, in `src/contract.ts` and in the contract fixtures. A build before 0.2.0 that reads a database with `waitingForNetwork` shows that download as Unavailable, never acting on it ([persistence rule](../../.claude/rules/persistence.md)).
+- **Contract:** `DownloadStatus` has 15 values in Rust, in [`src/contract.ts`](../../src/contract.ts) and in the contract fixtures. A build before 0.2.0 that reads a database with `waitingForNetwork` shows that download as Unavailable, never acting on it ([persistence rule](../../.claude/rules/persistence.md)).
 - **Platforms:** watching works on Windows and Linux. macOS has no watcher yet; there the downloads wait until the app starts again or the user retries.
 - **No new dependency:** `windows-sys` gains the IP Helper, NDIS and WinSock features it already ships in, and `velocity-core` uses the workspace's `libc` on Linux ([DEPENDENCIES.md](../DEPENDENCIES.md)).

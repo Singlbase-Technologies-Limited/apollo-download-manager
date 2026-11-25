@@ -146,6 +146,8 @@ pub struct FileHeaders {
     pub content_disposition: Option<String>,
     /// Sent as `Content-Type`, as given (#54).
     pub content_type: Option<String>,
+    /// Each sent as a `Link` header, as given: a mirror is `<url>; rel=duplicate` (#324).
+    pub links: Vec<String>,
 }
 
 /// The body of every redirect the server sends (#40).
@@ -1037,6 +1039,7 @@ pub(crate) fn answer<'a>(
             .map(|v| ("Content-Disposition", v)),
     );
     headers.extend(file.content_type.clone().map(|v| ("Content-Type", v)));
+    headers.extend(file.links.iter().cloned().map(|v| ("Link", v)));
     let (status, reason, body): (u16, &'static str, &[u8]) = match (mode, range) {
         (RangeMode::Ignore, _) | (_, None) => (200, "OK", data),
         (RangeMode::FullBodyForNonZeroStart, Some((start, _))) if start > 0 => (200, "OK", data),
