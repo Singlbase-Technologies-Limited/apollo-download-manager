@@ -6039,6 +6039,7 @@ name = "velocity-core"
 version = "0.2.0"
 dependencies = [
  "dirs",
+ "dom_query",
  "getrandom 0.4.3",
  "jiff",
  "keyring",

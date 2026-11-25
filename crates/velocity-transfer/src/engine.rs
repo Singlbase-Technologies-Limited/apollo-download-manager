@@ -907,7 +907,8 @@ fn start_worker(shared: &Arc<Shared>, id: TransferId, resume: Option<Resume>) {
         let Some(entry) = state.transfers.get_mut(&id) else {
             return;
         };
-        let (reporter, namer, typer, restarter) = (
+        let (reporter, namer, typer, restarter, announcer) = (
+            Arc::clone(shared),
             Arc::clone(shared),
             Arc::clone(shared),
             Arc::clone(shared),
@@ -943,6 +944,15 @@ fn start_worker(shared: &Arc<Shared>, id: TransferId, resume: Option<Resume>) {
                 if let Some(entry) = state.transfers.get_mut(&id) {
                     if entry.snapshot.content_type.as_deref() != Some(content_type) {
                         entry.snapshot.content_type = Some(content_type.to_owned());
+                        state.changed(id);
+                    }
+                }
+            })
+            .with_announced_mirrors(move |mirrors| {
+                let mut state = lock(&announcer.state);
+                if let Some(entry) = state.transfers.get_mut(&id) {
+                    if entry.snapshot.announced_mirrors != mirrors {
+                        entry.snapshot.announced_mirrors = mirrors.to_vec();
                         state.changed(id);
                     }
                 }

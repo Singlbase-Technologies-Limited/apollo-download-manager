@@ -1327,6 +1327,40 @@ mod tests {
         }
 
         #[test]
+        fn contract_mirrors() {
+            use crate::manager::DownloadMirrors;
+            use crate::mirrors::{MirrorCandidate, MirrorProject, MirrorSource};
+            let candidates = vec![
+                MirrorCandidate {
+                    url: "https://m1.example.org/x.iso".into(),
+                    source: MirrorSource::Official {
+                        project: MirrorProject::ArchLinux,
+                    },
+                    country: Some("DE".into()),
+                },
+                MirrorCandidate {
+                    url: "https://m2.example.org/x.iso".into(),
+                    source: MirrorSource::Announced,
+                    country: None,
+                },
+            ];
+            check(
+                "mirror-candidates.json",
+                serde_json::to_value(&candidates).unwrap(),
+            );
+            let mirrors = DownloadMirrors {
+                chosen: vec!["https://m3.example.org/x.iso".into()],
+                announced: vec![candidates[1].clone()],
+                official: Some(MirrorProject::Ubuntu),
+                changeable: true,
+            };
+            check(
+                "download-mirrors.json",
+                serde_json::to_value(&mirrors).unwrap(),
+            );
+        }
+
+        #[test]
         fn contract_add() {
             use crate::manager::{AddRequest, AddResult};
             let request = AddRequest::sample();

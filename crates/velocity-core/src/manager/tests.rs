@@ -350,6 +350,7 @@ fn events_for_unknown_transfers_are_ignored() {
         content_type: None,
         retry_at_ms: None,
         started_over: None,
+        announced_mirrors: Vec::new(),
     };
     stray.progress.completed_bytes = 999;
     control.emit(TransferEvent::Changed { snapshot: stray });
@@ -6539,6 +6540,200 @@ mod torrent_links {
         names.sort();
         let kept = kept.file_name().unwrap().to_string_lossy().into_owned();
         assert_eq!(names, ["a folder".to_owned(), kept]);
+    }
+
+    // #324: mirrors. An official list is fetched as a `.torrent` link is, into the app's folder.
+    const ISO: &str = "https://dl.fedoraproject.org/pub/f/x.iso";
+
+    #[test]
+    fn an_official_mirror_list_is_fetched_into_the_apps_folder_read_and_deleted() {
+        let mut s = setup("mirror-list");
+        let (reply, answer) = channel();
+        s.m.fetch_mirror_list(ISO, reply).unwrap();
+        let spec = s.direct.spec(TransferId(1));
+        assert_eq!(
+            spec.urls,
+            ["https://mirrors.fedoraproject.org/mirrorlist?path=pub/f/x.iso"]
+        );
+        assert_eq!(spec.directory, s.links);
+        assert_eq!(spec.max_connections, 1);
+        assert!(
+            s.m.snapshot().downloads.is_empty(),
+            "not a download in the list"
+        );
+        fetched(&mut s, format!("# path = pub/f/x.iso\nhttps://m1.example.org/pub/f/x.iso\n{ISO}\nrsync://m2.example.org/x.iso\n").as_bytes());
+        let found = answer.try_recv().unwrap().unwrap();
+        assert_eq!(
+            found.iter().map(|c| c.url.as_str()).collect::<Vec<_>>(),
+            ["https://m1.example.org/pub/f/x.iso"]
+        );
+        assert_eq!(
+            fs::read_dir(&s.links).unwrap().count(),
+            0,
+            "the list is deleted once read"
+        );
+        assert!(s.direct.log().contains(&"remove 1".to_owned()));
+    }
+
+    #[test]
+    fn a_mirror_list_too_large_is_cancelled_and_a_link_without_one_isnt_fetched() {
+        let mut s = setup("mirror-list-large");
+        let (reply, answer) = channel();
+        s.m.fetch_mirror_list(ISO, reply).unwrap();
+        s.direct.progress(
+            TransferId(1),
+            0,
+            Some(crate::mirrors::MAX_LIST_BYTES as u64 + 1),
+        );
+        s.m.pump(T0);
+        assert_eq!(answer.try_recv().unwrap(), Err(ErrorCode::InvalidInput));
+        assert!(s.direct.log().contains(&"cancel 1".to_owned()));
+        let (reply, _) = channel();
+        assert_eq!(
+            s.m.fetch_mirror_list("https://example.org/x.iso", reply),
+            Err(ErrorCode::NotFound)
+        );
+    }
+
+    #[test]
+    fn the_add_dialog_gives_a_link_the_mirrors_the_user_chose() {
+        let mut s = setup("mirrors-added");
+        let request = AddRequest {
+            links: vec![ISO.to_owned()],
+            mirrors: vec![
+                "https://m1.example.org/x.iso".to_owned(),
+                "ftp://m2.example.org/x.iso".to_owned(),
+            ],
+            ..AddRequest::default()
+        };
+        let results = s.m.add_request(&request, T0).unwrap();
+        assert!(
+            matches!(results[0].outcome, AddOutcome::Added { .. }),
+            "{results:?}"
+        );
+        s.m.pump(T0);
+        assert_eq!(
+            s.direct.spec(TransferId(1)).urls,
+            [
+                ISO,
+                "https://m1.example.org/x.iso",
+                "ftp://m2.example.org/x.iso"
+            ]
+        );
+        let stored = s.db.downloads().unwrap().remove(0);
+        assert_eq!(
+            stored.options.known().unwrap().urls.len(),
+            3,
+            "kept across a restart"
+        );
+        // Only for one link, at most 8, each a mirror the link may have.
+        let two = AddRequest {
+            links: vec![ISO.to_owned(), "https://example.org/y.iso".to_owned()],
+            ..request.clone()
+        };
+        assert_eq!(s.m.add_request(&two, T0), Err(ErrorCode::InvalidInput));
+        let nine = AddRequest {
+            mirrors: (0..9)
+                .map(|i| format!("https://m{i}.example.org/x.iso"))
+                .collect(),
+            ..request.clone()
+        };
+        assert_eq!(s.m.add_request(&nine, T0), Err(ErrorCode::InvalidInput));
+        let rsync = AddRequest {
+            mirrors: vec!["rsync://m.example.org/x.iso".to_owned()],
+            allow_duplicate: true,
+            ..request.clone()
+        };
+        assert_eq!(
+            s.m.add_request(&rsync, T0).unwrap()[0].outcome,
+            AddOutcome::Failed {
+                code: ErrorCode::UnsupportedScheme
+            }
+        );
+    }
+
+    #[test]
+    fn a_paused_download_takes_the_chosen_mirrors_from_its_checkpoint_and_a_running_one_refuses() {
+        let mut s = setup("mirrors-set");
+        let request = AddRequest {
+            links: vec![ISO.to_owned()],
+            ..AddRequest::default()
+        };
+        let id = match &s.m.add_request(&request, T0).unwrap()[0].outcome {
+            AddOutcome::Added { id, .. } => id.clone(),
+            other => panic!("{other:?}"),
+        };
+        s.m.pump(T0);
+        let mirror = "https://m1.example.org/x.iso".to_owned();
+        assert_eq!(
+            s.m.set_mirrors(&id, std::slice::from_ref(&mirror)),
+            Err(ErrorCode::InvalidState),
+            "running"
+        );
+        assert!(!s.m.mirrors(&id).unwrap().changeable);
+        s.m.pause(&id).unwrap();
+        s.m.pump(T0);
+        assert!(s.m.mirrors(&id).unwrap().changeable);
+        assert_eq!(
+            s.m.set_mirrors(&id, &[ISO.to_owned()]),
+            Err(ErrorCode::InvalidInput),
+            "its own link"
+        );
+        assert_eq!(
+            s.m.set_mirrors(&id, &[mirror.clone(), mirror.clone()]),
+            Err(ErrorCode::InvalidInput),
+            "twice"
+        );
+        s.m.set_mirrors(&id, std::slice::from_ref(&mirror)).unwrap();
+        assert!(
+            s.direct.log().contains(&"release 1".to_owned()),
+            "{:?}",
+            s.direct.log()
+        );
+        assert_eq!(
+            s.m.mirrors(&id).unwrap().chosen,
+            std::slice::from_ref(&mirror)
+        );
+        s.m.resume(&id).unwrap();
+        s.m.pump(T0);
+        assert_eq!(s.direct.spec(TransferId(2)).urls, [ISO.to_owned(), mirror]);
+        // Choosing none takes them away again.
+        s.m.pause(&id).unwrap();
+        s.m.pump(T0);
+        s.m.set_mirrors(&id, &[]).unwrap();
+        assert!(s.m.mirrors(&id).unwrap().chosen.is_empty());
+    }
+
+    #[test]
+    fn the_mirrors_a_server_announced_are_offered_until_chosen() {
+        let mut s = setup("mirrors-announced");
+        let request = AddRequest {
+            links: vec![ISO.to_owned()],
+            ..AddRequest::default()
+        };
+        let id = match &s.m.add_request(&request, T0).unwrap()[0].outcome {
+            AddOutcome::Added { id, .. } => id.clone(),
+            other => panic!("{other:?}"),
+        };
+        s.m.pump(T0);
+        s.direct.announce(
+            TransferId(1),
+            &[
+                "https://m1.example.org/x.iso",
+                "https://m2.example.org/x.iso",
+            ],
+        );
+        s.m.pump(T0);
+        let mirrors = s.m.mirrors(&id).unwrap();
+        assert_eq!(mirrors.announced.len(), 2);
+        assert_eq!(
+            mirrors.announced[0].source,
+            crate::mirrors::MirrorSource::Announced
+        );
+        assert_eq!(
+            mirrors.official,
+            Some(crate::mirrors::MirrorProject::Fedora)
+        );
     }
 }
 

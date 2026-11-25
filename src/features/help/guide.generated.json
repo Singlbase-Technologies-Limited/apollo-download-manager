@@ -1467,6 +1467,11 @@
      "id": "sftp-servers",
      "level": 2,
      "text": "SFTP servers"
+    },
+    {
+     "id": "mirrors",
+     "level": 2,
+     "text": "Mirrors"
     }
    ],
    "blocks": [
@@ -2469,6 +2474,33 @@
        [
         {
          "type": "text",
+         "text": "Mirrors"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Other servers with the same file, for one link: see "
+        },
+        {
+         "type": "link",
+         "content": [
+          {
+           "type": "text",
+           "text": "Mirrors"
+          }
+         ],
+         "to": {
+          "page": "add-a-download",
+          "anchor": "mirrors"
+         }
+        }
+       ]
+      ],
+      [
+       [
+        {
+         "type": "text",
          "text": "Start at a chosen time"
         }
        ],
@@ -2906,6 +2938,191 @@
        }
       ]
      ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
+     "id": "mirrors",
+     "content": [
+      {
+       "type": "text",
+       "text": "Mirrors"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "A mirror is another server with the same file. With mirrors, a download can take parts of the file from several servers, and carry on when one is slow or down."
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Find mirrors,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " under "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Advanced options"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the Add dialog for one link, or "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Mirrors…"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in a download's right-click menu or the details panel's menu, reads the official mirror list of the link's project. It works for links on Ubuntu, Debian, Fedora, Apache, Arch Linux, Linux Mint, openSUSE and GNU servers. Nothing is fetched until you click."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Mirrors the server names"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " are offered too, once the download has started."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Tick up to 8,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " or paste a mirror's link and choose "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Add"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ". Each shows where it came from and, when the list says, its country."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A mirror is used only if it serves exactly the same file;"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " one that doesn't is left out, and the download goes on from the others. Your login and custom headers are never sent to a mirror on another server."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Changing a download's mirrors:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " pause it first. It then continues from where it stopped, with the mirrors you chose."
+         }
+        ]
+       }
+      ]
+     ]
     }
    ],
    "sections": [
@@ -2927,7 +3144,7 @@
     {
      "anchor": "before-you-add",
      "heading": "Before you add",
-     "text": "The dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Files, folders and logins Start at a chosen time The download waits until a date and time you choose (Queue and schedule)"
+     "text": "The dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Files, folders and logins Mirrors Other servers with the same file, for one link: see Mirrors Start at a chosen time The download waits until a date and time you choose (Queue and schedule)"
     },
     {
      "anchor": "starting-it",
@@ -2938,6 +3155,11 @@
      "anchor": "sftp-servers",
      "heading": "SFTP servers",
      "text": "The first download from an SFTP server stops before logging in and asks Trust this server?, with the server's key fingerprint (SHA256:…). Nothing has been sent yet: no login, no file name. Check the fingerprint with the server's owner before trusting it. On the server, ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub prints it. Choose Trust and continue only if they match. Cancel leaves the download failed. Retry connects again and asks again. If you close Apollo Download Manager without answering, it doesn't ask at the next start: Retry the download to see the question again. \"The server's host key changed\" means the server shows another key than the one you trusted. A reinstalled server does that, and so does an attacker. Apollo Download Manager refuses it every time. Ask the server's owner whether and why the key changed (Download messages)."
+    },
+    {
+     "anchor": "mirrors",
+     "heading": "Mirrors",
+     "text": "A mirror is another server with the same file. With mirrors, a download can take parts of the file from several servers, and carry on when one is slow or down. Find mirrors, under Advanced options in the Add dialog for one link, or Mirrors… in a download's right-click menu or the details panel's menu, reads the official mirror list of the link's project. It works for links on Ubuntu, Debian, Fedora, Apache, Arch Linux, Linux Mint, openSUSE and GNU servers. Nothing is fetched until you click. Mirrors the server names are offered too, once the download has started. Tick up to 8, or paste a mirror's link and choose Add. Each shows where it came from and, when the list says, its country. A mirror is used only if it serves exactly the same file; one that doesn't is left out, and the download goes on from the others. Your login and custom headers are never sent to a mirror on another server. Changing a download's mirrors: pause it first. It then continues from where it stopped, with the mirrors you chose."
     }
    ],
    "file": "add-a-download.md"

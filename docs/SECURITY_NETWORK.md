@@ -81,6 +81,7 @@ A download's mirrors, such as a Metalink file's, are other servers than the one 
 - **No credentials to other servers.** The login and custom headers go only to the first URL's origin; a mirror on another origin gets neither (tested). A Metalink download carries none anyway (#54).
 - **Every mirror is checked** like the first URL: the scheme allowlist applies to each, and one the engine may not fetch, such as `file://`, refuses the download (tested).
 - **A bad mirror can't stop a download** as long as another source is left: it is cooled down or disabled, and its ranges go elsewhere.
+- **Mirrors from a server or a project's list are only offered** (#324): none is used until the user ticks it, and each, a pasted one too, is checked first ([`mirrors.rs`](../crates/velocity-core/src/mirrors.rs)): `http`, `https` or `ftp`, a host, no login, no space, within the URL limit, not a Tor address, not the link itself (tested). A list is fetched only when the user asks, through the engine with every control above, at most 4 MiB; an XML list with a `<!DOCTYPE>` is refused, and the HTML lists are parsed without running anything.
 
 ## Metalink (#54)
 
