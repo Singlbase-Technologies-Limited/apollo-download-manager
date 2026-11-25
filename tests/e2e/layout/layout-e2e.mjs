@@ -189,10 +189,40 @@ async function tourChecks() {
   }
 }
 
+// A tip (#460): its card sits in the bottom right, inside the window and above the status bar, and a notification
+// shown with it goes above it, not over it.
+async function tipChecks() {
+  for (const theme of ['light', 'dark']) {
+    for (const [label, w, h] of [
+      ['min-960x600', 960, 600],
+      ['laptop-1366x768', 1366, 768],
+    ]) {
+      const { ctx, page } = await newPage(w, h);
+      await open(page, `fresh=1&theme=${theme}&tip=chooseMagnetFiles&toast=1`);
+      const card = page.getByRole('region', { name: 'Tip' });
+      await card.waitFor();
+      const box = await card.boundingBox();
+      const bar = await page.locator('footer[aria-label="Status"]').boundingBox();
+      const inside = box && box.x >= 0 && box.y >= 0 && box.x + box.width <= w && box.y + box.height <= h;
+      check(`tip ${label} ${theme}: the card is in the window`, Boolean(inside), JSON.stringify(box));
+      check(`tip ${label} ${theme}: the card is above the status bar`, Boolean(box && bar && box.y + box.height <= bar.y + 1), `${JSON.stringify(box)} vs ${JSON.stringify(bar)}`);
+      // A notification while the tip shows (the harness's `toast=1`): it sits above the card, not over it.
+      const toast = page.locator('[data-sonner-toast]').first();
+      await toast.waitFor();
+      await page.waitForTimeout(500);
+      const t = await toast.boundingBox();
+      check(`tip ${label} ${theme}: the notification is above the card`, Boolean(t && box && t.y + t.height <= box.y + 1), `${JSON.stringify(t)} vs ${JSON.stringify(box)}`);
+      await shot(page, `tip-${label}-${theme}`);
+      await ctx.close();
+    }
+  }
+}
+
 try {
   // First, so it reports even when a later check stops the run.
   await hoverHelp();
   await tourChecks();
+  await tipChecks();
   await guideSidebar();
   const { runChecks } = await import('./layout-checks.mjs');
   await runChecks({ open, shot, row, newPage, check, BASE });

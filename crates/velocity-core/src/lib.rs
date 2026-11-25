@@ -94,7 +94,8 @@ use serde::Serialize;
 /// 500 links waiting for the Add dialog.
 /// Version 40 (#463) added `set_guide_state`, and `guide` and `guideWelcome` in `ShellSettings`:
 /// the guide after Get started.
-pub const COMMAND_API_VERSION: u32 = 40;
+/// Version 41 (#460) added `set_tips`, `has_tray` and `tips` in `ShellSettings`: the contextual tips.
+pub const COMMAND_API_VERSION: u32 = 41;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -150,6 +150,8 @@ pub fn run() {
             shell::set_appearance,
             shell::complete_onboarding,
             shell::set_guide_state,
+            shell::set_tips,
+            shell::has_tray,
             shell::finish_downloads,
             shell::get_settings,
             shell::set_settings,

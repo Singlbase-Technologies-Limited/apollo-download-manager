@@ -20,8 +20,17 @@ The limits of every setting are in the [developer documents](../SETTINGS.md).
 | Start Apollo Download Manager when I sign in, so queued downloads and seeding carry on after a restart | On for a new install; off if you used an earlier version |
 | Confirm before quitting with active downloads | On |
 | Keep the computer awake while downloading: it doesn't go to sleep on its own while downloads are active; the screen can still turn off | On |
+| Show tips: now and then, a short tip about a feature, at the moment it helps | On |
 
 **When downloads finish,** the power button in the status bar (at the bottom right) can put the computer to sleep, shut it down, or close Apollo Download Manager once the running downloads have all finished. Before it does, a window counts down 60 seconds, with **Cancel**; then the choice goes back to **Do nothing**. Paused, failed and seeding downloads don't count as running. A shut-down is never forced: a program with unsaved work can still stop it.
+
+**Tips** appear in a card at the bottom right, never on start-up and at most one a session, once the short guide after the first start was gone through or skipped. Each tip has a button that turns its feature on, and **Dismiss**: a dismissed tip never shows again. A tip shows only while its feature is off:
+
+- **When the connection drops:** a download failed because the network went away. The tip offers to restart downloads by themselves when the network is back.
+- **Downloading with the window closed:** you cancelled quitting while downloads were running. The tip offers to close to the tray instead. It shows only where there is a tray.
+- **Choosing a torrent's files:** you added a magnet link. The tip offers to show a magnet link's files before it downloads them.
+
+**Help** (the **?** in the title bar), then **Tips**, lists every tip, whether it was shown or dismissed, and its button, with the **Show tips** switch.
 
 On Linux the tray needs an AppIndicator library. Without a tray, closing the window quits Apollo Download Manager, and it never starts hidden.
 

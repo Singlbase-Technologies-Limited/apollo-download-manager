@@ -5,6 +5,10 @@ import { Toaster } from 'sonner';
 import { ConfirmHost } from '../components/ConfirmHost';
 import { TooltipProvider } from '../components/Tooltip';
 import { GuideDialog } from '../features/help/GuideView';
+import { useTipVisible } from '../features/tips/tips';
+
+/** The room a tip's card takes in the bottom right, with a gap (#460). */
+const TIP_CARD_SPACE = 168;
 import { Onboarding } from '../features/onboarding/Onboarding';
 import { api, isDesktop } from '../lib/api';
 import { toApiError } from '../lib/errors';
@@ -33,6 +37,8 @@ function Centered({ children }: { children: ReactNode }) {
 }
 
 function Root() {
+  // A tip in the corner (#460) moves the notifications above it.
+  const tipVisible = useTipVisible();
   const desktop = isDesktop();
   const info = useQuery({ queryKey: keys.appInfo, queryFn: api.appInfo, retry: false, enabled: desktop });
   const settings = useShellSettings(desktop && info.isSuccess);
@@ -87,7 +93,7 @@ function Root() {
         theme={theme}
         closeButton
         duration={3500}
-        offset={{ bottom: 40, right: 16 }}
+        offset={{ bottom: tipVisible ? 40 + TIP_CARD_SPACE : 40, right: 16 }}
         toastOptions={{
           classNames: {
             toast: '!border-border !bg-surface !text-fg !shadow-panel !text-[12.5px]',

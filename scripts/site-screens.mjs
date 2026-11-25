@@ -160,6 +160,7 @@ const shellSettings = (theme, onboardingCompleted) => ({
   onboardingCompleted,
   guide: 'finished',
   guideWelcome: true,
+  tips: { enabled: true, shown: [], dismissed: [] },
   defaultDirectory: FOLDER,
 });
 

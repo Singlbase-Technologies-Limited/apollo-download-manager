@@ -284,6 +284,67 @@ impl Section for OnboardingSettings {
     const KEY: &'static str = "onboarding";
 }
 
+/// A tip about a feature the user may not know (#460), shown once at the moment it helps.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TipId {
+    /// After a download failed because the connection dropped: restart downloads when it is back.
+    RestartOnNetwork,
+    /// After the user kept the app open instead of quitting with downloads running: close to the tray.
+    CloseToTray,
+    /// After a magnet link was added: choose its files before it downloads.
+    ChooseMagnetFiles,
+    /// A tip this version doesn't know, saved by a later one; dropped when read.
+    #[serde(other)]
+    Unknown,
+}
+
+/// The tips (#460): whether they show at all, and which ones were shown or dismissed. Not part of the
+/// Settings form: saved by its own command, so the form's save never overwrites it (PO decision on #460).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct TipsSettings {
+    /// "Show tips"; on by default.
+    pub enabled: bool,
+    /// Shown at least once.
+    pub shown: Vec<TipId>,
+    /// Dismissed, or its action taken: never shown again by itself.
+    pub dismissed: Vec<TipId>,
+}
+
+impl Default for TipsSettings {
+    fn default() -> Self {
+        TipsSettings {
+            enabled: true,
+            shown: Vec::new(),
+            dismissed: Vec::new(),
+        }
+    }
+}
+
+impl Section for TipsSettings {
+    const KEY: &'static str = "tips";
+}
+
+impl TipsSettings {
+    /// Each known tip once, in a fixed order; tips this version doesn't know are dropped.
+    pub fn checked(&self) -> Self {
+        let clean = |ids: &[TipId]| -> Vec<TipId> {
+            let set: std::collections::BTreeSet<TipId> = ids
+                .iter()
+                .copied()
+                .filter(|id| *id != TipId::Unknown)
+                .collect();
+            set.into_iter().collect()
+        };
+        TipsSettings {
+            enabled: self.enabled,
+            shown: clean(&self.shown),
+            dismissed: clean(&self.dismissed),
+        }
+    }
+}
+
 /// One-off upkeep this install has done, so it runs once (#345). Not a setting the user edits.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
@@ -308,6 +369,8 @@ pub struct ShellSettings {
     pub guide: GuideState,
     /// The guide's offer says "Welcome", or presents it as new to someone who set up before it.
     pub guide_welcome: bool,
+    /// The tips (#460).
+    pub tips: TipsSettings,
     /// The default folder as it applies now: the setting, else the system's Downloads folder;
     /// `None` when there is neither.
     pub default_directory: Option<String>,
@@ -332,6 +395,7 @@ impl ShellSettings {
             onboarding_completed: true,
             guide: GuideState::Unseen,
             guide_welcome: true,
+            tips: TipsSettings::default(),
             default_directory: Some("/home/user/Downloads".to_owned()),
         }
     }
@@ -361,6 +425,27 @@ mod tests {
         assert!(!look.layout.details_visible);
         assert!(!OnboardingSettings::default().completed);
         assert_eq!(OnboardingSettings::default().guide, GuideState::Unseen);
+    }
+
+    // #460: tips are on until turned off, settings saved before them still load, and a tip a later
+    // version saved is dropped rather than failing the whole section.
+    #[test]
+    fn tips_default_on_and_tolerate_unknown_ones() {
+        assert!(TipsSettings::default().enabled);
+        let old: TipsSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!(old, TipsSettings::default());
+        let later: TipsSettings = serde_json::from_str(
+            r#"{"enabled":false,"shown":["closeToTray","someFutureTip","closeToTray"],"dismissed":["chooseMagnetFiles"]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            later.checked(),
+            TipsSettings {
+                enabled: false,
+                shown: vec![TipId::CloseToTray],
+                dismissed: vec![TipId::ChooseMagnetFiles],
+            }
+        );
     }
 
     // #463: settings saved before the guide existed still load, as someone who set up before it.
