@@ -30,7 +30,7 @@ A ruleset named **Main** targets the default branch, is *Active*, and has no byp
 | Block force pushes | On | On | `main`'s history is never rewritten |
 | Require a pull request before merging | On, 0 approvals | On (2026-10-31) | Stops a direct push to `main` on the server, not only in the agent's guard ([CLAUDE.md](../CLAUDE.md#instructions-versus-enforcement)). With 0 approvals, the PO can still merge their own PRs; GitHub never lets an author approve their own PR |
 | Require linear history | On | On (2026-10-31) | Matches squash-only merging; refuses a merge commit pushed by mistake |
-| Require status checks to pass (`ci-required`) | On | Not yet: after PR checks have run once on a pull request (#236), so GitHub offers the check | PR checks don't start on a pull request now, so a required check would stay pending and block every merge. Turn it on when the automatic triggers come back ([CI.md](CI.md)) |
+| Require status checks to pass (`ci-required`) | On | On: `main`'s rules require `ci-required` (read from GitHub's rules for `main`, 2026-11-25) | CI runs on every pull request again since #236, so the check always reports ([CI.md](CI.md)) |
 | Require conversation resolution | On | Optional | Every review comment answered before merging |
 | Bypass list | Empty | On | Nobody, the PO included, skips the rules by accident. The PO can still change the ruleset |
 | Tag rule for `v*` | Only the PO creates, updates or deletes release tags | On (2026-10-31): the **Release Tags** ruleset restricts creations, updates and deletions and blocks force pushes on `v*`; Organization admin and Repository admin may bypass, which means the PO. The agent can't create a release tag | Releases are tags on verified `main` commits |
@@ -84,7 +84,7 @@ Check: `gh api $R/pages --jq .build_type` → `workflow`.
 | Private vulnerability reporting | On | Public repositories | On (2026-10-31) |
 | Dependabot malware alerts | On | Public repositories | On (2026-10-31) | `gh api $R/private-vulnerability-reporting` |
 
-Source: [GitHub security features](https://docs.github.com/en/code-security/getting-started/github-security-features). What Apollo Download Manager does with an advisory is in [SECURITY.md](SECURITY.md#dependency-advisories-75).
+Source: [GitHub security features](https://docs.github.com/en/code-security/getting-started/github-security-features). What Apollo Download Manager does with an advisory is in [SECURITY.md](SECURITY_SUPPLY_CHAIN.md#dependency-advisories-75).
 
 ## When something changes
 

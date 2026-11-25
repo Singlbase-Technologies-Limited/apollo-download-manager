@@ -45,4 +45,4 @@ PO decisions:
 
 - Each new Chrome, Edge or Firefox ID is a [`branding.json`](../../branding.json) change with its tests, and a release.
 - A user who registered Firefox with v0.1.x gets the registration rewritten when the new app starts, and installs the store's add-on.
-- The listings' text and permission justifications live in [`browser-extension/store/`](../../browser-extension/store/), and the PO's steps for each store in [BROWSER_EXTENSION.md](../BROWSER_EXTENSION.md#publishing-in-the-stores).
+- The listings' text and permission justifications live in [`browser-extension/store/`](../../browser-extension/store/), and the PO's steps for each store in [BROWSER_EXTENSION.md](../BROWSER_EXTENSION_BUILD.md#publishing-in-the-stores).

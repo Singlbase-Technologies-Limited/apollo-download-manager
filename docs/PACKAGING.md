@@ -113,7 +113,7 @@ pnpm package:linux
 
 A check whose tool is missing is reported NOT RUN; `--require-listing` makes that an error, as in CI. Built on a newer distribution than Ubuntu 22.04, the glibc check fails, as it should.
 
-**In CI:** the *Linux packages* workflow ([`package-linux.yml`](../.github/workflows/package-linux.yml)) runs the same command on an Ubuntu 22.04 runner, with caches of its own ([CI.md](CI.md#caching)), and uploads the deb, the rpm and their checksums as the `velocity-v2-linux-packages` artifact, kept 14 days. Then [`scripts/package-install-test.sh`](../scripts/package-install-test.sh) installs each package in a clean Ubuntu 22.04, Ubuntu 24.04 and Debian 12 container (the deb) and Fedora 42 container (the rpm), checks that every file is there, that every program finds its libraries and that the engine and torrent helper start, then removes the package and checks its files are gone. It is started by hand only, on the branch to package.
+**In CI:** the *Linux packages* workflow ([`package-linux.yml`](../.github/workflows/package-linux.yml)) runs the same command on an Ubuntu 22.04 runner, with caches of its own ([CI_COSTS.md](CI_COSTS.md#caching)), and uploads the deb, the rpm and their checksums as the `velocity-v2-linux-packages` artifact, kept 14 days. Then [`scripts/package-install-test.sh`](../scripts/package-install-test.sh) installs each package in a clean Ubuntu 22.04, Ubuntu 24.04 and Debian 12 container (the deb) and Fedora 42 container (the rpm), checks that every file is there, that every program finds its libraries and that the engine and torrent helper start, then removes the package and checks its files are gone. It is started by hand only, on the branch to package.
 
 ### Testing them beside V1
 

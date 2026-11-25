@@ -55,8 +55,8 @@ The full list is on #53. The options put to the PO were:
   - the UI's error type grows `hostKey` (`COMMAND_API_VERSION` 6).
 - **Documents:**
   - [ARCHITECTURE.md](../ARCHITECTURE.md) names the new crate;
-  - [ENGINE_INTERNALS.md](../ENGINE_INTERNALS.md#sftp-53) describes SFTP;
-  - [SECURITY.md](../SECURITY.md#sftp-host-keys-53) describes the host-key rules.
+  - [ENGINE_INTERNALS.md](../ENGINE_FTP_SFTP.md#sftp-53) describes SFTP;
+  - [SECURITY_NETWORK.md](../SECURITY_NETWORK.md#sftp-host-keys-53) describes the host-key rules.
 
 ## Follow-up
 

@@ -2,6 +2,8 @@
 
 Apollo Download Manager replaces aria2 with its own transfer engine, so its correctness rests on its own tests. This page is the test strategy (#15):
 
+The fixtures, test servers and tools, the special kinds of test, and the measured build times are in [TEST_FIXTURES.md](TEST_FIXTURES.md).
+
 - **Levels L1–L5:** what each proves, and how long it takes.
 - **The test pyramid,** and which issue builds each layer.
 - **Fixtures:** the rules, and the local servers Apollo Download Manager needs.
@@ -55,7 +57,7 @@ Selecting too little would let a broken change through, so anything shared or un
 
 ## Build settings for fast feedback
 
-These settings were measured in #3. The timings are in [DEVELOPMENT.md](DEVELOPMENT.md#check-timings).
+These settings were measured in #3. The timings are in [DEVELOPMENT.md](TEST_FIXTURES.md#check-timings).
 
 - **Dependencies are built with `opt-level = 1` and no debug info.** The app runs at a usable speed, and dependencies are compiled once.
 - **Workspace crates are built with `debug = "line-tables-only"`.** Backtraces keep file and line numbers. The Tauri shell's library is also built as a `staticlib` and a `cdylib` for mobile targets. With full debug info, every test run re-linked several hundred megabytes. To debug with variables in a debugger, override it for that build: `CARGO_PROFILE_DEV_DEBUG=true cargo build`.
@@ -78,69 +80,11 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 | **Integration** | The manager, persistence and engine together: lifecycle, queue, pause and resume, checkpoints after `kill -9`, migrations; since #58, every direct-download command on the real supervised engine, the completion gate, a crashed or unavailable engine, and the app starting again (`velocity-transfer` `tests/manager.rs`), and torrents through the manager with a real helper (`velocity-torrent` `tests/manager.rs`) | [`crates/velocity-core/tests/`](../crates/velocity-core/tests/), [`crates/velocity-transfer/tests/`](../crates/velocity-transfer/tests/) | L2 | #26, #43, #50, #58 |
 | **UI** | What the user sees and does, against a fake native backend; only the Tauri boundary is mocked | Vitest in jsdom with Testing Library, against Tauri's own `mockIPC` (`@tauri-apps/api/mocks`) through [`src/test/fakeBackend.ts`](../src/test/fakeBackend.ts) | L1 and L2 | #29, #59–#61 |
 | **Layout** | The window in a real browser: dragging the navigation and the list's column edges with a real pointer (a live preview, one save on release), a reload restoring them, and no overflow at the smallest window, in both themes | `pnpm test:e2e:layout` ([`tests/e2e/layout/`](../tests/e2e/layout/layout-e2e.mjs), V1's): Playwright's Chromium against the window with Tauri's IPC mocked (`harness.tsx`), served by Vite. `-- --shots <dir>` saves screenshots. The browser, about 120 MB, comes from `pnpm exec playwright install chromium` once per machine, into the user's Playwright cache, never the repository; `CHROMIUM_PATH` uses another | L4 | #59 |
-| **Native host and browser** | Message validation in the host; the real extension, host and app in real Chromium and Firefox | Host: [`crates/velocity-native-host/tests/host_e2e.rs`](../crates/velocity-native-host/tests/host_e2e.rs), the real host against a real local listener. Browser: `pnpm test:e2e:chromium` (Playwright's Chromium, Windows and Linux) and `pnpm test:e2e:firefox` (geckodriver, Linux), with V1's extension installed too ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#tests)) | L2 (host), L4 (browser) | #64, #65 |
+| **Native host and browser** | Message validation in the host; the real extension, host and app in real Chromium and Firefox | Host: [`crates/velocity-native-host/tests/host_e2e.rs`](../crates/velocity-native-host/tests/host_e2e.rs), the real host against a real local listener. Browser: `pnpm test:e2e:chromium` (Playwright's Chromium, Windows and Linux) and `pnpm test:e2e:firefox` (geckodriver, Linux), with V1's extension installed too ([BROWSER_EXTENSION.md](BROWSER_EXTENSION_BUILD.md#tests)) | L2 (host), L4 (browser) | #64, #65 |
 | **Security** | TLS certificate rules per backend, redirect and credential rules, secret-leak scans, filesystem attacks, fuzzed parsers | Fixture suites plus `cargo-fuzz` targets (needs approval) | L2, plus L4 for fuzzing | #67, #69–#73 |
 | **End-to-end and platform** | The packaged app installed on Windows, Linux and macOS; install and upgrade beside V1 | Installer tests, real machines | L4 and L5 | #81–#83 |
 | **Field test** | The installed app used as a user uses it, with real downloads from real servers and real settings: what fixtures can't show, such as servers that cut connections, long downloads, pause, resume and crashes | `pnpm field` ([`tests/field/`](../tests/field/README.md)), by hand on Windows, never in CI | L5 | #262 |
 | **Benchmarks** | Apollo DM's own speed, resource use and reliability, measured once the engine and app exist. No aria2 comparison for now ([ADR-0009](decisions/0009-no-aria2-benchmark-gate.md)) | To be designed then | L4 | #77 |
-
-## Fixture policy
-
-- **Local only.** Every test talks to servers it starts itself on `127.0.0.1` (or `::1`), on a free port. A test's own libtorrent session listens on a port free for TCP and UDP (`velocity_torrent::engine::free_listen_port`, #438), never port 0: on Windows the system's free TCP port can be a reserved UDP one. No test contacts the public internet, a public tracker, the DHT or a CDN. A test that needs the network is a defect.
-- **Seeded data.** Files are generated from a fixed seed with a known SHA-256. Every transfer test checks the SHA-256 of the result, not just "completed".
-- **Deterministic timing.** Throttling and delays are controlled by the fixture, never by real network conditions. Timeouts are generous and bounded. A random seed is printed when a test fails.
-- **Misbehaviour on purpose.** Fixtures expose switches for the server faults Apollo Download Manager must survive (below), so each test chooses its fault explicitly.
-- **No secrets.** Test certificates, keys and passwords are generated for the test or committed as obviously fake fixtures, never real credentials.
-- **Real components where it matters.** Fakes are fine at unit boundaries. Claims about the engine, processes, files or crash recovery use real libcurl, real processes and real files.
-
-## Fixture servers Apollo Download Manager needs
-
-| Fixture | Fault switches (research report section 5.4) | Used by | Built in |
-|---|---|---|---|
-| HTTP/1.1 range server ([`crates/velocity-test-http`](../crates/velocity-test-http/), standard library only) | **Built:** ranges honoured, Range ignored (`200`), `200` for a non-zero range, malformed `Content-Range`, short `206`, unknown total (`*/`), multipart, cut and overrunning bodies, throttling per connection and per IP (all connections together; a response held back catches up no more than 50 ms, #281), configured redirects with a body, `Content-Disposition` (#40), connections closed without an answer, a cut first answer, one byte sent flipped once (`corrupt_once`, #46), and counters for connections, GETs, HEADs, body bytes, `Range` and `If-Range` headers, every request's path and headers (#40), request times and responses sent at once | Probe, scheduler, retries, connections, redirects and file names | **#37** (first modes), extended by #40, #41, #42, #45, #46, #47 and #48 |
-| Changed-object modes | **Built** (#45): `ETag`, `Last-Modified` and `Date` sent as configured, `If-Range` honoured as RFC 9110 §13.1.5 says, and a file that changes after a set number of GETs. That one change covers a new strong ETag, a dropped ETag and content changed with the ETag kept. Weak-ETag-only and Last-Modified-only files are configurations | Validators, resume | **#45** |
-| Throttle and politeness modes | Speed limits (#49) need no server mode: the server sends as fast as asked, and the engine paces itself. **Built** (#48): `429` and `503` with `Retry-After` on the first requests, a slow but healthy 20 KiB/s stream, a frozen later range. **Built** (#247): `limit_answering`, an error status for any request beyond N being answered at once, over HTTP/1.1 and HTTP/2, as proof.ovh.net does. `freeze_process` freezes a whole engine process for the supervisor's hang test | Retries, stall detection, limits | **#48**, #49 |
-| Encoding modes | **Built** (#45): `Content-Encoding` sent without encoding anything, so the stored bytes can be compared, and changed between responses with a file change | Range safety | #41, **#45** |
-| TLS front with a test CA (`velocity_test_http::tls::TlsFront`, on rustls, ring and rcgen) | **Built:** terminates TLS for the HTTP/1.1 or HTTP/2 server, whose modes and counters work unchanged; a fresh CA per front; leaves that are valid, without an extended key usage, client-auth or code-signing only, from an untrusted issuer, for another host, expired or revoked; a CRL served on a fresh port, so Schannel can check revocation; ALPN `http/1.1` or `h2`; the TLS version and ALPN of each session. Clients trust the CA through velocity-curl's test-only `test-ca` feature ([SECURITY.md](SECURITY.md#how-the-tests-trust-a-test-ca)) | TLS rules, HTTP/2 over TLS | **#69** |
-| HTTP/2 over cleartext (`Http2Server` in [`crates/velocity-test-http`](../crates/velocity-test-http/), on `h2` and tokio) | **Built:** the HTTP/1.1 server's range modes as concurrent streams, throttling per stream or per TCP connection, a slowed first later range, and counters for TCP connections, streams and stream resets. libcurl reaches it with prior knowledge through the `test-h2c` feature of `velocity-curl`, which only test builds have: an optimised build with it doesn't compile (PO decision on #47). The engine's HTTP/2 tests are in the test-only crate [`crates/velocity-transfer-h2c`](../crates/velocity-transfer-h2c/), so `velocity-transfer`'s examples build without the feature (#46) | Multiplexing policy, probe and split over HTTP/2 | **#47** |
-| Redirects across origins | Cross-host redirect with credentials and cookies, https→http, redirect to `file:` or `sftp:` | Credential and protocol rules | **#40**, #67, #70 |
-| FTP and FTPS (`velocity_test_http::ftp::FtpServer`, standard library, with rustls for FTPS) | **Built** (#51), ported from V1's FTP test server: passive mode (`EPSV`, `PASV`), a required login, `SIZE`, `MDTM`, `REST`, a missing file; switches for no `SIZE`, no `REST`, no `MDTM`, a cut transfer and throttling; a file replaced with another time; explicit FTPS (`AUTH TLS`, `PBSZ`, `PROT P`) and implicit FTPS on a `TestPki` leaf with its revocation list; a record of logins, commands, `RETR`s, `REST` offsets and encrypted connections | FTP, FTPS, resume with `REST`, the cleartext rules | **#51** |
-| SFTP (`velocity_test_http::ssh::SshServer`, the installed OpenSSH) | **Built** (#53): the machine's `sshd`, started unprivileged on a free port for the user running the tests, with throwaway host keys (Ed25519, ECDSA or RSA), key logins (one key with a passphrase) and `internal-sftp`; a cut (sshd and its sessions killed) and a restart with the same or a new host key. Without `sshd`, NOT RUN; with `VELOCITY_REQUIRE_SSHD`, as on CI, a failure. **Known flake on Windows** (#62): the unprivileged `sshd`'s SFTP child process sometimes never answers after the login, or ends the session at once. The fetch then fails with a timeout or an interrupted connection, and the test fails. It failed one Windows `check:fast` run on 2026-10-26 and none of the 10 runs of the SFTP tests alone just after; with 4 test binaries at a time it came back 1 to 2 times in 60 runs, and it was worse for a while after heavy repeated load. The server log, which a failing test prints, shows the subsystem starting and no SFTP data. Password logins need a root `sshd`, which CI's Linux job provisions ([`scripts/ci-sftp-server.sh`](../scripts/ci-sftp-server.sh), `VELOCITY_SFTP_PASSWORD_SERVER`), and which WSL gets once through `sudo bash scripts/local-sftp-server.sh` (#176; [platform-verify reference](../.claude/skills/platform-verify/reference.md#local-sftp-password-login-server)); NOT RUN on Windows | Host keys, logins, resume, failures | **#53** (OpenSSH installed by the PO: Windows OpenSSH Server, `openssh-server` in WSL) |
-| Proxy (`velocity_test_http::proxy`: `HttpProxy`, `Socks5Proxy`, standard library only) | **Built** (#192): an HTTP proxy that only tunnels (`CONNECT`) and refuses any other request, and a SOCKS5 proxy that resolves names, mapping test names to 127.0.0.1; each with an optional required login, and a record of the targets asked for, the logins given, the refusals and the plain requests | Proxy support: libcurl, SFTP, torrents, the leak scan | **#192** |
-| Mirrors and Metalink | **Built** (#46): wrong piece hashes, as piece lists the tests supply, with a byte sent flipped once. **Built** (#54): a Metalink corpus ([`crates/velocity-core/tests/fixtures/metalink/`](../crates/velocity-core/tests/fixtures/metalink/): RFC 5854's example, Metalink 4 with subfolders and sources Apollo DM can't use, Metalink 3) with malicious documents in the unit tests (entity bombs, external entities, unsafe and duplicate names, oversized documents), the HTTP server's `Content-Type` (`FileHeaders::content_type`), and an end-to-end test of a followed link whose file gets one bad piece. **Built** (#55): mirrors as several local servers in [`crates/velocity-transfer/tests/mirrors.rs`](../crates/velocity-transfer/tests/mirrors.rs): one missing the file, one dead (a closed port), one with other bytes of the same size, a throttled one beside a fast one, ETags that do or don't match, and the requests a mirror received (no login, no custom header) | Failover, integrity | #46, #54, #55 |
-| BitTorrent tracker and peers | Local tracker, libtorrent seeders and leechers; DHT, LPD and peer exchange off | Torrents | **#62** |
-| Fake desktop IPC and browser harness | Malformed messages, the app unavailable, wrong caller | Native host, extension | **#65**, #64 |
-| Disk and crash faults | **Built:** a full disk and a refused write, simulated by velocity-transfer's test-only `test-faults` feature (no real small drive, PO decision on #74); the engine (#43) and the app (#74) killed at random points ([ENGINE_INTERNALS.md](ENGINE_INTERNALS.md#tests)) | Recovery | **#74**, #43 |
-| Benchmark server | Byte and request counters, throttle modes, h2 and TLS, kill and resume | Apollo DM's own benchmarks, later (ADR-0009) | #77 |
-
-## How the engine is tested
-
-- **Scheduler logic without a network.** `velocity-transfer` runs against a **simulated transport**: random chunk sizes, delays, splits, cancellations, retries, duplicate and late callbacks, `200` substitutions and simulated crashes (runtime state dropped, durable coverage kept). After every simulated event, a property test asserts invariants I1–I7 and byte equality with the source.
-- **Protocol behaviour with real libcurl.** `velocity-curl` and the engine run against the fixture servers above, so abort-at-boundary, HTTP/2 stream resets and libcurl's real callbacks are covered.
-- **Acceptance rows.** Each row of the research report's section 5.4 becomes at least one named fixture test, checking the final SHA-256, the status shown and the wasted bytes.
-- **Crash recovery.** `kill -9` at random points over 100 trials: always resumes; re-downloaded bytes are at most one checkpoint interval plus in-flight data (#43). The app killed the same way comes back from its database and finishes the right file (#74).
-- **Disk faults.** A full disk or a refused write mid-download fails with its own message, keeps what reached the disk, and resumes once fixed (#74).
-
-## The secret-leak scan (#71)
-
-`velocity_test_http::leaks::LeakScan` looks for a test's known secrets everywhere Apollo Download Manager writes or shows something. A test that uses a login, a cookie, a key's passphrase or a tracker passkey runs it at the end:
-
-- **Where it looks:** every file under the folders the test gives it (the database and its WAL, checkpoints, part and finished files), files in the system's temporary folder changed since the test began (three levels deep), texts such as the app's log, the diagnostics export and what the details panel shows, and a running child process's arguments and environment.
-- **In what forms:** each secret as written, percent-encoded, and in base64 at each of its three possible alignments, so a `Basic` login or an encoded link is caught too. A secret must be at least 8 bytes, so it can't match by chance.
-- **A running child, on Linux only:** it reads `/proc/<pid>/cmdline` and `environ` of the engine and the torrent helper. On Windows that part prints NOT RUN, and `secret_leaks.rs` checks the command a child is started with instead: one fixed argument and a cleared environment (PO decision on #71).
-- **Where it runs:** [`crates/velocity-transfer/tests/secret_leaks.rs`](../crates/velocity-transfer/tests/secret_leaks.rs) (HTTP login and cookie and FTP login through the child engine; SFTP key and password logins) and [`crates/velocity-torrent/tests/manager.rs`](../crates/velocity-torrent/tests/manager.rs) (a private tracker's passkey, through the manager and the torrent helper). The scan's own tests plant each kind of leak and check it is found.
-
-## Timelines in ramp tests (#257)
-
-`velocity_test_http::timeline::Timeline` samples a line every interval while a test runs, and the test puts the lines in its failure message.
-- **Why:** the adaptive-connection tests time the ramp. A loaded CI runner bends that timing in ways a local run doesn't show, even with the test pinned to one or two cores.
-- **Where:** `adaptive_connections_stop_below_the_cap_when_more_stop_helping` ([`crates/velocity-transfer/tests/connections.rs`](../crates/velocity-transfer/tests/connections.rs)) and `a_server_that_throttles_each_connection_gets_separate_connections` ([`crates/velocity-transfer-h2c/tests/http2.rs`](../crates/velocity-transfer-h2c/tests/http2.rs)) record, every 500 ms, the requests running and the ramp's count and reason. A failure on CI then shows what the ramp did.
-
-## The field test (#262)
-
-The installed app, built from `main`, used the way a person uses it: real links from real servers, pause and resume, closing and killing the app mid-download, torrents. `pnpm field` drives the real window through Playwright and records each download every few seconds, with what is on disk and the app's connections. Every problem becomes an issue in epic #1. It runs by hand on Windows, before each release candidate, never in CI, and never against the public internet in automated tests (the fixture policy above still holds).
-
-How to run a session, what it may download and how links are kept private: [tests/field/README.md](../tests/field/README.md). The scenarios: [tests/field/CHECKLIST.md](../tests/field/CHECKLIST.md). Session reports are comments on #262.
 
 ## How the frontend is tested
 
@@ -156,22 +100,6 @@ How to run a session, what it may download and how links are kept private: [test
 - **NOT RUN needs a reason,** for example "no Mac available" (the PO accepted macOS as NOT RUN for #2) or "OpenSSH not available on Windows".
 - **CI results:** reported only after seeing them. A job the selector didn't choose is NOT RUN, not PASS. CI's own statuses (FAILED, INFRA, BLOCKED, CANCELLED…) are explained in [CI_DIAGNOSTICS.md](CI_DIAGNOSTICS.md).
 - **Platform runs** use `/platform-verify` (Windows natively, Linux in the WSL clean clone).
-
-## Test-only dependencies
-
-Test tools are dependencies too. Each needs PO approval before it's added ([DEPENDENCIES.md](DEPENDENCIES.md)), recorded in the issue that first needs it. These are expected:
-
-| Tool | For | Issue |
-|---|---|---|
-| A property-testing crate (for example `proptest`) | Scheduler invariants | #42 |
-| `cargo-fuzz` and libFuzzer | Fuzz targets | #73 |
-| Testing Library (`@testing-library/react`, `dom`, `user-event`) and jsdom (**approved**, test-only) | UI tests | #29 |
-| Playwright (`@playwright/test`, **approved**, test-only) | The layout test (#59); browser end-to-end next | #59, #64 |
-| OpenSSH server (**installed**, a platform tool; Windows feature and Ubuntu package) | SFTP fixtures | #53 |
-| `h2`, tokio, `http` and `bytes` (**approved**, test-only) | The HTTP/2 fixture server | #47 |
-| rustls, tokio-rustls, ring and rcgen (**approved**, test-only) | The TLS fixture | #69 |
-
-Without approval, a hand-written seeded generator or a Node built-in module is the fallback.
 
 ## Writing tests
 

@@ -29,12 +29,12 @@ No GPL, AGPL or LGPL-only component is in the shipped graph.
 
 **Since #29 (2026-10-29):**
 - `pnpm licenses list --prod` lists **40 production packages**: React and `@tauri-apps/api` as before, plus Radix's dialogs and their helpers, TanStack Query, zustand, sonner, lucide-react (ISC), clsx, tailwind-merge, class-variance-authority (Apache-2.0), `tslib` (0BSD) and the Inter font (OFL-1.1).
-- The dialog and notification plugins add 18 crates to [`Cargo.lock`](../Cargo.lock), all MIT or Apache-2.0 ([DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies)).
+- The dialog and notification plugins add 18 crates to [`Cargo.lock`](../Cargo.lock), all MIT or Apache-2.0 ([APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#approved-direct-dependencies)).
 - Development-only packages under MIT-0, BlueOak-1.0.0 and CC-BY-4.0 are allowed as [DEPENDENCIES.md](DEPENDENCIES.md#allowed-licences) says. None is shipped.
 
 ## Planned native libraries
 
-From the research report, section 8.2. Versions are proposals until #35 records them in the native lock file (the build path is [ADR-0004](decisions/0004-libcurl-build-path.md)); "static" means linked into Apollo Download Manager's own binaries.
+From the research report, section 8.2. The versions are recorded in the native lock file since #35 (the build path is [ADR-0004](decisions/0004-libcurl-build-path.md)); "static" means linked into Apollo Download Manager's own binaries.
 
 | Component | Licence | Obligation, as distributed statically |
 |---|---|---|
@@ -57,7 +57,7 @@ From the research report, section 8.2. Versions are proposals until #35 records 
 
 **SFTP** is russh, a Rust crate (Apache-2.0), not a native library: [ADR-0013](decisions/0013-sftp-russh.md) replaced libssh2 ([ADR-0011](decisions/0011-sftp-libssh2.md)) before it shipped. It is listed with the Rust crates in the notices.
 
-**Conclusion (research report section 8.2):** a static libcurl with Schannel (Windows) or a static OpenSSL (Linux and macOS), plus nghttp2 and zlib, contains **no copyleft component**, with either SFTP option. That **doesn't hold for a distribution's dynamic libcurl**. On Ubuntu 24.04 it brings libssh (LGPL-2.1), librtmp (LGPL-2.1) and libidn2 (LGPLv3+ or GPLv2+), whose relinking and source obligations would apply if a package bundled them, for example in an AppImage. So distribution libraries are never bundled without review ([DEPENDENCIES.md](DEPENDENCIES.md#distribution-packages)).
+**Conclusion (research report section 8.2):** a static libcurl with Schannel (Windows) or a static OpenSSL (Linux and macOS), plus nghttp2 and zlib, contains **no copyleft component**, with either SFTP option. That **doesn't hold for a distribution's dynamic libcurl**. On Ubuntu 24.04 it brings libssh (LGPL-2.1), librtmp (LGPL-2.1) and libidn2 (LGPLv3+ or GPLv2+), whose relinking and source obligations would apply if a package bundled them, for example in an AppImage. So distribution libraries are never bundled without review ([APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#distribution-packages)).
 
 ## Third-party notices
 

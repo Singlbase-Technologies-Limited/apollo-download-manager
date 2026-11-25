@@ -41,7 +41,7 @@ The screen (#30, [`src/features/settings/SettingsView.tsx`](../src/features/sett
 | Section | Setting | Default | Bounds |
 |---|---|---|---|
 | `advanced` | **Forget servers** (a button, not a saved setting) | — | Forgets what downloads learned about servers (`forget_learned_servers`, #325) |
-| | `globalDownloadLimitKib` | 0: none | 0, or at least 1 KiB/s (#49). Direct downloads only: torrents have their own `downloadLimit` ([TORRENTS.md](TORRENTS.md#settings-and-identity), #312) |
+| | `globalDownloadLimitKib` | 0: none | 0, or at least 1 KiB/s (#49). Direct downloads only: torrents have their own `downloadLimit` ([TORRENTS.md](TORRENT_CONTRACT.md#settings-and-identity), #312) |
 | | `enableBittorrent` | on (V1's) | Off refuses torrents and magnet links with `PROTOCOL_DISABLED` |
 | | `enableMetalink` | off (V1's) | Offered when the engine reads Metalink, as it does since #54 |
 | | `userAgent` | `null`: `ApolloDownloadManager/<version>` | At most 256 bytes, no control characters; for downloads added after it |
@@ -58,7 +58,7 @@ The screen (#30, [`src/features/settings/SettingsView.tsx`](../src/features/sett
 | `acceptRequests` | on | Off refuses links from the extension (`DISABLED`); the browser then downloads them |
 | `confirmBeforeAdding` | on | A link opens the Add dialog. Off adds it at once, unless it is a torrent, a magnet link, a taken name or a link added before |
 
-The torrent helper's own settings are the `torrent` section, `TorrentSettings` ([TORRENTS.md](TORRENTS.md#settings-and-identity)); the screen shows them with the helper's port and port mapping (`get_torrent_network`).
+The torrent helper's own settings are the `torrent` section, `TorrentSettings` ([TORRENTS.md](TORRENT_CONTRACT.md#settings-and-identity)); the screen shows them with the helper's port and port mapping (`get_torrent_network`).
 
 ## Proxy
 
@@ -73,15 +73,14 @@ The torrent helper's own settings are the `torrent` section, `TorrentSettings` (
 | `rememberPassword` | off | Keep the password in the system keychain ([ADR-0015](decisions/0015-keychain-with-consent.md)) |
 
 - **The password** is set on its own (`set_proxy_password`) and never comes back to the window, which only learns whether one is set (`get_proxy_password_set`). It is held in memory, and saved in the keychain only while `rememberPassword` is on; turning it off deletes it there (PO decision on #192). A keychain that refuses is said (`KEYCHAIN_UNAVAILABLE`), and the password is still used until the app closes.
-- **What it covers:** every direct download (HTTP, HTTPS, FTP, SFTP) that starts, resumes or retries after a change, and the torrent helper at once. SFTP and torrents can't use an HTTPS proxy: SFTP downloads fail with a message saying so, and no torrent starts (`PROXY_UNSUPPORTED`). How each engine uses it is in [ENGINE_INTERNALS.md](ENGINE_INTERNALS.md#proxy-192) and [TORRENTS.md](TORRENTS.md#settings-and-identity).
+- **What it covers:** every direct download (HTTP, HTTPS, FTP, SFTP) that starts, resumes or retries after a change, and the torrent helper at once. SFTP and torrents can't use an HTTPS proxy: SFTP downloads fail with a message saying so, and no torrent starts (`PROXY_UNSUPPORTED`). How each engine uses it is in [ENGINE_INTERNALS.md](ENGINE_INTERNALS.md#proxy-192) and [TORRENTS.md](TORRENT_CONTRACT.md#settings-and-identity).
 - **When the app starts** the torrent helper gets the proxy, with a remembered password, before anything else, and the transfer engine before the first download starts.
 
 ## The window
 
-
 ## Performance
 
-**Performance profiles are limits for the adaptive engine** ([ADR-0005](decisions/0005-v1-features-without-aria2.md), #57), not V1's aria2 option sets. Within a profile's limits, a download opens every connection it may use, a step at a time, and the engine drops those that don't make it faster ([ENGINE_INTERNALS.md](ENGINE_INTERNALS.md#adaptive-connections), #47, #221). A server that gains nothing from more connections gets fewer.
+**Performance profiles are limits for the adaptive engine** ([ADR-0005](decisions/0005-v1-features-without-aria2.md), #57), not V1's aria2 option sets. Within a profile's limits, a download opens every connection it may use, a step at a time, and the engine drops those that don't make it faster ([ENGINE_SCHEDULER.md](ENGINE_CONNECTIONS.md#adaptive-connections), #47, #221). A server that gains nothing from more connections gets fewer.
 
 | Profile | Connections, per download and per server | Smallest piece | Notes |
 |---|---|---|---|

@@ -14,7 +14,7 @@ The *Release candidate* workflow ([`release-candidate.yml`](../.github/workflows
 | `build-info.json` | The version, the tag if any, the commit, when and by which run it was built, each file's size and SHA-256, and each platform's native build records: the libcurl, OpenSSL, nghttp2, zlib, libtorrent and Boost versions with their sources, and the toolchains ([BUILDING_NATIVE.md](BUILDING_NATIVE.md#build-infojson)) |
 | `SHA256SUMS` | The SHA-256 of every file above, in the `sha256sum` format |
 
-It is kept **14 days** ([CI.md](CI.md#costs)). The run's summary repeats the checksums.
+It is kept **14 days** ([CI_COSTS.md](CI_COSTS.md#costs)). The run's summary repeats the checksums.
 
 ## Starting one
 

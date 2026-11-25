@@ -15,8 +15,8 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 
 | Item | Owner | Status | Evidence |
 |---|---|---|---|
-| Dependency advisories (#75) | Agent | PASS | `pnpm check:advisories` with #446 in: Rust PASS, npm PASS. RUSTSEC-2026-0459 (SQLite, Medium), found by this review, was fixed in #446; the rest are fixed or accepted in the register ([SECURITY.md](SECURITY.md#the-register)) |
-| TLS verification on every backend (#69) | Agent | PASS | #69 closed; [SECURITY.md](SECURITY.md#tls-verification-69) |
+| Dependency advisories (#75) | Agent | PASS | `pnpm check:advisories` with #446 in: Rust PASS, npm PASS. RUSTSEC-2026-0459 (SQLite, Medium), found by this review, was fixed in #446; the rest are fixed or accepted in the register ([SECURITY.md](SECURITY_SUPPLY_CHAIN.md#the-register)) |
+| TLS verification on every backend (#69) | Agent | PASS | #69 closed; [SECURITY_NETWORK.md](SECURITY_NETWORK.md#tls-verification-69) |
 | Links, redirects and local addresses (#67) | Agent | PASS | #67 closed; [SECURITY.md](SECURITY.md#links-redirects-and-local-addresses-67) |
 | Secrets kept out of storage (#70), and the leak scan (#71) | Agent | PASS | #70 and #71 closed; [SECURITY.md](SECURITY.md#secrets-70) |
 | Files and folders (#72) | Agent | PASS | #72 closed; [SECURITY.md](SECURITY.md#files-and-folders-72) |
@@ -59,7 +59,7 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 
 | Item | Owner | Status | Evidence |
 |---|---|---|---|
-| The installed app with real downloads (#262) | PO and agent | PASS | #262 closed (2026-11-04); its session reports are comments on #262 ([TESTING.md](TESTING.md#the-field-test-262)) |
+| The installed app with real downloads (#262) | PO and agent | PASS | #262 closed (2026-11-04); its session reports are comments on #262 ([TEST_FIXTURES.md](TEST_FIXTURES.md#the-field-test-262)) |
 | Feedback on the candidates | PO | PASS | 0.1.0 and 0.1.1 were released from their candidates on the PO's acceptance, as pre-releases |
 | Ramp and speed field testing (#330) | Agent | NOT RUN | #330 open, in v0.3.0 |
 

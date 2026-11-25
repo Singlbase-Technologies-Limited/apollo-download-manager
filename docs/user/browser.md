@@ -10,7 +10,7 @@ See also, for developers: [how the extension and its native host work](../BROWSE
 - **Firefox:** install it from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/apollo-download-manager/). **Get the extension** in Settings, Browser opens that page in Firefox.
 - **Edge: not in its store yet.** **Get the extension** stays off for Edge until its store page is live, and a note in Settings, Browser says so. Until then, Edge can install the extension from the Chrome Web Store, once you allow extensions from other stores.
 
-The installers don't set the extension up for you. Testers can load a build of the extension by hand, as the [developer documents](../BROWSER_EXTENSION.md#loading-a-build-by-hand) say.
+The installers don't set the extension up for you. Testers can load a build of the extension by hand, as the [developer documents](../BROWSER_EXTENSION_BUILD.md#loading-a-build-by-hand) say.
 
 **Beside V1:** the extension is named **Apollo Download Manager** (**Apollo DM** for short), its menu item is **Download with Apollo Download Manager**, and it talks only to Apollo Download Manager. V1's extension can stay installed at the same time ([Beside V1](v1-and-v2.md)).
 

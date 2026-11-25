@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev                      # builds the Rust shell and opens the app with hot reload
 ```
 
-The first `pnpm dev` compiles every Rust dependency and takes several minutes (see [Build times](#build-times)). Later runs reuse the build.
+The first `pnpm dev` compiles every Rust dependency and takes several minutes (see [Build times](TEST_FIXTURES.md#build-times)). Later runs reuse the build.
 
 You should see a window titled **Apollo Download Manager (dev)**. The first time, it asks where downloads should go. After that, it opens on the downloads, with the navigation and the status bar ([UI_ARCHITECTURE.md](UI_ARCHITECTURE.md)):
 
@@ -36,7 +36,7 @@ The same build on Linux (Ubuntu 24.04 under WSL2/WSLg):
 | pnpm | exactly the version in [`package.json`](../package.json) → `packageManager` (12.14.0) | Package manager |
 | Rust | installed with rustup; [`rust-toolchain.toml`](../rust-toolchain.toml) pins the toolchain (1.99.1) and rustup installs it automatically | Desktop shell and core |
 | Platform libraries | see below | Tauri's webview and native build |
-| vcpkg | a clone with the baseline commit in [`scripts/native/vcpkg/vcpkg.json`](../scripts/native/vcpkg/vcpkg.json), bootstrapped, in `VCPKG_ROOT`, `C:cpkg` or `~/vcpkg` | Builds libtorrent, Boost and OpenSSL for the torrent bridge ([BUILDING_NATIVE.md](BUILDING_NATIVE.md#libtorrent)) |
+| vcpkg | a clone with the baseline commit in [`scripts/native/vcpkg/vcpkg.json`](../scripts/native/vcpkg/vcpkg.json), bootstrapped, in `VCPKG_ROOT`, `C:cpkg` or `~/vcpkg` | Builds libtorrent, Boost and OpenSSL for the torrent bridge ([BUILDING_LIBTORRENT.md](BUILDING_LIBTORRENT.md#libtorrent)) |
 
 `pnpm check:prereqs` checks all of these. It only reads your system; it never installs or changes anything.
 
@@ -83,7 +83,7 @@ Then install Node.js and pnpm.
 |---|---|
 | `pnpm dev` | Run the desktop app with hot reload (Vite on port 1430, Rust rebuilt on change) |
 | `pnpm dev:web` | Run only the web UI in a browser (native commands are unavailable there) |
-| `pnpm dev:engine` | Build the transfer engine (`velocity-transfer`), the torrent helper (`velocity-torrent`, which needs libtorrent built: [BUILDING_NATIVE.md](BUILDING_NATIVE.md#libtorrent)) and the browser's native host (`velocity-native-host-v2`, #65) beside the app, where the app looks for them; `pnpm dev` runs it first (#58) |
+| `pnpm dev:engine` | Build the transfer engine (`velocity-transfer`), the torrent helper (`velocity-torrent`, which needs libtorrent built: [BUILDING_LIBTORRENT.md](BUILDING_LIBTORRENT.md#libtorrent)) and the browser's native host (`velocity-native-host-v2`, #65) beside the app, where the app looks for them; `pnpm dev` runs it first (#58) |
 | `pnpm check:fast` | Level L1 checks: `cargo fmt --check`, clippy with `-D warnings`, `cargo test`, `tsc`, ESLint (zero warnings), Vitest. It runs every check even after a failure and prints a summary |
 | `pnpm test:focused -- <area>` | Level L2: the tests of one crate, `frontend` or `scripts` while you iterate |
 | `pnpm check:pr` | Level L3 run locally: only the checks this branch's changes need |
@@ -110,56 +110,7 @@ The app is named Apollo Download Manager ([ADR-0018](decisions/0018-product-name
 
 The bundle identifier, not the name, keeps the apps apart: it decides the data directory and the single-instance lock. Tests in `velocity-core` and `src-tauri` fail if Apollo Download Manager's identifier, data folder, pipe name, native host name or dev port ever matches V1's. The identity lives in [`branding.json`](../branding.json); [COEXISTENCE.md](COEXISTENCE.md) has the details. Apollo Download Manager keeps its own identity after release too ([ADR-0003](decisions/0003-v2-app-identity.md)): the installer offers to remove V1 (#81), and importing V1 data is a separate decision (#24).
 
-## Build times
-
-The two tables below were measured on 2026-10-21, before the #3 profile change ([check timings](#check-timings) has the current figures).
-
-Windows 11 (build 26200), Intel Core i7-13620H (16 logical CPUs), 15.7 GiB RAM, NVMe SSD, Rust 1.99.1, Node.js 24.12.0, pnpm 12.14.0:
-
-| Step | Time |
-|---|---|
-| First `cargo build --workspace` from an empty `target/` | 278 s |
-| `pnpm check:fast`, first run (clippy compiles its own artefacts) | 128 s |
-| `pnpm check:fast`, warm | 7 s |
-| `cargo build --workspace` with no changes | 3 s |
-| Rebuild after a one-line change in [`crates/velocity-core`](../crates/velocity-core/) | 19 s |
-| Rebuild after a one-line change in `src-tauri` | 17 s |
-| Vite dev server start | 0.23 s |
-
-Linking the desktop executable dominates incremental rebuilds. Issue #3 tuned this (see [check timings](#check-timings)).
-
-Linux: Ubuntu 24.04.4 LTS under WSL2 (kernel 6.6.87.2) on the same PC, limited to 2 vCPUs and 1.9 GiB RAM, with the same tool versions:
-
-| Step | Time |
-|---|---|
-| First `cargo build --workspace` from an empty `target/` | 413 s |
-| `pnpm check:fast`, first run | 191 s |
-| `pnpm check:fast`, warm | 8 s |
-| `cargo build --workspace` with no changes | < 1 s |
-| Rebuild after a one-line change in [`crates/velocity-core`](../crates/velocity-core/) | 17 s |
-
-| Platform | Clean-clone run |
-|---|---|
-| Windows 11 | **PASS** (2026-10-21, machine above) |
-| Linux (Ubuntu 24.04, WSL2/WSLg) | **PASS** (2026-10-21). WSL is a real Linux kernel and userland, but not a native desktop install; WebKitGTK rendered through WSLg |
-| macOS | **NOT RUN**: no macOS machine was available |
-
-### Check timings
-
-Measured 2026-10-21 for #3 on the two machines above. Each figure is the median of `node scripts/check-fast.mjs` wall time after one warm-up run. "One-file change" means appending a comment line to [`crates/velocity-core/src/lib.rs`](../crates/velocity-core/src/lib.rs) before each run. That rebuilds the core and the desktop shell that depends on it.
-
-| `pnpm check:fast` | Before tuning | After tuning |
-|---|---|---|
-| Windows, no-op | 9.2 s | 8.9 s |
-| Windows, one-file change | 20.9 s | 14.0 s |
-| Linux (WSL2, 2 vCPU, 1.9 GiB), no-op | 6.1 s | 5.5 s |
-| Linux (WSL2, 2 vCPU, 1.9 GiB), one-file change | 66.7 s (18–123 s) | 7.0 s |
-
-- **Windows:** 5 runs on each side, with the same scripts and only the [`Cargo.toml`](../Cargo.toml) profile change reverted for "before". A first measurement on `main`'s scripts, with 3 runs, gave 7.5 s and 25.8 s.
-- **Linux:** 3 runs before, on `main`, and 5 runs after.
-- **Where the time goes:** in a no-op run, mostly ESLint (about 4.5 s on Windows, 3 s on Linux). After a Rust change, mostly `cargo test`, which re-links the desktop shell. Before tuning, that link wrote a staticlib of about 660 MB on Linux; it is now about 140 MB. Under WSL's 1.9 GiB of memory, the link time varied a lot.
-
-`pnpm check:full` on Windows: 249 s, of which the Rust release build took 232 s. Linux (WSL2): 224 s across the checks, of which the Rust release build took 215 s.
+**Build times** and check timings, measured, are in [TEST_FIXTURES.md](TEST_FIXTURES.md#build-times).
 
 ## Repository layout
 

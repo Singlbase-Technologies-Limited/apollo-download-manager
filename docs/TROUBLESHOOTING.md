@@ -18,7 +18,7 @@ Start with `pnpm check:prereqs`. It names each missing prerequisite and prints t
 
 ## Downloads
 
-Every message a download can show, with what it means and what to do, is in the user guide's [Download messages](user/download-messages.md) (moved there by #425). What the engine does in each case is in [ENGINE_INTERNALS.md](ENGINE_INTERNALS.md#retries-waits-and-stalls-48).
+Every message a download can show, with what it means and what to do, is in the user guide's [Download messages](user/download-messages.md) (moved there by #425). What the engine does in each case is in [ENGINE_SCHEDULER.md](ENGINE_RETRIES_LIMITS.md#retries-waits-and-stalls-48).
 
 What lies behind the messages, for a bug report or a developer build:
 
@@ -31,7 +31,7 @@ What lies behind the messages, for a bug report or a developer build:
 | "The server can't encrypt the connection, …" | The FTP server refused `AUTH TLS`; the login was never sent |
 | "There is not enough disk space." / "… isn't allowed to write to that location." | Kept what was downloaded (#74) |
 | The engine is unavailable (`ENGINE_UNAVAILABLE`) | It crashed more than 5 times in 5 minutes |
-| The engine is missing (`ENGINE_MISSING`) or doesn't match the app (`ENGINE_INCOMPATIBLE`); the torrent helper the same | `velocity-transfer` or `velocity-torrent` isn't beside the app, or is from another build. In development, `pnpm dev` builds the engine first (`pnpm dev:engine`), and the helper once libtorrent is built ([BUILDING_NATIVE.md](BUILDING_NATIVE.md#libtorrent)) |
+| The engine is missing (`ENGINE_MISSING`) or doesn't match the app (`ENGINE_INCOMPATIBLE`); the torrent helper the same | `velocity-transfer` or `velocity-torrent` isn't beside the app, or is from another build. In development, `pnpm dev` builds the engine first (`pnpm dev:engine`), and the helper once libtorrent is built ([BUILDING_LIBTORRENT.md](BUILDING_LIBTORRENT.md#libtorrent)) |
 | Settings, Browser says the browser connection program isn't installed | `velocity-native-host-v2` isn't beside the app. In development, `pnpm dev:engine` builds it |
 | The extension says "The connection to Apollo DM is not set up" | The native host isn't registered with that browser, or for another copy ([BROWSER_EXTENSION.md](BROWSER_EXTENSION.md#registering-with-each-browser)) |
 | The extension says "Apollo Download Manager is not running" | The native host starts the app in the tray (#322) and waits up to 10 seconds; it found no app beside it, or the app didn't answer |
