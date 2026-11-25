@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { codeInUserGuide, missingSeeAlso, SEE_ALSO, unlinkedPaths } from './docs-rules-lib.mjs';
+import { codeInUserGuide, missingSeeAlso, SEE_ALSO, trackedPaths, unlinkedPaths } from './docs-rules-lib.mjs';
 
 // #425: what the user guide may name, that the developer pages link the code they name, and that the matching pages of
 // the two guides link each other.
@@ -75,6 +75,19 @@ describe('the developer pages link the paths they name (#425)', () => {
     const text = 'The core is `crates/velocity-core`.\n';
     expect(unlinkedPaths({ 'docs/user/x.md': text, 'docs/research/r.md': text, 'docs/README.md': text, 'README.md': text }, exists)).toEqual([]);
     expect(unlinkedPaths({ 'docs/decisions/0001-v2-direction.md': text }, exists)).toHaveLength(1);
+  });
+});
+
+describe('what counts as in the repository (#425)', () => {
+  it('is what git tracks, files and the folders holding them, never a build output on this disk', () => {
+    const tracked = trackedPaths(['crates/velocity-core/src/lib.rs', 'docs/TESTING.md', 'package.json']);
+    for (const p of ['crates/velocity-core/src/lib.rs', 'crates/velocity-core/src', 'crates/velocity-core', 'crates', 'docs/TESTING.md', 'package.json']) {
+      expect(tracked(p), p).toBe(true);
+    }
+    for (const p of ['target/native', 'browser-extension/dist/chrome', '../velocity-download-manager', 'crates/velocity-core/src/main.rs', 'crates/velocity']) {
+      expect(tracked(p), p).toBe(false);
+    }
+    expect(tracked('crates/velocity-core/')).toBe(true);
   });
 });
 

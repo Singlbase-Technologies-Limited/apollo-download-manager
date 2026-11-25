@@ -119,3 +119,17 @@ export function missingSeeAlso(pairs, read) {
   }
   return missing;
 }
+
+/**
+ * Whether a path, from the repository's root, is in the repository: a file git tracks, or a folder holding one (#425).
+ * A build output or another checkout on this disk isn't, so a check gives the same answer here as on CI.
+ * @param {string[]} files every file git tracks, from the root, with `/`
+ */
+export function trackedPaths(files) {
+  const known = new Set();
+  for (const file of files) {
+    const parts = file.split('/');
+    for (let i = 1; i <= parts.length; i++) known.add(parts.slice(0, i).join('/'));
+  }
+  return (path) => known.has(posix.normalize(path).replace(/\/+$/, ''));
+}

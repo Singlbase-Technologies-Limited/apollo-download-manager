@@ -26,11 +26,11 @@ pnpm native:build   # fetch, build, check and write build-info.json
 pnpm native:verify  # the release blocker: the record and every artefact still match
 ```
 
-Both work on the Rust host target. The output goes to [`target/native/`](../target/native/) (ignored by git):
+Both work on the Rust host target. The output goes to `target/native/` (ignored by git):
 
 | Path | What it holds |
 |---|---|
-| [`target/native/sources/`](../target/native/sources/) | The downloaded archives and their `.asc` signatures |
+| `target/native/sources/` | The downloaded archives and their `.asc` signatures |
 | `target/native/<target>/prefix/` | The built static libraries (`lib/`), headers (`include/`) and the curl tool (`bin/`) |
 | `target/native/<target>/build-info.json` | The [build identity record](#build-infojson) |
 
@@ -98,7 +98,7 @@ On Linux, the built curl tool links only the C library dynamically (`ldd`: `linu
 - **Overrides:** [`.cargo/config.toml`](../.cargo/config.toml) overrides the build scripts of `curl-sys` (`links = "curl"`) and `libz-sys` (`links = "z"`), so neither compiles a bundled copy nor looks for a system one ([build-script overrides](https://doc.rust-lang.org/cargo/reference/build-scripts.html#overriding-build-scripts)). `curl-sys` has no default features, so it pulls in no `openssl-sys`.
 - **Linking:** [`crates/velocity-curl/build.rs`](../crates/velocity-curl/build.rs) reads `build-info.json` and links the static libraries in `target/native/<target>/prefix/lib`, plus the system libraries curl's own `libcurl.pc` lists (Windows: `bcrypt`, `advapi32`, `crypt32`, `secur32`, `ws2_32`, `iphlpapi`). On Linux it lists none; `pthread` and `dl` are added for a static OpenSSL on glibc before 2.34.
 - **Refusal:** the build stops with a message naming `pnpm native:build` when the record is missing, is for another target, records a libcurl below the floor, or lists an artefact that is gone.
-- **Location:** [`.cargo/config.toml`](../.cargo/config.toml) sets `VELOCITY_NATIVE_DIR` to [`target/native`](../target/native/) as an absolute path. A `VELOCITY_NATIVE_DIR` already in the environment wins, for a build kept elsewhere.
+- **Location:** [`.cargo/config.toml`](../.cargo/config.toml) sets `VELOCITY_NATIVE_DIR` to `target/native` as an absolute path. A `VELOCITY_NATIVE_DIR` already in the environment wins, for a build kept elsewhere.
 - **Checks build it first:** `pnpm check:fast`, `check:pr` and `test:focused -- <crate>` run `native:build` before any Rust check. Plain `cargo` doesn't, and stops with the refusal message instead.
 
 ## Checking at run time

@@ -14,7 +14,7 @@ The torrent bridge ([`crates/velocity-lt`](../crates/velocity-lt/)) links libtor
 - **Release only:** the triplets are `x64-windows-static-md-release` and `x64-linux-release`, so only release libraries are built; cargo links those in every profile. libtorrent is built without iconv (`"default-features": false`).
 - **The record:** the build writes `target/native/<target>/libtorrent-info.json`:
   - libtorrent's version and the vcpkg baseline;
-  - the install prefix, relative to [`target/native`](../target/native/) (`vcpkg-installed/<triplet>`), so a moved or renamed checkout still finds it. Records written before the repository's rename hold an absolute path; `native:build` rebuilds them, and `build.rs` still reads one;
+  - the install prefix, relative to `target/native` (`vcpkg-installed/<triplet>`), so a moved or renamed checkout still finds it. Records written before the repository's rename hold an absolute path; `native:build` rebuilds them, and `build.rs` still reads one;
   - the compile definitions and link libraries, read from libtorrent's CMake package. The shim must be compiled with the same definitions as libtorrent, such as `TORRENT_USE_OPENSSL` and `TORRENT_SSL_PEERS`;
   - the SHA-256 of each library.
 
