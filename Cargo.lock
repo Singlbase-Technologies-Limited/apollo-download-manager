@@ -6065,6 +6065,7 @@ version = "0.2.0"
 dependencies = [
  "curl",
  "curl-sys",
+ "libc",
  "serde_json",
  "velocity-curl",
  "velocity-test-http",
