@@ -2,7 +2,7 @@
   "sections": [
     {
       "title": "Architecture",
-      "pages": ["ARCHITECTURE.md", "UI_ARCHITECTURE.md", "UI_FEATURES.md", "CONTRACTS.md", "DATA_AND_MIGRATIONS.md", "COEXISTENCE.md", "SECURITY.md", "SECURITY_SUPPLY_CHAIN.md", "SECURITY_NETWORK.md", "PRIVACY.md", "ACCESSIBILITY.md"]
+      "pages": ["ARCHITECTURE.md", "UI_ARCHITECTURE.md", "UI_FEATURES.md", "CONTRACTS.md", "DATA_AND_MIGRATIONS.md", "COEXISTENCE.md", "SECURITY.md", "SECURITY_NETWORK.md", "SECURITY_SUPPLY_CHAIN.md", "PRIVACY.md", "ACCESSIBILITY.md"]
     },
     {
       "title": "Repository",

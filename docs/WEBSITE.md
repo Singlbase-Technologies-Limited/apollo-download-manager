@@ -29,6 +29,16 @@ A pull request that touches `docs/` builds the site, and the build fails on:
 - a document without a sidebar name, or with one longer than 24 characters;
 - a link to a heading that doesn't exist.
 
+**Where a reader is** (#425): above each document's title, a label names its part of the site and its section, such as "Developers · Engine and browser" or "User guide · Using the app"; on a phone the menu button shows the section.
+
+**The documents' own rules** (#425), which `pnpm check:links` checks with the links ([`scripts/docs-rules-lib.mjs`](../scripts/docs-rules-lib.mjs)):
+
+- **The user guide names no code:** no crate, source or test file, code path, identifier or issue number. Users' data folders, `known_hosts`, the licence files, link schemes and commands in code blocks may appear.
+- **A developer page links every repository path it names** in code style, such as [`crates/velocity-core/src/lib.rs`](../crates/velocity-core/src/lib.rs), so readers don't copy paths by hand. The research records stay word for word, so they're left out (PO decision on #425).
+- **Matching pages link each other:** each user guide page with a developer counterpart (`SEE_ALSO` in that file) has a "See also" line to it, and the counterpart one back.
+
+**A user guide page that became others** keeps its address on the website: `MOVED_GUIDE_PAGES` in [`scripts/site-lib.mjs`](../scripts/site-lib.mjs) makes a short page there that links the new ones, which search engines don't list and the sitemap leaves out. Today: `guide/downloads/` (#425).
+
 A link to another document stays a link on the site, one to a user guide goes to that guide's page, and one to any other file goes to it on GitHub. These pages may show images from [`docs/images/`](images/), and text such as `<Name>` stays text. The user guides allow neither.
 
 ## The screens
@@ -82,7 +92,8 @@ pnpm site -- --releases releases.json      # with the download page made from a 
 - the menus, the theme switch and that it's remembered, the screen switcher, the FAQ, and previous and next;
 - both searches (#422): the label, the typed text and the documents list share one left edge; the box has a placeholder; a result opens the right page by mouse and by keyboard alone (focus, type, Tab, Enter); and no match says "Nothing found.";
 - both sidebars at desktop width (#487): no group heading, page name or folder name wraps onto a second line;
-- tables at desktop width (#422): no cell wraps to more than 8 lines. The pages whose tables hold paragraphs rather than values are listed in `TALL_TABLES` in [`scripts/site-check.mjs`](../scripts/site-check.mjs), for the content audit (#425) to rewrite; a page leaves the list once it passes.
+- the developer pages' heights (#425): none taller than 8,000 px at 1440 px wide, except the reference pages in `REFERENCE_PAGES` and the research records. A longer page is split by topic;
+- tables at desktop width (#422): no cell wraps to more than 8 lines. The pages whose tables hold paragraphs rather than values are listed in `TALL_TABLES` in [`scripts/site-check.mjs`](../scripts/site-check.mjs), which #425 split but didn't rewrite; a page leaves the list once it passes.
 - names in tables (#485), at every width: no file, folder or crate name in a table cell breaks between two letters or digits. The site lets code break only after `/`, `\`, `.`, `_` or `:`, and a table too wide for the page scrolls in its own box.
 - the home page on a slow line (about 1.6 Mbit/s, 150 ms latency, #423): a placeholder in the screenshot's frame while it loads, a screenshot (never an empty frame) 100 ms after the theme switch, and the dark one once it arrives; on a fast line, the dark screenshot within 100 ms of the switch; a phone fetching the 720 px copy; and, on a phone on the same slow line, a layout shift (CLS) under 0.01.
 

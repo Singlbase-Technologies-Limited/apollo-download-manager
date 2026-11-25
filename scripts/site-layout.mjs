@@ -103,7 +103,7 @@ export function pager(previous, next) {
   return `<nav class="pager" aria-label="Previous and next">${side('prev', 'Previous', previous)}${side('next', 'Next', next)}</nav>`;
 }
 
-function document_({ body, aside, toc, after, crumb }) {
+function document_({ body, aside, toc, after, crumb, label }) {
   const list = toc ? `<nav class="toc" aria-label="On this page"><p>On this page</p>${toc}</nav>` : '';
   const small = toc ? `<details class="toc-small"><summary class="toc-title">On this page</summary>${toc}</details>` : '';
   return `<div class="docs">
@@ -112,7 +112,8 @@ function document_({ body, aside, toc, after, crumb }) {
 <aside class="docs-side">
 ${aside}</aside>
 <main id="main" class="doc">
-${small}<article class="prose">
+${label ? `<p class="doc-label">${esc(label)}</p>
+` : ''}${small}<article class="prose">
 ${body}
 </article>
 ${after ?? ''}
@@ -132,16 +133,17 @@ ${list}
  * @param {string} [page.toc] a document's table of contents
  * @param {string} [page.after] what follows a document, such as its previous and next links
  * @param {string} [page.crumb] where a document is, for the small screens' menu button
+ * @param {string} [page.label] the part of the site and section a document is in, above its title (#425)
  * @param {string} [page.head] more for the `<head>`
  * @param {boolean} [page.reading] a narrow page of text with no sidebar
  */
-export function layout({ path, title, description, body, aside, toc, after, crumb, head = '', reading = false }) {
+export function layout({ path, title, description, body, aside, toc, after, crumb, label, head = '', reading = false }) {
   const depth = path.split('/').length - 1;
   const up = depth === 0 ? './' : '../'.repeat(depth);
   const here = path.replace(/index\.html$/, '');
   const full = title === NAME ? NAME : `${title} · ${NAME}`;
   const canonical = path === '404.html' ? '' : `<link rel="canonical" href="${SITE_URL}${here}">\n`;
-  const main = aside !== undefined ? document_({ body, aside, toc, after, crumb }) : `<main id="main"${reading ? ' class="reading"' : ''}>\n${body}\n</main>`;
+  const main = aside !== undefined ? document_({ body, aside, toc, after, crumb, label }) : `<main id="main"${reading ? ' class="reading"' : ''}>\n${body}\n</main>`;
   return `<!doctype html>
 <html lang="en">
 <head>

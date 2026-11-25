@@ -136,6 +136,13 @@ describe('the developer site, built from docs/ (#355)', () => {
     }
   });
 
+  it('says above each document’s title which part of the site and which section it is in (#425)', () => {
+    expect(site['developers/engine-connections/index.html']).toContain('<p class="doc-label">Developers · Engine and browser</p>');
+    expect(site['developers/index.html']).toContain('<p class="doc-label">Developers</p>');
+    expect(site['guide/resume/index.html']).toContain('<p class="doc-label">User guide · Using the app</p>');
+    expect(site['developers/engine-connections/index.html']).toContain('<label class="docs-button" for="docs-menu">Engine and browser</label>');
+  });
+
   it('links to the developer site from the product pages', () => {
     expect(site['index.html']).toMatch(/<a href="[^"]*developers\/">Developers<\/a>/);
   });

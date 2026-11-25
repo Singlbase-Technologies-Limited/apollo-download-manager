@@ -73,3 +73,31 @@ Every received byte is either written into the part file once, or counted in `wa
 - **No figure** is shown until 0.5 s has been measured.
 - **Why 3 seconds:** a change in speed, such as a new speed limit, shows half within 1.5 s and fully within 3 s. A pause in one connection barely moves the figure.
 - **Before #246,** the speed was measured over a single 256 KiB step, about 80 ms at 3 MiB/s, and it jumped between KiB/s and GiB/s.
+
+## Connection values
+
+All are starting values, not yet tuned by measurement (#77, which was to measure them, was closed as not planned); the user can change them ([SETTINGS.md](SETTINGS.md#engine), #30).
+
+| Value | Starting value | Where it comes from |
+|---|---|---|
+| Per-host cap | The performance profile's: 8 for Balanced, 2 to 16 for the others ([SETTINGS.md](SETTINGS.md#performance)) | Report section 5.5 (8, at most 16); PO decisions on #47 and #57. `set_engine_limits` changes it while transfers run, and libcurl's own per-host cap (`CURLMOPT_MAX_HOST_CONNECTIONS`) with it: with many small downloads at once, each keeping one connection, that is what bounds a host |
+| Smallest piece (`Sizes::min_split`) | The profile's: 1 MiB for Balanced | PO decision on #57 |
+| Shared budget (`CONNECTION_BUDGET`) | 48 | V1's `connection_budget`; PO decision on #47 |
+| Window | max(2 s, 4 × RTT) | Report section 5.5 |
+| Windows per count | 2, averaged | #47's 2 flat windows (report section 5.5); #221 |
+| Loss that brings a connection back | 10% | #221: the gain #47 needed to add one; one connection of 8 that carries its share is worth 12.5%. 5% let noise keep a connection that didn't help on CI's Windows runner |
+| Windows not measured after the count is set from outside | 1 | #221 |
+| HTTP/2: gain that keeps connections of their own | 10% | Report section 5.5 |
+
+**Measured** on the local test servers (Windows 11), with #47's climbing ramp. These check behaviour, not speed: no speed claim is made without a measurement (PO decision on #47; #77 was closed as not planned). #221 changed the ramp and its fixtures, and these rows haven't been measured again:
+
+| Fixture | Expected | Observed |
+|---|---|---|
+| 4 downloads from one host, 8 asked for each, 2 MiB/s per connection | 2 each (`perHostCap`); Jain's index ≥ 0.9 | 2 each; Jain's index 1.000 in both engine modes |
+| 1 MiB/s per connection, 8 asked for | Ramps up to 8 | 8 |
+| 1 MiB/s per connection, 3 MiB/s per client, 8 asked for, 5 runs | Stops below the cap | Kept 3, at most 4 at once, every run |
+| HTTP/2, 1 MiB/s per TCP connection, 5 runs | Connections of their own | 9 or 10 connections, 6 to 8 at once |
+| HTTP/2, 1 MiB/s per stream, 5 runs | One multiplexed connection | 1 connection, 8 streams |
+| 40 small files from one host | Reuse | 1 connection one by one; at most 8 at once |
+
+The "at once" counts above are the server's. Since #154, the ramp fixtures check the engine's own count instead, `DownloadReport::peak_requests`.

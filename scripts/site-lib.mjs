@@ -404,6 +404,7 @@ export function buildSite({ releases }) {
     for (const id of Object.keys(shown)) {
       if (!p.blocks.some((b) => b.type === 'heading' && b.id === id)) throw new Error(`site/content/screens.json: guide ${p.id} has no heading ${id}`);
     }
+    const group = guideGroups.find((g) => g.pages.includes(p.id))?.title;
     const at = order.indexOf(p.id);
     const neighbour = (id) => id && { href: href({ page: id }), title: id === 'index' ? 'Introduction' : guide.find((g) => g.id === id).title };
     // The guide's own search (#422): the developer site's script, over an index of the guide's pages only.
@@ -417,6 +418,7 @@ export function buildSite({ releases }) {
       toc: tableOfContents(p.headings),
       after: pager(neighbour(order[at - 1]), neighbour(order[at + 1])),
       crumb: 'User guide',
+      label: group ? `User guide · ${group}` : 'User guide',
       head: `<script type="module" src="${guideRoot}search.js"></script>\n`,
     });
   }
@@ -447,7 +449,8 @@ export function buildSite({ releases }) {
       path,
       title: moved.title,
       description: `The ${moved.title} page of the user guide is now ${String(moved.pages.length)} pages.`,
-      body: `<header class="page-head"><div class="wrap"><h1>${esc(moved.title)}</h1><p class="lead">This page of the user guide became these pages:</p></div></header>\n<div class="wrap prose"><ul>${links.join('')}</ul></div>`,
+      body: `<h1>${esc(moved.title)}</h1>\n<p>This page of the user guide became these pages:</p>\n<ul>${links.join('')}</ul>`,
+      label: 'User guide',
       aside: `${searchForm({ root: '../', id: 'guide-search', label: 'Search the user guide', placeholder: 'Resume, torrents, browser…' })}\n${guideNav(guideGroups, guide, id, href)}`,
       crumb: 'User guide',
       head: '<meta name="robots" content="noindex">\n<script type="module" src="../search.js"></script>\n',
