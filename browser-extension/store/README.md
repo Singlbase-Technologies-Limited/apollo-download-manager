@@ -18,6 +18,7 @@ Up to 132 characters (the Chrome Web Store's limit):
 >
 > - Matching downloads go to the app, with the file name, size and type the browser knows. You choose which file types and sites, or have the browser ask you each time.
 > - Right-click any link, image, video or audio to download it with Apollo Download Manager.
+> - On a page with many files, a button lists them so you can send several at once. It is on from the start, and one click hides it on a site or everywhere.
 > - Magnet links and .torrent downloads can go to the app too. This is off by default, and the app always asks before adding a torrent.
 > - When the app isn't running or can't take a download, the browser simply downloads it.
 >
@@ -37,8 +38,8 @@ Up to 132 characters (the Chrome Web Store's limit):
 | `nativeMessaging` | Passes links to the Apollo Download Manager desktop app on this computer. It is the only channel to the app. |
 | `storage` | Keeps the extension's settings, the popup's last 5 sends (file name and site only) and pending "ask first" prompts. |
 | `contextMenus` | Adds "Download with Apollo Download Manager" to the right-click menu on links and media. It can be turned off. |
-| `scripting` | Registers the magnet-link script, only while torrent capture is on and page access was granted, and puts it into the pages already open when capture starts. |
-| Optional access to all sites | Asked for only when you turn on magnet capture, so magnet link clicks on pages reach the app. |
+| `scripting` | Registers the magnet-link script and the script that finds the files on a page, each only while it is on and page access was granted, and puts them into the pages already open when they start. |
+| Optional access to all sites | Asked for only when you turn on magnet capture or the button for pages with files, so magnet link clicks reach the app and the button can find the files a page links to. |
 
 ## Privacy
 

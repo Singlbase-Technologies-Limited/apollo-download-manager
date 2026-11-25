@@ -6,14 +6,14 @@ import { createHash } from 'node:crypto';
 export const TARGETS = ['chrome', 'firefox'];
 
 /** The extension's scripts, one bundle each. */
-export const ENTRIES = ['background', 'popup', 'options', 'prompt', 'magnet'];
+export const ENTRIES = ['background', 'popup', 'options', 'prompt', 'magnet', 'pagefiles'];
 
 /** V2's icons, from the desktop app's own (`src-tauri/icons`): published name -> source name. */
 export const ICONS = { 32: '32x32.png', 64: '64x64.png', 128: '128x128.png' };
 
 /**
  * The permissions the extension asks for, the same as V1's. Access to pages is optional and asked
- * for only when the user turns on magnet link capture.
+ * for only when the user turns on magnet link capture or the page button (#426).
  */
 export const PERMISSIONS = ['downloads', 'nativeMessaging', 'storage', 'contextMenus', 'scripting'];
 export const OPTIONAL_HOST_PERMISSIONS = ['<all_urls>'];
@@ -52,6 +52,8 @@ export function manifest(target, { release, version, branding }) {
     action: { default_popup: 'popup.html', default_title: name, default_icon: icons },
     options_ui: { page: 'options.html', open_in_tab: true },
     content_security_policy: { extension_pages: "script-src 'self'; object-src 'none'; base-uri 'none'" },
+    // The page's file panel by keyboard (#426); the user can change the keys in the browser.
+    commands: { 'open-page-files': { suggested_key: { default: 'Alt+Shift+D' }, description: 'Choose files on this page to download' } },
   };
   if (target === 'chrome') {
     return {

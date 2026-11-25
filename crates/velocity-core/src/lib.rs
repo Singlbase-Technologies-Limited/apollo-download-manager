@@ -90,7 +90,9 @@ use serde::Serialize;
 /// torrent network status's `adapterMissing`.
 /// Version 38 (#472) added `remember_trackers`, `forget_trackers`, and `trackersSaved` and
 /// `trackersMissing` in `TorrentDetails`: a torrent's trackers kept in the keychain.
-pub const COMMAND_API_VERSION: u32 = 38;
+/// Version 39 (#426) added the browser link source `page`, files chosen on a page, and keeps up to
+/// 500 links waiting for the Add dialog.
+pub const COMMAND_API_VERSION: u32 = 39;
 
 /// Name, version and contract version of the running application.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

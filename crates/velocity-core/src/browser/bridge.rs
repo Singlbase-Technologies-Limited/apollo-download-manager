@@ -18,8 +18,8 @@ use serde::Serialize;
 use serde_json::json;
 
 use super::protocol::{
-    parse_message, AddFromBrowser, BrowserCommand, BrowserResponse, IpcEnvelope, RequestSource,
-    PROTOCOL_VERSION,
+    parse_message, AddFromBrowser, AddManyFromBrowser, BrowserCommand, BrowserResponse,
+    IpcEnvelope, RequestSource, PROTOCOL_VERSION,
 };
 use super::registration::chrome_origins;
 use super::BrowserSettings;
@@ -100,8 +100,9 @@ pub struct BrowserPrompt {
 pub struct PromptInbox(std::sync::Mutex<VecDeque<BrowserPrompt>>);
 
 impl PromptInbox {
-    /// More links than the dialog sensibly holds; the browser's own rate limit comes first.
-    pub const MAX_WAITING: usize = 64;
+    /// As many links as the Add dialog takes (`MAX_ADD`), so a choice of files from a page (#426)
+    /// waits whole; the browser's own rate limit comes first.
+    pub const MAX_WAITING: usize = crate::manager::MAX_ADD;
 
     pub fn push(&self, prompt: BrowserPrompt) {
         let mut waiting = self.0.lock().unwrap_or_else(|p| p.into_inner());
@@ -162,6 +163,20 @@ pub enum Route {
     },
     /// Show the Add dialog with the link, and answer with [`prompted`].
     Ask { id: String, prompt: BrowserPrompt },
+    /// Files chosen on a page (#426): add `request`'s links, then answer with [`answer_batch`],
+    /// which says which of `prompts` the user must decide on; `ask` go to the Add dialog anyway.
+    AddMany {
+        id: String,
+        request: Box<AddRequest>,
+        prompts: Vec<BrowserPrompt>,
+        ask: Vec<BrowserPrompt>,
+    },
+    /// Show the Add dialog with all the files chosen on a page, and answer with
+    /// [`prompted_many`].
+    AskMany {
+        id: String,
+        prompts: Vec<BrowserPrompt>,
+    },
 }
 
 /// Whether `caller` is V2's extension: its Chrome origin or its Firefox add-on ID.
@@ -209,7 +224,9 @@ pub fn route(
             "acceptsRequests": settings.accept_requests,
             "engineRunning": status.engine_running,
         })),
-        BrowserCommand::AddDownload(_) if !settings.accept_requests => {
+        BrowserCommand::AddDownload(_) | BrowserCommand::AddMany(_)
+            if !settings.accept_requests =>
+        {
             Route::Reply(BrowserResponse::err(
                 &id,
                 "DISABLED",
@@ -227,6 +244,33 @@ pub fn route(
                 prompt,
             }
         }
+        BrowserCommand::AddMany(many) => route_many(id, &many, settings),
+    }
+}
+
+/// The files chosen on a page (#426), each once: with "Ask before adding" on, all go to the Add
+/// dialog; otherwise all but torrents are added together, and torrents go to the dialog.
+fn route_many(id: String, many: &AddManyFromBrowser, settings: &BrowserSettings) -> Route {
+    let mut seen = std::collections::HashSet::new();
+    let (ask, add): (Vec<BrowserPrompt>, Vec<BrowserPrompt>) = many
+        .adds()
+        .filter(|a| seen.insert(a.url.clone()))
+        .map(|a| BrowserPrompt::of(&a))
+        .partition(|p| needs_confirmation(settings.confirm_before_adding, &p.url));
+    if add.is_empty() {
+        return Route::AskMany { id, prompts: ask };
+    }
+    let request = AddRequest {
+        links: add.iter().map(|p| p.url.clone()).collect(),
+        referrer: many.referrer.clone(),
+        from_browser: true,
+        ..AddRequest::default()
+    };
+    Route::AddMany {
+        id,
+        request: Box::new(request),
+        prompts: add,
+        ask,
     }
 }
 
@@ -258,13 +302,7 @@ pub fn answer_added(
     id: &str,
     results: Result<Vec<AddResult>, ErrorCode>,
 ) -> Option<BrowserResponse> {
-    let failed = |code: ErrorCode| {
-        let wire = serde_json::to_value(code)
-            .ok()
-            .and_then(|v| v.as_str().map(str::to_owned))
-            .unwrap_or_else(|| "ADD_FAILED".to_owned());
-        Some(BrowserResponse::err(id, &wire, code.user_message()))
-    };
+    let failed = |code: ErrorCode| Some(BrowserResponse::err(id, &wire(code), code.user_message()));
     let outcome = match results {
         Ok(results) => results.into_iter().next().map(|r| r.outcome),
         Err(code) => return failed(code),
@@ -284,9 +322,69 @@ pub fn answer_added(
     }
 }
 
+/// An error code as the browser reads it, such as `INVALID_URL`.
+fn wire(code: ErrorCode) -> String {
+    serde_json::to_value(code)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_owned))
+        .unwrap_or_else(|| "ADD_FAILED".to_owned())
+}
+
 /// The answer once the Add dialog was shown.
 pub fn prompted(id: &str) -> BrowserResponse {
     BrowserResponse::ok(id, json!({ "action": "prompted" }))
+}
+
+/// The answer once the Add dialog was shown with `count` files from a page (#426).
+pub fn prompted_many(id: &str, count: usize) -> BrowserResponse {
+    BrowserResponse::ok(
+        id,
+        json!({ "action": "sent", "added": 0, "prompted": count, "failed": [] }),
+    )
+}
+
+/// The answer once the files from a page were added (#426), and those of `prompts` the user must
+/// decide on in the Add dialog: a taken name, or a link added before. `asked` more went to the
+/// dialog already. Each failed link is listed with its reason.
+pub fn answer_batch(
+    id: &str,
+    results: Result<Vec<AddResult>, ErrorCode>,
+    prompts: &[BrowserPrompt],
+    asked: usize,
+) -> (BrowserResponse, Vec<BrowserPrompt>) {
+    let results = match results {
+        Ok(results) => results,
+        Err(code) => {
+            return (
+                BrowserResponse::err(id, &wire(code), code.user_message()),
+                Vec::new(),
+            )
+        }
+    };
+    let (mut added, mut ask, mut failed) = (0usize, Vec::new(), Vec::new());
+    for r in results {
+        let failure = |code: &str, message: &str| json!({ "url": r.source, "code": code, "message": message });
+        match &r.outcome {
+            AddOutcome::Added { .. } => added += 1,
+            AddOutcome::Conflict { .. } | AddOutcome::Duplicate { .. } => {
+                if let Some(p) = prompts.iter().find(|p| p.url == r.source) {
+                    ask.push(p.clone());
+                }
+            }
+            AddOutcome::Failed { code } => failed.push(failure(&wire(*code), code.user_message())),
+            AddOutcome::NotFetched { error } => failed.push(failure("NOT_FETCHED", &error.message)),
+            // The browser sends links only, never a Metalink file (#222).
+            AddOutcome::MetalinkAdded { .. } => failed.push(failure(
+                &wire(ErrorCode::Internal),
+                ErrorCode::Internal.user_message(),
+            )),
+        }
+    }
+    let answer = BrowserResponse::ok(
+        id,
+        json!({ "action": "sent", "added": added, "prompted": asked + ask.len(), "failed": failed }),
+    );
+    (answer, ask)
 }
 
 #[cfg(test)]
@@ -519,6 +617,156 @@ mod tests {
         };
         assert_eq!(answer_added("a1", result(conflict)), None);
         assert_eq!(prompted("a1").result.unwrap(), json!({"action":"prompted"}));
+    }
+
+    fn many(urls: &[&str]) -> serde_json::Value {
+        let links: Vec<serde_json::Value> = urls.iter().map(|u| json!({ "url": u })).collect();
+        json!({"v":1,"id":"m1","type":"download.addMany","payload":{"links":links,"referrer":"https://site.example/files/"}})
+    }
+
+    // #426: the files chosen on a page.
+    #[test]
+    fn files_from_a_page_open_one_add_dialog_by_default() {
+        let r = route_with(
+            &BrowserSettings::default(),
+            &envelope(
+                &chrome(),
+                many(&[
+                    "https://e.example/a.iso",
+                    "https://e.example/b.iso",
+                    "https://e.example/a.iso",
+                ]),
+            ),
+        );
+        let Route::AskMany { id, prompts } = r else {
+            panic!("{r:?}")
+        };
+        assert_eq!(id, "m1");
+        let urls: Vec<&str> = prompts.iter().map(|p| p.url.as_str()).collect();
+        assert_eq!(
+            urls,
+            ["https://e.example/a.iso", "https://e.example/b.iso"],
+            "each once"
+        );
+        assert!(prompts.iter().all(|p| p.source == RequestSource::Page
+            && p.referrer.as_deref() == Some("https://site.example/files/")));
+        assert_eq!(
+            prompted_many("m1", 2).result.unwrap(),
+            json!({"action":"sent","added":0,"prompted":2,"failed":[]})
+        );
+    }
+
+    #[test]
+    fn files_from_a_page_are_added_together_and_torrents_still_ask() {
+        let r = route_with(
+            &adding_at_once(),
+            &envelope(
+                &chrome(),
+                many(&[
+                    "https://e.example/a.iso",
+                    "https://e.example/x.torrent",
+                    "https://e.example/b.pdf",
+                ]),
+            ),
+        );
+        let Route::AddMany {
+            request,
+            prompts,
+            ask,
+            ..
+        } = r
+        else {
+            panic!("{r:?}")
+        };
+        assert_eq!(
+            request.links,
+            ["https://e.example/a.iso", "https://e.example/b.pdf"]
+        );
+        assert!(request.from_browser);
+        assert_eq!(
+            request.referrer.as_deref(),
+            Some("https://site.example/files/")
+        );
+        assert_eq!(request.directory, None, "the automatic folder");
+        assert_eq!(prompts.len(), 2);
+        assert_eq!(ask.len(), 1);
+        assert_eq!(ask[0].url, "https://e.example/x.torrent");
+    }
+
+    #[test]
+    fn only_torrents_from_a_page_all_ask() {
+        let r = route_with(
+            &adding_at_once(),
+            &envelope(&chrome(), many(&["https://e.example/x.torrent"])),
+        );
+        assert!(
+            matches!(r, Route::AskMany { ref prompts, .. } if prompts.len() == 1),
+            "{r:?}"
+        );
+    }
+
+    #[test]
+    fn files_from_a_page_are_refused_while_browser_requests_are_off() {
+        let off = BrowserSettings {
+            accept_requests: false,
+            ..BrowserSettings::default()
+        };
+        let r = route_with(
+            &off,
+            &envelope(&chrome(), many(&["https://e.example/a.iso"])),
+        );
+        assert!(matches!(&r, Route::Reply(a) if a.error_code() == Some("DISABLED")));
+    }
+
+    #[test]
+    fn a_batch_answer_counts_what_happened_to_each_file() {
+        let prompts = vec![
+            prompt("https://e.example/1"),
+            prompt("https://e.example/2"),
+            prompt("https://e.example/3"),
+            prompt("https://e.example/4"),
+        ];
+        let at = |url: &str, outcome| AddResult {
+            source: url.to_owned(),
+            outcome,
+        };
+        let results = vec![
+            at(
+                "https://e.example/1",
+                AddOutcome::Added { id: "d-1".into() },
+            ),
+            at(
+                "https://e.example/2",
+                AddOutcome::Conflict {
+                    check: DestinationCheck::sample(),
+                },
+            ),
+            at(
+                "https://e.example/3",
+                AddOutcome::Failed {
+                    code: ErrorCode::InvalidUrl,
+                },
+            ),
+            at(
+                "https://e.example/4",
+                AddOutcome::NotFetched {
+                    error: TransferError::new(FailureClass::Permanent, Some(404), "Not found"),
+                },
+            ),
+        ];
+        let (answer, ask) = answer_batch("m1", Ok(results), &prompts, 1);
+        let result = answer.result.unwrap();
+        assert_eq!(result["action"], "sent");
+        assert_eq!(result["added"], 1);
+        assert_eq!(result["prompted"], 2, "the taken name and one torrent");
+        assert_eq!(result["failed"][0]["code"], "INVALID_URL");
+        assert_eq!(result["failed"][1]["code"], "NOT_FETCHED");
+        assert_eq!(result["failed"][1]["url"], "https://e.example/4");
+        assert_eq!(ask.len(), 1);
+        assert_eq!(ask[0].url, "https://e.example/2");
+        let (refused, none) = answer_batch("m1", Err(ErrorCode::InvalidInput), &prompts, 0);
+        assert_eq!(refused.error_code(), Some("INVALID_INPUT"));
+        assert!(none.is_empty());
     }
 
     fn prompt(url: &str) -> BrowserPrompt {

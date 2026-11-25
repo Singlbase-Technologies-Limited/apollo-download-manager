@@ -256,3 +256,24 @@ describe('recent sends (#356)', () => {
     expect(await bg.onDownloadCreated(item())).toBe('handed-off');
   });
 });
+
+describe('files chosen on a page (#426)', () => {
+  const links = (n: number) => Array.from({ length: n }, (_, i) => ({ url: `https://cdn.test/${String(i)}.iso`, filename: `${String(i)}.iso` }));
+
+  it('sends them in as few messages as the app allows, with the page as referrer, and adds up the answers', async () => {
+    const f = fakeApi((m) => ({ v: 1, id: m.id, ok: true, result: { action: 'sent', added: (m.payload as { links: unknown[] }).links.length, prompted: 0, failed: [] } }));
+    const o = await createBackground(f.api).onPageFiles(links(150), 'https://site.test/files/');
+    expect(f.sent.map((m) => m.type)).toEqual(['download.addMany', 'download.addMany']);
+    expect(f.sent[0]).toMatchObject({ payload: { referrer: 'https://site.test/files/' } });
+    expect(o).toEqual({ added: 150, prompted: 0, failed: [], error: null, notSent: 0 });
+    expect(f.log).toEqual(['badge:']);
+  });
+
+  it('stops after the app refuses one message, and counts the rest as not sent', async () => {
+    const f = fakeApi(notRunning);
+    const o = await createBackground(f.api).onPageFiles(links(150), 'https://site.test/files/');
+    expect(f.sent).toHaveLength(1);
+    expect(o).toMatchObject({ added: 0, notSent: 150, error: { code: 'DESKTOP_NOT_RUNNING' } });
+    expect(f.log).toEqual(['badge:!']);
+  });
+});

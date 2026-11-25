@@ -19,6 +19,14 @@
     <div class="row"><button id="retry" class="primary" type="button">Try again</button></div>
   </section>
 
+  <section id="pageFiles" class="card" aria-labelledby="pageFilesTitle" hidden>
+    <div class="card-head"><h2 id="pageFilesTitle" class="card-title">Files on this page</h2><span id="pageFilesCount" class="pill info" hidden></span></div>
+    <p id="pageFilesText" class="text" role="status"></p>
+    <button id="pageFilesAction" class="primary" type="button" hidden></button>
+    <label id="pageFilesSiteRow" class="toggle" hidden>Show the button on this site <input id="pageFilesSite" type="checkbox"></label>
+    <p class="hint">Turn the button off on every site in the extension's settings.</p>
+  </section>
+
   <section class="card" aria-labelledby="modeTitle">
     <h2 id="modeTitle" class="card-title">When the browser starts a download</h2>
     <div class="segmented" role="group" aria-labelledby="modeTitle">

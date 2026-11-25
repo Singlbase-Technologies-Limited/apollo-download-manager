@@ -7,6 +7,12 @@ export const PROTOCOL_VERSION = 1;
 
 export type RequestSource = 'intercept' | 'contextMenu' | 'popup';
 
+/** One file chosen on a page (#426). */
+export interface PageLinkPayload {
+  url: string;
+  filename?: string;
+}
+
 export interface AddPayload {
   url: string;
   referrer?: string;
@@ -19,7 +25,8 @@ export interface AddPayload {
 export type Request =
   | { v: 1; id: string; type: 'ping' }
   | { v: 1; id: string; type: 'app.status' }
-  | { v: 1; id: string; type: 'download.add'; payload: AddPayload };
+  | { v: 1; id: string; type: 'download.add'; payload: AddPayload }
+  | { v: 1; id: string; type: 'download.addMany'; payload: { links: PageLinkPayload[]; referrer?: string } };
 
 export interface ResponseError {
   code: string;
@@ -80,3 +87,73 @@ export function parseResponse(raw: unknown, expectedId: string): Response {
   }
   return bad('The desktop application sent an invalid response.');
 }
+
+/** The most links one `download.addMany` carries, as the app allows (`MAX_BATCH_LINKS`, #426). */
+export const MAX_BATCH_LINKS = 100;
+/** Kept under the browser's 64 KiB message limit (`MAX_MESSAGE_BYTES`) with room for the envelope. */
+const MAX_BATCH_BYTES = 60 * 1024;
+const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).length;
+
+/**
+ * The files chosen on a page as `download.addMany` requests (#426): as few as fit the app's limits on links and
+ * message size. Links that can't be sent are left out, and a file name keeps its last component only.
+ */
+export function buildAddMany(links: readonly PageLinkPayload[], referrer?: string): Request[] {
+  const ref = referrer && referrer.length <= MAX_URL && isHttpUrl(referrer) ? referrer : undefined;
+  const base = 200 + (ref?.length ?? 0);
+  const out: Request[] = [];
+  let chunk: PageLinkPayload[] = [];
+  let size = base;
+  const flush = () => {
+    if (chunk.length === 0) return;
+    out.push({ v: PROTOCOL_VERSION, id: newId(), type: 'download.addMany', payload: ref ? { links: chunk, referrer: ref } : { links: chunk } });
+    chunk = [];
+    size = base;
+  };
+  for (const l of links) {
+    if (!browserCanDownload(l.url)) continue;
+    const link: PageLinkPayload = { url: l.url };
+    const name = l.filename?.split(/[\\/]/).pop();
+    if (name && name.length <= 1024 && !/\p{Cc}/u.test(name)) link.filename = name;
+    const n = bytes(link) + 1;
+    if (chunk.length === MAX_BATCH_LINKS || size + n > MAX_BATCH_BYTES) flush();
+    chunk.push(link);
+    size += n;
+  }
+  flush();
+  return out;
+}
+
+export interface BatchFailure {
+  url: string;
+  code: string;
+  message: string;
+}
+
+/** What happened to a choice of files from a page, over all its messages (#426). */
+export interface BatchOutcome {
+  added: number;
+  prompted: number;
+  failed: BatchFailure[];
+  /** Why a message was refused as a whole, such as the app not running; its links count as not sent. */
+  error: ResponseError | null;
+  notSent: number;
+}
+
+const count = (v: unknown) => (typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : 0);
+
+function failuresOf(v: unknown): BatchFailure[] {
+  if (!Array.isArray(v)) return [];
+  return v.flatMap((f: unknown) => {
+    const r = (typeof f === 'object' && f !== null ? f : {}) as Record<string, unknown>;
+    return typeof r.url === 'string' && typeof r.code === 'string' && typeof r.message === 'string' ? [{ url: r.url, code: r.code, message: r.message }] : [];
+  });
+}
+
+/** Adds one message's answer, for `sent` links, to what happened so far. */
+export function addToOutcome(o: BatchOutcome, r: Response, sent: number): BatchOutcome {
+  if (!r.ok) return { ...o, error: o.error ?? r.error, notSent: o.notSent + sent };
+  return { ...o, added: o.added + count(r.result.added), prompted: o.prompted + count(r.result.prompted), failed: [...o.failed, ...failuresOf(r.result.failed)] };
+}
+
+export const EMPTY_OUTCOME: BatchOutcome = { added: 0, prompted: 0, failed: [], error: null, notSent: 0 };

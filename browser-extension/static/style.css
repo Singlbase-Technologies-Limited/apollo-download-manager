@@ -87,6 +87,8 @@ button:disabled { opacity: .55; cursor: default; }
 .pill { flex-shrink: 0; border-radius: 999px; padding: 2px var(--s2); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .pill.ok { background: var(--success-soft); color: var(--success); }
 .pill.err { background: var(--danger-soft); color: var(--danger); }
+.pill.info { background: var(--accent-soft); color: var(--accent-strong); }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
 .empty { color: var(--fg-subtle); text-align: center; padding: var(--s3) 0; }
 
 /* Settings page. */
