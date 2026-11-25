@@ -17,8 +17,8 @@ Apollo Download Manager couldn't be distributed or made public without a licence
 - **Licence:** the GNU General Public License, version 3 only (SPDX `GPL-3.0-only`). Anyone who distributes a changed Apollo Download Manager must publish its source under the same licence.
 - **Copyright holder:** Singlbase Technologies Limited. The notice reads `Copyright (C) 2026 Singlbase Technologies Limited`.
 - **Version 3 only,** not "or later": Singlbase, not the Free Software Foundation, decides whether a future GPL version applies.
-- **Contributions** from outside Singlbase come under a Contributor Licence Agreement with Singlbase (`CLA.md`, #90), so Singlbase keeps the right to offer Apollo Download Manager under other terms as well.
-- **Where it is stated:** `LICENSE` (the licence's full text), `package.json` and the workspace `Cargo.toml` (`license`), the packages' metadata, the installers (which install `LICENSE`), the app's About screen (the notice GPL-3.0's section 5(d) asks an interactive program to show), and the README.
+- **Contributions** from outside Singlbase come under a Contributor Licence Agreement with Singlbase ([`CLA.md`](../../CLA.md), #90), so Singlbase keeps the right to offer Apollo Download Manager under other terms as well.
+- **Where it is stated:** `LICENSE` (the licence's full text), [`package.json`](../../package.json) and the workspace [`Cargo.toml`](../../Cargo.toml) (`license`), the packages' metadata, the installers (which install `LICENSE`), the app's About screen (the notice GPL-3.0's section 5(d) asks an interactive program to show), and the README.
 
 ## Options considered
 

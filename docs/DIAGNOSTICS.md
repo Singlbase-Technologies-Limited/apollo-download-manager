@@ -2,6 +2,8 @@
 
 What Apollo Download Manager records about itself, how secrets are kept out of it, and what the user can share (#28). Privacy as a whole is in [PRIVACY.md](PRIVACY.md).
 
+See also, for users: [Troubleshooting](user/troubleshooting.md).
+
 ## The app's log
 
 - **Where:** in memory only. `velocity_core::logs::AppLog` keeps the last 1,000 lines, each cut at 2,000 characters. Nothing is written to a log file, a terminal or the network.
@@ -17,7 +19,7 @@ What Apollo Download Manager records about itself, how secrets are kept out of i
     - at info: a direct download's connection count when it changes, with what it was allowed and what holds it back.
 
   A download read back at start-up adds no line until it changes. The bounds keep one download from pushing the rest out of the 1,000 lines: a retry is one line (getting going again after it, or after a stall, adds none), and connection changes are logged at most every 30 seconds, and 20 times a run, followed by one line saying further changes aren't. A torrent's peer count isn't logged.
-- **How:** the app installs `AppLog`'s layer as the global `tracing` subscriber when it starts (`src-tauri/src/diagnostics.rs`). Each line is redacted before it is kept.
+- **How:** the app installs `AppLog`'s layer as the global `tracing` subscriber when it starts ([`src-tauri/src/diagnostics.rs`](../src-tauri/src/diagnostics.rs)). Each line is redacted before it is kept.
 
 ## The engines' logs
 
@@ -50,7 +52,7 @@ Requests to the same host that end the same way as the one before are counted ra
 | A tracker URL's path and query, where passkeys live | `https://t.test/abc/announce` | `https://t.test/[redacted]` |
 | Secrets registered this session (`register_secret`, at least 8 characters, at most 64 kept) | | `[redacted]` |
 
-Hosts, ordinary paths and queries, and SSH key fingerprints (`SHA256:…`, which identify public keys) are kept, so a report still says which server failed. Its tests are in `crates/velocity-core/src/redact.rs`.
+Hosts, ordinary paths and queries, and SSH key fingerprints (`SHA256:…`, which identify public keys) are kept, so a report still says which server failed. Its tests are in [`crates/velocity-core/src/redact.rs`](../crates/velocity-core/src/redact.rs).
 
 ## Diagnostics
 
@@ -65,13 +67,13 @@ Hosts, ordinary paths and queries, and SSH key fingerprints (`SHA256:…`, which
 
 **Exporting:** `export_diagnostics` asks where to save, with the system's chooser, and writes the report as indented JSON. Each string in it is redacted once more, so nothing a part missed is written, and the JSON stays whole. The test `an_export_holds_no_secret_from_any_log` plants a secret of each kind in every log and checks that none reaches the export.
 
-**Where it is shown:** `src/features/diagnostics/DiagnosticsPanel.tsx`, under Settings, About and diagnostics (#30; PO decision on #28). It shows the report, both engines' "Restart" buttons, and "Export diagnostics…". It has no "Copy", unlike V1's, so the export is the only way out and it always runs the final redaction.
+**Where it is shown:** [`src/features/diagnostics/DiagnosticsPanel.tsx`](../src/features/diagnostics/DiagnosticsPanel.tsx), under Settings, About and diagnostics (#30; PO decision on #28). It shows the report, both engines' "Restart" buttons, and "Export diagnostics…". It has no "Copy", unlike V1's, so the export is the only way out and it always runs the final redaction.
 
 ## Crash logs
 
 The crash policy (#28): **local crash logs only.** Any telemetry or crash upload needs a separate PO decision.
 
-- When the app panics, `src-tauri/src/diagnostics.rs` logs it as an error, writes a crash log and then lets the default panic handling run.
+- When the app panics, [`src-tauri/src/diagnostics.rs`](../src-tauri/src/diagnostics.rs) logs it as an error, writes a crash log and then lets the default panic handling run.
 - **The crash log** (`velocity_core::crash::write_crash_log`):
   - a file `crash-<milliseconds>.txt` in the app's data folder, under `crash-logs` ([COEXISTENCE.md](COEXISTENCE.md));
   - it holds the version, the panic message and location, and a backtrace, all redacted;

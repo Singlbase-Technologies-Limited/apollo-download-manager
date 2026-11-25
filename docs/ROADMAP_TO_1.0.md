@@ -25,7 +25,7 @@ Each condition has a measurable test. "Owner" says who does it: the **agent**, t
 | 1.4 | **OpenSSF Scorecard** for the repository (#473): the security gate in place of an outside review | Score of 7 or more, with the low checks explained | Agent | Not measured | v0.4.0 |
 | 1.5 | **No unaccepted advisories** | `pnpm check:advisories` passes; every accepted one is in the register with a reason | Agent | PASS (2026-11-10); minimatch accepted until ESLint allows the fix | Every release |
 | 1.6 | **Mark of the Web** on Windows | #469's acceptance criteria | Agent | Done: direct downloads and torrent files (#469) | v0.3.0 (#469) |
-| 1.7 | **A security response promise** (#476) (PO decision, 2026-11-13) | `SECURITY.md` states: an answer to a report within 7 days, and a fix for a serious hole within 30 days | Agent | Private reporting is on; no times stated | v0.4.0 |
+| 1.7 | **A security response promise** (#476) (PO decision, 2026-11-13) | [`SECURITY.md`](../SECURITY.md) states: an answer to a report within 7 days, and a fix for a serious hole within 30 days | Agent | Private reporting is on; no times stated | v0.4.0 |
 
 ### 2. Reliability: no lost or corrupt downloads
 
@@ -52,14 +52,14 @@ Each condition has a measurable test. "Owner" says who does it: the **agent**, t
 | 4.1 | **The browser stores** | The extension is public in the Chrome Web Store, Firefox Add-ons and Edge Add-ons, and the app links to each | PO | Chrome and Firefox public; Edge account waiting (#240, #241) | Edge when approved. 1.0.0 doesn't wait for it (PO decision, 2026-11-13: "Yes, Edge can follow"); until then the guide points Edge users to the Chrome Web Store |
 | 4.2 | **Flatpak on Flathub** | Listed on Flathub, built from the release; installs and runs on Fedora and Ubuntu | Agent, PO (Flathub account) | None (PO decision, 2026-11-13: before 1.0) | v0.5.0 |
 | 4.3 | **Updates** (#474) | Full auto-update (PO decision, 2026-11-13: "Full auto-update"): the app finds, downloads and installs a signed update, and refuses one whose signature doesn't verify | Agent | Nothing in the app | After signing (1.1); v0.5.0 suggested |
-| 4.4 | **No bundled offers, ever** | Stated in `README.md` and the site; the installers' contents check (already in packaging) shows nothing but Apollo Download Manager's files | Agent | True; not stated | v0.3.0 |
+| 4.4 | **No bundled offers, ever** | Stated in [`README.md`](../README.md) and the site; the installers' contents check (already in packaging) shows nothing but Apollo Download Manager's files | Agent | True; not stated | v0.3.0 |
 
 ### 5. Legal
 
 | # | Condition | Test | Owner | Today | Version |
 |---|---|---|---|---|---|
 | 5.1 | **Trademark and IP due diligence** | #441's report, and the lawyer's answer on the name | PO, outside | In progress (#441) | v0.3.0 |
-| 5.2 | **Legal review of the licence and the CLA** | A lawyer's sign-off; `CLA.md` no longer a draft | PO, outside | NOT RUN | Before 1.0.0-rc |
+| 5.2 | **Legal review of the licence and the CLA** | A lawyer's sign-off; [`CLA.md`](../CLA.md) no longer a draft | PO, outside | NOT RUN | Before 1.0.0-rc |
 | 5.3 | **The Chrome Web Store publisher status** | Trader with a business number, or Non-trader confirmed by the lawyer | PO | Non-trader for now | With 5.1 |
 
 ### 6. The product

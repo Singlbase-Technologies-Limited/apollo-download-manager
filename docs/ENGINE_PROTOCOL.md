@@ -6,7 +6,7 @@ Two programs run as child processes of the app:
 
 Both speak the same protocol, and the same supervisor keeps both running (#39, #62). The commands, replies and events differ:
 - the engine's are the `DirectTransfer` wire forms in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md);
-- the helper's are the torrent contract in [TORRENTS.md](TORRENTS.md#the-torrent-contract).
+- the helper's are the torrent contract in [TORRENT_CONTRACT.md](TORRENT_CONTRACT.md#the-torrent-contract).
 
 Below, *the child* means either program.
 
@@ -72,7 +72,7 @@ For example:
 - **What's checked:** the protocol version and the child's contract version must match exactly, and both sides check them.
   - **The protocol** (`PROTOCOL_VERSION`) is now 3. Version 1 was the #37 prototype's JSON lines; version 2 named the first id `firstTransferId`; version 3 (#62) names it `firstId`, for every contract.
   - **The engine's contract** (`TRANSFER_CONTRACT_VERSION`) is now 16; what each version added is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md).
-  - **The helper's contract** (`TORRENT_CONTRACT_VERSION`) is now 8 ([TORRENTS.md](TORRENTS.md#the-torrent-contract)): version 2 added file choice, version 3 seeding, resume data and `restore`, version 4 trackers, peers, limits and the port settings, version 5 the proxy (#192), version 6 moving a torrent (#366), version 7 the piece order (#470), and version 8 the network adapter (#471).
+  - **The helper's contract** (`TORRENT_CONTRACT_VERSION`) is now 8 ([TORRENT_CONTRACT.md](TORRENT_CONTRACT.md#the-torrent-contract)): version 2 added file choice, version 3 seeding, resume data and `restore`, version 4 trackers, peers, limits and the port settings, version 5 the proxy (#192), version 6 moving a torrent (#366), version 7 the piece order (#470), and version 8 the network adapter (#471).
 - **The first frame:** the app refuses a child whose `hello` has other versions, or whose first frame isn't a `hello`, as `ENGINE_INCOMPATIBLE`. An engine that still speaks protocol 1 or 2 is refused this way.
 - **The answer:** the child refuses a `start` with other versions by exiting, with the reason on stderr.
 - **A child that exits before `hello`** failed to start: `ENGINE_START_FAILED`. A program that isn't there is `ENGINE_MISSING`.
@@ -81,7 +81,7 @@ For example:
 
 - **Graceful stop:** closing the child's stdin is the stop request.
   - **The engine** pauses every transfer, keeping its part file for a resume from its last checkpoint (#43), waits up to 5 seconds for its workers to stop, and exits.
-  - **The helper** exits; libtorrent's files stay as they are. Before the app closes it, the app collects every torrent's resume data (`collect_resume_data`), so the next session needn't check them ([TORRENTS.md](TORRENTS.md#resume-data-and-recovery)).
+  - **The helper** exits; libtorrent's files stay as they are. Before the app closes it, the app collects every torrent's resume data (`collect_resume_data`), so the next session needn't check them ([TORRENTS.md](TORRENT_LIFECYCLE.md#resume-data-and-recovery)).
 - **Kill:** the app waits up to 5 seconds for the child's stdout to end, and kills it if it doesn't. The engine does the same when the app goes away.
 - **No polling:** the app waits on the end of the child's stdout, not on a polling loop.
 - **Dropping a supervisor** stops its child before it returns: the child has exited, or been killed, by then. No other thread keeps a retired child alive, so its files are closed (#62).
@@ -92,7 +92,7 @@ For example:
 - **`SupervisedEngine`** implements `DirectTransfer` around `ChildProcessEngine`, with `TransferBook`;
 - **`SupervisedTorrentEngine`** implements `TorrentEngine` around `ChildTorrentEngine`, with `TorrentBook`.
 
-The rules below are the engine's. The helper follows them too, with its own messages ("the torrent helper stopped unexpectedly"), its torrent settings given to each new helper, and `version` as its hang check. A torrent that a crashed helper had fails as retryable, then the new helper gets it back under its id, from its latest resume data (PO decision on #62; [TORRENTS.md](TORRENTS.md#resume-data-and-recovery)).
+The rules below are the engine's. The helper follows them too, with its own messages ("the torrent helper stopped unexpectedly"), its torrent settings given to each new helper, and `version` as its hang check. A torrent that a crashed helper had fails as retryable, then the new helper gets it back under its id, from its latest resume data (PO decision on #62; [TORRENTS.md](TORRENT_LIFECYCLE.md#resume-data-and-recovery)).
 
 - **A new child is subscribed to before it is prepared**, so nothing it sends while it gets its setup is lost.
 - **An orphan the running child reports again** is the child's again: the ledger stops answering for it.

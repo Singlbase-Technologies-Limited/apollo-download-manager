@@ -15,8 +15,8 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 
 | Item | Owner | Status | Evidence |
 |---|---|---|---|
-| Dependency advisories (#75) | Agent | PASS | `pnpm check:advisories` with #446 in: Rust PASS, npm PASS. RUSTSEC-2026-0459 (SQLite, Medium), found by this review, was fixed in #446; the rest are fixed or accepted in the register ([SECURITY.md](SECURITY.md#the-register)) |
-| TLS verification on every backend (#69) | Agent | PASS | #69 closed; [SECURITY.md](SECURITY.md#tls-verification-69) |
+| Dependency advisories (#75) | Agent | PASS | `pnpm check:advisories` with #446 in: Rust PASS, npm PASS. RUSTSEC-2026-0459 (SQLite, Medium), found by this review, was fixed in #446; the rest are fixed or accepted in the register ([SECURITY.md](SECURITY_SUPPLY_CHAIN.md#the-register)) |
+| TLS verification on every backend (#69) | Agent | PASS | #69 closed; [SECURITY_NETWORK.md](SECURITY_NETWORK.md#tls-verification-69) |
 | Links, redirects and local addresses (#67) | Agent | PASS | #67 closed; [SECURITY.md](SECURITY.md#links-redirects-and-local-addresses-67) |
 | Secrets kept out of storage (#70), and the leak scan (#71) | Agent | PASS | #70 and #71 closed; [SECURITY.md](SECURITY.md#secrets-70) |
 | Files and folders (#72) | Agent | PASS | #72 closed; [SECURITY.md](SECURITY.md#files-and-folders-72) |
@@ -32,7 +32,7 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 | Apollo Download Manager's own licence | PO | PASS | GPL-3.0-only ([ADR-0017](decisions/0017-gpl-3-licence.md), #86) |
 | Third-party notices and licence closure (#76) | Agent | PASS | `pnpm check:notices` on `7dce4d1`: "THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 578 crates, 62 npm packages" |
 | Legal review of the licensing | PO | NOT RUN | [LICENSING.md](LICENSING.md): "No legal review was done for this decision" |
-| Legal review of the Contributor Licence Agreement | PO | NOT RUN | [OPEN_SOURCE.md](OPEN_SOURCE.md): `CLA.md` is a draft until reviewed by a lawyer |
+| Legal review of the Contributor Licence Agreement | PO | NOT RUN | [OPEN_SOURCE.md](OPEN_SOURCE.md): [`CLA.md`](../CLA.md) is a draft until reviewed by a lawyer |
 | Trademark and intellectual-property due diligence (#441) | PO | NOT RUN | #441 open, in v0.3.0; the PO is arranging the trademark searches with a lawyer |
 
 ## Packaging and signing
@@ -59,7 +59,7 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 
 | Item | Owner | Status | Evidence |
 |---|---|---|---|
-| The installed app with real downloads (#262) | PO and agent | PASS | #262 closed (2026-11-04); its session reports are comments on #262 ([TESTING.md](TESTING.md#the-field-test-262)) |
+| The installed app with real downloads (#262) | PO and agent | PASS | #262 closed (2026-11-04); its session reports are comments on #262 ([TEST_FIXTURES.md](TEST_FIXTURES.md#the-field-test-262)) |
 | Feedback on the candidates | PO | PASS | 0.1.0 and 0.1.1 were released from their candidates on the PO's acceptance, as pre-releases |
 | Ramp and speed field testing (#330) | Agent | NOT RUN | #330 open, in v0.3.0 |
 
@@ -100,7 +100,7 @@ What users meet in this version, with where it is documented:
 - **The extension is only in the Chrome Web Store** in 0.2.0. Edge and Firefox users load it by hand until their stores approve it ([Browser integration](user/browser.md#installing-the-extension)). Firefox Add-ons approved it on 2026-11-12, and the app links to it from 0.3.0.
 - **Nothing is imported from V1** ([V1 and Apollo Download Manager](user/v1-and-v2.md)).
 - **Protocols:** FTP and SFTP use one connection each, and SFTP and torrents can't use an HTTPS proxy ([Protocols](user/protocols.md#not-supported)).
-- **Torrents through a proxy** have limits ([Torrents](user/torrents.md#not-yet-or-different-from-v1)).
+- **Torrents through a proxy** have limits ([Torrents](user/torrents.md#different-from-v1)).
 - **Snap and Flatpak browsers** may not be able to start the browser connection. Settings, Browser warns beside such a browser; the user guide doesn't mention it yet.
 - **On Linux,** browser registrations must be removed before the package ([Installing](user/installing.md#removing-apollo-download-manager)).
 - **No macOS build.**

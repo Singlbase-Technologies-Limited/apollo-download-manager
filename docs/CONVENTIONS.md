@@ -52,9 +52,9 @@ These follow the [Rust API guidelines on naming](https://rust-lang.github.io/api
 
 | Item | Style | Example |
 |---|---|---|
-| `package.json` scripts | `group:action` | `check:fast`, `test:focused` |
+| [`package.json`](../package.json) scripts | `group:action` | `check:fast`, `test:focused` |
 | Node scripts | `kebab-case.mjs`, tests as `<name>.test.mjs` | `check-pr.mjs`, `checks-lib.test.mjs` |
-| Top-level docs | `UPPER_SNAKE_CASE.md` | `DEVELOPMENT_WORKFLOW.md` |
+| Top-level docs | `UPPER_SNAKE_CASE.md` | [`DEVELOPMENT_WORKFLOW.md`](DEVELOPMENT_WORKFLOW.md) |
 | Decision records | `NNNN-kebab-title.md` | `0001-v2-direction.md` |
 | Research | `YYYY-MM-DD-kebab-title.md` | `2026-10-21-libcurl-engine-research-r2.md` |
 | Environment variables | `VELOCITY_` plus `SCREAMING_SNAKE_CASE` | `VELOCITY_DATA_DIR` |

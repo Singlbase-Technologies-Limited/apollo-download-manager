@@ -111,6 +111,10 @@ const devSearch = (root) => searchForm({ root, id: 'dev-search', label: 'Search 
  * @param {(blocks: object[], hrefOf: (to: object) => string) => string} input.renderBlocks
  * @param {string} input.repo the repository's address
  */
+/** Whether `blocks` hold a Mermaid diagram (#484), so the page loads site/developers/diagrams.js, and others don't. */
+const hasDiagram = (blocks) =>
+  blocks.some((b) => (b.type === 'codeBlock' && b.lang === 'mermaid') || (b.type === 'list' && b.items.some(hasDiagram)) || (b.type === 'quote' && hasDiagram(b.content)));
+
 export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
   const sections = sectionsOf(nav, files);
   const docs = [START, ...sections.flatMap((s) => s.pages)];
@@ -128,6 +132,8 @@ export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
       if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(to.image)) throw new Error(`docs/${file}: the image ${to.image} must be a file in docs/images/`);
       return `${root}${posix.normalize(posix.join(posix.dirname(file), to.image))}`;
     };
+    // Where the page is (#425): its section in developers.json, above its title and on the phone's menu button.
+    const section = sections.find((s) => s.pages.includes(file))?.title;
     const first = page.sections.find((s) => s.text)?.text ?? page.title;
     const at = docs.indexOf(file);
     const neighbour = (f) => f && { href: `${root}${pagePath(f)}`, title: titles.get(f) };
@@ -139,8 +145,9 @@ export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
       aside: `${devSearch(root)}\n${contents(sections, nav.names, file, (f) => `${root}${pagePath(f)}`)}\n`,
       toc: tableOfContents(page.headings),
       after: pager(neighbour(docs[at - 1]), neighbour(docs[at + 1])),
-      crumb: 'Developer documents',
-      head: `<script type="module" src="${root}search.js"></script>\n`,
+      crumb: section ?? 'Developer documents',
+      label: section ? `Developers · ${section}` : 'Developers',
+      head: `<script type="module" src="${root}search.js"></script>\n${hasDiagram(page.blocks) ? `<script type="module" src="${root}diagrams.js"></script>\n` : ''}`,
     });
   }
 
