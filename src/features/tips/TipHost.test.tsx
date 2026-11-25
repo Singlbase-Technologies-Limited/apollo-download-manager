@@ -1,3 +1,4 @@
+import { emit } from '@tauri-apps/api/event';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -67,6 +68,28 @@ describe('the tip card (#460)', () => {
       { enabled: true, shown: ['restartOnNetwork'], dismissed: [] },
       { enabled: true, shown: ['restartOnNetwork'], dismissed: ['restartOnNetwork'] },
     ]);
+  });
+
+  it('shows after quitting was cancelled with downloads running', async () => {
+    installFakeBackend({ snapshot: emptySnapshot(), appSettings: allOff() });
+    const user = userEvent.setup();
+    render(<App client={createQueryClient()} />);
+    await screen.findByText('No downloads yet');
+    await act(() => emit('quit-requested', { active: 1 }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Keep downloading' }));
+    expect((await screen.findByRole('region', { name: 'Tip' })).textContent).toContain('keep Apollo DM running in the tray');
+  });
+
+  it('shows after a magnet link was added', async () => {
+    installFakeBackend({ snapshot: emptySnapshot(), appSettings: allOff() });
+    const user = userEvent.setup();
+    render(<App client={createQueryClient()} />);
+    await user.click(await screen.findByRole('button', { name: 'Add download' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add download' });
+    await user.click(within(dialog).getByRole('textbox', { name: 'Links' }));
+    await user.paste('magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    await user.click(within(dialog).getByRole('button', { name: 'Start download' }));
+    expect((await screen.findByRole('region', { name: 'Tip' })).textContent).toContain('magnet link’s files');
   });
 
   it('turns the feature on from its button', async () => {
