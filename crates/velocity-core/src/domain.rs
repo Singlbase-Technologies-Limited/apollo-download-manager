@@ -1333,19 +1333,31 @@ mod tests {
             let candidates = vec![
                 MirrorCandidate {
                     url: "https://m1.example.org/x.iso".into(),
-                    source: MirrorSource::Official { project: MirrorProject::ArchLinux },
+                    source: MirrorSource::Official {
+                        project: MirrorProject::ArchLinux,
+                    },
                     country: Some("DE".into()),
                 },
-                MirrorCandidate { url: "https://m2.example.org/x.iso".into(), source: MirrorSource::Announced, country: None },
+                MirrorCandidate {
+                    url: "https://m2.example.org/x.iso".into(),
+                    source: MirrorSource::Announced,
+                    country: None,
+                },
             ];
-            check("mirror-candidates.json", serde_json::to_value(&candidates).unwrap());
+            check(
+                "mirror-candidates.json",
+                serde_json::to_value(&candidates).unwrap(),
+            );
             let mirrors = DownloadMirrors {
                 chosen: vec!["https://m3.example.org/x.iso".into()],
                 announced: vec![candidates[1].clone()],
                 official: Some(MirrorProject::Ubuntu),
                 changeable: true,
             };
-            check("download-mirrors.json", serde_json::to_value(&mirrors).unwrap());
+            check(
+                "download-mirrors.json",
+                serde_json::to_value(&mirrors).unwrap(),
+            );
         }
 
         #[test]

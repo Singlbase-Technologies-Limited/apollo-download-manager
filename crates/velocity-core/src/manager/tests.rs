@@ -6690,7 +6690,10 @@ mod torrent_links {
             "{:?}",
             s.direct.log()
         );
-        assert_eq!(s.m.mirrors(&id).unwrap().chosen, std::slice::from_ref(&mirror));
+        assert_eq!(
+            s.m.mirrors(&id).unwrap().chosen,
+            std::slice::from_ref(&mirror)
+        );
         s.m.resume(&id).unwrap();
         s.m.pump(T0);
         assert_eq!(s.direct.spec(TransferId(2)).urls, [ISO.to_owned(), mirror]);
