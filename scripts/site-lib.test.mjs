@@ -102,7 +102,8 @@ describe('the website (#353)', () => {
 
   it('lists every page in the sitemap at its full address', () => {
     const site = buildSite({ releases: [release()] });
-    const pages = Object.keys(site).filter((p) => p.endsWith('index.html'));
+    // Every page search engines may list; a moved page's address (#425) is left out.
+    const pages = Object.keys(site).filter((p) => p.endsWith('index.html') && !site[p].includes('<meta name="robots" content="noindex">'));
     for (const p of pages) expect(site['sitemap.xml']).toContain(`<loc>${SITE_URL}${p.replace(/index\.html$/, '')}</loc>`);
     expect(site['robots.txt']).toContain(`Sitemap: ${SITE_URL}sitemap.xml`);
   });
@@ -174,8 +175,20 @@ describe('the website shows the real app (#353)', () => {
   });
 
   it('shows the screen a guide section describes, right under its heading', () => {
-    expect(site['guide/downloads/index.html']).toMatch(/id="adding-downloads">[^<]*<\/h2>\s*<figure[^>]*><img[^>]+screens\/add\.webp/);
+    // The Downloads page became task pages (#425); its screens moved with their sections.
+    expect(site['guide/add-a-download/index.html']).toMatch(/id="opening-the-add-dialog">[^<]*<\/h2>\s*<figure[^>]*><img[^>]+screens\/add\.webp/);
+    expect(site['guide/download-list/index.html']).toMatch(/id="the-details-panel">[^<]*<\/h2>\s*<figure[^>]*><img[^>]+screens\/details\.webp/);
     expect(site['guide/categories/index.html']).toContain('screens/categories.webp');
+  });
+
+  it('keeps the old Downloads address, pointing to the pages it became, and out of the sitemap (#425)', () => {
+    const moved = site['guide/downloads/index.html'];
+    for (const page of ['add-a-download', 'download-list', 'resume', 'queue-and-schedule', 'files-and-logins']) {
+      expect(moved).toContain(`<a href="../../guide/${page}/">`);
+      expect(site[`guide/${page}/index.html`], page).toBeDefined();
+    }
+    expect(moved).toContain('<meta name="robots" content="noindex">');
+    expect(site['sitemap.xml']).not.toContain('guide/downloads/');
   });
 
   it('describes every screen, gives it a size, and has its file', () => {
@@ -234,7 +247,8 @@ describe('the website shows the real app (#353)', () => {
   it('gives a long document its contents, and previous and next links (#379)', () => {
     const page = site['guide/torrents/index.html'];
     expect(page).toMatch(/<nav class="toc" aria-label="On this page">/);
-    expect(page).toMatch(/<a rel="prev" href="\.\.\/\.\.\/guide\/downloads\/">/);
+    // Since #425 the page before Torrents is Files, folders and logins.
+    expect(page).toMatch(/<a rel="prev" href="\.\.\/\.\.\/guide\/files-and-logins\/">/);
     expect(page).toMatch(/<a rel="next" href="\.\.\/\.\.\/guide\/categories\/">/);
     expect(page).toContain('aria-current="page">Torrents');
   });

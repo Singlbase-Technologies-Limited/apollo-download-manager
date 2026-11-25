@@ -249,6 +249,14 @@ impl FakeControl {
         s.changed(id);
     }
 
+    /// Reports the mirrors the transfer's server announced (#324).
+    pub fn announce(&self, id: TransferId, mirrors: &[&str]) {
+        let mut s = lock(&self.state);
+        let t = s.transfers.get_mut(&id).expect("known transfer");
+        t.snapshot.announced_mirrors = mirrors.iter().map(|m| (*m).to_owned()).collect();
+        s.changed(id);
+    }
+
     /// Sends an arbitrary event, for example one about a transfer that doesn't exist.
     pub fn emit(&self, event: TransferEvent) {
         lock(&self.state).emit(event);

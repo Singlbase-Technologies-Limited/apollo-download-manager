@@ -20,6 +20,7 @@ import { formatBytes } from '../../lib/format';
 import { useCapabilities, useCategories, useSettings } from '../../lib/queries';
 import { nameForDownload } from '../../naming';
 import { useUiStore, type AddPrefill } from '../../stores/ui';
+import { MirrorPicker } from '../mirrors/MirrorPicker';
 import { useTipStore } from '../tips/tips';
 import { showDownload } from '../downloads/showDownload';
 import { FileTree } from '../torrents/FileTree';
@@ -73,6 +74,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const [categoryId, setCategoryId] = useState(AUTOMATIC);
   const [createDirectory, setCreateDirectory] = useState(false);
   const [startAtOn, setStartAtOn] = useState(false);
+  /** Mirrors chosen for one direct link (#324). */
+  const [mirrors, setMirrors] = useState<string[]>([]);
   const [startAt, setStartAt] = useState(() => nextFullHour());
   const [requireEncryption, setRequireEncryption] = useState(false);
   const [chooseFiles, setChooseFiles] = useState(defaults?.chooseFilesForMagnets ?? false);
@@ -111,6 +114,8 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
   const firstInvalid = invalid[0];
   const single = links.length === 1 && files === 0 ? links[0] : undefined;
   const singleDirect = single !== undefined && (kinds[0] === 'http' || kinds[0] === 'ftp' || kinds[0] === 'sftp') ? single : undefined;
+  /** The one `http`, `https` or `ftp` link mirrors can be chosen for (#324). */
+  const mirrorLink = single !== undefined && (kinds[0] === 'http' || kinds[0] === 'ftp') ? single : undefined;
   const torrentMode = torrentFiles.length > 0 || kinds.some((k) => k === 'magnet' || k === 'torrentLink');
   const hasSftp = kinds.includes('sftp');
   const plainFtp = links.find((l) => cleartextWarning(l, false) !== null);
@@ -215,6 +220,7 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
     // The browser's link, unchanged, waits for the user at a local address; one typed or pasted here doesn't (#67, ADR-0006).
     fromBrowser: prefill?.fromBrowser !== undefined && text.trim() === (prefill.links ?? '').trim(),
     startAt: startAtOn ? startAt : null,
+    mirrors: mirrorLink !== undefined ? mirrors : [],
     ...over,
   });
 
@@ -590,6 +596,11 @@ function AddForm({ prefill, defaults, onClose }: { prefill: AddPrefill | null; d
           </button>
           {advanced ? (
             <div id="add-advanced" className="space-y-3 rounded-lg border border-border p-3">
+              {mirrorLink !== undefined ? (
+                <Field label="Mirrors" hint="Other servers with the same file: found in its project's official list, or pasted.">
+                  {() => <MirrorPicker link={mirrorLink} chosen={mirrors} onChange={setMirrors} />}
+                </Field>
+              ) : null}
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Connections" hint="Empty uses the performance profile.">
                   {(p) => <Input {...p} type="number" min={1} max={64} value={connections} onChange={(e) => { setConnections(e.target.value); }} />}

@@ -5,12 +5,12 @@ How Apollo Download Manager is versioned, how a version's changelog is written, 
 ## The version
 
 - **[Semantic Versioning](https://semver.org/):** `MAJOR.MINOR.PATCH`. While Apollo Download Manager is below 1.0.0, a minor version may break things, as SemVer allows for 0.y.z. The first release candidate is `v0.1.0-rc.1` (PO decision on #84).
-- **One value:** `package.json`'s `version` is the source.
-  - **Tauri** reads it for the app and its packages: `src-tauri/tauri.conf.json` says `"version": "../package.json"` ([Tauri's `version`](https://v2.tauri.app/reference/config/#version)).
-  - **The browser extension's manifest** is built from it (`scripts/build-extension.mjs`).
-  - **Cargo** can't read another file, so `[workspace.package] version` in `Cargo.toml` repeats it, and every crate takes it (`version.workspace = true`). The programs report it through `CARGO_PKG_VERSION`: the app's About screen, the user agent and the torrent client's identity.
-- **A test fails while they differ** ([`scripts/version-lib.test.mjs`](../scripts/version-lib.test.mjs)), and the release-candidate workflow refuses a tag whose version isn't `package.json`'s.
-- **Changing it:** `pnpm version:set <MAJOR.MINOR.PATCH>` sets `package.json` and `Cargo.toml`, then updates only Apollo Download Manager's own crates in `Cargo.lock` (`cargo update --workspace`). The contract fixture `tests/fixtures/contract/app-info.json` holds the version too: regenerate it with `VELOCITY_UPDATE_FIXTURES=1 cargo test -p velocity-core --lib contract` (found on 0.1.1, #342). Commit the four files in one pull request with the changelog section, such as `chore: version 0.2.0 (#N)`.
+- **One value:** [`package.json`](../package.json)'s `version` is the source.
+  - **Tauri** reads it for the app and its packages: [`src-tauri/tauri.conf.json`](../src-tauri/tauri.conf.json) says `"version": "../package.json"` ([Tauri's `version`](https://v2.tauri.app/reference/config/#version)).
+  - **The browser extension's manifest** is built from it ([`scripts/build-extension.mjs`](../scripts/build-extension.mjs)).
+  - **Cargo** can't read another file, so `[workspace.package] version` in [`Cargo.toml`](../Cargo.toml) repeats it, and every crate takes it (`version.workspace = true`). The programs report it through `CARGO_PKG_VERSION`: the app's About screen, the user agent and the torrent client's identity.
+- **A test fails while they differ** ([`scripts/version-lib.test.mjs`](../scripts/version-lib.test.mjs)), and the release-candidate workflow refuses a tag whose version isn't [`package.json`](../package.json)'s.
+- **Changing it:** `pnpm version:set <MAJOR.MINOR.PATCH>` sets [`package.json`](../package.json) and [`Cargo.toml`](../Cargo.toml), then updates only Apollo Download Manager's own crates in [`Cargo.lock`](../Cargo.lock) (`cargo update --workspace`). The contract fixture [`tests/fixtures/contract/app-info.json`](../tests/fixtures/contract/app-info.json) holds the version too: regenerate it with `VELOCITY_UPDATE_FIXTURES=1 cargo test -p velocity-core --lib contract` (found on 0.1.1, #342). Commit the four files in one pull request with the changelog section, such as `chore: version 0.2.0 (#N)`.
 - **A pre-release is a tag, not a version:** the files say `0.2.0`, and its candidates are the tags `v0.2.0-rc.1`, `v0.2.0-rc.2`.
 
 ## Choosing the next version
@@ -65,8 +65,8 @@ The PO decides each version, from what the release contains (PO decisions on #25
 The [`/release-candidate`](../.claude/skills/release-candidate/SKILL.md) skill walks through these, and changes nothing without the PO's approval:
 
 1. `main` is green: the latest *Main checks* run on the commit passed.
-2. `package.json` has the version to release, and the version test passes.
-3. `CHANGELOG.md`'s section for it is written: `pnpm changelog <last tag or start> --heading "<version> - <date>"`, edited. Then `pnpm guide` bundles it into the app, so the version's What's new window shows it (#496); a test fails while the bundled copy is older than `CHANGELOG.md`.
+2. [`package.json`](../package.json) has the version to release, and the version test passes.
+3. [`CHANGELOG.md`](../CHANGELOG.md)'s section for it is written: `pnpm changelog <last tag or start> --heading "<version> - <date>"`, edited. Then `pnpm guide` bundles it into the app, so the version's What's new window shows it (#496); a test fails while the bundled copy is older than [`CHANGELOG.md`](../CHANGELOG.md).
 4. The PO tags `v<version>-rc.<N>` on that commit, or starts the workflow by hand ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md#starting-one)).
 5. The candidate's `build-info.json` and `SHA256SUMS` match the commit, and the PO tests it beside V1.
 
@@ -77,7 +77,7 @@ Once the PO accepts a candidate, its installers are the release: the release wor
 1. **The PO tags `vX.Y.Z`** on the accepted candidate's commit, within 14 days of its build, while its files are kept.
 2. **The *Release* workflow** ([`release.yml`](../.github/workflows/release.yml)) starts on the tag:
    - **`verify`** refuses a tag that isn't `v<package.json version>`, isn't on `main`, has no green *Main checks* run, or isn't on a candidate's commit (a `v<version>-rc.N` tag; the highest N is the one released). It finds the candidate's run and artifact. Its files gone, it refuses: tag a new candidate.
-   - **`assemble`** downloads the candidate, checks every file against its `SHA256SUMS`, and names them `apollo-download-manager-<version>-<what>`, such as `apollo-download-manager-0.2.0-windows-x64-setup.exe` (`velocity-v2-…` until 0.1.1), and `build-info.json` as `apollo-download-manager-<version>-build-info.json` (#452), with a new `SHA256SUMS`. It attests their build provenance with GitHub's [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations), and takes the notes from `CHANGELOG.md`'s `## <version>` section; without one it refuses. The section's links into the repository, such as `docs/user/installing.md`, become full links to that file at the version's tag, since a release page can't follow a relative one (#452).
+   - **`assemble`** downloads the candidate, checks every file against its `SHA256SUMS`, and names them `apollo-download-manager-<version>-<what>`, such as `apollo-download-manager-0.2.0-windows-x64-setup.exe` (`velocity-v2-…` until 0.1.1), and `build-info.json` as `apollo-download-manager-<version>-build-info.json` (#452), with a new `SHA256SUMS`. It attests their build provenance with GitHub's [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations), and takes the notes from [`CHANGELOG.md`](../CHANGELOG.md)'s `## <version>` section; without one it refuses. The section's links into the repository, such as [`docs/user/installing.md`](user/installing.md), become full links to that file at the version's tag, since a release page can't follow a relative one (#452).
    - **`draft`** waits in the `release` environment for the PO's approval ([below](#the-release-environment)), then creates a **draft** GitHub release with the files and the notes, marked as a pre-release for a version below 1.0.0 (#452). It is the only job that may write.
 3. **The PO publishes the draft,** on GitHub, after a last look. Nothing publishes it automatically.
 4. **The website's download page** updates by itself: publishing the release starts the *Website* workflow, which rebuilds the site from `main` with the new files ([WEBSITE.md](WEBSITE.md#publishing)).

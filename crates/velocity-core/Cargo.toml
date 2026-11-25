@@ -26,6 +26,8 @@ getrandom.workspace = true
 zeroize.workspace = true
 keyring.workspace = true
 quick-xml.workspace = true
+# Mirror lists that are HTML pages (#324).
+dom_query.workspace = true
 # Info hashes for torrents (#62): the SHA-1 and SHA-2 the engine already uses (#46).
 sha1.workspace = true
 sha2.workspace = true

@@ -1,0 +1,10 @@
+{
+       "backup": [ "https://dlcdn.apache.org/" ],
+         "cca2": "ke",
+         "http": [ "https://dlcdn.apache.org/" ],
+     "in_attic": false,
+      "in_dist": false,
+         "ipv6": false,
+    "path_info": "httpd/httpd-2.4.62.tar.gz",
+    "preferred": "https://dlcdn.apache.org/"
+}

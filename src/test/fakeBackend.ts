@@ -17,9 +17,11 @@ import {
   type CategoryMove,
   type DestinationCheck,
   type DiagnosticReport,
+  type DownloadMirrors,
   type DownloadsSnapshot,
   type HistoryPage,
   type HistoryQuery,
+  type MirrorCandidate,
   type ErrorCode,
   type PeerStatus,
   type NetworkAdapter,
@@ -57,6 +59,10 @@ export interface FakeState {
   batch: (cmd: string, ids: string[]) => BatchResult;
   /** Commands that wait for this promise before they answer, to see the window while one is sent. */
   hold: Partial<Record<string, Promise<void>>>;
+  /** What `find_mirrors` answers for a link, or the error code it fails with (#324). */
+  foundMirrors: (link: string) => MirrorCandidate[] | ErrorCode;
+  /** Each download's mirrors (#324), as `download_mirrors` answers. */
+  mirrors: Record<string, DownloadMirrors>;
   /** What `get_diagnostics` answers, and where `export_diagnostics` saved (`null`: the user cancelled) (#28). */
   diagnostics: () => DiagnosticReport;
   exportedTo: string | null;
@@ -145,6 +151,8 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
       ],
     batch: (_cmd, ids) => ({ done: ids, failed: [], kept: [] }),
     hold: {},
+    foundMirrors: () => 'NOT_FOUND',
+    mirrors: {},
     diagnostics: () => fixture('diagnostics.json') as DiagnosticReport,
     exportedTo: null,
     history: () => ({ entries: [], total: 0 }),
@@ -240,6 +248,21 @@ export function installFakeBackend(over: Partial<FakeState> = {}): FakeState {
         case 'remember_trackers':
         case 'forget_trackers':
           return null;
+        case 'find_mirrors': {
+          const found = state.foundMirrors(args.link as string);
+          // Rejected as Tauri rejects a failed command: with its code, a string.
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          if (typeof found === 'string') throw found;
+          return found;
+        }
+        case 'download_mirrors':
+          return state.mirrors[args.id as string] ?? { chosen: [], announced: [], official: null, changeable: true };
+        case 'set_mirrors': {
+          const id = args.id as string;
+          const was = state.mirrors[id] ?? { chosen: [], announced: [], official: null, changeable: true };
+          state.mirrors[id] = { ...was, chosen: args.mirrors as string[] };
+          return null;
+        }
         case 'get_browser_integration':
           return state.browser;
         case 'open_extension_page':

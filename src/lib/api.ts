@@ -3,6 +3,8 @@
 import { invoke, type InvokeArgs } from '@tauri-apps/api/core';
 import { z } from 'zod';
 import {
+  DownloadMirrorsSchema,
+  MirrorCandidateSchema,
   AddResultSchema,
   AppearanceSettingsSchema,
   BatchResultSchema,
@@ -148,6 +150,10 @@ export const api = {
   rememberTrackers: (id: string) => call('remember_trackers', { id }, nothing),
   forgetTrackers: (id: string) => call('forget_trackers', { id }, nothing),
   useNewLink: (id: string, link: string) => call('use_new_link', { id, link }, nothing),
+  /** The mirrors a link's project lists, fetched now (#324). */
+  findMirrors: (link: string) => call('find_mirrors', { link }, z.array(MirrorCandidateSchema)),
+  downloadMirrors: (id: string) => call('download_mirrors', { id }, DownloadMirrorsSchema),
+  setMirrors: (id: string, mirrors: string[]) => call('set_mirrors', { id, mirrors }, nothing),
   retryDownloads: (ids: string[]) => call('retry_downloads', { ids }, BatchResultSchema),
   // The list's commands (#58, #59). Those over several downloads say what each did.
   pauseDownloads: (ids: string[]) => call('pause_downloads', { ids }, BatchResultSchema),
