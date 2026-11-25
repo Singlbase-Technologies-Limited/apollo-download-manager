@@ -111,6 +111,10 @@ const devSearch = (root) => searchForm({ root, id: 'dev-search', label: 'Search 
  * @param {(blocks: object[], hrefOf: (to: object) => string) => string} input.renderBlocks
  * @param {string} input.repo the repository's address
  */
+/** Whether `blocks` hold a Mermaid diagram (#484), so the page loads site/developers/diagrams.js, and others don't. */
+const hasDiagram = (blocks) =>
+  blocks.some((b) => (b.type === 'codeBlock' && b.lang === 'mermaid') || (b.type === 'list' && b.items.some(hasDiagram)) || (b.type === 'quote' && hasDiagram(b.content)));
+
 export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
   const sections = sectionsOf(nav, files);
   const docs = [START, ...sections.flatMap((s) => s.pages)];
@@ -143,7 +147,7 @@ export function buildDevSite({ files, nav, layout, renderBlocks, repo }) {
       after: pager(neighbour(docs[at - 1]), neighbour(docs[at + 1])),
       crumb: section ?? 'Developer documents',
       label: section ? `Developers · ${section}` : 'Developers',
-      head: `<script type="module" src="${root}search.js"></script>\n`,
+      head: `<script type="module" src="${root}search.js"></script>\n${hasDiagram(page.blocks) ? `<script type="module" src="${root}diagrams.js"></script>\n` : ''}`,
     });
   }
 

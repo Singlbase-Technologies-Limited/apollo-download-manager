@@ -117,7 +117,8 @@ function block1(tokens, i) {
     }
     case 'fence':
     case 'code_block':
-      return [{ type: 'codeBlock', text: t.content }, i + 1];
+      // A Mermaid diagram (#484) is marked, for the website to draw; any other code stays as it is.
+      return [t.info.trim() === 'mermaid' ? { type: 'codeBlock', lang: 'mermaid', text: t.content } : { type: 'codeBlock', text: t.content }, i + 1];
     case 'hr':
       return [{ type: 'rule' }, i + 1];
     case 'table_open': {

@@ -41,6 +41,26 @@ A pull request that touches `docs/` builds the site, and the build fails on:
 
 A link to another document stays a link on the site, one to a user guide goes to that guide's page, and one to any other file goes to it on GitHub. These pages may show images from [`docs/images/`](images/), and text such as `<Name>` stays text. The user guides allow neither.
 
+### Diagrams (#484)
+
+Draw a diagram in a developer document as a Mermaid code block, so GitHub and the website show the same drawing from the same text:
+
+````markdown
+```mermaid
+flowchart TD
+    accTitle: The components and how they talk
+    accDescr: One or two sentences that say what the diagram shows, for screen readers.
+    shell["Desktop shell"] --> core["velocity-core"]
+```
+````
+
+- **`accTitle` is required:** the build fails without it. It is the diagram's title for screen readers and its caption on the site; `accDescr` is its description. GitHub uses both too.
+- **Mermaid's default layout only.** The site leaves out Mermaid's ELK layout (EPL-2.0; PO decision on #484), so a diagram that asks for it (`flowchart-elk`, `layout: elk`) fails the build.
+- **Keep labels short:** a diagram is drawn at its own size, so its text stays readable. One wider than the page scrolls in its frame, which the keyboard can reach.
+- **The user guides have no diagrams:** the in-app guide shows a Mermaid block as code.
+
+[`site/developers/diagrams.js`](../site/developers/diagrams.js) draws them in the browser, with the site's own copy of Mermaid (`developers/mermaid/`, from the `mermaid` package's browser build, with its licence), in the site's colours, and again when the theme switch changes them. Only a page with a diagram loads it, and it fetches only the parts of Mermaid that page's diagrams need: about 400 to 600 KiB. Without scripts the diagram's text stays on the page.
+
 ## The screens
 
 Every picture is the real window, not a drawing, with example downloads, and says so. `pnpm site:screens` retakes them all, in Microsoft Edge with Playwright: start the web server with `pnpm exec vite`, and the script answers the app's commands itself, with made-up downloads of free software, so it touches no real data. It stops if the list doesn't load. Retake the screens when a screen they show changes, and at each version, since the window shows its version number.
@@ -64,10 +84,11 @@ The numbers in a picture are examples, never a speed claim.
 
 Every page is plain HTML and one stylesheet, with the site's own copy of the Inter font and its own screenshots: **no tracking, no analytics and nothing from another site**, so a visit asks nothing of anyone but GitHub Pages.
 
-The site has two small scripts of its own:
+The site has three small scripts of its own:
 
 - **[`site/theme.js`](../site/theme.js)** on every page (PO decision on #379): the theme switch. The choice stays in the browser and is sent nowhere. Without scripts the switch is hidden and the page is light. On the home page it also fetches the dark screenshot when the switch is pointed at or focused, and the light one stays until the dark one has loaded, so the switch never shows an empty frame; a visitor who never switches never downloads it (#423). While a screenshot loads, its frame shows the app's surface colour. The page script also marks the page as scripted (`js` on `<html>`) at once, so the switch keeps its place in the header from the first paint. The font is preloaded and used only if it arrives in time (`font-display: optional`), so a late font never re-wraps the page (#423).
 - **[`site/developers/search.js`](../site/developers/search.js)** on the developer pages (PO decision on #355) and, since the PO's brief of 2026-11-09 (#422), the user guide's pages: the search box above the documents list, with a placeholder saying what to search. Each guide loads its own `search-index.json` (`developers/`, `guide/`), so a search finds pages of that guide only, when someone first types. Without scripts the box stays hidden. Offline, a browser shows what it has cached; there's no service worker.
+- **[`site/developers/diagrams.js`](../site/developers/diagrams.js)** on a developer page with a diagram only (PO decision on #484): draws its Mermaid diagrams with the site's own copy of Mermaid, as [Diagrams](#diagrams-484) says.
 
 The screen switcher, the FAQ's answers and the phone menus are HTML and CSS. Tests ([`scripts/site-lib.test.mjs`](../scripts/site-lib.test.mjs), [`scripts/dev-site-lib.test.mjs`](../scripts/dev-site-lib.test.mjs)) fail if a page loads any other script, or anything from another address. Each page has a title, a description, its canonical address and sharing (Open Graph) tags; `sitemap.xml` lists every page and `robots.txt` points to it.
 
@@ -94,6 +115,7 @@ pnpm site -- --releases releases.json      # with the download page made from a 
 - both sidebars at desktop width (#487): no group heading, page name or folder name wraps onto a second line;
 - the developer pages' heights (#425): none taller than 8,000 px at 1440 px wide, except the reference pages in `REFERENCE_PAGES` and the research records. A longer page is split by topic;
 - tables at desktop width (#422): no cell wraps to more than 8 lines. The pages whose tables hold paragraphs rather than values are listed in `TALL_TABLES` in [`scripts/site-check.mjs`](../scripts/site-check.mjs), which #425 split but didn't rewrite; a page leaves the list once it passes.
+- the diagrams (#484), on every page with one: each is drawn, with its title for screen readers, in the light theme and again in the dark one; none widens the page, and one that scrolls can be reached by the keyboard. It prints how much of Mermaid each page fetched.
 - names in tables (#485), at every width: no file, folder or crate name in a table cell breaks between two letters or digits. The site lets code break only after `/`, `\`, `.`, `_` or `:`, and a table too wide for the page scrolls in its own box.
 - the home page on a slow line (about 1.6 Mbit/s, 150 ms latency, #423): a placeholder in the screenshot's frame while it loads, a screenshot (never an empty frame) 100 ms after the theme switch, and the dark one once it arrives; on a fast line, the dark screenshot within 100 ms of the switch; a phone fetching the 720 px copy; and, on a phone on the same slow line, a layout shift (CLS) under 0.01.
 

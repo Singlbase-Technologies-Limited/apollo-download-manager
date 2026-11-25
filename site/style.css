@@ -278,6 +278,12 @@ code { font-family: var(--mono); font-size: 0.875em; background: var(--surface-3
 .prose a { overflow-wrap: anywhere; }
 .prose pre { margin: 18px 0; padding: 14px 18px; background: var(--ink); color: var(--ink-fg); border-radius: var(--radius); overflow-x: auto; font-size: 0.875rem; line-height: 1.6; }
 .prose pre code { background: none; color: inherit; padding: 0; font-size: inherit; overflow-wrap: normal; }
+/* A Mermaid diagram (#484): drawn on the page's surface once site/developers/diagrams.js runs; its text until then. */
+.prose .diagram { margin: 24px 0; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
+.prose .diagram:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.prose .diagram pre.mermaid { margin: 0; background: none; color: var(--fg); padding: 0; text-align: center; }
+.prose .diagram pre.mermaid:not([data-processed]) { text-align: left; }
+.prose .diagram figcaption { text-align: center; position: sticky; left: 0; }
 .prose blockquote { margin: 20px 0; padding: 12px 18px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; }
 .prose blockquote p { margin: 6px 0; }
 .table { margin: 20px 0; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }

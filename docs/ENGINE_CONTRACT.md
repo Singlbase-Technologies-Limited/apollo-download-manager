@@ -49,6 +49,8 @@ A direct engine reports only these statuses: Queued, Connecting, Downloading, Re
 
 ```mermaid
 stateDiagram-v2
+    accTitle: A direct download's statuses
+    accDescr: A download is queued, connects, then downloads. It can stall, retry, pause, verify, and ends completed, failed or removed. Paused goes back to queued on resume.
     [*] --> Queued: add
     Queued --> Connecting
     Connecting --> Downloading: the probe's answer

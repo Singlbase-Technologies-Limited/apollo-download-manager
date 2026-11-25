@@ -24,6 +24,7 @@ Most crates are MIT, Apache-2.0, BSD, ISC or Zlib, often as `OR` choices. These 
 | `r-efi` (2 versions) | MIT OR Apache-2.0 OR LGPL-2.1-or-later | Apollo DM uses it under MIT or Apache-2.0 |
 
 | `@fontsource-variable/inter` (the Inter font, since #29) | OFL-1.1 | The font files are bundled unmodified. Ship its licence text in the notices; never sell the font on its own (PO decision on #29). The website serves the same file, with its licence beside it (#353) |
+| `mermaid` (the website only, since #484) | MIT | The website serves Mermaid's browser build, unmodified, with its licence beside it (`developers/mermaid/LICENSE.txt`); the app never ships it. The build leaves out the ELK layout file (`elkjs`, EPL-2.0 OR GPL-3.0-or-later) it bundles, so no copyleft code reaches the site (PO decision on #484, 2026-11-25) |
 
 No GPL, AGPL or LGPL-only component is in the shipped graph.
 

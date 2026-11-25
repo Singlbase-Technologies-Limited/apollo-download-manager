@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { buildChangelog, buildGuide, CHANGELOG_OUT, changelogData, GUIDE_OUT, guideData } from './guide-lib.mjs';
+import { buildChangelog, buildGuide, parsePage, CHANGELOG_OUT, changelogData, GUIDE_OUT, guideData } from './guide-lib.mjs';
 
 const index = `# The guide
 
@@ -76,6 +76,14 @@ describe('the in-app guide (#354)', () => {
       rows: [[[{ type: 'text', text: 'x' }], [{ type: 'code', text: '1' }]]],
     });
     expect(b.blocks.find((x) => x.type === 'codeBlock')).toEqual({ type: 'codeBlock', text: 'pnpm dev\n' });
+  });
+
+  it('marks a Mermaid diagram as one, and leaves other code as it was (#484)', () => {
+    const page = parsePage('docs/X.md', '# X\n\n```mermaid\nflowchart TD\n  a --> b\n```\n\n```sh\npnpm dev\n```\n', { developer: true });
+    expect(page.blocks.filter((x) => x.type === 'codeBlock')).toEqual([
+      { type: 'codeBlock', lang: 'mermaid', text: 'flowchart TD\n  a --> b\n' },
+      { type: 'codeBlock', text: 'pnpm dev\n' },
+    ]);
   });
 
   it('opens https links outside the app, and makes links to developer documents plain text', () => {
