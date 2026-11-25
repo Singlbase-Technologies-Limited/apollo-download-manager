@@ -5,6 +5,12 @@
 
 const V2 = /\bV2\b/;
 
+/** The files read for the short name "V2" (#421): what people read. SECURITY.md since #523. */
+export const SCANNED = ['README.md', 'SECURITY.md', 'docs/*.md', 'docs/**/*.md', 'site/content/*', 'browser-extension/static/*.html', 'src/*.ts', 'src/**/*.ts', 'src/**/*.tsx'];
+
+/** Also read for the full name "Velocity Download Manager" (#486): every public text. CLA.md waits for the legal review (#441). */
+export const FULL_NAME_SCANNED = [...SCANNED, 'CHANGELOG.md', 'AGENTS.md', 'browser-extension/store/*.md'];
+
 /**
  * What may still say V2, each with its reason. A line matching one is skipped.
  * @type {{ why: string, test: (line: string, path: string, lineNo: number) => boolean }[]}

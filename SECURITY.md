@@ -10,7 +10,7 @@ Please include what you found, how to reproduce it, the version (Settings, About
 
 ## Supported versions
 
-V2 is before 1.0. Only the latest release gets security fixes; please update before reporting.
+Apollo Download Manager is before 1.0. Only the latest release gets security fixes; please update before reporting.
 
 | Version | Security fixes |
 |---|---|
@@ -19,8 +19,8 @@ V2 is before 1.0. Only the latest release gets security fixes; please update bef
 
 ## What is in scope
 
-Apollo Download Manager: the app, the transfer engine, the torrent helper, the browser extension and its native host, and the installers. What V2 protects, and how, is in [docs/SECURITY.md](docs/SECURITY.md): TLS verification, the link and redirect rules, secrets kept out of storage, and file safety.
+Apollo Download Manager: the app, the transfer engine, the torrent helper, the browser extension and its native host, and the installers. What it protects, and how, is in [docs/SECURITY.md](docs/SECURITY.md): TLS verification, the link and redirect rules, secrets kept out of storage, and file safety.
 
-Vulnerabilities in a library V2 uses, such as libcurl, OpenSSL or libtorrent, are best reported to that project. Tell us too if V2 is affected; V2 tracks its libraries' advisories ([docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)).
+Vulnerabilities in a library Apollo Download Manager uses, such as libcurl, OpenSSL or libtorrent, are best reported to that project. Tell us too if Apollo Download Manager is affected; it tracks its libraries' advisories ([docs/SECURITY_SUPPLY_CHAIN.md](docs/SECURITY_SUPPLY_CHAIN.md)).
 
 V1, the download manager Apollo Download Manager grew out of, is a separate project.

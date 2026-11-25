@@ -81,7 +81,8 @@ The crash policy (#28): **local crash logs only.** Any telemetry or crash upload
   - only the newest 5 are kept, and nothing else in the folder is touched.
 - **Nothing is sent.** The user can attach a crash log to a report by hand.
 
+The redaction is checked by the automated secret-leak scan (#71), across the database, checkpoints, temporary files and child arguments ([TEST_FIXTURES.md](TEST_FIXTURES.md#the-secret-leak-scan-71)).
+
 ## Not here yet
 
 - A log file on disk, and log levels the user can choose.
-- The automated secret-leak scan across the database, checkpoints, temporary files and child arguments (#71).
