@@ -121,6 +121,10 @@ From most numerous and fastest to fewest and slowest. Each layer proves what the
 - **Crash recovery.** `kill -9` at random points over 100 trials: always resumes; re-downloaded bytes are at most one checkpoint interval plus in-flight data (#43). The app killed the same way comes back from its database and finishes the right file (#74).
 - **Disk faults.** A full disk or a refused write mid-download fails with its own message, keeps what reached the disk, and resumes once fixed (#74).
 
+## More than 1024 files open (#337)
+
+[`crates/velocity-curl/tests/fd_limit.rs`](../crates/velocity-curl/tests/fd_limit.rs), on Linux only: it raises the open-file limit to the hard limit, holds 1,100 files open so the next sockets are numbered past 1024, and downloads from the test server. `select()` can't watch a socket past `FD_SETSIZE`. The libcurl layer waits with `curl_multi_poll` (curl's `poll_7_68_0` feature), and it doesn't build without it, so no `select()` path exists; the test keeps it so. It runs in a test binary of its own, so the files it holds touch no other test. On Windows it compiles to nothing.
+
 ## The secret-leak scan (#71)
 
 `velocity_test_http::leaks::LeakScan` looks for a test's known secrets everywhere Apollo Download Manager writes or shows something. A test that uses a login, a cookie, a key's passphrase or a tracker passkey runs it at the end:
