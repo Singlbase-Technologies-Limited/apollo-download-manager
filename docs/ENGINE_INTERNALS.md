@@ -158,7 +158,7 @@ A Metalink document lists files with their sources, hashes and piece hashes: Met
 - **Per file:** its name, which may hold subfolders (`disc/image.iso`); its size; the strongest whole-file hash of MD5, SHA-1, SHA-224, SHA-256, SHA-384 and SHA-512; the strongest piece list, which must fit the size; and its sources.
 - **Sources:** `http`, `https`, `ftp` and `ftps` URLs without a login, best first. Metalink 4's lower `priority` comes first and Metalink 3's higher `preference`; unranked ones come last, in document order. A duplicate counts once. SFTP sources are dropped (a document can't supply a login or confirm a host key), as are torrents (`metaurl`, a Metalink 3 `bittorrent` resource; a non-goal of #54).
 - **A file with no usable source** is skipped and counted (`Metalink::skipped`), and a document with none at all is refused.
-- **Not supported, as in V1:** Metalink/HTTP (RFC 6249), whose `Link` and `Digest` headers aria2 never read.
+- **Announced mirrors** (#324): the probe reads Metalink/HTTP's `Link: <…>; rel=duplicate` headers (RFC 6249), resolves each against the file's address, checks it as the app checks a mirror ([`mirrors.rs`](../crates/velocity-core/src/mirrors.rs): `http`, `https` or `ftp`, a host, no login, not a Tor address, not the link itself), orders them by `pri`, and reports them in the snapshot's `announcedMirrors`. The engine never uses one by itself: the user chooses ([Mirrors](#mirrors-55)). The `Digest` header is still not read.
 
 ### Adding its files
 
@@ -212,6 +212,15 @@ So two equal mirrors share a file about evenly, and one twice as fast takes abou
 ### What a mirror is sent
 
 The user agent and the referrer go to every source. The login and custom headers go only to the first URL's origin (#40), so a mirror elsewhere never sees them ([SECURITY.md](SECURITY.md#mirrors-55)). The engine checks every URL in the spec as it checks the first: one it may not fetch refuses the download.
+
+### Mirrors the user chooses (#324)
+
+Besides a Metalink file's sources, a download's further sources are the mirrors the user chose (PO decisions on #324), at most 8, after its own link, in `TransferSpec.urls`:
+
+- **Where they come from:** the ones the file's server announced (above), and the ones a project's official list has. [`mirrors.rs`](../crates/velocity-core/src/mirrors.rs) knows eight projects' lists by the link's server: Ubuntu (Launchpad's CD-mirror feed), Debian (its CD mirror page), Fedora (MirrorManager's list for the file's path), Apache (`closer.lua`, which names only its CDN), Arch Linux (the mirror status JSON, active mirrors with ISOs, best score first), Linux Mint (its download mirrors page), openSUSE (the file's `.meta4`) and GNU (its mirror page, without the alpha and special mirrors). The three HTML pages are read with `dom_query` (PO decision on #324). Each list's reader is tested on a trimmed copy of the real list ([`tests/fixtures/mirrors/`](../tests/fixtures/mirrors/)).
+- **Fetched only on a click:** the manager fetches the list through the engine into the app's own folder, as a `.torrent` link (#60): no queue slot, at most 4 MiB, deleted once read, 30 seconds at most ([`manager/mirrors.rs`](../crates/velocity-core/src/manager/mirrors.rs)).
+- **Admitted as any source** (above): a mirror is used only once it answers with the same file.
+- **Changed while not running:** a paused or failed download lets the engine go of its transfer and continues from its checkpoint with the new sources; a running one refuses (`INVALID_STATE`), and the window asks to pause it first.
 
 ### What the report says
 

@@ -40,6 +40,7 @@ A link Apollo Download Manager can't download is refused in the dialog, with the
 | Checksum | Written like `sha-256=…` (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it |
 | Require encryption (FTPS) | For a plain `ftp://` link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network |
 | Remember this login in the system keychain | Off by default. See [Logins](#logins-headers-and-keys) |
+| Mirrors | Other servers with the same file, for one link: see [Mirrors](#mirrors) |
 
 **Start download** adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; **Add paused** adds it without starting it.
 
@@ -101,6 +102,16 @@ The right-click menu needs a pointer, as in V1. Its actions are also on the tool
 | Waiting for network | It failed because there was no network: the server's name didn't resolve, or no connection could be made. It keeps its bytes, takes no place among the downloads running at once, and starts again by itself when the network comes back, however long that takes. **Retry** starts it now; **Cancel** stops it. Listed under Queued. Turn this off in Settings, Queue and performance |
 
 Speed and time left show only while data arrives. **Avg. speed** is the average while the download ran, shown once data has arrived, and **Started** is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones.
+
+## Mirrors
+
+A mirror is another server with the same file. With mirrors, a download can take parts of the file from several servers, and carry on when one is slow or down.
+
+- **Find mirrors,** under **Advanced options** in the Add dialog for one link, or **Mirrors…** in a download's right-click menu or the details panel's menu, reads the official mirror list of the link's project. It works for links on Ubuntu, Debian, Fedora, Apache, Arch Linux, Linux Mint, openSUSE and GNU servers. Nothing is fetched until you click.
+- **Mirrors the server names** are offered too, once the download has started.
+- **Tick up to 8,** or paste a mirror's link and choose **Add**. Each shows where it came from and, when the list says, its country.
+- **A mirror is used only if it serves exactly the same file;** one that doesn't is left out, and the download goes on from the others. Your login and custom headers are never sent to a mirror on another server.
+- **Changing a download's mirrors:** pause it first. It then continues from where it stopped, with the mirrors you chose.
 
 ## The details panel
 

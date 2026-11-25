@@ -1348,6 +1348,11 @@
      "text": "The download list"
     },
     {
+     "id": "mirrors",
+     "level": 2,
+     "text": "Mirrors"
+    },
+    {
      "id": "the-details-panel",
      "level": 2,
      "text": "The details panel"
@@ -2289,6 +2294,33 @@
          "to": {
           "page": "downloads",
           "anchor": "logins-headers-and-keys"
+         }
+        }
+       ]
+      ],
+      [
+       [
+        {
+         "type": "text",
+         "text": "Mirrors"
+        }
+       ],
+       [
+        {
+         "type": "text",
+         "text": "Other servers with the same file, for one link: see "
+        },
+        {
+         "type": "link",
+         "content": [
+          {
+           "type": "text",
+           "text": "Mirrors"
+          }
+         ],
+         "to": {
+          "page": "downloads",
+          "anchor": "mirrors"
          }
         }
        ]
@@ -3394,6 +3426,191 @@
     {
      "type": "heading",
      "level": 2,
+     "id": "mirrors",
+     "content": [
+      {
+       "type": "text",
+       "text": "Mirrors"
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
+       "text": "A mirror is another server with the same file. With mirrors, a download can take parts of the file from several servers, and carry on when one is slow or down."
+      }
+     ]
+    },
+    {
+     "type": "list",
+     "ordered": false,
+     "items": [
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Find mirrors,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " under "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Advanced options"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in the Add dialog for one link, or "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Mirrors…"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " in a download's right-click menu or the details panel's menu, reads the official mirror list of the link's project. It works for links on Ubuntu, Debian, Fedora, Apache, Arch Linux, Linux Mint, openSUSE and GNU servers. Nothing is fetched until you click."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Mirrors the server names"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " are offered too, once the download has started."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Tick up to 8,"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " or paste a mirror's link and choose "
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Add"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": ". Each shows where it came from and, when the list says, its country."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "A mirror is used only if it serves exactly the same file;"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " one that doesn't is left out, and the download goes on from the others. Your login and custom headers are never sent to a mirror on another server."
+         }
+        ]
+       }
+      ],
+      [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": ""
+         },
+         {
+          "type": "strong",
+          "content": [
+           {
+            "type": "text",
+            "text": "Changing a download's mirrors:"
+           }
+          ]
+         },
+         {
+          "type": "text",
+          "text": " pause it first. It then continues from where it stopped, with the mirrors you chose."
+         }
+        ]
+       }
+      ]
+     ]
+    },
+    {
+     "type": "heading",
+     "level": 2,
      "id": "the-details-panel",
      "content": [
       {
@@ -4274,7 +4491,7 @@
     {
      "anchor": "adding-downloads",
      "heading": "Adding downloads",
-     "text": "Open the Add dialog with Add download at the top of the navigation, or Ctrl+N. Dropping .torrent files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or .torrent link anywhere outside a text field also opens it, with the link filled in. What you can add: Links, one per line, up to 500 at once: http://, https://, ftp://, ftps:// and sftp:// (Protocols and limits). Numbered series, with a pattern: a range in square brackets in a link's path adds one link per value. The dialog shows how many links it makes, and the first and last, before you add them. file[1-10].zip adds file1.zip to file10.zip. file[001-100].zip keeps the zeros: file001.zip to file100.zip. img[0-100:5].png counts in steps of 5: img0.png, img5.png and so on, to img100.png. part-[a-e].rar adds part-a.rar to part-e.rar; [A-Z] works for capitals. One range per link, from the smaller end. All the links together still count toward the 500. Magnet links, and links to .torrent files: Apollo Download Manager downloads the .torrent file first, for up to 60 seconds, then adds the torrent. .torrent files on your computer, with Choose .torrent files…. Metalink files (.metalink, .meta4) on your computer, with Choose Metalink files…: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason (Protocols and limits). A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example \"Only http, https, ftp, ftps, sftp and magnet links are supported.\" Links with spaces or control characters are refused too. Before you add, the dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Logins Start download adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; Add paused adds it without starting it. After you choose Start download or Add paused: A name already taken: choose Keep both (rename) or Skip. Apollo Download Manager never replaces a file that is already there. A link added before: Add anyway starts a separate download, and Show download selects the one already in the list. Links that failed are listed, each with the reason."
+     "text": "Open the Add dialog with Add download at the top of the navigation, or Ctrl+N. Dropping .torrent files on the window opens it too; other dropped files are ignored, and the window says so. Pasting a magnet or .torrent link anywhere outside a text field also opens it, with the link filled in. What you can add: Links, one per line, up to 500 at once: http://, https://, ftp://, ftps:// and sftp:// (Protocols and limits). Numbered series, with a pattern: a range in square brackets in a link's path adds one link per value. The dialog shows how many links it makes, and the first and last, before you add them. file[1-10].zip adds file1.zip to file10.zip. file[001-100].zip keeps the zeros: file001.zip to file100.zip. img[0-100:5].png counts in steps of 5: img0.png, img5.png and so on, to img100.png. part-[a-e].rar adds part-a.rar to part-e.rar; [A-Z] works for capitals. One range per link, from the smaller end. All the links together still count toward the 500. Magnet links, and links to .torrent files: Apollo Download Manager downloads the .torrent file first, for up to 60 seconds, then adds the torrent. .torrent files on your computer, with Choose .torrent files…. Metalink files (.metalink, .meta4) on your computer, with Choose Metalink files…: each adds every file it lists, in its subfolders inside the chosen folder. Metalink must be on in Settings, Advanced; while it's off, the file is refused with the reason (Protocols and limits). A link Apollo Download Manager can't download is refused in the dialog, with the reason, for example \"Only http, https, ftp, ftps, sftp and magnet links are supported.\" Links with spaces or control characters are refused too. Before you add, the dialog shows: The file's name. You can type another one; Apollo Download Manager keeps the link's file type at the end. The category and folder Apollo Download Manager chooses from the file type (Categories). You can choose others. A folder that doesn't exist yet: Create this folder makes it. A name already taken in that folder, as a warning. Options for the download, under Advanced options: Option What it does Connections The most connections this download may use. Apollo Download Manager starts with all of them and keeps those that make it faster Speed limit This download's own limit, on top of the global one in Settings. Under a limit, Apollo Download Manager uses only the connections that reach it, and the details say so Referrer, extra headers Sent to the server, for sites that need them User name and password The login for the server. For an sftp:// link, which always needs one, the login fields show without opening the options SSH key and its passphrase For SFTP servers that use keys Checksum Written like sha-256=… (also MD5, SHA-1, SHA-224, SHA-384, SHA-512). The finished file is checked against it Require encryption (FTPS) For a plain ftp:// link: refuse to download unless the server encrypts. Without it, the dialog warns that the login and the file can be read on the network Remember this login in the system keychain Off by default. See Logins Mirrors Other servers with the same file, for one link: see Mirrors Start download adds the download to the queue, which starts it as soon as Settings, Queue and performance allows; Add paused adds it without starting it. After you choose Start download or Add paused: A name already taken: choose Keep both (rename) or Skip. Apollo Download Manager never replaces a file that is already there. A link added before: Add anyway starts a separate download, and Show download selects the one already in the list. Links that failed are listed, each with the reason."
     },
     {
      "anchor": "a-start-time-of-its-own",
@@ -4290,6 +4507,11 @@
      "anchor": "the-download-list",
      "heading": "The download list",
      "text": "The lists in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. Search (Ctrl+F) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again. Hovering a download shows a name, folder or category that doesn't fit its column in full, and hovering its status says what the status means and what to do, such as why it failed, or that a double-click opens it. A screen reader reads the same help with the row. Columns: click a column's name to sort by it, and again to reverse. Choose columns shows or hides any of the 13 columns; Name is always shown, and Reset to default columns brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; Home or a double-click restores its width. Widths are kept. Selecting: click, Ctrl+click and Shift+click, or the checkboxes; the top checkbox selects every download shown. Acting: the toolbar and the right-click menu offer what the selected downloads allow: Resume, Pause, Cancel, Retry, Stop seeding, Move to top, up, down or bottom of the queue, Copy link, Copy name, Open file, Open folder, Details, Remove from list and Delete files. Removing a download still in progress, and deleting files, ask first. When an action can't apply to every selected download, a message says how many it changed and why the rest weren't. Keys in the list: Key Does ↑, ↓, Home, End Move; with Shift, extend the selection Ctrl+A, Escape Select all, select none Space Pause or resume Enter Open the details Delete Remove from the list (asks first for a running download) Shift+Delete Delete the files (asks first) The right-click menu needs a pointer, as in V1. Its actions are also on the toolbar, in the details panel and on the keys above. What the statuses mean: Status Meaning Retrying in 1m 30s The download failed in a way worth retrying; Apollo Download Manager tries again by itself at that time. Waiting to retry when the time isn't known. A server that asks Apollo Download Manager to slow down for 30 s or less isn't shown here: the download stays Downloading, and the details' Connections line says the server asked Apollo Download Manager to slow down No data received The server stopped sending. Apollo Download Manager resets the connection and tries again Waiting for peers A torrent with no one to download from yet Needs its login After Apollo Download Manager restarts, a download that had a login, headers or a key it didn't remember waits for them. Resume or Retry asks for them again Choose files A torrent waiting for you to choose its files (Torrents) Waiting for network It failed because there was no network: the server's name didn't resolve, or no connection could be made. It keeps its bytes, takes no place among the downloads running at once, and starts again by itself when the network comes back, however long that takes. Retry starts it now; Cancel stops it. Listed under Queued. Turn this off in Settings, Queue and performance Speed and time left show only while data arrives. Avg. speed is the average while the download ran, shown once data has arrived, and Started is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones."
+    },
+    {
+     "anchor": "mirrors",
+     "heading": "Mirrors",
+     "text": "A mirror is another server with the same file. With mirrors, a download can take parts of the file from several servers, and carry on when one is slow or down. Find mirrors, under Advanced options in the Add dialog for one link, or Mirrors… in a download's right-click menu or the details panel's menu, reads the official mirror list of the link's project. It works for links on Ubuntu, Debian, Fedora, Apache, Arch Linux, Linux Mint, openSUSE and GNU servers. Nothing is fetched until you click. Mirrors the server names are offered too, once the download has started. Tick up to 8, or paste a mirror's link and choose Add. Each shows where it came from and, when the list says, its country. A mirror is used only if it serves exactly the same file; one that doesn't is left out, and the download goes on from the others. Your login and custom headers are never sent to a mirror on another server. Changing a download's mirrors: pause it first. It then continues from where it stopped, with the mirrors you chose."
     },
     {
      "anchor": "the-details-panel",
