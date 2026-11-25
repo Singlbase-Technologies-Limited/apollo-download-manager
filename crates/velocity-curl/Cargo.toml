@@ -24,5 +24,9 @@ velocity-test-http = { path = "../velocity-test-http" }
 # This crate's own tests enable the test-only features.
 velocity-curl = { path = ".", features = ["test-h2c", "test-ca"] }
 
+# The file-descriptor test (#337, PO decision: test-only): raises the open-file limit on Linux.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+libc = "=0.2.191"
+
 [build-dependencies]
 serde_json.workspace = true

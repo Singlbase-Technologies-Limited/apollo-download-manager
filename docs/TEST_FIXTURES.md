@@ -31,6 +31,10 @@ The fixtures, servers and tools the tests use, the measured build and check time
 | Disk and crash faults | **Built:** a full disk and a refused write, simulated by velocity-transfer's test-only `test-faults` feature (no real small drive, PO decision on #74); the engine (#43) and the app (#74) killed at random points ([ENGINE_TESTS.md](ENGINE_TESTS.md#tests)) | Recovery | **#74**, #43 |
 | Benchmark server | Byte and request counters, throttle modes, h2 and TLS, kill and resume | Apollo DM's own benchmarks, later (ADR-0009) | #77 |
 
+## More than 1024 files open (#337)
+
+[`crates/velocity-curl/tests/fd_limit.rs`](../crates/velocity-curl/tests/fd_limit.rs), on Linux only: it raises the open-file limit to the hard limit, holds 1,100 files open so the next sockets are numbered past 1024, and downloads from the test server. `select()` can't watch a socket past `FD_SETSIZE`. The libcurl layer waits with `curl_multi_poll` (curl's `poll_7_68_0` feature), and it doesn't build without it, so no `select()` path exists; the test keeps it so. It runs in a test binary of its own, so the files it holds touch no other test. On Windows it compiles to nothing.
+
 ## The secret-leak scan (#71)
 
 `velocity_test_http::leaks::LeakScan` looks for a test's known secrets everywhere Apollo Download Manager writes or shows something. A test that uses a login, a cookie, a key's passphrase or a tracker passkey runs it at the end:
