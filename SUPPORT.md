@@ -2,6 +2,7 @@
 
 - **Using Apollo Download Manager:** the [user guide](docs/user/README.md) covers installing, downloads, torrents, settings, the browser extension and [troubleshooting](docs/user/troubleshooting.md).
 - **A bug:** open an issue with the bug form. Please attach a diagnostics export (Settings, About and diagnostics, **Export diagnostics…**): passwords, cookies, tokens and keys are removed from it.
+- **Issues are public:** anyone can read an issue and its attachments. Leave out names, folders, links and screenshots with personal details. For a report you'd rather not make public, e-mail support@singlbase.com.
 - **An idea for a feature:** open an issue with the feature form.
 - **A security problem:** never in a public issue; see [SECURITY.md](SECURITY.md).
 - **Building or contributing:** [CONTRIBUTING.md](CONTRIBUTING.md).
