@@ -3,8 +3,9 @@
 //!
 //! - **Why a window:** progress comes every 256 KiB, about every 80 ms at 3 MiB/s. A speed over
 //!   one step jumped between KiB/s and GiB/s with each pause or flush.
-//! - **Why 3 s:** a change in speed shows half within 1.5 s and fully within 3 s, the most the
-//!   issue allows, while one slow connection or write barely moves the figure.
+//! - **Why 5 s** (#330): field tests on 19 real downloads chose it over 3 s. It read steadier
+//!   (13.6% spread on a steady download against 17.6%) and still showed a lowered speed limit
+//!   within 2.9 s (3.9 s over 3 s); a 1 s pause costs a fifth of the figure, not a third.
 //! - **Only bytes that arrived count:** the first report after a start or resume holds the bytes
 //!   already on disk, so it only sets where measuring starts. A count that goes down (the download
 //!   started over) starts measuring again.
@@ -20,11 +21,11 @@ pub(crate) struct SpeedMeter {
 
 impl SpeedMeter {
     /// The time the speed is measured over.
-    pub(crate) const WINDOW: Duration = Duration::from_secs(3);
+    pub(crate) const WINDOW: Duration = Duration::from_secs(5);
     /// Less measured time than this gives no figure: a few events apart can't tell the speed.
     const LEAST: Duration = Duration::from_millis(500);
     /// Samples are kept at least this far apart, so the window holds about 30 at any speed.
-    const SPACING: Duration = Duration::from_millis(100);
+    const SPACING: Duration = Duration::from_millis(170);
 
     /// Counts `written` bytes at `now`, and returns the bytes per second over the window, or 0
     /// while less than [`Self::LEAST`] is measured.
@@ -113,16 +114,30 @@ mod tests {
     }
 
     #[test]
+    fn a_one_second_pause_moves_a_steady_figure_by_a_quarter_at_most() {
+        // #330: over a 5 s window a 1 s pause costs a fifth of the figure; over 3 s, a third.
+        let mut m = SpeedMeter::default();
+        let t0 = Instant::now();
+        m.observe(t0, 0);
+        let (_, t, bytes) = run(&mut m, t0, 0, 4 * MIB, 10.0);
+        let after = m.observe(t + Duration::from_secs(1), bytes);
+        assert!(
+            after as f64 >= 4.0 * MIB as f64 * 0.75,
+            "{after} B/s after a 1 s pause, from 4 MiB/s"
+        );
+    }
+
+    #[test]
     fn a_change_of_speed_shows_fully_within_the_window() {
         let mut m = SpeedMeter::default();
         let t0 = Instant::now();
         m.observe(t0, 0);
         let (_, t, bytes) = run(&mut m, t0, 0, 4 * MIB, 10.0);
         // A speed limit drops it to 1 MiB/s.
-        let (figures, _, _) = run(&mut m, t, bytes, MIB, 6.0);
+        let (figures, _, _) = run(&mut m, t, bytes, MIB, 8.0);
         let (half, _) = figures.iter().find(|(_, f)| *f <= 5 * MIB / 2).unwrap();
-        assert!(*half <= 1.6, "half the change showed after {half} s");
-        for (at, f) in figures.iter().filter(|(at, _)| *at >= 3.1) {
+        assert!(*half <= 2.6, "half the change showed after {half} s");
+        for (at, f) in figures.iter().filter(|(at, _)| *at >= 5.1) {
             assert!(
                 near(*f, MIB, 0.05),
                 "{f} B/s {at} s after the drop, for 1 MiB/s"

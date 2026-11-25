@@ -3367,7 +3367,7 @@
      "content": [
       {
        "type": "text",
-       "text": "Speed and time left show only while data arrives. "
+       "text": "Speed and time left show only while data arrives. The speed is measured over the last 5 seconds. Time left uses the average speed since the speed last changed, so a short slowdown barely moves it, and appears after the first 3 seconds. "
       },
       {
        "type": "strong",
@@ -4256,7 +4256,7 @@
     {
      "anchor": "the-lists",
      "heading": "The lists",
-     "text": "The lists in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. Search (Ctrl+F) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again. Hovering a download shows a name, folder or category that doesn't fit its column in full, and hovering its status says what the status means and what to do, such as why it failed, or that a double-click opens it. A screen reader reads the same help with the row. Columns: click a column's name to sort by it, and again to reverse. Choose columns shows or hides any of the 13 columns; Name is always shown, and Reset to default columns brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; Home or a double-click restores its width. Widths are kept. Speed and time left show only while data arrives. Avg. speed is the average while the download ran, shown once data has arrived, and Started is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones."
+     "text": "The lists in the navigation are All Downloads, Downloading, Queued, Completed, Seeding and Failed, each with its count. Choose a category below them to show only its downloads. Search (Ctrl+F) looks in the name, the link and the folder. To make room, collapse the navigation to icons with the button at its bottom; the same button, or a drag of its edge, opens it again. Hovering a download shows a name, folder or category that doesn't fit its column in full, and hovering its status says what the status means and what to do, such as why it failed, or that a double-click opens it. A screen reader reads the same help with the row. Columns: click a column's name to sort by it, and again to reverse. Choose columns shows or hides any of the 13 columns; Name is always shown, and Reset to default columns brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; Home or a double-click restores its width. Widths are kept. Speed and time left show only while data arrives. The speed is measured over the last 5 seconds. Time left uses the average speed since the speed last changed, so a short slowdown barely moves it, and appears after the first 3 seconds. Avg. speed is the average while the download ran, shown once data has arrived, and Started is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones."
     },
     {
      "anchor": "selecting-and-acting",

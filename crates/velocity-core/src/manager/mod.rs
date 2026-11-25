@@ -63,6 +63,8 @@ struct Download {
     needs_login: bool,
     /// When it started and how fast it went while it ran (#59).
     activity: activity::Tracker,
+    /// Its time left while it runs (#330).
+    time_left: time_left::TimeLeft,
     /// What the app's log last said about it (#251); `None` until it is first looked at.
     logged: Option<lifecycle::Logged>,
 }
@@ -424,6 +426,7 @@ impl Manager {
                 started_over: None,
                 started_at_ms: None,
                 average_speed_bps: None,
+                seconds_left: None,
                 speed_limit_bps: None,
                 requested_connections: None,
                 torrent: None,
@@ -443,6 +446,7 @@ impl Manager {
             saved_at_ms: None,
             needs_login: false,
             activity: activity::Tracker::default(),
+            time_left: time_left::TimeLeft::default(),
             logged: None,
         };
         download.record.status = download.waiting_status();
@@ -1124,9 +1128,17 @@ impl Manager {
                     download.running && is_running_status(shown),
                     snapshot.progress.completed_bytes,
                 );
+                download.time_left.observe(
+                    now_ms,
+                    download.running && shown == DownloadStatus::Downloading,
+                    snapshot.progress.completed_bytes,
+                    snapshot.progress.total_bytes,
+                    download.record.speed_limit_bps,
+                );
                 let record = &mut download.record;
                 record.started_at_ms = download.activity.totals.started_at_ms;
                 record.average_speed_bps = download.activity.average_speed_bps();
+                record.seconds_left = download.time_left.seconds();
                 record.status = shown;
                 // Not saved: a download read back at start-up isn't waiting to retry.
                 record.retry_at_ms = snapshot
@@ -1242,6 +1254,7 @@ mod remembered_trackers;
 mod service;
 mod settings;
 mod start_time;
+mod time_left;
 mod torrent_details;
 mod torrent_links;
 mod torrents;

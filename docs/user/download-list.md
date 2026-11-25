@@ -10,7 +10,7 @@ How to follow your downloads, act on them, and find them again later.
 
 **Columns:** click a column's name to sort by it, and again to reverse. **Choose columns** shows or hides any of the 13 columns; Name is always shown, and **Reset to default columns** brings back the default eight. Drag a column's edge to resize it, or focus the edge and use the arrow keys; **Home** or a double-click restores its width. Widths are kept.
 
-Speed and time left show only while data arrives. **Avg. speed** is the average while the download ran, shown once data has arrived, and **Started** is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones.
+Speed and time left show only while data arrives. The speed is measured over the last 5 seconds. Time left uses the average speed since the speed last changed, so a short slowdown barely moves it, and appears after the first 3 seconds. **Avg. speed** is the average while the download ran, shown once data has arrived, and **Started** is when it first ran. A notice above the list says when the transfer engine isn't running, so waiting downloads aren't mistaken for stuck ones.
 
 ## Selecting and acting
 

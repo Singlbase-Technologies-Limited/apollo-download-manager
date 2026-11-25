@@ -36,11 +36,9 @@ export function percentOf(d: DownloadRecord): number | null {
   return total ? (d.progress.completedBytes / total) * 100 : null;
 }
 
-/** Seconds left at the speed the engine reports, while bytes come; `null` otherwise. */
+/** Seconds left while it downloads, as the core works it out (#330); `null` for no figure. */
 export function etaSeconds(d: DownloadRecord): number | null {
-  const { totalBytes, completedBytes, downloadSpeedBps } = d.progress;
-  if (d.status !== 'downloading' || !totalBytes || downloadSpeedBps <= 0) return null;
-  return Math.max(0, totalBytes - completedBytes) / downloadSpeedBps;
+  return d.status === 'downloading' ? d.secondsLeft : null;
 }
 
 /** The average speed while it ran, but none while no byte has arrived: beside "0 B" it would read as a fault (#245). */

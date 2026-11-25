@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 42;
+export const COMMAND_API_VERSION = 43;
 
 const bytes = z.number().int().nonnegative();
 
@@ -132,6 +132,8 @@ export const DownloadRecordSchema = z.strictObject({
   startedAtMs: bytes.nullable(),
   /** Bytes per second while it ran, once it ran for a second (#59). */
   averageSpeedBps: bytes.nullable(),
+  /** Its time left while it downloads, worked out natively (#330); `null` for no figure. */
+  secondsLeft: z.number().int().nonnegative().nullable(),
   /** Its own speed limit, in bytes per second; `null` for none (#61). */
   speedLimitBps: bytes.nullable(),
   /** The connections a direct download asks for; `null` for a torrent (#61). */
