@@ -6543,6 +6543,28 @@
      "content": [
       {
        "type": "text",
+       "text": ""
+      },
+      {
+       "type": "strong",
+       "content": [
+        {
+         "type": "text",
+         "text": "Torrents share."
+        }
+       ]
+      },
+      {
+       "type": "text",
+       "text": " While it downloads, a torrent also uploads the pieces it has to other people, as every BitTorrent program does, and they can see your IP address. The Add download dialog says so for every torrent. Seeding is what a torrent does after it is complete."
+      }
+     ]
+    },
+    {
+     "type": "paragraph",
+     "content": [
+      {
+       "type": "text",
        "text": "Seeding is off by default: a torrent stops once it is complete. "
       },
       {
@@ -7179,7 +7201,7 @@
     {
      "anchor": "seeding",
      "heading": "Seeding",
-     "text": "Seeding is off by default: a torrent stops once it is complete. Seeding after download offers, for each torrent: Choice Seeds until Don’t seed It completes (the default) For a time 1 minute to 365 days (Seed time in minutes) Until a share ratio It has uploaded 0.1 to 100 times what it downloaded (Share ratio) Time or ratio, whichever first Whichever comes first Until I stop it You stop it Seeding torrents are listed under Seeding. Stop seeding stops one. The seeding limit, Torrents seeding at once in Settings, BitTorrent, caps how many seed at once (0, no limit, by default). The others wait in a queue, longest-waiting first; Leave seeding queue takes one out. The time and ratio count over the torrent's whole life, so a restart doesn't reset them."
+     "text": "Torrents share. While it downloads, a torrent also uploads the pieces it has to other people, as every BitTorrent program does, and they can see your IP address. The Add download dialog says so for every torrent. Seeding is what a torrent does after it is complete. Seeding is off by default: a torrent stops once it is complete. Seeding after download offers, for each torrent: Choice Seeds until Don’t seed It completes (the default) For a time 1 minute to 365 days (Seed time in minutes) Until a share ratio It has uploaded 0.1 to 100 times what it downloaded (Share ratio) Time or ratio, whichever first Whichever comes first Until I stop it You stop it Seeding torrents are listed under Seeding. Stop seeding stops one. The seeding limit, Torrents seeding at once in Settings, BitTorrent, caps how many seed at once (0, no limit, by default). The others wait in a queue, longest-waiting first; Leave seeding queue takes one out. The time and ratio count over the torrent's whole life, so a restart doesn't reset them."
     },
     {
      "anchor": "in-the-details-panel",
