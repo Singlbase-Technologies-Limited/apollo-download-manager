@@ -15,9 +15,9 @@ The research report (section 4.2, decision 4 in section 10) proposes two crates.
 
 **Option A from #33:**
 
-- **`crates/velocity-transfer`** holds the engine logic: range probe, leases and scheduler, checkpoints, integrity, retries, budgets and limits, and the stdio protocol. It is a library, plus an optional `velocity-transfer` sidecar binary.
-- **`crates/velocity-curl`** is the only crate that touches libcurl: FFI and the `Multi` loop on its own thread.
-- **`crates/velocity-core`** keeps policy, persistence and the adapters, including the `DirectTransfer` contract (#36) that the manager calls.
+- **[`crates/velocity-transfer`](../../crates/velocity-transfer/)** holds the engine logic: range probe, leases and scheduler, checkpoints, integrity, retries, budgets and limits, and the stdio protocol. It is a library, plus an optional `velocity-transfer` sidecar binary.
+- **[`crates/velocity-curl`](../../crates/velocity-curl/)** is the only crate that touches libcurl: FFI and the `Multi` loop on its own thread.
+- **[`crates/velocity-core`](../../crates/velocity-core/)** keeps policy, persistence and the adapters, including the `DirectTransfer` contract (#36) that the manager calls.
 
 ## Options considered
 
@@ -29,7 +29,7 @@ The research report (section 4.2, decision 4 in section 10) proposes two crates.
 
 ## Consequences
 
-- **Rules:** `.claude/rules/transfer-engine.md` and `rust-native.md` apply to these paths. The rule "only `velocity-curl` calls libcurl" is no longer pending.
+- **Rules:** [`.claude/rules/transfer-engine.md`](../../.claude/rules/transfer-engine.md) and `rust-native.md` apply to these paths. The rule "only `velocity-curl` calls libcurl" is no longer pending.
 - **Unblocked:** #36 (contract), #37 (prototype) and #35 (libcurl provenance) can name these crates. The crates themselves are created by the first issue that needs them (#36 or #37), each as a new workspace member.
 - **Dependencies:** adding libcurl or its Rust bindings still needs PO approval under the dependency policy (#9) and the libcurl build decision (#34).
 - **Process model:** whether the engine runs in-process or as a child is still #38. This layout supports both.

@@ -4,7 +4,7 @@
 
 ## Status
 
-- **Apollo Download Manager's own licence hasn't been chosen** (#86, PO only; no agent selects it). There is no `LICENSE` file: all rights are reserved, `package.json` says `UNLICENSED`, and the Rust workspace sets `publish = false`. Our two crates declare no licence yet.
+- **Apollo Download Manager's own licence hasn't been chosen** (#86, PO only; no agent selects it). There is no `LICENSE` file: all rights are reserved, [`package.json`](../package.json) says `UNLICENSED`, and the Rust workspace sets `publish = false`. Our two crates declare no licence yet.
 - **Nothing has been distributed.** Before any build goes to anyone outside the project, three things must be in place: the product licence, the third-party notices ([below](#third-party-notices), #76) and the release checks (#78).
 - **Apollo Download Manager contains no aria2** ([ADR-0001](decisions/0001-v2-direction.md)), so V1's GPL obligations for aria2 don't apply to Apollo Download Manager.
 
@@ -24,17 +24,18 @@ Most crates are MIT, Apache-2.0, BSD, ISC or Zlib, often as `OR` choices. These 
 | `r-efi` (2 versions) | MIT OR Apache-2.0 OR LGPL-2.1-or-later | Apollo DM uses it under MIT or Apache-2.0 |
 
 | `@fontsource-variable/inter` (the Inter font, since #29) | OFL-1.1 | The font files are bundled unmodified. Ship its licence text in the notices; never sell the font on its own (PO decision on #29). The website serves the same file, with its licence beside it (#353) |
+| `mermaid` (the website only, since #484) | MIT | The website serves Mermaid's browser build, unmodified, with its licence beside it (`developers/mermaid/LICENSE.txt`); the app never ships it. The build leaves out the ELK layout file (`elkjs`, EPL-2.0 OR GPL-3.0-or-later) it bundles, so no copyleft code reaches the site (PO decision on #484, 2026-11-25) |
 
 No GPL, AGPL or LGPL-only component is in the shipped graph.
 
 **Since #29 (2026-10-29):**
 - `pnpm licenses list --prod` lists **40 production packages**: React and `@tauri-apps/api` as before, plus Radix's dialogs and their helpers, TanStack Query, zustand, sonner, lucide-react (ISC), clsx, tailwind-merge, class-variance-authority (Apache-2.0), `tslib` (0BSD) and the Inter font (OFL-1.1).
-- The dialog and notification plugins add 18 crates to `Cargo.lock`, all MIT or Apache-2.0 ([DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies)).
+- The dialog and notification plugins add 18 crates to [`Cargo.lock`](../Cargo.lock), all MIT or Apache-2.0 ([APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#approved-direct-dependencies)).
 - Development-only packages under MIT-0, BlueOak-1.0.0 and CC-BY-4.0 are allowed as [DEPENDENCIES.md](DEPENDENCIES.md#allowed-licences) says. None is shipped.
 
 ## Planned native libraries
 
-From the research report, section 8.2. Versions are proposals until #35 records them in the native lock file (the build path is [ADR-0004](decisions/0004-libcurl-build-path.md)); "static" means linked into Apollo Download Manager's own binaries.
+From the research report, section 8.2. The versions are recorded in the native lock file since #35 (the build path is [ADR-0004](decisions/0004-libcurl-build-path.md)); "static" means linked into Apollo Download Manager's own binaries.
 
 | Component | Licence | Obligation, as distributed statically |
 |---|---|---|
@@ -57,20 +58,20 @@ From the research report, section 8.2. Versions are proposals until #35 records 
 
 **SFTP** is russh, a Rust crate (Apache-2.0), not a native library: [ADR-0013](decisions/0013-sftp-russh.md) replaced libssh2 ([ADR-0011](decisions/0011-sftp-libssh2.md)) before it shipped. It is listed with the Rust crates in the notices.
 
-**Conclusion (research report section 8.2):** a static libcurl with Schannel (Windows) or a static OpenSSL (Linux and macOS), plus nghttp2 and zlib, contains **no copyleft component**, with either SFTP option. That **doesn't hold for a distribution's dynamic libcurl**. On Ubuntu 24.04 it brings libssh (LGPL-2.1), librtmp (LGPL-2.1) and libidn2 (LGPLv3+ or GPLv2+), whose relinking and source obligations would apply if a package bundled them, for example in an AppImage. So distribution libraries are never bundled without review ([DEPENDENCIES.md](DEPENDENCIES.md#distribution-packages)).
+**Conclusion (research report section 8.2):** a static libcurl with Schannel (Windows) or a static OpenSSL (Linux and macOS), plus nghttp2 and zlib, contains **no copyleft component**, with either SFTP option. That **doesn't hold for a distribution's dynamic libcurl**. On Ubuntu 24.04 it brings libssh (LGPL-2.1), librtmp (LGPL-2.1) and libidn2 (LGPLv3+ or GPLv2+), whose relinking and source obligations would apply if a package bundled them, for example in an AppImage. So distribution libraries are never bundled without review ([APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#distribution-packages)).
 
 ## Third-party notices
 
 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) lists every third-party component Apollo Download Manager ships, with its version, its licence, the licence Apollo Download Manager uses it under and its source, followed by the licence texts (#76). It goes with every distributed build.
 
 - **Regenerate it** with `pnpm notices` after any dependency change, and commit the result. `pnpm check:notices` fails when the file is out of date, and when a component's licence isn't in [DEPENDENCIES.md](DEPENDENCIES.md#allowed-licences)'s allowed list. CI runs it ([CI.md](CI.md#permissions-and-supply-chain)).
-- **What it reads** (`scripts/notices.mjs`):
+- **What it reads** ([`scripts/notices.mjs`](../scripts/notices.mjs)):
   - **Rust:** `cargo tree -e normal --target all` for the four programs Apollo Download Manager ships: the app, the transfer engine, the torrent helper and the native host. So it lists crates for every target platform, including macOS-only ones, and leaves out build and test tools. `cargo metadata` gives each crate's licence, source and files.
   - **npm:** `pnpm licenses list --prod`, the packages in the user interface.
   - **Native libraries:** [`scripts/native/deps.lock`](../scripts/native/deps.lock), the vcpkg overlay ports' versions (libtorrent, OpenSSL), and Boost, whose version comes with the vcpkg baseline (a test fails when the baseline changes, so the version is checked again).
 - **Which licence:** for a choice such as `MIT OR Apache-2.0`, Apollo Download Manager uses the first allowed licence in this order: MIT, Apache-2.0, BSD-3-Clause, BSD-2-Clause, ISC, Zlib, BSL-1.0, Unicode-3.0, 0BSD, then the rest of the permissive list. So `r-efi`'s `MIT OR Apache-2.0 OR LGPL-2.1-or-later` is used under MIT. Every part of an `AND` must be allowed.
-- **Licence texts** (PO decision on #76, 2026-10-30): each distinct text is printed once, naming every component that ships it. They come from each package's own licence, copyright and notice files, only for the licences it is used under: a crate used under MIT contributes `LICENSE-MIT`, not `LICENSE-APACHE`. Native libraries' texts are in `scripts/notices/native/`, copied from each verified source archive or from vcpkg's installed copy of it. 43 crates and one npm package ship no licence file. For those, the generator uses SPDX's standard text of their licence, from [SPDX license-list-data](https://github.com/spdx/license-list-data) v3.29.0 in `scripts/notices/licenses/`, and names the authors in their package metadata.
-- **Exceptions:** a component the rules refuse needs the PO's approval and a note here; it is then listed in `APPROVED_EXCEPTIONS` in `scripts/notices-lib.mjs`. There are none.
+- **Licence texts** (PO decision on #76, 2026-10-30): each distinct text is printed once, naming every component that ships it. They come from each package's own licence, copyright and notice files, only for the licences it is used under: a crate used under MIT contributes `LICENSE-MIT`, not `LICENSE-APACHE`. Native libraries' texts are in [`scripts/notices/native/`](../scripts/notices/native/), copied from each verified source archive or from vcpkg's installed copy of it. 43 crates and one npm package ship no licence file. For those, the generator uses SPDX's standard text of their licence, from [SPDX license-list-data](https://github.com/spdx/license-list-data) v3.29.0 in [`scripts/notices/licenses/`](../scripts/notices/licenses/), and names the authors in their package metadata.
+- **Exceptions:** a component the rules refuse needs the PO's approval and a note here; it is then listed in `APPROVED_EXCEPTIONS` in [`scripts/notices-lib.mjs`](../scripts/notices-lib.mjs). There are none.
 - **Per-platform reports** (#17): `node scripts/notices.mjs --report <target triple> <file>` writes, as JSON, the components one platform's build ships, with the licence each is used under and any problem. The crates are `cargo tree --target <triple>`'s instead of every target's; the native libraries and npm packages are the same on every platform. The packaging scripts write one for their platform, and every release candidate carries both ([RELEASE_CANDIDATES.md](RELEASE_CANDIDATES.md)).
 - **AppImage:** none is built (PO decision on #82), so there is no AppImage content inventory.
 
@@ -79,6 +80,6 @@ From the research report, section 8.2. Versions are proposals until #35 records 
 **GPL-3.0-only,** `Copyright (C) 2026 Singlbase Technologies Limited` (PO decision on #86, [ADR-0017](decisions/0017-gpl-3-licence.md)).
 
 - **Compatible with everything Apollo Download Manager ships:** the components above are permissive, or MPL-2.0 used unmodified, and OpenSSL 3.5's Apache-2.0 is one GPL-3.0 accepts. A component added later must be too ([DEPENDENCIES.md](DEPENDENCIES.md#allowed-licences)).
-- **Where it is stated:** [`LICENSE`](../LICENSE), the full text from gnu.org; `license` in `package.json` and in the workspace `Cargo.toml`, which every crate takes; `license` and `copyright` in `src-tauri/tauri.release.conf.json`, for the packages' metadata; the installers and packages, which install `LICENSE` beside the notices ([PACKAGING.md](PACKAGING.md)); the app's About section, with the notice GPL-3.0's section 5(d) asks an interactive program to show; and the README.
+- **Where it is stated:** [`LICENSE`](../LICENSE), the full text from gnu.org; `license` in [`package.json`](../package.json) and in the workspace [`Cargo.toml`](../Cargo.toml), which every crate takes; `license` and `copyright` in [`src-tauri/tauri.release.conf.json`](../src-tauri/tauri.release.conf.json), for the packages' metadata; the installers and packages, which install `LICENSE` beside the notices ([PACKAGING.md](PACKAGING.md)); the app's About section, with the notice GPL-3.0's section 5(d) asks an interactive program to show; and the README.
 - **Contributions** come under a Contributor Licence Agreement with Singlbase (#90).
 - **No legal review** was done for this decision.

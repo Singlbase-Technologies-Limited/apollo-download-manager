@@ -1,6 +1,8 @@
 # Protocols and limits
 
-What Apollo Download Manager downloads, and what it can do for each kind of link. The tables below are checked against what Apollo Download Manager's download engine reports about itself, so they change only when the engine does (`crates/velocity-transfer/tests/user_guide.rs`).
+What Apollo Download Manager downloads, and what it can do for each kind of link. The tables below are checked automatically against what Apollo Download Manager's download engine reports about itself, so they change only when the engine does.
+
+See also, for developers: [how the download engine works](../ENGINE_INTERNALS.md).
 
 ## Direct downloads
 
@@ -19,7 +21,7 @@ What the columns mean:
 - **Encrypted:**
   - **HTTPS:** always, and the server's certificate is always checked. There is no way to turn that check off.
   - **FTP:** an `ftps://` link is encrypted. A plain `ftp://` link is encrypted only when you tick "Require encryption (FTPS)" when adding it. Without that, the Add dialog warns that the login and the file can be read on the network.
-  - **SFTP:** always. The first time you download from a server, Apollo Download Manager asks you to confirm the server's identity ([Downloads](downloads.md#sftp-servers)).
+  - **SFTP:** always. The first time you download from a server, Apollo Download Manager asks you to confirm the server's identity ([Add a download](add-a-download.md#sftp-servers)).
 
 **Limits that apply to every direct download:**
 
@@ -35,7 +37,7 @@ What the columns mean:
 
 A Metalink file lists one or more files, with their mirrors and checksums. When the Metalink switch is on (Settings, Advanced; off by default, as in V1), a link to a `.metalink` or `.meta4` file adds the files it describes, and Apollo Download Manager downloads each from its mirrors and checks it against the checksums the Metalink file gives.
 
-**A Metalink file on your computer:** in the Add dialog, **Choose Metalink files…** adds every file each one lists, in the folder you choose, or the default one (#222).
+**A Metalink file on your computer:** in the Add dialog, **Choose Metalink files…** adds every file each one lists, in the folder you choose, or the default one.
 
 ## BitTorrent
 

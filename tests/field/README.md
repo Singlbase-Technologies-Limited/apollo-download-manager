@@ -1,6 +1,6 @@
 # Field test
 
-The installed app, used the way a person uses it, with real downloads from real servers and real settings (#262). It finds what the automated tests can't: servers that cut connections, long downloads, pause and resume, crashes. Every problem it finds becomes an issue in epic #1, Phase I. It runs by hand on Windows, before each release candidate, and never in CI. The test levels are in [docs/TESTING.md](../../docs/TESTING.md#the-field-test-262).
+The installed app, used the way a person uses it, with real downloads from real servers and real settings (#262). It finds what the automated tests can't: servers that cut connections, long downloads, pause and resume, crashes. Every problem it finds becomes an issue in epic #1, Phase I. It runs by hand on Windows, before each release candidate, and never in CI. The test levels are in [docs/TESTING.md](../../docs/TEST_FIXTURES.md#the-field-test-262).
 
 ## Before a session
 

@@ -18,7 +18,7 @@ These are the facts on 2026-10-26:
 ## Decision
 
 1. **libtorrent runs in the torrent helper,** a child process the app starts and supervises: `velocity-torrent serve`. It works the way the engine does: one argument, a cleared environment, stderr kept in memory, the same restart backoff and cap, and the same hang checks.
-2. **One shared child-process layer.** The engine's child-process code becomes generic over its messages, in a new workspace crate, `crates/velocity-child`, with no new outside dependencies:
+2. **One shared child-process layer.** The engine's child-process code becomes generic over its messages, in a new workspace crate, [`crates/velocity-child`](../../crates/velocity-child/), with no new outside dependencies:
    - **The framing:** `frame`.
    - **The envelope:** `message`, with a `Contract` trait that supplies the command, reply and event types and the contract version.
    - **Each side of a connection:** the child's `serve` loop and the app's `client`.

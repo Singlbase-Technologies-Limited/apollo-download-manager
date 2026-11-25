@@ -34,8 +34,8 @@ Everything else in ADR-0003 stands: the identifiers, the native-messaging host a
 
 ## Consequences
 
-- **V1 and Apollo Download Manager install side by side,** each with its own folder and uninstall entry. A test fails if the release product name ever equals V1's (`crates/velocity-core/src/branding.rs`).
-- **`branding.json`'s `releaseProductName`,** [COEXISTENCE.md](../COEXISTENCE.md) and the packaging configuration (`src-tauri/tauri.release.conf.json`) carry the new name.
+- **V1 and Apollo Download Manager install side by side,** each with its own folder and uninstall entry. A test fails if the release product name ever equals V1's ([`crates/velocity-core/src/branding.rs`](../../crates/velocity-core/src/branding.rs)).
+- **[`branding.json`](../../branding.json)'s `releaseProductName`,** [COEXISTENCE.md](../COEXISTENCE.md) and the packaging configuration ([`src-tauri/tauri.release.conf.json`](../../src-tauri/tauri.release.conf.json)) carry the new name.
 - **Offering to remove V1** from Apollo Download Manager's installer, which ADR-0003 mentions, moves to a later issue (PO decision on #81).
 
 ## Follow-up

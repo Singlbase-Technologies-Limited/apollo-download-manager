@@ -7,7 +7,7 @@
 
 ## Context
 
-On resume, Apollo Download Manager must know whether the file on the server is still the one it started downloading. Bytes from two versions must never be mixed (research report section 5.3; `.claude/rules/transfer-engine.md`, "Validators").
+On resume, Apollo Download Manager must know whether the file on the server is still the one it started downloading. Bytes from two versions must never be mixed (research report section 5.3; [`.claude/rules/transfer-engine.md`](../../.claude/rules/transfer-engine.md), "Validators").
 
 A strong ETag or a strong `Last-Modified` proves it, and the engine sends it in `If-Range` (#45). Some servers send neither. The only check left is then the total length, which misses a file that changed without changing size.
 

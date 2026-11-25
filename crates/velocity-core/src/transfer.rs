@@ -65,7 +65,9 @@ use std::sync::mpsc::Receiver;
 /// [`DirectTransfer::set_host_memory`]: what the engine learned about a server outlives it.
 /// Version 24 (#466) added [`Resume::NewLink`]: a download continues with a new link the user
 /// gave, and a file that isn't the same one fails it instead of starting over.
-pub const TRANSFER_CONTRACT_VERSION: u32 = 24;
+/// Version 25 (#324) added [`TransferSnapshot::announced_mirrors`]: the mirrors the file's server
+/// names in `Link: rel=duplicate` headers.
+pub const TRANSFER_CONTRACT_VERSION: u32 = 25;
 
 /// What the engine learned about one server (#325): the host name and port its connections go
 /// to, lowercase and without a login, the count an earlier download settled at, and the most
@@ -643,6 +645,11 @@ pub struct TransferSnapshot {
     /// Why the transfer last dropped the bytes it had and started again, as a sentence for the
     /// user (#257); `None` while it never did. A start that drops nothing isn't one.
     pub started_over: Option<String>,
+    /// The mirrors the file's server announced in `Link: rel=duplicate` headers (RFC 6249),
+    /// checked and best first, once it answered with the file (#324); none for FTP and SFTP. The
+    /// app offers them; the engine never uses one by itself.
+    #[serde(default)]
+    pub announced_mirrors: Vec<String>,
 }
 
 impl TransferSnapshot {
@@ -680,6 +687,7 @@ impl TransferSnapshot {
             content_type: None,
             retry_at_ms: None,
             started_over: None,
+            announced_mirrors: Vec::new(),
         }
     }
 }
@@ -1144,6 +1152,7 @@ mod tests {
             started_over: Some(
                 "The file on the server changed, so the download started again.".to_owned(),
             ),
+            announced_mirrors: vec!["https://m.example.net/a.iso".into()],
         }
     }
 

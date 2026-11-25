@@ -95,6 +95,8 @@ struct DirectJob {
     transfer: Option<TransferId>,
     /// The file's media type, as the engine reported it (#54).
     content_type: Option<String>,
+    /// The mirrors the file's server announced, as the engine reported them (#324).
+    announced_mirrors: Vec<String>,
     /// Its login is saved in the system keychain, at the user's request (#70).
     login_saved: bool,
 }
@@ -106,6 +108,7 @@ impl DirectJob {
             resume,
             transfer: None,
             content_type: None,
+            announced_mirrors: Vec::new(),
             login_saved: false,
         }
     }
@@ -192,6 +195,8 @@ pub struct Manager {
     just_completed: Vec<String>,
     /// `.torrent` links being fetched, and the trackers of those fetched (#60).
     links: torrent_links::TorrentLinks,
+    /// The official mirror lists being fetched (#324).
+    mirror_lists: mirrors::MirrorLists,
     /// The proxy's password (#192): typed this session, or remembered in the keychain.
     proxy_password: Option<crate::secret::Secret>,
     /// The kind of proxy set, for the torrents that can't use an HTTPS one.
@@ -335,6 +340,7 @@ impl Manager {
             user_agent: None,
             just_completed: Vec::new(),
             links: torrent_links::TorrentLinks::default(),
+            mirror_lists: mirrors::MirrorLists::default(),
             proxy_password: None,
             proxy_kind: crate::proxy::ProxyKind::None,
         }
@@ -1077,7 +1083,7 @@ impl Manager {
     fn apply(&mut self, event: TransferEvent, now_ms: u64) -> bool {
         match event {
             TransferEvent::Changed { snapshot } => {
-                if self.apply_fetch(&snapshot) {
+                if self.apply_fetch(&snapshot) || self.apply_mirror_fetch(&snapshot) {
                     return true;
                 }
                 let Some(app_id) = self.by_transfer.get(&snapshot.id).cloned() else {
@@ -1157,6 +1163,11 @@ impl Manager {
                 {
                     job.content_type = Some(content_type);
                 }
+                if let (false, Some(job)) =
+                    (snapshot.announced_mirrors.is_empty(), download.direct_mut())
+                {
+                    job.announced_mirrors = snapshot.announced_mirrors;
+                }
                 let record = &mut download.record;
                 if record.status == DownloadStatus::Completed && record.completed_at_ms.is_none() {
                     record.completed_at_ms = Some(now_ms);
@@ -1231,6 +1242,7 @@ mod categories;
 mod finished;
 mod history;
 mod lifecycle;
+mod mirrors;
 mod network;
 mod new_link;
 mod opening;
@@ -1251,6 +1263,7 @@ pub use adding::{
     is_torrent_link, AddOutcome, AddRequest, AddResult, Duplicate, FETCH_WAIT, MAX_ADD,
 };
 pub use batch::MAX_BATCH;
+pub use mirrors::{DownloadMirrors, MirrorReply, MIRROR_LIST_WAIT};
 pub use proxy::saved_proxy;
 pub use recovery::SensitiveOptions;
 pub use service::{now_ms, ManagerService, SNAPSHOT_EVERY, TICK};

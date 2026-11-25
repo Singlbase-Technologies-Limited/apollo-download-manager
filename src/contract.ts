@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 /** Must equal `velocity_core::COMMAND_API_VERSION`; the app refuses to start on a mismatch. */
-export const COMMAND_API_VERSION = 42;
+export const COMMAND_API_VERSION = 43;
 
 const bytes = z.number().int().nonnegative();
 
@@ -407,8 +407,32 @@ export const AddRequestSchema = z.strictObject({
   fromBrowser: z.boolean(),
   /** Its own start time, local `YYYY-MM-DDTHH:MM` (#350); `null` to start as usual. */
   startAt: z.string().nullable(),
+  /** Mirrors the user chose for the request's one link (#324), at most 8. */
+  mirrors: z.array(z.string()),
 });
 export type AddRequest = z.infer<typeof AddRequestSchema>;
+
+/** A project whose official mirror list the app reads (#324). */
+export const MirrorProjectSchema = z.enum(['ubuntu', 'debian', 'fedora', 'apache', 'archLinux', 'linuxMint', 'openSuse', 'gnu']);
+export type MirrorProject = z.infer<typeof MirrorProjectSchema>;
+/** Where a mirror came from: the file's server, or a project's official list (#324). */
+export const MirrorSourceSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('announced') }),
+  z.strictObject({ kind: z.literal('official'), project: MirrorProjectSchema }),
+]);
+/** A mirror offered for a link: the file's address there, and the mirror's country when known (#324). */
+export const MirrorCandidateSchema = z.strictObject({ url: z.string().min(1), source: MirrorSourceSchema, country: z.string().length(2).nullable() });
+export type MirrorCandidate = z.infer<typeof MirrorCandidateSchema>;
+/** The most mirrors one download may use besides its own link (PO decision on #324). */
+export const MAX_MIRRORS = 8;
+/** A download's mirrors (#324), from `download_mirrors`. */
+export const DownloadMirrorsSchema = z.strictObject({
+  chosen: z.array(z.string()),
+  announced: z.array(MirrorCandidateSchema),
+  official: MirrorProjectSchema.nullable(),
+  changeable: z.boolean(),
+});
+export type DownloadMirrors = z.infer<typeof DownloadMirrorsSchema>;
 
 /** The download a new one would repeat (#60). */
 export const DuplicateSchema = z.strictObject({

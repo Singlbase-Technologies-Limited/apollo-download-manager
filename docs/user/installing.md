@@ -4,6 +4,8 @@ Apollo Download Manager installs beside V1, the download manager it grew out of:
 
 **No signed release yet:** Apollo Download Manager's installers are test builds, made by its CI and not signed.
 
+See also, for developers: [how the installers are built](../PACKAGING.md).
+
 ## Windows
 
 The installer is `Apollo Download Manager_<version>_x64-setup.exe`.
@@ -30,7 +32,7 @@ sudo apt install "./Apollo Download Manager_<version>_amd64.deb"   # Ubuntu, Deb
 sudo dnf install "./Apollo Download Manager-<version>-1.x86_64.rpm" # Fedora
 ```
 
-Use the file name of the package you have, in quotes because it has spaces. A release candidate's files have other names, such as `apollo-download-manager-0.2.0-rc.1-<commit>-<date>-linux-amd64.deb`. Apollo Download Manager then appears in your applications menu as "Apollo Download Manager". Its data is kept in `~/.local/share/com.velocity.downloadmanager.v2`, apart from V1's, and its licence and the third-party licences are in `/usr/lib/Apollo Download Manager/` (`LICENSE`, `THIRD_PARTY_NOTICES.md`).
+Use the file name of the package you have, in quotes because it has spaces. Apollo Download Manager then appears in your applications menu as "Apollo Download Manager". Its data is kept in `~/.local/share/com.velocity.downloadmanager.v2`, apart from V1's, and its licence and the third-party licences are in `/usr/lib/Apollo Download Manager/` (`LICENSE`, `THIRD_PARTY_NOTICES.md`).
 
 No AppImage is made for now.
 

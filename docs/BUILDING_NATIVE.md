@@ -1,8 +1,10 @@
 # Building the native libraries
 
-Apollo Download Manager's direct-download engine uses libcurl ([ADR-0001](decisions/0001-v2-direction.md)). Release builds link a libcurl that Apollo Download Manager builds itself, from verified sources ([ADR-0004](decisions/0004-libcurl-build-path.md)), so the shipped version can be proven. This page covers how that build works, how to run it, and how to update a pin. The approval and pinning rules are in [DEPENDENCIES.md](DEPENDENCIES.md#native-libraries).
+Apollo Download Manager's direct-download engine uses libcurl ([ADR-0001](decisions/0001-v2-direction.md)). Release builds link a libcurl that Apollo Download Manager builds itself, from verified sources ([ADR-0004](decisions/0004-libcurl-build-path.md)), so the shipped version can be proven. This page covers how that build works, how to run it, and how to update a pin. The approval and pinning rules are in [APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#native-libraries).
 
-The torrent bridge uses libtorrent, with Boost and OpenSSL, built with vcpkg for now: see [libtorrent](#libtorrent).
+libtorrent's build is in [BUILDING_LIBTORRENT.md](BUILDING_LIBTORRENT.md).
+
+The torrent bridge uses libtorrent, with Boost and OpenSSL, built with vcpkg for now: see [libtorrent](BUILDING_LIBTORRENT.md#libtorrent).
 
 ## What gets built
 
@@ -12,7 +14,7 @@ The torrent bridge uses libtorrent, with Boost and OpenSSL, built with vcpkg for
 | Linux x64 (`x86_64-unknown-linux-gnu`) | zlib, nghttp2, OpenSSL, curl | A static OpenSSL, on the 3.5 long-term line | Each project's own `configure` script |
 | macOS | **Not established** (#83) | — | — |
 
-The versions, sources and signing keys are in [`scripts/native/deps.lock`](../scripts/native/deps.lock). Every library is built static, so nothing from the build host's own libcurl is linked or bundled ([DEPENDENCIES.md](DEPENDENCIES.md#distribution-packages)).
+The versions, sources and signing keys are in [`scripts/native/deps.lock`](../scripts/native/deps.lock). Every library is built static, so nothing from the build host's own libcurl is linked or bundled ([APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#distribution-packages)).
 
 **libcurl keeps only what Apollo Download Manager uses.** The build disables DICT, FILE, Gopher, IMAP, IPFS, LDAP and LDAPS, MQTT, POP3, RTSP, SMTP, Telnet, TFTP, WebSockets and the `.netrc` parser. Libraries Apollo Download Manager doesn't use stay out too: libpsl, libidn2, Brotli, zstd, libssh2, libssh, librtmp and GSS-API. A protocol that isn't compiled in can't be reached by any URL or redirect. The engine's own allowlists (#67) still apply on top. SFTP comes later, once its backend is decided (#52, #53).
 
@@ -34,7 +36,7 @@ Both work on the Rust host target. The output goes to `target/native/` (ignored 
 
 **Work folder:** Linux compiles in `target/native/<target>/build/`. Windows compiles in a new temporary folder (`%TEMP%\v2n-…`), because MSVC fails under a deep checkout path: a clean clone 140 characters deep hit its 260-character limit (C1083, "Cannot open compiler generated file"). Both folders are deleted after the build, whether it passed or failed.
 
-**Reuse:** a finished build is reused while the lock file and the scripts in `scripts/native/` are unchanged, and while every recorded artefact still has its recorded SHA-256. `node scripts/native/build.mjs --force` rebuilds anyway.
+**Reuse:** a finished build is reused while the lock file and the scripts in [`scripts/native/`](../scripts/native/) are unchanged, and while every recorded artefact still has its recorded SHA-256. `node scripts/native/build.mjs --force` rebuilds anyway.
 
 **Measured times** (cold, 2026-10-22):
 
@@ -91,12 +93,12 @@ On Linux, the built curl tool links only the C library dynamically (`ldd`: `linu
 
 ## Linking into Rust
 
-`crates/velocity-curl` is the only crate that calls libcurl ([ADR-0002](decisions/0002-engine-crate-layout.md)). It links this build, never `curl-sys`'s bundled curl 8.22.0 or a system libcurl:
+[`crates/velocity-curl`](../crates/velocity-curl/) is the only crate that calls libcurl ([ADR-0002](decisions/0002-engine-crate-layout.md)). It links this build, never `curl-sys`'s bundled curl 8.22.0 or a system libcurl:
 
 - **Overrides:** [`.cargo/config.toml`](../.cargo/config.toml) overrides the build scripts of `curl-sys` (`links = "curl"`) and `libz-sys` (`links = "z"`), so neither compiles a bundled copy nor looks for a system one ([build-script overrides](https://doc.rust-lang.org/cargo/reference/build-scripts.html#overriding-build-scripts)). `curl-sys` has no default features, so it pulls in no `openssl-sys`.
-- **Linking:** `crates/velocity-curl/build.rs` reads `build-info.json` and links the static libraries in `target/native/<target>/prefix/lib`, plus the system libraries curl's own `libcurl.pc` lists (Windows: `bcrypt`, `advapi32`, `crypt32`, `secur32`, `ws2_32`, `iphlpapi`). On Linux it lists none; `pthread` and `dl` are added for a static OpenSSL on glibc before 2.34.
+- **Linking:** [`crates/velocity-curl/build.rs`](../crates/velocity-curl/build.rs) reads `build-info.json` and links the static libraries in `target/native/<target>/prefix/lib`, plus the system libraries curl's own `libcurl.pc` lists (Windows: `bcrypt`, `advapi32`, `crypt32`, `secur32`, `ws2_32`, `iphlpapi`). On Linux it lists none; `pthread` and `dl` are added for a static OpenSSL on glibc before 2.34.
 - **Refusal:** the build stops with a message naming `pnpm native:build` when the record is missing, is for another target, records a libcurl below the floor, or lists an artefact that is gone.
-- **Location:** `.cargo/config.toml` sets `VELOCITY_NATIVE_DIR` to `target/native` as an absolute path. A `VELOCITY_NATIVE_DIR` already in the environment wins, for a build kept elsewhere.
+- **Location:** [`.cargo/config.toml`](../.cargo/config.toml) sets `VELOCITY_NATIVE_DIR` to `target/native` as an absolute path. A `VELOCITY_NATIVE_DIR` already in the environment wins, for a build kept elsewhere.
 - **Checks build it first:** `pnpm check:fast`, `check:pr` and `test:focused -- <crate>` run `native:build` before any Rust check. Plain `cargo` doesn't, and stops with the refusal message instead.
 
 ## Checking at run time
@@ -107,13 +109,13 @@ On Linux, the built curl tool links only the C library dynamically (`ldd`: `linu
 the transfer engine can't start: libcurl 8.22.0 is linked, but Apollo Download Manager needs 8.23.0 or newer. Rebuild the native libraries with `pnpm native:build` (docs/BUILDING_NATIVE.md)
 ```
 
-The engine (#37) obtains libcurl only through `start()`, and maps a `StartError` to the `ENGINE_INCOMPATIBLE` error code for the UI. The tests: `crates/velocity-curl/src/capabilities.rs` (the check, against stand-in values), `src/runtime.rs` (`start` refuses a stand-in 8.22.0), and `tests/linked_libcurl.rs` (the real linked libcurl starts and reports exactly `ftp ftps http https`).
+The engine (#37) obtains libcurl only through `start()`, and maps a `StartError` to the `ENGINE_INCOMPATIBLE` error code for the UI. The tests: [`crates/velocity-curl/src/capabilities.rs`](../crates/velocity-curl/src/capabilities.rs) (the check, against stand-in values), `src/runtime.rs` (`start` refuses a stand-in 8.22.0), and `tests/linked_libcurl.rs` (the real linked libcurl starts and reports exactly `ftp ftps http https`).
 
 ## build-info.json
 
-One record per build, schema 1. It is written only after every check passes. `checkBuildInfo` in `native-lib.mjs` checks a record against the lock file. A missing or incomplete record is a release blocker ([DEPENDENCIES.md](DEPENDENCIES.md#release-blockers-related-to-provenance)).
+One record per build, schema 1. It is written only after every check passes. `checkBuildInfo` in `native-lib.mjs` checks a record against the lock file. A missing or incomplete record is a release blocker ([APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#release-blockers-related-to-provenance)).
 
-**`pnpm native:verify`** enforces it. It fails unless the host target's record passes `checkBuildInfo`, and every artefact it lists still has its recorded SHA-256, so a library replaced after the build is caught. `pnpm tauri build` runs it first (`beforeBuildCommand` in `src-tauri/tauri.conf.json`), so no package is built without a complete record.
+**`pnpm native:verify`** enforces it. It fails unless the host target's record passes `checkBuildInfo`, and every artefact it lists still has its recorded SHA-256, so a library replaced after the build is caught. `pnpm tauri build` runs it first (`beforeBuildCommand` in [`src-tauri/tauri.conf.json`](../src-tauri/tauri.conf.json)), so no package is built without a complete record.
 
 | Field | Content |
 |---|---|
@@ -132,43 +134,10 @@ Each change to `deps.lock` is its own reviewed PR. A libcurl floor bump also nee
 
 1. **Check the advisories first:** curl's [vulnerability table](https://curl.se/docs/vulnerabilities.html) and the advisories for nghttp2, zlib and OpenSSL (#75).
 2. **Download** the new archive and its `.asc` from the project's official release location.
-3. **Verify the signature** with the key in `scripts/native/keys/`. If the project signs with a new key, get it from the project's own published source and record that source in the lock file's header.
+3. **Verify the signature** with the key in [`scripts/native/keys/`](../scripts/native/keys/). If the project signs with a new key, get it from the project's own published source and record that source in the lock file's header.
 4. **Update the line:** version, URL, SHA-256 and fingerprint. The parser refuses a source file name that doesn't match `<name>-<version>.`.
 5. **Run `pnpm native:build`** on Windows and Linux. CI runs both native jobs for the PR, because the lock file changed ([CI.md](CI.md#selecting-jobs)).
-6. **Record it:** the approval in [DEPENDENCIES.md](DEPENDENCIES.md#approved-direct-dependencies), and the measured times above if they changed.
-
-## libtorrent
-
-The torrent bridge (`crates/velocity-lt`) links libtorrent-rasterbar 2.0.15, Boost 1.91 and OpenSSL 3.5.9, built with [vcpkg](https://github.com/microsoft/vcpkg) (PO decisions on #62). `pnpm native:build` builds them after libcurl, with [`scripts/native/libtorrent.mjs`](../scripts/native/libtorrent.mjs).
-
-- **The pins:**
-  - **The registry:** [`scripts/native/vcpkg/vcpkg.json`](../scripts/native/vcpkg/vcpkg.json) pins the vcpkg registry by its `builtin-baseline` commit, `9e593bb` (2026-07-29). Boost and vcpkg's own helpers come from that commit.
-  - **Overlay ports:** the registry offers libtorrent 2.0.11 and then 2.1.x, and OpenSSL 3.5 only up to 3.5.4. So libtorrent 2.0.15 and OpenSSL 3.5.9 come from overlay ports in [`scripts/native/vcpkg/ports`](../scripts/native/vcpkg/ports). Each is vcpkg's own recipe (libtorrent 2.0.11's, OpenSSL 3.5.4's) with only the version and the SHA-512 changed, and libtorrent's licence field corrected to its `LICENSE` file. The repository stores two of the OpenSSL port's files with LF where vcpkg has CRLF; its patches are byte for byte vcpkg's.
-  - **Checksums:** vcpkg checks each source's SHA-512 on every download. Those archives are GitHub's archives of the release tags. Apollo Download Manager hasn't checked them against release signatures, as it does for libcurl's sources.
-  - **Files kept in the repository (#454):** github.com rate-limits some downloads, answering HTTP 429 even with a token, and release candidates build without a cache. So [`scripts/native/vcpkg-downloads/`](../scripts/native/vcpkg-downloads) keeps those files, and `libtorrent.mjs` places them in vcpkg's downloads folder before `vcpkg install`. vcpkg then reports "Using cached" and never fetches them. `vcpkg install` cleans build trees and packages after each package, but not downloads (`--clean-after-build` would remove the placed files before the package that needs them is built). Each must have the SHA-512 its port pins: the build checks it, and so does vcpkg. The list is `PRELOADED_DOWNLOADS` in [`libtorrent-lib.mjs`](../scripts/native/libtorrent-lib.mjs). Today it holds one file, boost-math's `boost_math_android.patch` (Boost Software License 1.0). Its port fetches it from `github.com/boostorg/math/commit/05d9f24….patch?full_index=1`. GitHub's API serves a different form, so it was rebuilt with git: `git format-patch -n --full-index --no-signature 05d9f24^1..05d9f24^2`, with `*.hpp diff=cpp` set, which gives exactly the pinned SHA-512. When a new vcpkg baseline changes the port, the test that checks the file against its pin fails, and the file is replaced or removed.
-- **Release only:** the triplets are `x64-windows-static-md-release` and `x64-linux-release`, so only release libraries are built; cargo links those in every profile. libtorrent is built without iconv (`"default-features": false`).
-- **The record:** the build writes `target/native/<target>/libtorrent-info.json`:
-  - libtorrent's version and the vcpkg baseline;
-  - the install prefix, relative to `target/native` (`vcpkg-installed/<triplet>`), so a moved or renamed checkout still finds it. Records written before the repository's rename hold an absolute path; `native:build` rebuilds them, and `build.rs` still reads one;
-  - the compile definitions and link libraries, read from libtorrent's CMake package. The shim must be compiled with the same definitions as libtorrent, such as `TORRENT_USE_OPENSSL` and `TORRENT_SSL_PEERS`;
-  - the SHA-256 of each library.
-
-  `crates/velocity-lt/build.rs` refuses to build without it, or when it records another libtorrent version. A generator expression the build doesn't know is refused rather than guessed at.
-- **Reuse:** the build is reused while the manifest, the ports, `libtorrent.mjs` and `libtorrent-lib.mjs` are unchanged and every library still has its recorded SHA-256. vcpkg also keeps built packages in its own binary cache.
-- **vcpkg itself:** `libtorrent.mjs` uses `VCPKG_ROOT` when it is set, else `C:\vcpkg` on Windows and `~/vcpkg` on Linux. The clone must contain the baseline commit. `pnpm check:prereqs` reports a missing vcpkg.
-  - **Windows:** `git clone https://github.com/microsoft/vcpkg C:\vcpkg`, then `C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics`.
-  - **Linux:** `sudo apt install curl zip unzip tar`, then `git clone https://github.com/microsoft/vcpkg ~/vcpkg` and `~/vcpkg/bootstrap-vcpkg.sh -disableMetrics`. vcpkg downloads its own CMake and Ninja.
-- **In CI** (#205): the native libraries are cached on their own, and vcpkg is set up at the baseline commit only when they have to be built ([CI.md](CI.md#caching)).
-- **Memory:** compiling libtorrent takes up to about 1.3 GB per compiler process. On a 2 GB WSL the compiler was killed for lack of memory. Raise WSL's memory in `.wslconfig`, or set `VCPKG_MAX_CONCURRENCY` lower (this machine uses 4 with 6 GB).
-- **Measured times** (cold, 2026-10-26; Boost and OpenSSL make up most of it):
-
-  | Platform | Machine | Time |
-  |---|---|---|
-  | Windows 11 | 16 logical CPUs, VS Build Tools 2022; debug and release | 860 s |
-  | Linux, Ubuntu 24.04 in WSL2 | 8 vCPUs, 6 GB, `VCPKG_MAX_CONCURRENCY=4`; release only | 1939 s |
-
-  A clean Windows time for the release-only triplet wasn't measured: that run shared the CPU with other builds.
-- **Not yet Apollo Download Manager's own build:** releases are meant to link libraries Apollo Download Manager builds from verified sources, as for libcurl. Building libtorrent and Boost that way is a release blocker ([DEPENDENCIES.md](DEPENDENCIES.md#release-blockers-related-to-provenance)).
+6. **Record it:** the approval in [APPROVED_DEPENDENCIES.md](APPROVED_DEPENDENCIES.md#approved-direct-dependencies), and the measured times above if they changed.
 
 ## Known limitations
 

@@ -172,6 +172,8 @@ export const canOpenFile = (d: DownloadRecord) => d.status === 'completed' || d.
 
 /** A failed or paused direct download may be given a new link for the same file (#466); a torrent never. */
 export const canUseNewLink = (d: DownloadRecord) => d.kind !== 'torrent' && d.kind !== 'magnet' && (d.status === 'failed' || d.status === 'paused');
+/** A direct download's mirrors can be looked at until it completes (#324); they change while it isn't running. */
+export const canHaveMirrors = (d: DownloadRecord) => d.kind !== 'torrent' && d.kind !== 'magnet' && d.status !== 'completed' && d.status !== 'removed';
 
 const NONE: ActionAvailability = { pause: false, resume: false, cancel: false, retry: false, move: false, remove: false, deleteFiles: false, stopSeeding: false };
 
