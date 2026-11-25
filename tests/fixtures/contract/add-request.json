@@ -38,6 +38,7 @@
   "metalinkFiles": [
     "/home/user/release.meta4"
   ],
+  "mirrors": [],
   "onConflict": "rename",
   "referrer": "https://example.com/page",
   "requireEncryption": true,

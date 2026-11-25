@@ -97,6 +97,11 @@ pub struct AddRequest {
     /// schedule's window. `None` to start as usual.
     #[serde(default)]
     pub start_at: Option<crate::queue::LocalTime>,
+    /// Mirrors the user chose for the request's one direct link (#324): its further sources, at
+    /// most [`crate::mirrors::MAX_MIRRORS`], each as [`crate::mirrors::check_mirror`] says. Only
+    /// with exactly one link and nothing else.
+    #[serde(default)]
+    pub mirrors: Vec<String>,
 }
 
 /// The files chosen for one `.torrent` file of an [`AddRequest`] (#63).
@@ -163,6 +168,7 @@ impl AddRequest {
     pub fn sample() -> Self {
         AddRequest {
             start_at: None,
+            mirrors: Vec::new(),
             in_order: false,
             ends_first: false,
             links: vec!["https://example.com/files/archive.zip".to_owned()],
@@ -402,6 +408,8 @@ impl Manager {
             || count > MAX_ADD
             || (request.file_name.is_some() && count != 1)
             || request.connections == Some(0)
+            || (!request.mirrors.is_empty() && (request.links.len() != 1 || count != 1))
+            || request.mirrors.len() > crate::mirrors::MAX_MIRRORS
         {
             return Err(ErrorCode::InvalidInput);
         }
@@ -523,6 +531,15 @@ impl Manager {
         if split_login(link).1.is_some() {
             return Err(ErrorCode::InvalidUrl);
         }
+        // The mirrors the user chose (#324), checked before anything is placed.
+        let mut urls = vec![link.to_owned()];
+        for mirror in &request.mirrors {
+            let mirror = crate::mirrors::check_mirror(mirror, link)?;
+            if urls.contains(&mirror) {
+                return Err(ErrorCode::InvalidInput);
+            }
+            urls.push(mirror);
+        }
         let key = [link.to_owned()];
         if let Some(duplicate) = Known::blocking(&known.links, &key, request.allow_duplicate) {
             return Ok(AddOutcome::Duplicate { duplicate });
@@ -532,7 +549,7 @@ impl Manager {
             Placement::Conflict(check) => return Ok(AddOutcome::Conflict { check }),
         };
         let spec = TransferSpec {
-            urls: vec![link.to_owned()],
+            urls,
             directory: place.directory,
             file_name: place.file_name,
             credentials: request.credentials.clone(),

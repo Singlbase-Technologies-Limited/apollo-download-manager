@@ -219,7 +219,20 @@ impl Manager {
 
     /// Deletes a fetch's own file and its part file, if they are plain files.
     fn drop_fetch_file(&self, name: &str) {
-        let Some(folder) = &self.links.folder else {
+        self.links.drop_fetch_file(name);
+    }
+}
+
+impl TorrentLinks {
+    /// The app's own folder for fetches, once [`Manager::with_torrent_links`] gave it; mirror
+    /// lists are fetched there too (#324).
+    pub(super) fn folder(&self) -> Option<PathBuf> {
+        self.folder.clone()
+    }
+
+    /// Deletes a fetch's own file and its part file, if they are plain files.
+    pub(super) fn drop_fetch_file(&self, name: &str) {
+        let Some(folder) = &self.folder else {
             return;
         };
         let part = format!("{name}{}", crate::naming::PART_FILE_SUFFIX);
@@ -230,7 +243,9 @@ impl Manager {
             }
         }
     }
+}
 
+impl Manager {
     /// The trackers taken out of a fetched `.torrent`, for the torrent added from it.
     pub(super) fn fetched_trackers(&mut self, origin: &TorrentOrigin) -> Vec<String> {
         match origin {
