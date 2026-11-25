@@ -15,9 +15,12 @@
 #   zlib     https://madler.net/madler/pgp.html (Mark Adler, linked from zlib.net; the same
 #            fingerprint as keys.openpgp.org's copy)
 #
+# zlib 1.4 (released 2026-11-05): SHA-256 computed and its signature verified with gpg against keys/zlib.asc on
+# 2026-11-17, for RUSTSEC-2026-0544 (#506; PO: an exception to the two-week rule, as a security fix).
+#
 # Which libraries a target builds: TARGETS in native-lib.mjs (Windows: zlib, nghttp2, curl with
 # Schannel; Linux: zlib, nghttp2, OpenSSL, curl). OpenSSL stays on the 3.5 long-term line (PO, #35).
-zlib    1.3.2   https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz  d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3  verified:5ED46A6721D365587791E2AA783FCD8E58BCAFBA  Zlib
+zlib    1.4     https://github.com/madler/zlib/releases/download/v1.4/zlib-1.4.tar.xz  4f11c512053d7bab8d9e9b89bde3575add3e4c50a383b42ef6cb837035fc5a7c  verified:5ED46A6721D365587791E2AA783FCD8E58BCAFBA  Zlib
 nghttp2 1.70.0  https://github.com/nghttp2/nghttp2/releases/download/v1.70.0/nghttp2-1.70.0.tar.xz  e05cb1388eaca3830aded4ccf20044b6e1ac1a61411dcca11b0437c4285c8bc2  verified:F4F3B91474D1EB29889BD0EF7E8403D5D673C366  MIT
 openssl 3.5.9   https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz  603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a  verified:B146647E45A7B33947AB226B2A2C87D161692D40  Apache-2.0
 curl    8.23.0  https://curl.se/download/curl-8.23.0.tar.xz  8dadd7d2536a314f982ad05a651b713f426bf7d02cc2c76cffb9796f2218e6c5  verified:27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2  curl

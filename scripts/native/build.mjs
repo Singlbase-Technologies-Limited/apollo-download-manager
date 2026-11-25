@@ -103,7 +103,8 @@ function buildWindows(sources, work, prefix) {
   };
   cmakeBuild('zlib', extract(sources.zlib, work), options.zlib);
   cmakeBuild('nghttp2', extract(sources.nghttp2, work), options.nghttp2);
-  const zlibLib = ['zs.lib', 'zlibstatic.lib', 'zlib.lib'].map((f) => join(prefix, 'lib', f)).find(existsSync);
+  // zlib's CMake names its static library libzs.lib with MSVC since 1.4 (#506); crates/velocity-curl/build.rs links it.
+  const zlibLib = ['libzs.lib'].map((f) => join(prefix, 'lib', f)).find(existsSync);
   if (!zlibLib) throw new Error(`the zlib build installed no static library in ${join(prefix, 'lib')}`);
   options.curl = [
     '-DBUILD_SHARED_LIBS=OFF',

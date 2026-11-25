@@ -30,7 +30,7 @@ Resumes after a break, sorts files into folders, and takes downloads from your b
 - **Picks up where it stopped.** Resumes after a break, once it has checked the file hasn't changed.
 - **Several connections over HTTP and HTTPS.** Up to 8 per file, kept only while they make it faster.
 - **Torrents built in.** Magnet links and `.torrent` files, with seeding.
-- **Takes downloads from your browser.** An extension for Chrome, Edge, Brave and Firefox hands links to the app.
+- **Takes downloads from your browser.** An extension for Chrome, Edge, Brave and Firefox hands links to the app, one at a time or many files from a page at once.
 - **Tells you why.** When a download waits or fails, it says so in plain words.
 - **Private by design.** No telemetry and no analytics: it connects only to the servers you download from.
 

@@ -90,8 +90,10 @@ use serde::Serialize;
 /// torrent network status's `adapterMissing`.
 /// Version 38 (#472) added `remember_trackers`, `forget_trackers`, and `trackersSaved` and
 /// `trackersMissing` in `TorrentDetails`: a torrent's trackers kept in the keychain.
+/// Version 39 (#426) added the browser link source `page`, files chosen on a page, and keeps up to
+/// 500 links waiting for the Add dialog.
 /// Version 40 (#463) added `set_guide_state`, and `guide` and `guideWelcome` in `ShellSettings`:
-/// the guide after Get started. (39 is #426's.)
+/// the guide after Get started.
 /// Version 41 (#460) added `set_tips`, `has_tray` and `tips` in `ShellSettings`: the contextual tips.
 pub const COMMAND_API_VERSION: u32 = 41;
 

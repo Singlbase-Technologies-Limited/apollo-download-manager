@@ -844,7 +844,7 @@ export const BrowserRequestSchema = z.strictObject({
   referrer: z.string().nullable(),
   fileSize: z.number().int().nonnegative().nullable(),
   mime: z.string().nullable(),
-  source: z.enum(['intercept', 'contextMenu', 'popup']),
+  source: z.enum(['intercept', 'contextMenu', 'popup', 'page']),
 });
 export type BrowserRequest = z.infer<typeof BrowserRequestSchema>;
 

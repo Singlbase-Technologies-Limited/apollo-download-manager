@@ -25,6 +25,9 @@ pub const MAX_MESSAGE_BYTES: usize = 64 * 1024;
 /// The longest file name, and the longest MIME type, a message may give (V1's).
 const MAX_FILE_NAME_BYTES: usize = 1024;
 const MAX_MIME_BYTES: usize = 255;
+/// The most links one `download.addMany` may carry (#426). A longer choice comes in several
+/// messages, each also under [`MAX_MESSAGE_BYTES`].
+pub const MAX_BATCH_LINKS: usize = 100;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -47,6 +50,8 @@ pub enum RequestSource {
     ContextMenu,
     /// A link typed in the extension's popup.
     Popup,
+    /// A file the user chose from the ones the extension found on a page (#426).
+    Page,
 }
 
 /// A link the browser offers, with what the browser knows about it.
@@ -65,11 +70,50 @@ pub struct AddFromBrowser {
     pub source: RequestSource,
 }
 
+/// One file the extension found on a page, with what the page says about it (#426).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PageLink {
+    pub url: String,
+    #[serde(default)]
+    pub filename: Option<String>,
+    #[serde(default)]
+    pub file_size: Option<u64>,
+    #[serde(default)]
+    pub mime: Option<String>,
+}
+
+/// The files the user chose on one page, sent together (`download.addMany`, #426), so a choice of
+/// many isn't many messages against the rate limit.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AddManyFromBrowser {
+    pub links: Vec<PageLink>,
+    /// The page the files were found on.
+    #[serde(default)]
+    pub referrer: Option<String>,
+}
+
+impl AddManyFromBrowser {
+    /// Each link as one `download.add` would carry it, from a page.
+    pub fn adds(&self) -> impl Iterator<Item = AddFromBrowser> + '_ {
+        self.links.iter().map(|l| AddFromBrowser {
+            url: l.url.clone(),
+            referrer: self.referrer.clone(),
+            filename: l.filename.clone(),
+            file_size: l.file_size,
+            mime: l.mime.clone(),
+            source: RequestSource::Page,
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BrowserCommand {
     Ping,
     AppStatus,
     AddDownload(AddFromBrowser),
+    AddMany(AddManyFromBrowser),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -175,6 +219,13 @@ pub fn parse_message(bytes: &[u8]) -> Result<BrowserMessage, BrowserResponse> {
             check_add(&add).map_err(|m| BrowserResponse::err(&id, "INVALID_MESSAGE", m))?;
             BrowserCommand::AddDownload(add)
         }
+        "download.addMany" => {
+            let many: AddManyFromBrowser = serde_json::from_value(raw.payload).map_err(|_| {
+                BrowserResponse::err(&id, "INVALID_MESSAGE", "The download request is malformed.")
+            })?;
+            check_many(&many).map_err(|m| BrowserResponse::err(&id, "INVALID_MESSAGE", m))?;
+            BrowserCommand::AddMany(many)
+        }
         "ping" | "app.status" => {
             return Err(BrowserResponse::err(
                 &id,
@@ -191,6 +242,13 @@ pub fn parse_message(bytes: &[u8]) -> Result<BrowserMessage, BrowserResponse> {
         }
     };
     Ok(BrowserMessage { id, command })
+}
+
+fn check_many(m: &AddManyFromBrowser) -> Result<(), &'static str> {
+    if m.links.is_empty() || m.links.len() > MAX_BATCH_LINKS {
+        return Err("A request carries from 1 to 100 links.");
+    }
+    m.adds().try_for_each(|a| check_add(&a))
 }
 
 fn check_add(a: &AddFromBrowser) -> Result<(), &'static str> {
@@ -328,6 +386,52 @@ mod tests {
             parse_message(&big).unwrap_err().error_code(),
             Some("MESSAGE_TOO_LARGE")
         );
+    }
+
+    fn many(links: Value) -> Value {
+        json!({"v":1,"id":"m1","type":"download.addMany","payload":{"links":links,"referrer":"https://e.example/files/"}})
+    }
+
+    // #426: the files chosen on a page come in one message.
+    #[test]
+    fn accepts_the_files_chosen_on_a_page_in_one_message() {
+        let m = parse(many(json!([
+            {"url":"https://e.example/a.iso","fileSize":1024},
+            {"url":"https://e.example/b.pdf","filename":"b.pdf","mime":"application/pdf"}
+        ])))
+        .unwrap();
+        let BrowserCommand::AddMany(batch) = m.command else {
+            panic!("{m:?}")
+        };
+        let adds: Vec<AddFromBrowser> = batch.adds().collect();
+        assert_eq!(adds.len(), 2);
+        assert!(adds.iter().all(|a| a.source == RequestSource::Page
+            && a.referrer.as_deref() == Some("https://e.example/files/")));
+        assert_eq!(adds[1].filename.as_deref(), Some("b.pdf"));
+        let most: Vec<Value> = (0..MAX_BATCH_LINKS)
+            .map(|i| json!({"url": format!("https://e.example/{i}.zip")}))
+            .collect();
+        assert!(parse(many(Value::Array(most))).is_ok());
+    }
+
+    #[test]
+    fn a_page_batch_is_checked_link_by_link_and_bounded() {
+        let too_many: Vec<Value> = (0..=MAX_BATCH_LINKS)
+            .map(|i| json!({"url": format!("https://e.example/{i}.zip")}))
+            .collect();
+        let cases = [
+            many(json!([])),
+            many(Value::Array(too_many)),
+            many(json!([{"url":"https://e.example/a.zip"},{"url":"file:///etc/passwd"}])),
+            many(json!([{"url":"https://e.example/a.zip","headers":{"Cookie":"x"}}])),
+            many(json!([{"url":"https://e.example/a.zip","filename":"a\u{1}b"}])),
+            many(json!([{"url":"https://e.example/a.zip","source":"page"}])),
+            json!({"v":1,"id":"m","type":"download.addMany","payload":{"links":[{"url":"https://e.example/a"}],"referrer":"javascript:1"}}),
+            json!({"v":1,"id":"m","type":"download.addMany","payload":{"links":[{"url":"https://e.example/a"}],"directory":"/etc"}}),
+        ];
+        for c in cases {
+            assert!(parse(c.clone()).is_err(), "{c}");
+        }
     }
 
     #[test]

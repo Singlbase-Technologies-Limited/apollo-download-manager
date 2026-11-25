@@ -3,7 +3,8 @@ import { ext } from './shared/ext';
 import { sanitizeSettings } from './shared/settings';
 import { EXTENSION_NAME } from './shared/branding';
 import { RECENT_KEY } from './shared/recent';
-import { syncMagnetCapture as syncMagnetCaptureWith, type MagnetCaptureApi } from './shared/magnet-capture';
+import { syncMagnetCapture as syncMagnetCaptureWith, syncPageButton as syncPageButtonWith, type OptionalScriptApi } from './shared/magnet-capture';
+import { pageSendOf } from './shared/page-store';
 
 const MENU_ID = 'velocity-v2-download-link';
 
@@ -62,34 +63,54 @@ async function syncContextMenu() {
 const MAGNET_SCRIPT = 'velocity-v2-magnet-links';
 const PAGES = { origins: ['<all_urls>'] };
 
-/** The magnet click script's rules are in shared/magnet-capture.ts; this is the browser's side of them. */
-const magnetApi: MagnetCaptureApi = {
-  getSettings: async () => sanitizeSettings((await ext.storage.local.get('settings')).settings),
-  hasPageAccess: () => ext.permissions.contains(PAGES),
-  isRegistered: async () => (await ext.scripting.getRegisteredContentScripts({ ids: [MAGNET_SCRIPT] })).length > 0,
-  register: () =>
-    ext.scripting
-      .registerContentScripts([{ id: MAGNET_SCRIPT, js: ['magnet.js'], matches: ['<all_urls>'], runAt: 'document_start', allFrames: false, persistAcrossSessions: true }])
-      .catch(() => undefined),
-  unregister: () => ext.scripting.unregisterContentScripts({ ids: [MAGNET_SCRIPT] }).catch(() => undefined),
-  openTabs: () => ext.tabs.query({}),
-  inject: async (tabId) => {
-    await ext.scripting.executeScript({ target: { tabId }, files: ['magnet.js'] });
-  },
-};
+const PAGE_SCRIPT = 'velocity-v2-page-files';
+
+/**
+ * The optional scripts' rules are in shared/magnet-capture.ts; this is the browser's side of them: the magnet click
+ * script, and the page button's (#426), which starts once the page has loaded.
+ */
+function scriptApi(id: string, file: string, runAt: 'document_start' | 'document_idle'): OptionalScriptApi {
+  return {
+    getSettings: async () => sanitizeSettings((await ext.storage.local.get('settings')).settings),
+    hasPageAccess: () => ext.permissions.contains(PAGES),
+    isRegistered: async () => (await ext.scripting.getRegisteredContentScripts({ ids: [id] })).length > 0,
+    register: () =>
+      ext.scripting.registerContentScripts([{ id, js: [file], matches: ['<all_urls>'], runAt, allFrames: false, persistAcrossSessions: true }]).catch(() => undefined),
+    unregister: () => ext.scripting.unregisterContentScripts({ ids: [id] }).catch(() => undefined),
+    openTabs: () => ext.tabs.query({}),
+    inject: async (tabId) => {
+      await ext.scripting.executeScript({ target: { tabId }, files: [file] });
+    },
+  };
+}
+const magnetApi = scriptApi(MAGNET_SCRIPT, 'magnet.js', 'document_start');
+const pageApi = scriptApi(PAGE_SCRIPT, 'pagefiles.js', 'document_idle');
 const syncMagnetCapture = () => syncMagnetCaptureWith(magnetApi);
+const syncPageButton = () => syncPageButtonWith(pageApi);
+const syncScripts = () => {
+  void syncMagnetCapture();
+  void syncPageButton();
+};
 
 const syncAll = () => {
   void syncContextMenu();
-  void syncMagnetCapture();
+  syncScripts();
 };
 ext.runtime.onInstalled.addListener(syncAll);
 ext.runtime.onStartup.addListener(syncAll);
 ext.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && 'settings' in changes) syncAll();
 });
-ext.permissions.onRemoved.addListener(() => void syncMagnetCapture());
-ext.permissions.onAdded.addListener(() => void syncMagnetCapture());
+ext.permissions.onRemoved.addListener(syncScripts);
+ext.permissions.onAdded.addListener(syncScripts);
+
+// Alt+Shift+D (#426): the page's file panel, by keyboard.
+ext.commands.onCommand.addListener((command) => {
+  if (command !== 'open-page-files') return;
+  void ext.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+    if (tab?.id !== undefined) void ext.tabs.sendMessage(tab.id, { type: 'page.files.open' }).catch(() => undefined);
+  });
+});
 
 ext.downloads.onCreated.addListener((item) => {
   void bg.onDownloadCreated({
@@ -124,6 +145,14 @@ ext.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
   if (sender.id === ext.runtime.id && sender.tab && isContentMessage(msg)) {
     void bg.onCapturedMagnet(msg.url, sender.tab.url);
     return false;
+  }
+  // The page button's script may only send the files the user chose on its page (#426).
+  const pageLinks = sender.id === ext.runtime.id && sender.tab ? pageSendOf(msg) : null;
+  if (pageLinks) {
+    bg.onPageFiles(pageLinks, sender.tab?.url).then(sendResponse, (e: unknown) => {
+      sendResponse({ added: 0, prompted: 0, failed: [], error: { code: 'INTERNAL', message: String(e) }, notSent: pageLinks.length });
+    });
+    return true;
   }
   // Otherwise only the extension's own pages may talk to the background.
   if (sender.id !== ext.runtime.id || !sender.url?.startsWith(ext.runtime.getURL('')) || !isPageMessage(msg)) return false;
