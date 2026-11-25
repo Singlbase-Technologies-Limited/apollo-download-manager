@@ -224,10 +224,56 @@ fn extra_trackers_reach_new_torrents() {
     );
 }
 
+/// #521 (PO decision): with no torrent, the helper listens nowhere, even after a settings change;
+/// the first torrent, paused or not, opens its port.
+#[test]
+fn the_helper_listens_nowhere_until_a_torrent_is_added() {
+    let dir = Dir::new("offline-until-torrent");
+    let (mut engine, _events) = helper_with(OFF);
+    let started = Instant::now();
+    while started.elapsed() < Duration::from_secs(2) {
+        assert_eq!(
+            engine.network().unwrap().listen_port,
+            0,
+            "listening with no torrent"
+        );
+        thread::sleep(Duration::from_millis(100));
+    }
+    engine
+        .set_settings(TorrentSettings {
+            listen_port: free_port(),
+            ..OFF
+        })
+        .unwrap();
+    thread::sleep(Duration::from_millis(500));
+    assert_eq!(
+        engine.network().unwrap().listen_port,
+        0,
+        "a settings change went online"
+    );
+
+    with_a_paused_torrent(&mut engine, &dir);
+    wait_for("the port once a torrent is added", 30, || {
+        engine.network().unwrap().listen_port != 0
+    });
+}
+
+/// A paused torrent, so the helper listens (#521) without downloading anything.
+fn with_a_paused_torrent(engine: &mut SupervisedTorrentEngine, dir: &Dir) {
+    engine
+        .add(TorrentSpec {
+            paused: true,
+            ..spec(file("v1-multi"), &dir.0, Vec::new())
+        })
+        .unwrap();
+}
+
 /// The helper listens on the port the settings name, and says when it can't.
 #[test]
 fn the_helper_listens_on_the_port_set_and_reports_one_it_cant_open() {
     let (mut engine, _events) = helper_with(OFF);
+    let dir = Dir::new("listen-port");
+    with_a_paused_torrent(&mut engine, &dir);
     let mut network = engine.network().unwrap();
     wait_for("a random port", 30, || {
         network = engine.network().unwrap();

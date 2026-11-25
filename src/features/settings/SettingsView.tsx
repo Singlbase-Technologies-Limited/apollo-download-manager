@@ -526,7 +526,7 @@ function TorrentSection({ s, patch }: { s: Settings; patch: Patch }) {
               {network.data.adapterMissing !== null ? (
                 <p className="text-warning">The network adapter chosen for torrents isn’t connected: torrents connect through no other until it is.</p>
               ) : (
-                <p>{network.data.listenError ? `Couldn’t listen: ${network.data.listenError}` : `Listening on port ${String(network.data.listenPort)}.`}</p>
+                <p>{network.data.listenError ? `Couldn’t listen: ${network.data.listenError}` : network.data.listenPort === 0 ? 'Not connected: torrents connect to nothing until one is added.' : `Listening on port ${String(network.data.listenPort)}.`}</p>
               )}
               <p>{portMapText(network.data)}</p>
             </>

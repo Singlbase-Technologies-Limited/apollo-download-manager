@@ -85,7 +85,7 @@ A profile sets the most a download may use. Within it, Apollo Download Manager s
 
 **Network adapter:** choose your VPN's adapter, and torrents connect only through it. If the VPN disconnects, torrents stop finding peers rather than use your normal connection, and the screen says the adapter isn't connected; they go on once it is back. An adapter that is no longer on the computer stays chosen, shown as not found, until you choose another.
 
-If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded.
+Until you add a torrent, Apollo Download Manager connects to nothing for torrents: it doesn't listen, join the DHT or ask the router, and the screen says so. The first torrent, paused or not, starts all three, until Apollo Download Manager quits. If the listening port is taken, Apollo Download Manager uses the next free one, and the screen says which. With port mapping on, it shows whether the router answered and which port it forwarded.
 
 ## Browser
 

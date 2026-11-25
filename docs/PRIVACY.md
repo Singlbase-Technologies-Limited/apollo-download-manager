@@ -5,6 +5,7 @@ What Apollo Download Manager keeps, and what it sends. AGENTS.md's rule is that 
 ## What Apollo Download Manager sends
 
 - **Only the downloads.** Apollo Download Manager connects to the servers, mirrors, trackers and peers of the downloads you add, and to nothing else.
+- **Nothing for torrents until you add one** (#521, PO decision): until the first torrent is added or resumed, the torrent helper listens on no port and doesn't join the DHT, so nothing is looked up or contacted for torrents. From the first torrent until Apollo Download Manager quits, it listens on its port and, with DHT on (the default), contacts the DHT's nodes, starting from libtorrent's `dht.libtorrent.org` unless Settings names others.
 - **A mirror list, when you ask** (#324, PO decision): **Find mirrors** fetches the official mirror list of the link's project from that project's own server (for example Launchpad for Ubuntu, or `mirrors.fedoraproject.org` for Fedora). It sends the request for the list, and for Fedora, Apache and openSUSE the file's path on their server; never the rest of the link's details, a login or a cookie. Nothing is fetched until you click.
 - **No telemetry or analytics.** Apollo Download Manager has none. Adding any needs a PO decision first.
 - **No crash reports.** A crash is recorded on this computer only ([DIAGNOSTICS.md](DIAGNOSTICS.md#crash-logs)).

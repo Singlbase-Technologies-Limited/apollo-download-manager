@@ -22,6 +22,8 @@ See also, for users: [Torrents](user/torrents.md).
 
 libtorrent runs in the **torrent helper**, a child process the app starts and supervises. A crash in libtorrent therefore ends only the helper ([ADR-0014](decisions/0014-torrent-helper-child-process.md)). The helper speaks the same protocol as the direct-download engine, and the same supervisor restarts it ([ENGINE_PROTOCOL.md](ENGINE_PROTOCOL.md)). The app starts it from beside its own executable (#58). The app depends on `velocity-torrent` without its `engine` feature, so it gets the helper's client and supervisor and never links libtorrent; only the helper program turns the feature on (PO decision on #58).
 
+**Offline until the first torrent** (#521, PO decision): the helper starts its libtorrent session with no listen interface and with DHT, local peer discovery and port mapping off (`offline` in [`crates/velocity-torrent/src/engine.rs`](../crates/velocity-torrent/src/engine.rs)). libtorrent then disables networking, and looks up no DHT bootstrap name. The first torrent added or restored switches the settings' networking on, and it stays on until the helper stops; a settings or proxy change before that keeps it off. Measured on Windows 11, 60 seconds after a start with no torrent: before, the helper listened on port 6891 (TCP and UDP) on every interface; after, it has no UDP socket and no TCP socket but its loopback link to the app. Tested in `the_helper_listens_nowhere_until_a_torrent_is_added` ([`crates/velocity-torrent/tests/network.rs`](../crates/velocity-torrent/tests/network.rs)).
+
 How libtorrent, Boost and OpenSSL are built is in [BUILDING_LIBTORRENT.md](BUILDING_LIBTORRENT.md#libtorrent).
 
 ## Checks before libtorrent

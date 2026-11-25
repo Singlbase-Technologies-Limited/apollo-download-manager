@@ -189,6 +189,14 @@ describe('BitTorrent settings (V1)', () => {
     await waitFor(() => { expect(session.textContent).toContain('Listening on port 6890'); });
     expect(session.textContent).toContain('Port 6890 forwarded by the router as 40000 (NAT-PMP).');
   });
+
+  it('says torrents connect to nothing until one is added (#521)', async () => {
+    installFakeBackend({ network: { listenPort: 0, listenError: null, portMapping: { state: 'off' }, adapterMissing: null } });
+    await openSettings('BitTorrent');
+    const session = await screen.findByRole('region', { name: 'Connection' });
+    await waitFor(() => { expect(session.textContent).toContain('Not connected: torrents connect to nothing until one is added.'); });
+    expect(session.textContent).not.toContain('Listening on port 0');
+  });
 });
 
 describe('the Settings screen (#30)', () => {
