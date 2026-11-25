@@ -10,7 +10,7 @@ How Apollo Download Manager's instructions for contributors and AI agents are or
 | [CLAUDE.md](../CLAUDE.md) | How Claude Code works through an issue, the skills, and the rule map | In every session |
 | `.claude/rules/*.md` | Rules for one area, such as Rust or the browser extension, with `paths:` globs | When Claude reads or edits a file that matches a glob |
 | `.claude/skills/*/SKILL.md` | One step of the workflow each, such as `/investigate-issue` or `/prepare-pr` | Their descriptions in every session; the body when invoked |
-| `.claude/settings.json` | Deny and ask rules, and the agent guard hook ([CLAUDE.md](../CLAUDE.md#instructions-versus-enforcement)) | Enforced, not guidance |
+| [`.claude/settings.json`](../.claude/settings.json) | Deny and ask rules, and the agent guard hook ([CLAUDE.md](../CLAUDE.md#instructions-versus-enforcement)) | Enforced, not guidance |
 
 Instructions are guidance: Claude Code applies them, but doesn't enforce them. A rule that must hold no matter what goes into a hook, as the agent guard does for pushes to `main` (#98).
 
@@ -24,8 +24,8 @@ Instructions are guidance: Claude Code applies them, but doesn't enforce them. A
 | CLAUDE.md imports AGENTS.md (`@AGENTS.md`) | Otherwise the shared rules never reach Claude |
 | Every rule has `paths:`, and each glob matches a file or is marked pending | A rule without `paths:` loads in every session; a dead glob never loads at all |
 | Every skill has a `description:`, only known frontmatter fields, under 500 lines, and a listing under 1,536 characters | Claude Code ignores an unknown field silently, and truncates a long description ([skills docs](https://code.claude.com/docs/en/skills)) |
-| Every `pnpm <command>` in code is a `package.json` script or a pnpm command | A renamed script leaves instructions that fail |
-| No `package.json` script is named like a pnpm command, such as `doctor` or `setup` | `pnpm doctor` runs pnpm's own command, so the script never runs |
+| Every `pnpm <command>` in code is a [`package.json`](../package.json) script or a pnpm command | A renamed script leaves instructions that fail |
+| No [`package.json`](../package.json) script is named like a pnpm command, such as `doctor` or `setup` | `pnpm doctor` runs pnpm's own command, so the script never runs |
 | No `develop` or `staging` branch, and no aria2 use | Apollo DM has neither ([DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md), [ADR-0001](decisions/0001-v2-direction.md)); a line that rules them out ("no", "never", V1 as a reference) passes |
 | No requirement sentence repeated in two guidance files | Copies drift apart; keep one and link to it (AGENTS.md, "Documentation") |
 
@@ -47,7 +47,7 @@ The check fails when a pending glob starts matching files, so the note is remove
 
 - **Locally:** `pnpm check:guidance`.
 - **In CI:** on every pull request, in the `select` job, and after every merge to `main` ([CI.md](CI.md)). It runs whatever changed, because any path can change its result: deleting a folder can kill a rule's glob.
-- **In Vitest:** `scripts/check-guidance.test.mjs` runs it on the real files, so `pnpm check:fast` catches drift too.
+- **In Vitest:** [`scripts/check-guidance.test.mjs`](../scripts/check-guidance.test.mjs) runs it on the real files, so `pnpm check:fast` catches drift too.
 
 **Keeping it current:** the skill fields and pnpm commands are lists in `guidance-lib.mjs`, taken from the Claude Code docs and `pnpm --help` of the pinned pnpm. Update them when Claude Code or pnpm changes.
 

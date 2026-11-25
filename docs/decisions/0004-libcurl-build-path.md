@@ -7,7 +7,7 @@
 
 ## Context
 
-Apollo Download Manager's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the Rust `curl` and `curl-sys` crates, behind `crates/velocity-curl` ([ADR-0002](0002-engine-crate-layout.md)). The research report sets a version floor of **libcurl 8.23.0** (section 8.1). The latest `curl-sys` doesn't meet it. These facts were re-checked at decision time:
+Apollo Download Manager's transfer engine uses libcurl ([ADR-0001](0001-v2-direction.md)) through the Rust `curl` and `curl-sys` crates, behind [`crates/velocity-curl`](../../crates/velocity-curl/) ([ADR-0002](0002-engine-crate-layout.md)). The research report sets a version floor of **libcurl 8.23.0** (section 8.1). The latest `curl-sys` doesn't meet it. These facts were re-checked at decision time:
 
 | Fact (2026-10-22) | Source |
 |---|---|

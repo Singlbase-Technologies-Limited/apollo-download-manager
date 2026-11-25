@@ -4,7 +4,7 @@ Apollo Download Manager and V1, the download manager it grew out of, can be inst
 
 ## One source of identity
 
-`branding.json` at the repository root holds Apollo Download Manager's identity. The core reads it (`velocity_core::branding`), and `src-tauri/tauri.conf.json` must carry the same identifier and product name, which a test checks. A build runs as the development identity unless it is built with the `release-identity` feature, as packaging does; then the app, the engine, the torrent helper and the native host all run as the release identity, and `src-tauri/tauri.release.conf.json` carries it ([PACKAGING.md](PACKAGING.md), #81).
+[`branding.json`](../branding.json) at the repository root holds Apollo Download Manager's identity. The core reads it (`velocity_core::branding`), and [`src-tauri/tauri.conf.json`](../src-tauri/tauri.conf.json) must carry the same identifier and product name, which a test checks. A build runs as the development identity unless it is built with the `release-identity` feature, as packaging does; then the app, the engine, the torrent helper and the native host all run as the release identity, and [`src-tauri/tauri.release.conf.json`](../src-tauri/tauri.release.conf.json) carries it ([PACKAGING.md](PACKAGING.md), #81).
 
 | Field | Development builds | Release builds (packaging: Windows since #81, Linux since #82; macOS is #83) | V1, for comparison |
 |---|---|---|---|

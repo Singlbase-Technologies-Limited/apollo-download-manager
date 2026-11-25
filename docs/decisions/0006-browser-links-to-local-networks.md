@@ -7,7 +7,7 @@
 
 ## Context
 
-A web page can make the browser extension hand Apollo Download Manager a link whose host resolves to the user's own machine (`127.0.0.1`, `::1`) or to a private network: a router's admin page, a NAS, an internal service. Fetching such a link on a page's behalf is a server-side request forgery risk, and DNS rebinding makes a harmless-looking name resolve to a private address at connect time. V1 accepted browser links after validation and rate limiting, with no check of the connected address (V1 `docs/BROWSER_EXTENSION.md`; parity map). libcurl can inspect the connected address before the request (`CURLOPT_PREREQFUNCTION`; research report section 8).
+A web page can make the browser extension hand Apollo Download Manager a link whose host resolves to the user's own machine (`127.0.0.1`, `::1`) or to a private network: a router's admin page, a NAS, an internal service. Fetching such a link on a page's behalf is a server-side request forgery risk, and DNS rebinding makes a harmless-looking name resolve to a private address at connect time. V1 accepted browser links after validation and rate limiting, with no check of the connected address (V1 [`docs/BROWSER_EXTENSION.md`](../BROWSER_EXTENSION.md); parity map). libcurl can inspect the connected address before the request (`CURLOPT_PREREQFUNCTION`; research report section 8).
 
 ## Decision
 

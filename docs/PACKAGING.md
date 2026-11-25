@@ -13,7 +13,7 @@ One installer, a per-user NSIS setup (`Apollo Download Manager_<version>_x64-set
 
 ### Beside V1
 
-V1 is installed under its own product name. The new installer uses Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md); the tests in `crates/velocity-core/src/branding.rs` check it against V1's exact name):
+V1 is installed under its own product name. The new installer uses Apollo Download Manager, so nothing it writes has V1's name ([ADR-0018](decisions/0018-product-name-apollo.md); the tests in [`crates/velocity-core/src/branding.rs`](../crates/velocity-core/src/branding.rs) check it against V1's exact name):
 
 | | Apollo DM | V1 |
 |---|---|---|
@@ -35,7 +35,7 @@ Offering to remove V1 from Apollo Download Manager's installer is left for a lat
   - It reads the old install folder from `HKCU\…\Uninstall\<the 0.1.x product name>`, runs that folder's uninstaller silently with `/UPDATE`, and waits for it. The old programs and the old Apps & features entry go; the data, the settings and the browser keys stay. One install and one entry remain.
   - Then it removes the old uninstaller and folder, the old Start menu and desktop shortcuts with that name (only when they point into the old folder), the old `HKCU\Software\Velocity Project\<the 0.1.x product name>` key, and the `Velocity Project` key only when it is empty, so V1's stays.
   - If the old uninstaller fails, the hook removes nothing more, so the old install stays whole, with its entry.
-  - The browser registrations' manifests still name the old folder's native host. On its next start the app points each Apollo Download Manager registration whose host is gone at its own host (`repair_moved_host` in `crates/velocity-core/src/browser/registration.rs`), and leaves V1's alone.
+  - The browser registrations' manifests still name the old folder's native host. On its next start the app points each Apollo Download Manager registration whose host is gone at its own host (`repair_moved_host` in [`crates/velocity-core/src/browser/registration.rs`](../crates/velocity-core/src/browser/registration.rs)), and leaves V1's alone.
 
 ### Building it
 
@@ -45,9 +45,9 @@ On Windows, after `pnpm native:build`:
 pnpm package:windows
 ```
 
-[`scripts/package-windows.mjs`](../scripts/package-windows.mjs), with the steps it shares with the Linux packages in [`scripts/package-build.mjs`](../scripts/package-build.mjs), builds the three programs for release with `--features velocity-core/release-identity`, and stages them in `src-tauri/binaries/` under Tauri's sidecar names (`velocity-transfer-x86_64-pc-windows-msvc.exe`). It copies the notices and `build-info.json` to `src-tauri/staging/` (both folders are ignored by git), and runs `tauri build --config src-tauri/tauri.release.conf.json --features release-identity --bundles nsis`. The installer lands in `target/release/bundle/nsis/`, with its SHA-256 in a `.sha256` file beside it.
+[`scripts/package-windows.mjs`](../scripts/package-windows.mjs), with the steps it shares with the Linux packages in [`scripts/package-build.mjs`](../scripts/package-build.mjs), builds the three programs for release with `--features velocity-core/release-identity`, and stages them in [`src-tauri/binaries/`](../src-tauri/binaries/) under Tauri's sidecar names (`velocity-transfer-x86_64-pc-windows-msvc.exe`). It copies the notices and `build-info.json` to [`src-tauri/staging/`](../src-tauri/staging/) (both folders are ignored by git), and runs `tauri build --config src-tauri/tauri.release.conf.json --features release-identity --bundles nsis`. The installer lands in [`target/release/bundle/nsis/`](../target/release/bundle/nsis/), with its SHA-256 in a `.sha256` file beside it.
 
-It also writes the platform's records for a release candidate in `target/release/bundle/`: `native-build-info-windows.json` and `libtorrent-info-windows.json` (the native build records) and `licence-report-windows.json` ([LICENSING.md](LICENSING.md#third-party-notices)); the Linux script writes the `-linux` ones. When 7-Zip is installed, the script then lists the installer and fails if a program or file is missing or anything named aria2 is in it. Without 7-Zip it says the check was NOT RUN; `--require-listing` makes that an error, as in CI.
+It also writes the platform's records for a release candidate in [`target/release/bundle/`](../target/release/bundle/): `native-build-info-windows.json` and `libtorrent-info-windows.json` (the native build records) and `licence-report-windows.json` ([LICENSING.md](LICENSING.md#third-party-notices)); the Linux script writes the `-linux` ones. When 7-Zip is installed, the script then lists the installer and fails if a program or file is missing or anything named aria2 is in it. Without 7-Zip it says the check was NOT RUN; `--require-listing` makes that an error, as in CI.
 
 **In CI:** the *Windows installer* workflow ([`package-windows.yml`](../.github/workflows/package-windows.yml)) runs the same command on a Windows runner and uploads the installer and its checksum as the `velocity-v2-windows-installer` artifact, kept 14 days. It is started by hand only, on the branch to package (PO decision on #81).
 
@@ -76,7 +76,7 @@ A deb, for Ubuntu and Debian, and an rpm, for Fedora and openSUSE, made by Tauri
   |---|---|
   | `/usr/bin/velocity-desktop-v2` | The app |
   | `/usr/bin/velocity-transfer`, `/usr/bin/velocity-torrent`, `/usr/bin/velocity-native-host-v2` | The transfer engine, the torrent helper and the browser's native host, beside the app as it expects |
-  | `/usr/lib/Apollo Download Manager/` | `LICENSE`, `THIRD_PARTY_NOTICES.md` and the native libraries' `build-info.json` |
+  | `/usr/lib/Apollo Download Manager/` | `LICENSE`, [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and the native libraries' `build-info.json` |
   | `/usr/share/applications/Apollo Download Manager.desktop` | The menu entry |
   | `/usr/share/icons/hicolor/<size>/apps/velocity-desktop-v2.png` | The icons |
 

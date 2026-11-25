@@ -42,7 +42,7 @@ Development and release identifiers also differ, so a development build never sh
 
 ## Consequences
 
-- **Release identity:** the app identifier switches to `com.velocity.downloadmanager.v2` in the packaging work (#81 to #83). Until then, the repository keeps the development identifier. The tests in `src-tauri/src/lib.rs` keep guarding that Apollo Download Manager's identifier and dev port never match V1's.
+- **Release identity:** the app identifier switches to `com.velocity.downloadmanager.v2` in the packaging work (#81 to #83). Until then, the repository keeps the development identifier. The tests in [`src-tauri/src/lib.rs`](../../src-tauri/src/lib.rs) keep guarding that Apollo Download Manager's identifier and dev port never match V1's.
 - **Taking over from V1** is an installer feature: it offers to remove V1 (#81). V1's data is never modified.
 - **Importing V1 data** (settings, categories, history) is a separate, later decision (#24). Any import is read-only toward V1.
 - **Identity work:** #27 (data paths, single instance, IPC names), #64 (extension) and #65 (native host) use these values.

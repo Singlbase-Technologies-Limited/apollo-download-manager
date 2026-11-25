@@ -18,7 +18,7 @@ It is kept **14 days** ([CI.md](CI.md#costs)). The run's summary repeats the che
 
 ## Starting one
 
-Only from a commit on `main` whose *Main checks* run on `main` passed. The workflow refuses any other: a commit on another branch, one without a green run, or a tag whose version isn't `package.json`'s. The rules are in [`scripts/release-candidate-lib.mjs`](../scripts/release-candidate-lib.mjs).
+Only from a commit on `main` whose *Main checks* run on `main` passed. The workflow refuses any other: a commit on another branch, one without a green run, or a tag whose version isn't [`package.json`](../package.json)'s. The rules are in [`scripts/release-candidate-lib.mjs`](../scripts/release-candidate-lib.mjs).
 
 - **By hand,** for a test build of the latest `main` or one of its commits (the candidate is named `main`):
 

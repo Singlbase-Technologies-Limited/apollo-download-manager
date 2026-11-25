@@ -4,7 +4,7 @@ Every Apollo Download Manager setting, what it does, and its bounds. They are se
 
 ## The Settings screen
 
-The screen (#30, `src/features/settings/SettingsView.tsx`) edits every section below except the window's look, which keeps saving through `set_appearance` so it never overwrites a panel width ([the window](#the-window)).
+The screen (#30, [`src/features/settings/SettingsView.tsx`](../src/features/settings/SettingsView.tsx)) edits every section below except the window's look, which keeps saving through `set_appearance` so it never overwrites a panel width ([the window](#the-window)).
 
 - **Saved whole:** `set_settings` checks every section first and saves none when one is refused (`INVALID_INPUT`); then it writes them all in one go, and applies them at once (`velocity_core::settings::Settings`, `Manager::set_settings`). The screen says "Saving…", then "Saved", or why it wasn't, and shows what is saved.
 - **When each applies:** at once, all of them. The engine's retries, timeouts, preallocation and write buffer apply to downloads that start or retry after the change; the connection budget, the queue, the limits and the torrent helper's settings apply to running ones too. None needs a restart.

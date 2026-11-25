@@ -1,6 +1,6 @@
 # Engine internals
 
-How the direct-download engine in `crates/velocity-transfer` fetches a file. Checked against the code at commit `9a4f484` (2026-10-30, #80). The contract the manager sees is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md), and how the engine's child process talks to the app is in [ENGINE_PROTOCOL.md](ENGINE_PROTOCOL.md). The design comes from section 5 of the [research report](research/2026-10-21-libcurl-engine-research-r2.md); the terms are in the [glossary](GLOSSARY.md).
+How the direct-download engine in [`crates/velocity-transfer`](../crates/velocity-transfer/) fetches a file. Checked against the code at commit `9a4f484` (2026-10-30, #80). The contract the manager sees is in [ENGINE_CONTRACT.md](ENGINE_CONTRACT.md), and how the engine's child process talks to the app is in [ENGINE_PROTOCOL.md](ENGINE_PROTOCOL.md). The design comes from section 5 of the [research report](research/2026-10-21-libcurl-engine-research-r2.md); the terms are in the [glossary](GLOSSARY.md).
 
 ## The probe (#41)
 
@@ -80,7 +80,7 @@ An FTP download uses one connection, whatever is asked (PO decision on #51): eac
 ### Logins and encryption
 
 - **The login** comes from the spec's `credentials` and goes out as FTP's `USER` and `PASS`. Without one, libcurl logs in as `anonymous`. A link with a login in it is refused by the engine; the app splits it off first and never stores it (`database::without_login`). FTP has no redirects, so the origin rules don't apply.
-- **Plain FTP sends the login and the file in clear.** The engine reports what it can encrypt per protocol (`ProtocolCapabilities::encryption`), and the Add download form shows `cleartextWarning` from `src/capabilities.ts` before it starts a plain `ftp://` download, with the choice to require encryption (#60, PO decision on #51).
+- **Plain FTP sends the login and the file in clear.** The engine reports what it can encrypt per protocol (`ProtocolCapabilities::encryption`), and the Add download form shows `cleartextWarning` from [`src/capabilities.ts`](../src/capabilities.ts) before it starts a plain `ftp://` download, with the choice to require encryption (#60, PO decision on #51).
 - **Explicit FTPS:** a download that requires encryption (`TransferSpec::require_encryption`) asks `AUTH TLS` before the login, then `PBSZ 0` and `PROT P`, so the data connections are TLS too (`CURLUSESSL_ALL`, `CURLFTPAUTH_TLS`). A server that refuses fails the download at once, as `EncryptionRefused`, before the login is sent. There is no fallback to plain FTP.
 - **Implicit FTPS:** an `ftps://` link is TLS from the first byte, on both connections.
 - **Certificates** are verified as for HTTPS, with the platform's trust store ([SECURITY.md](SECURITY.md#tls-verification-69)). A refused one fails at once, before the login.
@@ -107,7 +107,7 @@ An FTP download uses one connection, whatever is asked (PO decision on #51): eac
 
 ## SFTP (#53)
 
-`sftp://` links download on russh, in `crates/velocity-sftp` ([ADR-0013](decisions/0013-sftp-russh.md)). The engine fetches through one interface, `velocity_curl::Transport`, so SFTP shares everything after the connection with HTTP and FTP: the probe, the gate, checkpoints, retries, speed limits and the completion gate.
+`sftp://` links download on russh, in [`crates/velocity-sftp`](../crates/velocity-sftp/) ([ADR-0013](decisions/0013-sftp-russh.md)). The engine fetches through one interface, `velocity_curl::Transport`, so SFTP shares everything after the connection with HTTP and FTP: the probe, the gate, checkpoints, retries, speed limits and the completion gate.
 
 ### One transport interface
 
@@ -180,7 +180,7 @@ As aria2's `follow-metalink` did for V1: while Metalink is on, a completed HTTP 
 
 ## Mirrors (#55)
 
-A download can have several sources: its URL and its mirrors, such as a Metalink file's (#54), in `TransferSpec::urls`, best first. Several are used at once, as V1's aria2 did (`uri-selector=feedback`; PO decision on #55). `download::download_from` takes them; `crates/velocity-transfer/src/sources.rs` keeps each one's health. A download with one URL takes exactly the path it took before.
+A download can have several sources: its URL and its mirrors, such as a Metalink file's (#54), in `TransferSpec::urls`, best first. Several are used at once, as V1's aria2 did (`uri-selector=feedback`; PO decision on #55). `download::download_from` takes them; [`crates/velocity-transfer/src/sources.rs`](../crates/velocity-transfer/src/sources.rs) keeps each one's health. A download with one URL takes exactly the path it took before.
 
 ### Which sources may share a file
 
@@ -279,7 +279,7 @@ Every received byte is either written into the part file once, or counted in `wa
 
 **Progress and speed (#246).**
 - **When progress is sent:** the engine sends a progress snapshot for every 256 KiB written (`PROGRESS_STEP`), and at once when the count goes down because the download started over.
-- **The speed:** the snapshot's download speed is the bytes written over the last 3 seconds (`SpeedMeter` in `crates/velocity-transfer/src/speed.rs`). That's a measurement, not an estimate. The list, the details panel, the time left and the status bar's total all show this figure.
+- **The speed:** the snapshot's download speed is the bytes written over the last 3 seconds (`SpeedMeter` in [`crates/velocity-transfer/src/speed.rs`](../crates/velocity-transfer/src/speed.rs)). That's a measurement, not an estimate. The list, the details panel, the time left and the status bar's total all show this figure.
 - **Measuring starts again** at the first report after a start or resume, and when the count goes down. So the bytes already on disk never count as received.
 - **No figure** is shown until 0.5 s has been measured.
 - **Why 3 seconds:** a change in speed, such as a new speed limit, shows half within 1.5 s and fully within 3 s. A pause in one connection barely moves the figure.
@@ -496,7 +496,7 @@ A download doesn't ask for all its connections at once (PO decision on #247):
 
 A download's extra connections, and later downloads from the same server, resume the first connection's TLS session instead of doing a full handshake. libcurl does this by itself: the engine runs every transfer on one `Multi` ([`fetch.rs`](../crates/velocity-curl/src/fetch.rs)), and libcurl 8.23.0 shares its TLS session cache among the easy handles of one `Multi`. No share handle is needed (PO decision on #327).
 
-- **Verified (2026-11-06):** `later_connections_to_a_server_resume_its_tls_session` in `crates/velocity-curl/tests/tls.rs` makes 4 requests, each on a new connection of its own, to the TLS test front. The first is a full handshake and the other 3 resume, with TLS 1.3, on Windows (Schannel) and on Linux (OpenSSL 3.5, WSL2). The test guards it across libcurl updates.
+- **Verified (2026-11-06):** `later_connections_to_a_server_resume_its_tls_session` in [`crates/velocity-curl/tests/tls.rs`](../crates/velocity-curl/tests/tls.rs) makes 4 requests, each on a new connection of its own, to the TLS test front. The first is a full handshake and the other 3 resume, with TLS 1.3, on Windows (Schannel) and on Linux (OpenSSL 3.5, WSL2). The test guards it across libcurl updates.
 - **Not tested here (libcurl's documented behaviour):** a session is offered only to the host, port and TLS settings it was made with, so a session from one server is never offered to another. Sessions live in memory only; nothing about them is written to disk.
 
 ### HTTP/2
@@ -698,7 +698,7 @@ Run it with `cargo run --release -p velocity-transfer --example hash_readback --
 
 ## Disk writes far into a new file (Windows)
 
-Segments are written in parallel, so a later segment writes far past what is already in the part file. Measured with `crates/velocity-transfer/examples/high_offset_write.rs` (report open question 7; #42, 2026-10-23). It writes 1 MiB into a new file and syncs it, 3 runs each:
+Segments are written in parallel, so a later segment writes far past what is already in the part file. Measured with [`crates/velocity-transfer/examples/high_offset_write.rs`](../crates/velocity-transfer/examples/high_offset_write.rs) (report open question 7; #42, 2026-10-23). It writes 1 MiB into a new file and syncs it, 3 runs each:
 
 | Machine | Offset of the write | No preallocation | After `set_len` | At offset 0 |
 |---|---|---|---|---|
@@ -724,8 +724,8 @@ Run it with `cargo run --release -p velocity-transfer --example high_offset_writ
 
 ## Tests
 
-- **Fixtures:** `crates/velocity-transfer/tests/download.rs` runs the real engine against the local test server ([`velocity-test-http`](../crates/velocity-test-http/src/lib.rs)), whose options make it misbehave on demand. There is one test per row of report section 5.1's table, each checking the file's bytes, the number of GETs and the wasted bytes. A further test slows one connection so that a split happens, and checks that the old request stops at the boundary.
-- **Properties:** `crates/velocity-transfer/tests/scheduler.rs` runs 3,000 generated scenarios of a simulated transport through the scheduler, with `proptest`. The scenarios mix random requests, chunk sizes, splits, refused answers, duplicate and late callbacks, cancellations, syncs, crashes that keep only D, and new epochs. After every event it checks I1 to I7 and that every covered byte equals the source. At the end it checks that the finished file is the source. Breaking the scheduler on purpose is caught: a split that doesn't shrink the old lease, accepting bytes at any offset, and a failed lease that doesn't give its bytes back each fail it.
+- **Fixtures:** [`crates/velocity-transfer/tests/download.rs`](../crates/velocity-transfer/tests/download.rs) runs the real engine against the local test server ([`velocity-test-http`](../crates/velocity-test-http/src/lib.rs)), whose options make it misbehave on demand. There is one test per row of report section 5.1's table, each checking the file's bytes, the number of GETs and the wasted bytes. A further test slows one connection so that a split happens, and checks that the old request stops at the boundary.
+- **Properties:** [`crates/velocity-transfer/tests/scheduler.rs`](../crates/velocity-transfer/tests/scheduler.rs) runs 3,000 generated scenarios of a simulated transport through the scheduler, with `proptest`. The scenarios mix random requests, chunk sizes, splits, refused answers, duplicate and late callbacks, cancellations, syncs, crashes that keep only D, and new epochs. After every event it checks I1 to I7 and that every covered byte equals the source. At the end it checks that the finished file is the source. Breaking the scheduler on purpose is caught: a split that doesn't shrink the old lease, accepting bytes at any offset, and a failed lease that doesn't give its bytes back each fail it.
 - **Persistence fixtures:** `tests/download.rs` also covers:
   - checkpoints of synced bytes, the probe's included;
   - a pause and a resume from the last checkpoint, fetching only what was missing;
@@ -745,7 +745,7 @@ Run it with `cargo run --release -p velocity-transfer --example high_offset_writ
   The same file kills the app too (#74): the test binary starts itself again as an app process (the manager over a database file, with its own child engine), kills it at a random moment, waits for its orphaned engine to stop, then opens the same database in a new manager, which brings the download back from its stored checkpoint and must finish it with the source's bytes.
 
   CI runs 3 trials of each. The full 100 run by hand with `VELOCITY_CRASH_TRIALS=100 cargo test -p velocity-transfer --test crash_recovery -- --nocapture` (PO decision on #43), and `VELOCITY_CRASH_SEED` repeats a run.
-- **A full disk and a refused write (#74):** `crates/velocity-transfer-h2c/tests/disk_faults.rs`, through the manager and the in-process engine. velocity-transfer's test-only `test-faults` feature makes the part file's writes fail after a chosen number of bytes, as a full disk (`StorageFull`) or a refused write (`PermissionDenied`) would; an optimised build refuses the feature, like `test-ca`. No real small drive is made (PO decision on #74). The fault strikes once inside the 4 MiB probe and once among the parallel segments, never on a chunk boundary, so the failing write is cut part-way, as an interrupted write is. Each case checks:
+- **A full disk and a refused write (#74):** [`crates/velocity-transfer-h2c/tests/disk_faults.rs`](../crates/velocity-transfer-h2c/tests/disk_faults.rs), through the manager and the in-process engine. velocity-transfer's test-only `test-faults` feature makes the part file's writes fail after a chosen number of bytes, as a full disk (`StorageFull`) or a refused write (`PermissionDenied`) would; an optimised build refuses the feature, like `test-ca`. No real small drive is made (PO decision on #74). The fault strikes once inside the 4 MiB probe and once among the parallel segments, never on a chunk boundary, so the failing write is cut part-way, as an interrupted write is. Each case checks:
   - the download fails, as permanent, with "There is not enough disk space." or "Apollo Download Manager isn't allowed to write to that location.";
   - the part file and a checkpoint of what reached the disk are kept;
   - once the fault is cleared, the user's retry fetches only what was missing, and the file equals the source.
@@ -787,13 +787,13 @@ Run it with `cargo run --release -p velocity-transfer --example high_offset_writ
   - after a piece is fetched again, the whole-file hash still matches.
 
   The unit tests in `integrity.rs` check the six algorithms against their standard test vectors, a frontier fed in reverse order, and the piece verifier. `tests/engine_contract.rs` checks checksums and piece hashes in both engine modes.
-- **HTTP/2 fixtures (#47):** `crates/velocity-transfer-h2c/tests/http2.rs` runs against the cleartext HTTP/2 server: #41's probe fixtures, #42's split that resets only its stream, and the multiplex policy against a server throttling each TCP connection and one throttling each stream. They need the `test-h2c` feature, which only test builds have ([TESTING.md](TESTING.md#fixture-servers-apollo-download-manager-needs)). They live in a test-only crate of their own (#46): a dev-dependency's features reach every example of its crate, so while they were in `velocity-transfer`, none of its examples could be built for release.
-- **TLS fixtures (#69):** `crates/velocity-transfer-h2c/tests/tls.rs` downloads in segments over HTTPS and over HTTP/2 negotiated through ALPN, and checks that a refused certificate fails permanently with nothing on disk. It needs the `test-ca` feature, so it lives in the same test-only crate. What each TLS backend accepts and refuses is in [SECURITY.md](SECURITY.md#tls-verification-69).
+- **HTTP/2 fixtures (#47):** [`crates/velocity-transfer-h2c/tests/http2.rs`](../crates/velocity-transfer-h2c/tests/http2.rs) runs against the cleartext HTTP/2 server: #41's probe fixtures, #42's split that resets only its stream, and the multiplex policy against a server throttling each TCP connection and one throttling each stream. They need the `test-h2c` feature, which only test builds have ([TESTING.md](TESTING.md#fixture-servers-apollo-download-manager-needs)). They live in a test-only crate of their own (#46): a dev-dependency's features reach every example of its crate, so while they were in `velocity-transfer`, none of its examples could be built for release.
+- **TLS fixtures (#69):** [`crates/velocity-transfer-h2c/tests/tls.rs`](../crates/velocity-transfer-h2c/tests/tls.rs) downloads in segments over HTTPS and over HTTP/2 negotiated through ALPN, and checks that a refused certificate fails permanently with nothing on disk. It needs the `test-ca` feature, so it lives in the same test-only crate. What each TLS backend accepts and refuses is in [SECURITY.md](SECURITY.md#tls-verification-69).
 - **FTP fixtures (#51):** the FTP server in [`ftp.rs`](../crates/velocity-test-http/src/ftp.rs) is V1's test server ported to the standard library. It serves passive FTP with `SIZE`, `MDTM` and `REST`, explicit and implicit FTPS on a `TestPki`, and switches for no `SIZE`, no `REST`, no `MDTM` and a cut transfer. It records the logins, `RETR`s, `REST` offsets and which connections were encrypted.
-  - `crates/velocity-curl/tests/ftp.rs` checks the head built for each case in the table above, the login, a refused login, a cut, and FTPS: explicit, implicit, required from a plain server, and an untrusted certificate.
-  - `crates/velocity-transfer/tests/ftp.rs` ports V1's tests: a whole file whose SHA-256 matches, a cut transfer resumed with `REST`, and a missing file. It adds a pause resumed from its checkpoint, a resume with and without `MDTM`, a file whose time changed, and a server without `REST`.
+  - [`crates/velocity-curl/tests/ftp.rs`](../crates/velocity-curl/tests/ftp.rs) checks the head built for each case in the table above, the login, a refused login, a cut, and FTPS: explicit, implicit, required from a plain server, and an untrusted certificate.
+  - [`crates/velocity-transfer/tests/ftp.rs`](../crates/velocity-transfer/tests/ftp.rs) ports V1's tests: a whole file whose SHA-256 matches, a cut transfer resumed with `REST`, and a missing file. It adds a pause resumed from its checkpoint, a resume with and without `MDTM`, a file whose time changed, and a server without `REST`.
   - `tests/engine_contract.rs` downloads over FTP with a login in both engine modes, on one connection.
-  - `crates/velocity-transfer-h2c/tests/ftps.rs` downloads over explicit and implicit FTPS on the test CA, and checks that requiring encryption from a plain server, and a refused certificate, fail at once without the login.
+  - [`crates/velocity-transfer-h2c/tests/ftps.rs`](../crates/velocity-transfer-h2c/tests/ftps.rs) downloads over explicit and implicit FTPS on the test CA, and checks that requiring encryption from a plain server, and a refused certificate, fail at once without the login.
 - **Unit tests:** the tests in `probe.rs`, `validator.rs`, `failure.rs`, `retry.rs`, `adaptive.rs`, `budget.rs`, the libcurl layer's `rate.rs`, `scheduler.rs`, `files.rs` and the libcurl layer's `tests/curl_loop.rs` (`FetchLimit`, the per-host cap) and `tests/http2.rs` cover each rule on its own.
 
 ## Not yet

@@ -190,7 +190,7 @@ In `manager/finished.rs`:
 - **Commands** reach it through a bounded channel. No lock is held while it talks to the engine or the database.
 - **Every 100 ms** it applies the engine's events and the schedule.
 - **Snapshots:** when the `DownloadsSnapshot` changed, it sends it, at most every 250 ms (V1 refreshed every 250 ms to 5 s).
-- **The desktop shell** (`src-tauri/src/downloads.rs`) starts it, sends each snapshot as the `downloads-snapshot` event, and exposes V1's direct-download commands. They are listed in [CONTRACTS.md](CONTRACTS.md#the-downloads-commands).
+- **The desktop shell** ([`src-tauri/src/downloads.rs`](../src-tauri/src/downloads.rs)) starts it, sends each snapshot as the `downloads-snapshot` event, and exposes V1's direct-download commands. They are listed in [CONTRACTS.md](CONTRACTS.md#the-downloads-commands).
 
 Torrents run beside direct downloads in the same manager and queue; how is in [TORRENTS.md](TORRENTS.md#in-the-app-58).
 

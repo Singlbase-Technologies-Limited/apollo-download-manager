@@ -32,7 +32,7 @@ Passing tests isn't the same as being ready to release. This checklist covers ev
 | Apollo Download Manager's own licence | PO | PASS | GPL-3.0-only ([ADR-0017](decisions/0017-gpl-3-licence.md), #86) |
 | Third-party notices and licence closure (#76) | Agent | PASS | `pnpm check:notices` on `7dce4d1`: "THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 578 crates, 62 npm packages" |
 | Legal review of the licensing | PO | NOT RUN | [LICENSING.md](LICENSING.md): "No legal review was done for this decision" |
-| Legal review of the Contributor Licence Agreement | PO | NOT RUN | [OPEN_SOURCE.md](OPEN_SOURCE.md): `CLA.md` is a draft until reviewed by a lawyer |
+| Legal review of the Contributor Licence Agreement | PO | NOT RUN | [OPEN_SOURCE.md](OPEN_SOURCE.md): [`CLA.md`](../CLA.md) is a draft until reviewed by a lawyer |
 | Trademark and intellectual-property due diligence (#441) | PO | NOT RUN | #441 open, in v0.3.0; the PO is arranging the trademark searches with a lawyer |
 
 ## Packaging and signing

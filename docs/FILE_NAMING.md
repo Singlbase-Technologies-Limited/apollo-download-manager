@@ -29,7 +29,7 @@ Every name from outside, whether a link, a server or a typed name, becomes one p
 
 A typed name that isn't already a safe file name is refused with `INVALID_FILENAME`, rather than changed behind the user's back.
 
-**The Add form's preview:** `src/naming.ts` mirrors `name_for_download` for #60's preview. `naming-cases.json`, which Rust generates, holds the cases both sides must agree on, so the preview can't drift from what adding does. The native side always decides.
+**The Add form's preview:** [`src/naming.ts`](../src/naming.ts) mirrors `name_for_download` for #60's preview. `naming-cases.json`, which Rust generates, holds the cases both sides must agree on, so the preview can't drift from what adding does. The native side always decides.
 
 ## Categories
 

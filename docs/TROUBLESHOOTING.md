@@ -7,7 +7,7 @@ Start with `pnpm check:prereqs`. It names each missing prerequisite and prints t
 | Symptom | Cause | Fix |
 |---|---|---|
 | `pnpm setup` changes your shell profile instead of checking prerequisites | `setup` is a built-in pnpm command | Use `pnpm check:prereqs` |
-| `pnpm: command not found`, or the wrong pnpm version | pnpm is missing, or Corepack isn't enabled | `corepack enable`, or `npx get-pnpm`; the pinned version is in `package.json` → `packageManager` |
+| `pnpm: command not found`, or the wrong pnpm version | pnpm is missing, or Corepack isn't enabled | `corepack enable`, or `npx get-pnpm`; the pinned version is in [`package.json`](../package.json) → `packageManager` |
 | `cargo: command not found` just after installing Rust | The terminal was opened before rustup updated `PATH` | Open a new terminal. `pnpm check:prereqs` also looks in `~/.cargo/bin` |
 | `link.exe` not found or `LNK1181` on Windows | Microsoft C++ Build Tools are missing, or the Rust toolchain is GNU instead of MSVC | Install the "Desktop development with C++" workload; check that `rustup show` lists `x86_64-pc-windows-msvc` |
 | `webkit2gtk-4.1` not found on Linux | WebKitGTK development files are missing | Install the apt packages in [DEVELOPMENT.md](DEVELOPMENT.md#linux-debianubuntu) |
