@@ -21,12 +21,15 @@ const WIDTHS = [
 ];
 /** The most lines a table cell may wrap to at desktop width (#422). */
 const TABLE_LINES = 8;
-/** Pages whose tables hold paragraphs, not values: CSS can't make them short, so #425 rewrites them. */
+/**
+ * Pages whose tables hold paragraphs, not values: CSS can't make them short. #425 split the long pages but didn't
+ * rewrite these tables, so they are listed where they now are; a page leaves the list once its tables pass.
+ */
 const TALL_TABLES = [
+  'developers/approved-dependencies/',
   'developers/architecture/',
   'developers/contracts/',
-  'developers/dependencies/',
-  'developers/engine-internals/',
+  'developers/engine-retries-limits/',
   'developers/parity/',
   'developers/research/2026-10-21-libcurl-engine-research-r2/',
   // Up to ten columns of findings; they fitted only while names in them broke between letters (#485).
@@ -34,8 +37,15 @@ const TALL_TABLES = [
   'developers/research/2026-11-13-feature-research-site-grabber/',
   'developers/research/2026-11-13-feature-research-torrents/',
   'developers/research/2026-11-13-feature-research-user-wishes/',
+  'developers/test-fixtures/',
   'developers/testing/',
+  // The network adapter's row (#471), already over the limit on main before #425 moved it here.
+  'developers/torrent-contract/',
 ];
+/** The tallest a developer page may be at 1440 px wide (#425), so it reads as one topic. */
+const PAGE_HEIGHT = 8000;
+/** Reference tables and records, which may be taller (#425, PO decisions on the audit): research records too. */
+const REFERENCE_PAGES = ['developers/parity/', 'developers/contracts/', 'developers/engine-contract/', 'developers/settings/', 'developers/approved-dependencies/'];
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.txt': 'text/plain; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.xml': 'application/xml' };
 const at = process.argv.indexOf('--shots');
 const shots = at > 0 ? process.argv[at + 1] : null;
@@ -344,7 +354,7 @@ for (const [route, id, query, target] of [
   const page = await open(check, 'guide/installing/', 'pager');
   await page.click('.pager a[rel="next"]');
   await page.waitForLoadState();
-  if (!page.url().endsWith('/guide/downloads/')) problem('pager', `next went to ${page.url()}`);
+  if (!page.url().endsWith('/guide/add-a-download/')) problem('pager', `next went to ${page.url()}`);
   await page.close();
 }
 await check.close();
@@ -429,6 +439,18 @@ for (const theme of ['light', 'dark']) {
     seen.add(at.key);
   }
   if (seen.size < 20) problem('keyboard', `Tab reached only ${String(seen.size)} things`);
+  await context.close();
+}
+
+// The developer pages' heights (#425): none taller than PAGE_HEIGHT at 1440 px, but the references and research records.
+{
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  for (const route of routes.filter((r) => r.startsWith('developers/') && !r.startsWith('developers/research/') && !REFERENCE_PAGES.includes(r))) {
+    await page.goto(`${origin}${BASE}${route}`, { waitUntil: 'load' });
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    if (height > PAGE_HEIGHT) problem(`height /${route}`, `${String(height)} px at 1440 px wide, over ${String(PAGE_HEIGHT)}: split it, or list it as a reference`);
+  }
   await context.close();
 }
 

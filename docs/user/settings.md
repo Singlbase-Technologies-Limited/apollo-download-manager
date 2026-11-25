@@ -2,6 +2,8 @@
 
 Open **Settings** with the gear in the title bar, beside the window buttons, or press **Ctrl+,**. It opens in a window over the app, so your downloads stay in view behind it; **Escape** or the close button closes it. **Search settings** at the top finds a setting by its name and opens the section it's in.
 
+See also, for developers: [where each setting is stored, and its bounds](../SETTINGS.md).
+
 The **?** beside the gear has **What’s new**, which shows what changed in this version and the ones before, from the release notes the app carries with it, **Send feedback…**, which opens the project’s issue page in your browser (Apollo Download Manager sends nothing itself), and **About Apollo DM**, which opens About and diagnostics.
 
 - **Every change is saved and applies at once;** no setting needs a restart. The screen says "Saving…", then "Saved", or why a value was refused, and shows what is saved.
@@ -46,8 +48,8 @@ On Linux the tray needs an AppIndicator library. Without a tray, closing the win
 | Simultaneous downloads | 2 | Up to 32. The others wait in the queue. Paused downloads, torrents choosing their files and seeding torrents don't count. Updating from 0.1.x changes a saved 3, the old default, to 2 once; set it again if you want 3 |
 | Start new downloads at once | On | Off: new downloads wait in the queue until you start them |
 | Restart downloads when the network is back | On | A download that failed because there was no network shows **Waiting for network**, and continues from where it stopped when Windows or Linux says the network changed. Off: it shows Failed, and you retry it |
-| Speed limit for direct downloads | None | For all direct downloads together, in KiB/s. Torrents have their own limit, under BitTorrent (#312) |
-| Use the schedule | Off | Downloads you add while it's on run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose; they wait outside it, and the list says when they start, such as **Scheduled: tomorrow 02:00**. You choose the times with hour and minute boxes, in the app's time format. A stop of 00:00 runs to midnight; a stop before the start runs past midnight. Under the switch, a line says what it does: **Next: tomorrow 02:00 to 07:00**, **Open now, until …**, or **Off**. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start. If the app was closed when the window opened, its downloads start as soon as it opens inside the window; outside it, they wait for the next one. A download with its own start time starts at that time instead ([Downloads](downloads.md)) |
+| Speed limit for direct downloads | None | For all direct downloads together, in KiB/s. Torrents have their own limit, under BitTorrent |
+| Use the schedule | Off | Downloads you add while it's on run only between a start and a stop time (02:00 to 07:00 by default), on the days you choose; they wait outside it, and the list says when they start, such as **Scheduled: tomorrow 02:00**. You choose the times with hour and minute boxes, in the app's time format. A stop of 00:00 runs to midnight; a stop before the start runs past midnight. Under the switch, a line says what it does: **Next: tomorrow 02:00 to 07:00**, **Open now, until …**, or **Off**. Downloads already running when you turn it on carry on, and turning it off lets the waiting ones start. If the app was closed when the window opened, its downloads start as soon as it opens inside the window; outside it, they wait for the next one. A download with its own start time starts at that time instead ([Queue and schedule](queue-and-schedule.md)) |
 | Profile | Balanced | How many connections a download may use, and the smallest piece of a file each connection takes |
 | Connections for all downloads together | 48 | Shared fairly between the running downloads |
 

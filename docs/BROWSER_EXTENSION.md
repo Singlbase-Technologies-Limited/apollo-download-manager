@@ -1,8 +1,14 @@
 # Browser extension
 
-The browser extension offers the browser's downloads to Apollo Download Manager, and lets the browser carry on whenever the app can't take one. It is V1's extension ported with the app's own identity (#64), so V1's extension and this one can be installed side by side. It reaches the app through the app's own native host, which each browser starts once it is registered in Settings, Browser (#65). The rules for this area are in `.claude/rules/browser-integration.md`.
+The browser extension offers the browser's downloads to Apollo Download Manager, and lets the browser carry on whenever the app can't take one. It is V1's extension ported with the app's own identity (#64), so V1's extension and this one can be installed side by side. It reaches the app through the app's own native host, which each browser starts once it is registered in Settings, Browser (#65). The rules for this area are in [`.claude/rules/browser-integration.md`](../.claude/rules/browser-integration.md).
+
+Building, testing, loading by hand, packaging and publishing are in [BROWSER_EXTENSION_BUILD.md](BROWSER_EXTENSION_BUILD.md).
+
+See also, for users: [Use with your browser](user/browser.md).
 
 ## What it does
+
+How it works inside; what a user sees and chooses is in the user guide's [Use with your browser](user/browser.md#what-the-extension-does).
 
 - **Interception:** when the browser starts a download that matches the rules, the extension pauses it and offers it to Apollo Download Manager. If Apollo Download Manager takes it, the browser's copy is cancelled and erased; on any failure the browser's download resumes.
 - **Modes:** send matching downloads to Apollo Download Manager (the default), ask first in a small window, or leave every download to the browser. Closing the ask window lets the browser continue.
@@ -18,7 +24,7 @@ The browser extension offers the browser's downloads to Apollo Download Manager,
 
 ## Identity
 
-Apollo Download Manager's extension uses none of V1's names or IDs ([ADR-0003](decisions/0003-v2-app-identity.md), [COEXISTENCE.md](COEXISTENCE.md)). All of them come from `branding.json`.
+Apollo Download Manager's extension uses none of V1's names or IDs ([ADR-0003](decisions/0003-v2-app-identity.md), [COEXISTENCE.md](COEXISTENCE.md)). All of them come from [`branding.json`](../branding.json).
 
 | | Apollo DM development build | Apollo DM release build | V1 |
 |---|---|---|---|
@@ -28,12 +34,12 @@ Apollo Download Manager's extension uses none of V1's names or IDs ([ADR-0003](d
 | Firefox add-on ID | `apollo-download-manager@singlbase.com` ([ADR-0020](decisions/0020-extension-store-distribution.md); `velocity-download-manager-v2@velocity.local` until 0.2.0) | the same | `velocity-download-manager@velocity.local` |
 
 - **Telling them apart:** Apollo Download Manager's name, toolbar title and context-menu item say "Apollo Download Manager", and its short name and messages "Apollo DM" (the short form, docs/BRANDING.md).
-- **The Chrome key:** the manifest's `key` is the Chrome Web Store item's public key (#240), and it pins the Chrome extension ID, so a build loaded by hand has the store's ID. Google holds the private half; until 0.2.0 the key was one generated for Apollo Download Manager in #64. The repository ignores `*.pem` and `*.key` files. A test derives the ID from the key and checks it against `branding.json` (`scripts/extension-lib.test.mjs`).
-- **Store publication:** the stores and their links are below ([Publishing in the stores](#publishing-in-the-stores)). The Chrome Web Store link is set since 0.2.0 and the Firefox Add-ons link since 0.3.0; the Edge link follows once its store approves (PO decision on #240, 2026-11-10).
+- **The Chrome key:** the manifest's `key` is the Chrome Web Store item's public key (#240), and it pins the Chrome extension ID, so a build loaded by hand has the store's ID. Google holds the private half; until 0.2.0 the key was one generated for Apollo Download Manager in #64. The repository ignores `*.pem` and `*.key` files. A test derives the ID from the key and checks it against [`branding.json`](../branding.json) ([`scripts/extension-lib.test.mjs`](../scripts/extension-lib.test.mjs)).
+- **Store publication:** the stores and their links are below ([Publishing in the stores](BROWSER_EXTENSION_BUILD.md#publishing-in-the-stores)). The Chrome Web Store link is set since 0.2.0 and the Firefox Add-ons link since 0.3.0; the Edge link follows once its store approves (PO decision on #240, 2026-11-10).
 
 ## Protocol
 
-The extension speaks V1's native messaging protocol, version 1, unchanged: it can ping, ask for the app's status, or offer a link (`download.add` with the URL and, when known, the referrer, the file name, the size, the MIME type and where it came from). It never sends paths, commands or engine options. The files chosen on a page go together in `download.addMany` (#426): up to 100 links (`MAX_BATCH_LINKS`), each with an optional file name, and the page as the referrer, checked link by link like `download.add`. A longer choice goes in several messages, each under the 64 KiB limit, so a choice of 500 is 5 messages, well within the 30-in-10-seconds rate limit. The answer says how many were added, how many opened in the Add dialog, and which failed and why. `tests/fixtures/contract/browser-messages.json` holds valid and invalid messages; the extension's tests check its messages against it, and the native host (#65) accepts the valid ones and refuses the invalid ones.
+The extension speaks V1's native messaging protocol, version 1, unchanged: it can ping, ask for the app's status, or offer a link (`download.add` with the URL and, when known, the referrer, the file name, the size, the MIME type and where it came from). It never sends paths, commands or engine options. The files chosen on a page go together in `download.addMany` (#426): up to 100 links (`MAX_BATCH_LINKS`), each with an optional file name, and the page as the referrer, checked link by link like `download.add`. A longer choice goes in several messages, each under the 64 KiB limit, so a choice of 500 is 5 messages, well within the 30-in-10-seconds rate limit. The answer says how many were added, how many opened in the Add dialog, and which failed and why. [`tests/fixtures/contract/browser-messages.json`](../tests/fixtures/contract/browser-messages.json) holds valid and invalid messages; the extension's tests check its messages against it, and the native host (#65) accepts the valid ones and refuses the invalid ones.
 
 ## Permissions
 
@@ -50,52 +56,9 @@ The same as V1's, each in use (checked on #356). These reasons are also the stor
 
 The windows, toolbar button, tabs, keyboard shortcut (`commands`) and permissions APIs the extension also calls need no permission of their own. The extension's pages run only the extension's own scripts (`script-src 'self'`).
 
-## Building
-
-```sh
-pnpm build:extension              # development build: talks to the development app
-pnpm build:extension -- --release # release build: talks to the release app
-```
-
-Both write `browser-extension/dist/chrome` (Chrome, Edge and Brave, Manifest V3 with a service worker; Chrome 116 or later) and `browser-extension/dist/firefox` (Manifest V3 with a background script; Firefox 115 or later). Each script is bundled by Vite as a classic script, and the icons are the desktop app's own (`src-tauri/icons`).
-
-To try a build: in Chrome, open `chrome://extensions`, turn on developer mode and load `browser-extension/dist/chrome` unpacked; in Firefox, open `about:debugging`, This Firefox, and load `browser-extension/dist/firefox/manifest.json` as a temporary add-on. It reaches Apollo Download Manager once the native host is registered with that browser ([below](#registering-with-each-browser)).
-
-### Store packages
-
-```sh
-pnpm package:extension   # a release build, zipped for the stores
-```
-
-It writes `browser-extension/dist/packages/apollo-download-manager-chrome-<version>.zip` (for the Chrome Web Store and Microsoft Edge Add-ons) and `apollo-download-manager-firefox-<version>.zip` (for addons.mozilla.org), with the manifest at the archive's root. The zip writer (`scripts/zip-lib.mjs`) uses Node's own zlib, sorts the files and dates them 1980-01-01, so the same build gives the same bytes. The Chrome package leaves out the manifest's `key`, since the Chrome Web Store gives the item its own; the Firefox package declares that the add-on collects no data ([ADR-0020](decisions/0020-extension-store-distribution.md)). `scripts/extension-lib.test.mjs` checks both. Uploading is a manual step for the PO (#240). The listing text and the permission reasons are in [`browser-extension/store/`](../browser-extension/store/README.md), and each package is checked by hand with the [release test](BROWSER_EXTENSION_RELEASE_TEST.md) before it is uploaded.
-
-### Publishing in the stores
-
-The PO holds the Singlbase store accounts and submits each package; the agent has no store access ([ADR-0020](decisions/0020-extension-store-distribution.md)). For each release whose extension changed:
-
-1. **Build and check:** `pnpm package:extension`, then the [release test](BROWSER_EXTENSION_RELEASE_TEST.md) with those packages.
-2. **Chrome Web Store** ([developer dashboard](https://chrome.google.com/webstore/devconsole)): upload `apollo-download-manager-chrome-<version>.zip`. Fill in the listing from [`browser-extension/store/`](../browser-extension/store/README.md): descriptions, single purpose, a reason for each permission, the privacy answers and link, the icon and screenshots. Submit for review.
-   - **The first upload only:** the store gives the item its ID and key. Copy the item ID and, from the Package tab's **View public key**, the key as one line, into the issue ([Chrome: manifest key](https://developer.chrome.com/docs/extensions/reference/manifest/key)). They go into `branding.json` (`chromeExtensionIds`, `chromeExtensionKey`) in a release, so the native host allows the store's extension.
-3. **Microsoft Edge Add-ons** ([Partner Center](https://partner.microsoft.com/dashboard/microsoftedge)): upload the same Chrome zip, with the same listing. **The first upload only:** copy the ID Edge assigns into the issue; it joins `chromeExtensionIds`.
-4. **Firefox Add-ons** ([developer hub](https://addons.mozilla.org/developers/)): upload `apollo-download-manager-firefox-<version>.zip`, listed on AMO, with the same listing. The ID is in the package (`apollo-download-manager@singlbase.com`) and can't change once published.
-5. **Store links:** once each listing is public, its address goes into `branding.json`'s `extensionStoreUrls`, which turns on the app's **Get the extension** buttons (#241).
-6. **Check:** install the extension from each store and confirm it reaches the installed app (the popup says "Connected"), and record it in the issue.
-
-## Tests
-
-- **Unit tests** (`browser-extension/tests`, Vitest's `extension` project): interception, fallback, ask mode, the context menu, magnet links, the files on a page and the page button's panel (in jsdom, with an axe-core accessibility check; jsdom has no layout, so not colour contrast), the rules, the settings, the protocol and Apollo Download Manager's identity, against fakes of the WebExtension APIs. `pnpm test:focused -- extension` runs them; `tsc --noEmit -p browser-extension` checks their types.
-- **The manifest and the key** (`scripts/extension-lib.test.mjs`): permissions, pinned IDs and names.
-- **The native host** (`crates/velocity-native-host/tests/host_e2e.rs`, L2): the real host program, with browser framing, against a real local listener: callers other than Apollo Download Manager's extensions (V1's included) refused, only valid messages passed on with the token and the caller, a wrong token refused, the app not running, a copy of the host with a stand-in app beside it that never answers (started, then given up on after 10 s), an oversized message. Each test runs a copy of the host in a folder of its own, so a real app build beside the built host is never started.
-- **The bridge and registration** (`velocity_core::browser`, unit tests): the protocol against the shared fixture, the token and its file, the local connection and its limits, the routing (callers, settings, torrents always asking, rate limit, what adding did), and registering with each browser in a folder and a registry key of the test's own, with V1's manifests and registry values in place and unchanged afterwards.
-- **Real browsers** (L4): `pnpm test:e2e:chromium` and `pnpm test:e2e:firefox` (`tests/e2e/browser`). A link clicked on a local page is intercepted by the extension, goes through the native host into a running Apollo Download Manager, which records it once; the browser's copy is cancelled. The page is on 127.0.0.1, so the app holds the link until the user confirms its local address ([SECURITY.md](SECURITY.md#links-redirects-and-local-addresses-67)): the test checks it does, without asking the server for anything or writing a file. Downloading itself is the engine tests' to check. V1's extension is installed too, with a recording stand-in for V1's host: the test checks V1's extension reached only V1's host.
-  - **Build first:** `cargo build -p velocity-desktop-v2 -p velocity-transfer -p velocity-torrent -p velocity-native-host` and `pnpm build:extension`, and V1's extension built in `../velocity-download-manager` (or `V1_EXTENSION_DIR`). No Apollo Download Manager development instance may be running, since Apollo Download Manager is single-instance.
-  - **Chromium** runs on Windows and Linux. On Windows, Chromium reads native hosts only from the registry: the test writes `HKCU\Software\Chromium\NativeMessagingHosts` keys for Apollo Download Manager's development host and V1's stand-in, and puts back any key that was there. The browser is Playwright's (`pnpm exec playwright install chromium`, as for the [layout test](TESTING.md)); on Linux it also needs system libraries, installed once as root with `pnpm exec playwright install-deps chromium` (`--dry-run` lists them).
-  - **The page button** (#426): `pnpm test:e2e:page-files`, in Playwright's Chromium on Windows and Linux, with the same builds (V1's extension isn't needed). It loads a copy of the built extension whose manifest grants access to pages, since a test can't answer the browser's prompt, and finds the button and panel in the browser's accessibility tree, since a closed shadow root hides them from page scripts. It checks: no button on a page without files; the button and its first-time tip on a page with 12; choosing all 12 by keyboard and sending them adds 12 downloads; Escape closes the panel; dragging moves the button and the place is kept after a reload; a page's styles don't change its size; turning it off removes it without a reload; 20 files a page adds after 2 s bring the button; and it prints the scripting time on a page with 5,000 links, and after the page adds 20 more (targets: under 50 ms and under 10 ms). `--shots <folder>` saves screenshots. In Firefox, on Linux: `pnpm test:e2e:page-files:firefox`, through geckodriver (`tests/e2e/browser/firefox-driver.mjs`, shared with the Firefox test). WebDriver can't look into a closed shadow root, so it reaches the button with real key presses and checks the 12 files in the app's database. It checks that Firefox granted the copy access to pages, no button without files, the button for files added later and for 12, and sending all 12 by keyboard.
-  - **Firefox** runs on Linux only (PO decision on #64), with Firefox, geckodriver and `zip` installed, as V1's did. Checked with Firefox 159 from Mozilla's APT repository and geckodriver 0.37.1 from its GitHub release, on Ubuntu 24.04 under WSLg.
-
 ## The native host
 
-`velocity-native-host-v2` (`crates/velocity-native-host`) is what the browser starts for Apollo Download Manager's extension. It is ported from V1's host with Apollo Download Manager's names.
+`velocity-native-host-v2` ([`crates/velocity-native-host`](../crates/velocity-native-host/)) is what the browser starts for Apollo Download Manager's extension. It is ported from V1's host with Apollo Download Manager's names.
 
 - **Framing:** native messaging's: a 32-bit length in native byte order, then UTF-8 JSON. A message over 64 KiB is refused before it is read; an answer over 1 MB is replaced by an error.
 - **Callers:** only Apollo Download Manager's Chrome extension origin and Firefox add-on ID, from the arguments the browser passes. V1's extensions are refused (`FORBIDDEN_CALLER`).
@@ -115,7 +78,7 @@ The PO holds the Singlbase store accounts and submits each package; the agent ha
 
 ## Registering with each browser
 
-Settings, Browser, and step 3 of Get started, list each of Chrome, Chromium, Edge, Brave and Firefox that is installed here, or still registered, with Register or Unregister (`register_browser`, `unregister_browser`) and **Get the extension** (`open_extension_page`, #241). Installed browsers are found in each browser's App Paths registry entry on Windows (for this user, then for every user; Chromium has none, so it isn't listed unless registered), and on Linux by their usual program names on `PATH`, then as a Snap (`/snap/bin`) or Flatpak. A Snap or Flatpak browser is listed with a note that it may not reach the native host; that hasn't been tried on a real system yet. **Get the extension** opens the store page from `branding.json`'s `extensionStoreUrls` in that browser; all three are `null` until #240 publishes the extension, so the button is off and says why. Registering is for this user only: nothing system-wide, no elevation.
+Settings, Browser, and step 3 of Get started, list each of Chrome, Chromium, Edge, Brave and Firefox that is installed here, or still registered, with Register or Unregister (`register_browser`, `unregister_browser`) and **Get the extension** (`open_extension_page`, #241). Installed browsers are found in each browser's App Paths registry entry on Windows (for this user, then for every user; Chromium has none, so it isn't listed unless registered), and on Linux by their usual program names on `PATH`, then as a Snap (`/snap/bin`) or Flatpak. A Snap or Flatpak browser is listed with a note that it may not reach the native host; that hasn't been tried on a real system yet. **Get the extension** opens the store page from [`branding.json`](../branding.json)'s `extensionStoreUrls` in that browser; all three are `null` until #240 publishes the extension, so the button is off and says why. Registering is for this user only: nothing system-wide, no elevation.
 
 - **The manifest** names Apollo Download Manager's host, the host program beside the app, and the extensions allowed to start it: Apollo Download Manager's Chrome extension (`allowed_origins`) or Firefox add-on (`allowed_extensions`).
 - **Where:** on Linux, each browser's own folder (for example `~/.config/google-chrome/NativeMessagingHosts`, `~/.mozilla/native-messaging-hosts`); on Windows, `<data folder>/native-messaging/<host>.<browser>.json`, with each browser's `HKEY_CURRENT_USER\Software\…\NativeMessagingHosts\<host>` key pointing to it (`windows-sys`, PO decision on #65). The macOS places are V1's, untested (#83).

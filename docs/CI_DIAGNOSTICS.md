@@ -30,7 +30,7 @@ The run passes only when every mandatory check is PASSED or SKIPPED-BY-SELECTOR.
 
 - **Within a job,** the check runner runs every check even after one fails (`check:fast`, `check:pr`). Clippy uses `--keep-going`, so a crate that doesn't compile doesn't hide the others. `cargo test` uses `--no-fail-fast`, so every test binary runs. Vitest runs every test file.
 - **Between jobs,** report and summary steps run with `if: ${{ !cancelled() }}`, never `always()`, which would also run in cancelled runs. Mandatory checks never use `continue-on-error`, which would turn a failure into a success. The one exception is downloading the reports: a missing report is itself classified as INFRA.
-- **Errors are extracted** by `scripts/diagnostics-lib.mjs`, with unit tests built from real tool output. It reads rustfmt diffs, rustc and clippy errors with `-->` locations, failed Rust tests with their panic location, `tsc`, ESLint, Vitest and `check:links`. When it recognises nothing, it keeps the last 10 lines of output.
+- **Errors are extracted** by [`scripts/diagnostics-lib.mjs`](../scripts/diagnostics-lib.mjs), with unit tests built from real tool output. It reads rustfmt diffs, rustc and clippy errors with `-->` locations, failed Rust tests with their panic location, `tsc`, ESLint, Vitest and `check:links`. When it recognises nothing, it keeps the last 10 lines of output.
 - **Packaging and release jobs** (#17, #18) keep strict `needs` semantics: they never run after a failed mandatory check.
 
 ## Reading a failed run
@@ -40,7 +40,7 @@ GH_TOKEN="$(gh auth token -u velocity-claude-agent)" gh run download <run id> -n
 GH_TOKEN="$(gh auth token -u velocity-claude-agent)" gh run view <run id> --log-failed   # full logs of the failed steps
 ```
 
-In Claude Code, `/ci-triage <run id or PR>` does this and proposes one fix plan for every failure (`.claude/skills/ci-triage/`).
+In Claude Code, `/ci-triage <run id or PR>` does this and proposes one fix plan for every failure ([`.claude/skills/ci-triage/`](../.claude/skills/ci-triage/)).
 
 ## Re-run policy
 

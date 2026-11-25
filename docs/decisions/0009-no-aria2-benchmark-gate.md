@@ -44,8 +44,8 @@ The PO's view: Apollo Download Manager doesn't need to beat aria2 to be worth bu
   - **#37:** the dependency on #20 and the benchmark acceptance criterion are removed.
   - **#85:** the dependency on #20 is removed.
   - **Epic #1:** milestone 3 no longer refers to benchmark gates.
-  - **Docs:** TESTING.md, CI.md, CLAUDE.md and `.claude/rules/transfer-engine.md` no longer point to #20.
-- **The research report stays as it is** (`docs/research/` copies are verbatim). Its section 7 is superseded on this point by this ADR.
+  - **Docs:** TESTING.md, CI.md, CLAUDE.md and [`.claude/rules/transfer-engine.md`](../../.claude/rules/transfer-engine.md) no longer point to #20.
+- **The research report stays as it is** ([`docs/research/`](../research/) copies are verbatim). Its section 7 is superseded on this point by this ADR.
 
 ## Follow-up
 

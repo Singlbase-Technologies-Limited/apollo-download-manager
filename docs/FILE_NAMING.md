@@ -2,6 +2,8 @@
 
 How Apollo Download Manager names a download's file, chooses its category and folder, and what it does when the name is taken (#31, built on #40). The rules are V1's, with its fixes for V1 issues #38 and #46, adapted to names that the Apollo Download Manager engine learns from the server. The code:
 
+See also, for users: [Files, folders and logins](user/files-and-logins.md).
+
 - [`naming.rs`](../crates/velocity-core/src/naming.rs): file names.
 - [`category.rs`](../crates/velocity-core/src/category.rs): categories.
 - [`destination.rs`](../crates/velocity-core/src/destination.rs): folders, the folder settings and what is already there.
@@ -29,7 +31,7 @@ Every name from outside, whether a link, a server or a typed name, becomes one p
 
 A typed name that isn't already a safe file name is refused with `INVALID_FILENAME`, rather than changed behind the user's back.
 
-**The Add form's preview:** `src/naming.ts` mirrors `name_for_download` for #60's preview. `naming-cases.json`, which Rust generates, holds the cases both sides must agree on, so the preview can't drift from what adding does. The native side always decides.
+**The Add form's preview:** [`src/naming.ts`](../src/naming.ts) mirrors `name_for_download` for #60's preview. `naming-cases.json`, which Rust generates, holds the cases both sides must agree on, so the preview can't drift from what adding does. The native side always decides.
 
 ## Categories
 
@@ -56,7 +58,7 @@ A typed name that isn't already a safe file name is refused with `INVALID_FILENA
 
 **The automatic category** is the first category, in the order shown, that lists the file name's extension.
 
-**Changing a download's category** (`set_download_category`, #366) moves its file to the folder a new download of that category would get (`check_destination`'s folder; with no category, the default folder). A finished file moves at once; an unfinished one moves its part file and resumes from its checkpoint there; a running one is paused, moved and resumed. A taken name, by a file, a part file or a download in the list, gives the next free `name (n).ext`, and nothing is ever replaced or moved through a link (`velocity_core::file_move`). Across drives the file is copied, synced and checked before the original goes. A torrent moves through the torrent engine, unless its name is taken in the new folder: then it stays ([TORRENTS.md](TORRENTS.md#moving-a-torrent)). A file that can't move stays, and the category still changes. **Deleting a category** leaves its downloads without one, and touches no file.
+**Changing a download's category** (`set_download_category`, #366) moves its file to the folder a new download of that category would get (`check_destination`'s folder; with no category, the default folder). A finished file moves at once; an unfinished one moves its part file and resumes from its checkpoint there; a running one is paused, moved and resumed. A taken name, by a file, a part file or a download in the list, gives the next free `name (n).ext`, and nothing is ever replaced or moved through a link (`velocity_core::file_move`). Across drives the file is copied, synced and checked before the original goes. A torrent moves through the torrent engine, unless its name is taken in the new folder: then it stays ([TORRENTS.md](TORRENT_LIFECYCLE.md#moving-a-torrent)). A file that can't move stays, and the category still changes. **Deleting a category** leaves its downloads without one, and touches no file.
 
 ## Folders
 
@@ -101,4 +103,4 @@ When the server names the file, the engine reports the name once the download ha
 - **Free disk space:** `check_destination` doesn't report it yet. V1 used the `fs4` crate, and a new dependency needs the PO's approval.
 - **Creating a chosen folder:** a folder the user picks must already exist, unless they agree to create it in the Add dialog (#60). It is then created inside its nearest existing parent, one level at a time, and never through a link (`INVALID_PATH`). #72 covers the rest of the file system checks.
 - **Torrent categories:** a torrent added from the Add dialog (#60) gets the category of its largest file, or of a magnet link's display name, unless one is chosen. A torrent's own name, a file or its folder, that is taken in the folder is asked about and never renamed.
-- **The screens:** the Categories screen came with the sidebar (#29), and the conflict question with the Add dialog (#60) ([UI_ARCHITECTURE.md](UI_ARCHITECTURE.md#adding-downloads)) (PO decision on #31).
+- **The screens:** the Categories screen came with the sidebar (#29), and the conflict question with the Add dialog (#60) ([UI_FEATURES.md](UI_FEATURES.md#adding-downloads)) (PO decision on #31).

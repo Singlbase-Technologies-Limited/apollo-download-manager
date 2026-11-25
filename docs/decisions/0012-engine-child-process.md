@@ -21,13 +21,13 @@ The research report (section 4.3) recommended a child process unless the prototy
 ## Decision
 
 1. **The direct-download engine runs as a child process** (`velocity-transfer serve`), started and supervised by the app over its inherited stdin and stdout. There is no listening socket, port or shared secret.
-2. **The app reaches it only through the `DirectTransfer` contract,** with the client in `crates/velocity-transfer/src/stdio.rs`. The in-process engine stays for tests and the CLI, and is not shipped as a production mode.
+2. **The app reaches it only through the `DirectTransfer` contract,** with the client in [`crates/velocity-transfer/src/stdio.rs`](../../crates/velocity-transfer/src/stdio.rs). The in-process engine stays for tests and the CLI, and is not shipped as a production mode.
 3. **The production protocol and the supervisor are #39:**
    - framing and versioning that reject a mismatched engine;
    - restart with backoff;
    - cleanup or resume of the part files a crashed engine leaves behind;
    - engine messages treated as untrusted.
-4. **Secrets cross only the pipe,** never process arguments or environment variables (`.claude/rules/security.md`).
+4. **Secrets cross only the pipe,** never process arguments or environment variables ([`.claude/rules/security.md`](../../.claude/rules/security.md)).
 5. **libtorrent is not part of this decision.** Where the torrent bridge runs is decided with #62.
 
 ## Options considered

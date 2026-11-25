@@ -2,9 +2,11 @@
 
 Apollo Download Manager downloads torrents and magnet links with a separate program, the torrent helper, built on libtorrent. If it ever stops, Apollo Download Manager starts it again and the torrents carry on. BitTorrent can be turned off in Settings, BitTorrent; torrents and magnet links are then refused.
 
+See also, for developers: [how torrents work inside](../TORRENTS.md).
+
 ## Adding a torrent
 
-Use the Add dialog ([Downloads](downloads.md#adding-downloads)): paste a magnet link or a link to a `.torrent` file, choose `.torrent` files with **Choose .torrent files…**, or drop them on the window.
+Use the Add dialog ([Add a download](add-a-download.md)): paste a magnet link or a link to a `.torrent` file, choose `.torrent` files with **Choose .torrent files…**, or drop them on the window.
 
 - **One `.torrent` file** shows its name, its version (v1, v2 or hybrid), its hash and its files as a tree, all chosen at first. Untick what you don't want; a folder's box chooses everything in it.
 - **Several `.torrent` files** are each added whole.
@@ -52,7 +54,7 @@ Open the unfinished file in your player from its folder. Apollo Download Manager
 
 Settings, BitTorrent holds the torrent settings: DHT, peer exchange and local peer discovery, peers per torrent, the seeding limit, upload and download limits for all torrents together, extra trackers, the listening port (6890 by default) with port mapping on your router, and the one network adapter torrents may use, such as a VPN's. They are listed in [Settings](settings.md#bittorrent).
 
-## Not yet, or different from V1
+## Different from V1
 
 - **Private torrents after a restart:** tracker addresses can carry your passkey, so Apollo Download Manager keeps them only if you tick **Remember this torrent's trackers in the system keychain**, in the Add dialog or in **Edit…** from the details panel. Then the torrent finds its peers again after a restart. Without it, a private torrent finds no peers after a restart; add it again from its `.torrent` file or magnet link. The details panel's **Trackers** row says whether they're remembered.
 - **Connections** for a torrent are the torrent helper's own, so a torrent's details don't offer a connection count.

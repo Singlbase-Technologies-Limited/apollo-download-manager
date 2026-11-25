@@ -16,7 +16,7 @@ SFTP is a required protocol for Apollo Download Manager ([ADR-0001](0001-v2-dire
 
 ## Decision
 
-1. **SFTP uses libssh2 through libcurl.** libssh2 joins the native libraries Apollo Download Manager builds and pins in `scripts/native/deps.lock`: version, source, SHA-256, signature and licence, as for curl (docs/BUILDING_NATIVE.md).
+1. **SFTP uses libssh2 through libcurl.** libssh2 joins the native libraries Apollo Download Manager builds and pins in [`scripts/native/deps.lock`](../../scripts/native/deps.lock): version, source, SHA-256, signature and licence, as for curl (docs/BUILDING_NATIVE.md).
 2. **russh is not used.**
 3. **The SFTP security rules still apply in full,** and #53 must prove them against a local OpenSSH fixture before SFTP ships:
    - an unknown host key is refused until the user confirms its fingerprint;
@@ -24,7 +24,7 @@ SFTP is a required protocol for Apollo Download Manager ([ADR-0001](0001-v2-dire
    - the known_hosts file is Apollo Download Manager-owned and unhashed, with a SHA-256 pin per host;
    - libcurl must be at least 8.23.0, for the CVE-2026-87865 fix.
 
-   (Research report section 8; `.claude/rules/security.md`.)
+   (Research report section 8; [`.claude/rules/security.md`](../../.claude/rules/security.md).)
 
 ## Options considered
 

@@ -1,6 +1,6 @@
 # Accessibility
 
-What Apollo Download Manager does for keyboard and screen-reader users, and how each behaviour is checked. It is the audit of #66: V1's keyboard and accessibility behaviours (V1's `tests/unit` and `.claude/rules/frontend.md` at `e9d717a8`), each with an automated test in Apollo Download Manager or a manual check. The rule for new UI work is in `.claude/rules/frontend.md`.
+What Apollo Download Manager does for keyboard and screen-reader users, and how each behaviour is checked. It is the audit of #66: V1's keyboard and accessibility behaviours (V1's `tests/unit` and [`.claude/rules/frontend.md`](../.claude/rules/frontend.md) at `e9d717a8`), each with an automated test in Apollo Download Manager or a manual check. The rule for new UI work is in [`.claude/rules/frontend.md`](../.claude/rules/frontend.md).
 
 ## The audit
 
@@ -10,8 +10,8 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 
 | Behaviour | Checked by |
 |---|---|
-| The list is a grid named "Downloads", reachable with Tab, with the selected rows marked `aria-selected` | `src/features/downloads/DownloadsView.test.tsx`, "supports keyboard navigation and space to pause" |
-| ↑ and ↓ move the selection, Home and End go to the first and last row, Shift with an arrow extends it | the same test; `src/app/Accessibility.test.tsx`, "End selects the last row…" |
+| The list is a grid named "Downloads", reachable with Tab, with the selected rows marked `aria-selected` | [`src/features/downloads/DownloadsView.test.tsx`](../src/features/downloads/DownloadsView.test.tsx), "supports keyboard navigation and space to pause" |
+| ↑ and ↓ move the selection, Home and End go to the first and last row, Shift with an arrow extends it | the same test; [`src/app/Accessibility.test.tsx`](../src/app/Accessibility.test.tsx), "End selects the last row…" |
 | Ctrl+A (⌘A) selects every row, Escape selects none | `Accessibility.test.tsx`, "End selects the last row, Ctrl+A every row, and Escape none" |
 | Enter opens the focused row's details | `Accessibility.test.tsx`, "Enter opens the details of the focused row" |
 | Space pauses or resumes the selection | `DownloadsView.test.tsx`, "supports keyboard navigation and space to pause" |
@@ -23,13 +23,13 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 
 | Behaviour | Checked by |
 |---|---|
-| The navigation and details panel resize with the arrow keys (Shift for bigger steps), Home and End, and collapse with Enter, on separators that say their value and bounds | `src/components/Splitter.test.tsx`; `src/app/App.test.tsx`, "the panels" |
+| The navigation and details panel resize with the arrow keys (Shift for bigger steps), Home and End, and collapse with Enter, on separators that say their value and bounds | [`src/components/Splitter.test.tsx`](../src/components/Splitter.test.tsx); [`src/app/App.test.tsx`](../src/app/App.test.tsx), "the panels" |
 | A dialog takes focus when it opens, keeps Tab inside, closes with Escape, and gives focus back to what opened it | `Accessibility.test.tsx`, "focus in dialogs" |
 | A confirmation (an alert dialog) takes focus, and Escape cancels it | `Accessibility.test.tsx`, "Delete asks before removing…" |
 | Menus open with Enter, move with the arrows, close with Escape and give focus back | `Accessibility.test.tsx`, "menus from the keyboard" |
-| Ctrl+N (⌘N) opens the Add dialog, Ctrl+, (⌘,) opens Settings | `src/features/add/AddDownloadDialog.test.tsx`; `src/features/settings/SettingsView.test.tsx` |
-| The user guide (#354) moves focus to the page's title, or to the heading it opened at, so a screen reader reads on from there; its contents are a navigation named "Guide contents", and the search says how many results it found (`role="status"`) | `src/features/help/GuideView.test.tsx` |
-| Number fields commit with Enter and on leaving the field | `src/features/downloads/DetailsPanel.test.tsx`; `SettingsView.test.tsx` |
+| Ctrl+N (⌘N) opens the Add dialog, Ctrl+, (⌘,) opens Settings | [`src/features/add/AddDownloadDialog.test.tsx`](../src/features/add/AddDownloadDialog.test.tsx); [`src/features/settings/SettingsView.test.tsx`](../src/features/settings/SettingsView.test.tsx) |
+| The user guide (#354) moves focus to the page's title, or to the heading it opened at, so a screen reader reads on from there; its contents are a navigation named "Guide contents", and the search says how many results it found (`role="status"`) | [`src/features/help/GuideView.test.tsx`](../src/features/help/GuideView.test.tsx) |
+| Number fields commit with Enter and on leaving the field | [`src/features/downloads/DetailsPanel.test.tsx`](../src/features/downloads/DetailsPanel.test.tsx); `SettingsView.test.tsx` |
 
 ### Names, announcements and the look
 
@@ -38,9 +38,9 @@ Each behaviour has a test, run with the frontend's Vitest suite (`pnpm test:focu
 | Every button, checkbox, field, menu item, separator, progress bar, dialog and landmark has a name, in the list with the details panel, with the navigation as icons, in the Add dialog, on the Categories and History screens, and in every Settings section | `Accessibility.test.tsx`, "every control has a name, and icons stay silent" |
 | Icons inside buttons and menu items are hidden from screen readers, as is the brand icon | the same tests; lucide-react hides its icons unless given a label, and `BrandIcon` is `aria-hidden` |
 | Errors are announced (`role="alert"`), and saving and progress messages are read politely (`role="status"`) | `DetailsPanel.test.tsx`, `SettingsView.test.tsx`, `App.test.tsx` |
-| Text has at least 4.5:1 contrast on every background it is shown on, in both themes, and the focus ring at least 3:1 (WCAG 2.2 AA) | `src/a11y.test.ts`, which reads `src/index.css` |
-| Whatever has keyboard focus is outlined in the ring colour | `src/a11y.test.ts` |
-| With the system's reduced-motion setting, animations and transitions stop | `src/a11y.test.ts` |
+| Text has at least 4.5:1 contrast on every background it is shown on, in both themes, and the focus ring at least 3:1 (WCAG 2.2 AA) | [`src/a11y.test.ts`](../src/a11y.test.ts), which reads [`src/index.css`](../src/index.css) |
+| Whatever has keyboard focus is outlined in the ring colour | [`src/a11y.test.ts`](../src/a11y.test.ts) |
+| With the system's reduced-motion setting, animations and transitions stop | [`src/a11y.test.ts`](../src/a11y.test.ts) |
 | The light and dark themes follow the system or the saved choice | `App.test.tsx`, "the theme" |
 | Screen readers read the list, a dialog, the details panel and Settings in a sensible order, with what each control does | **Manual** (below) |
 

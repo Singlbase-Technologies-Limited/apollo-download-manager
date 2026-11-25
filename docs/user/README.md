@@ -18,10 +18,14 @@ The guides are in four groups, here and in the sidebar, in the app and on the we
 
 | Guide | What it covers |
 |---|---|
-| [Downloads](downloads.md) | Adding downloads, the download list, the details panel, the history, files and folders, logins |
+| [Add a download](add-a-download.md) | Adding links, series, files and Metalink files, the Add dialog's options, and SFTP servers |
+| [The download list](download-list.md) | The lists, columns, keys, what each status means, the details panel and the history |
+| [Resume after a break](resume.md) | Pausing, crashes and power cuts, a lost network, a login asked again, an expired link |
+| [Queue and schedule](queue-and-schedule.md) | How many run at once, their order, the schedule, a start time, and what happens when they finish |
+| [Files, folders and logins](files-and-logins.md) | What happens to the files, and how passwords and keys are kept |
 | [Torrents](torrents.md) | Adding torrents and magnet links, choosing files, seeding, trackers |
 | [Categories](categories.md) | Sorting downloads by file type into folders |
-| [Browser integration](browser.md) | Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager |
+| [Use with your browser](browser.md) | Sending downloads from Chrome, Edge, Brave and Firefox to Apollo Download Manager |
 
 ## Reference
 
@@ -29,6 +33,7 @@ The guides are in four groups, here and in the sidebar, in the app and on the we
 |---|---|
 | [Settings](settings.md) | Every section of the Settings screen, including the proxy |
 | [Protocols and limits](protocols.md) | What Apollo Download Manager downloads (HTTP, HTTPS, FTP, FTPS, SFTP, Metalink, BitTorrent), and what each can do |
+| [Download messages](download-messages.md) | Every message a download can show, what it means and what to do |
 
 ## Help
 
