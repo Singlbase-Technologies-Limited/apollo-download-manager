@@ -21,6 +21,7 @@ pub mod keychain;
 pub mod logs;
 pub mod manager;
 pub mod metalink;
+pub mod mirrors;
 pub mod naming;
 pub mod network_watch;
 pub mod notices;
