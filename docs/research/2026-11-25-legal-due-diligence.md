@@ -128,7 +128,13 @@ $ git log --format='%b' | grep -ic "co-authored-by: claude"
   - ***Thaler v. Perlmutter*** (D.C. Cir., 18 March 2025): "the human authorship requirement does not prohibit copyrighting work that was made by or with the assistance of artificial intelligence"; the author must be "the person who created, operated, or used artificial intelligence".
   - **For counsel:** how much of Apollo Download Manager's code reflects enough human control.
 - **UK:** **read.** CDPA s.9(3) makes "the person by whom the arrangements necessary for the creation of the work are undertaken" the author of a computer-generated work, and s.178 defines one as generated "in circumstances such that there is no human author". Whether Singlbase or the PO made "the arrangements", and how s.9(3) applies to AI-assisted code, needs counsel.
-- **EU:** protection needs the author's own intellectual creation (CJEU case law, not read here). How far AI output qualifies is unsettled.
+- **EU: read.**
+  - **The Software Directive 2009/24/EC:**
+    - Art. 1(3): "A computer program shall be protected if it is original in the sense that it is the author's own intellectual creation."
+    - Art. 1(2): "Ideas and principles which underlie any element of a computer program … are not protected".
+    - Art. 2(1): "The author of a computer program shall be the natural person or group of natural persons who has created the program".
+  - **The CJEU in *Infopaq* (C-5/08)** applies the same test across copyright: protection only for "the author's own intellectual creation" (para. 37).
+  - **What follows:** EU law needs a human creator of the program's expression, close to the US position. How much human control over AI output suffices is unsettled.
 - **Kenya: read** (the Act as at 31 December 2022). Section 2 defines the "author":
   - of "a literary, dramatic, musical or artistic work or computer program which is computer generated", as "the person by whom the arrangements necessary for the creation of the work were undertaken";
   - of "a computer programmer", as "the person who exercised control over the making of the program".
@@ -143,7 +149,10 @@ $ git log --format='%b' | grep -ic "co-authored-by: claude"
 
 **External evidence needed:**
 
-- The terms under which the PO and Singlbase use the AI service, including who owns its output.
+- **The AI service's terms, read** (Anthropic's Consumer Terms of Service, effective 8 October 2025, which govern Claude.ai and Claude Pro "for individuals"), §4: "Subject to your compliance with our Terms, we assign to you all of our right, title, and interest-- if any--in Outputs."
+  - Under consumer terms, "you" is the account holder, so whatever rights exist in the code pass to that person, not automatically to Singlbase.
+  - **To confirm with the PO:** which plan and account the work runs under.
+  - **What this needs:** a written assignment from the account holder to Singlbase, or a business plan under Anthropic's Commercial Terms, which weren't read here. This is an item for counsel (#532).
 - Any employment or contractor agreement with the PO, assigning their work to Singlbase.
 - A record of how the work was directed: the issues, ADRs and PO decisions are in GitHub and support the human contribution.
 
@@ -251,7 +260,7 @@ THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 577 crates, 62 npm pac
 - **E2, Docs, confirmed:** line 15's "356 third-party crates" is a count of the app alone on 2026-10-22. The notices list 577 crates: the app, the engine, the torrent helper and the native host, on every target.
 - **E3, Counsel:** licences that need an opinion on compatibility with GPL-3.0-only:
   - MPL-2.0 (`cssparser`, `cssparser-macros`, `selectors`, `dtoa-short`, `option-ext`, through Tauri);
-  - Apache-2.0 (OpenSSL 3.5.9, on Linux; compatible with GPL v3 in the FSF's published view, not read here);
+  - Apache-2.0 (OpenSSL 3.5.9, on Linux). The FSF's licence list, **read**: "This is a free software license, compatible with version 3 of the GNU GPL";
   - BSL-1.0 (Boost 1.91.0);
   - BSD-3-Clause (libtorrent 2.0.15);
   - OFL-1.1 (the Inter font, which ships in the app).
@@ -279,7 +288,10 @@ THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 577 crates, 62 npm pac
 
 - **US: read.** *MGM Studios v. Grokster*, 545 U.S. 913 (2005), held: "One who distributes a device with the object of promoting its use to infringe copyright, as shown by clear expression or other affirmative steps taken to foster infringement, going beyond mere distribution with knowledge of third-party action, is liable for the resulting acts of infringement by third parties using the device, regardless of the device's lawful uses". No text found in the app, guide, website or store listing promotes infringement (searched for this report). That should be kept so (N3), and counsel should review the marketing.
 - **EU: read.** The CJEU's *Stichting Brein v Ziggo* (C-610/15, 14 June 2017) ruled that "communication to the public" covers "the making available and management, on the internet, of a sharing platform which, by means of indexation of metadata relating to protected works and the provision of a search engine, allows users of that platform to locate those works and to share them". Apollo Download Manager indexes nothing, has no search and runs no tracker.
-- **UK:** CDPA s.16(2) (authorising infringement) and s.97A injunctions against service providers. Not read here.
+- **UK: read.**
+  - CDPA s.16(2): "Copyright in a work is infringed by a person who without the licence of the copyright owner does, or authorises another to do, any of the acts restricted by the copyright."
+  - s.97A lets the High Court grant an injunction "against a service provider, where that service provider has actual knowledge of another person using their service to infringe copyright". "Service provider" has the E-Commerce Regulations' meaning, an information-society service, which a downloaded app isn't obviously.
+  - **For counsel:** whether distributing a general-purpose client can be "authorising" under s.16(2).
 - **Kenya: read.** The Copyright Act s.35(1)(a) makes it infringement when a person, "without the license of the owner", "does, or causes to be done, an act" the copyright controls. Its safe harbours (s.35A onwards) protect an "Internet Service Provider", defined by "access software that provides or enables computer access by multiple users to a computer server", which doesn't describe an app's publisher. Counsel should say whether "causes to be done" can reach the publisher of a general-purpose tool.
 
 **F2:** DHT and peer exchange on by default are V1's defaults (PO decisions on #62) and normal for a general-purpose client. Seeding off by default lowers what a user uploads after a download completes.
@@ -315,6 +327,7 @@ THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 577 crates, 62 npm pac
   4. using the user's cookies to reach subscription content;
   5. whether bundling yt-dlp (Unlicense) or running a copy the user installs changes Singlbase's position;
   6. platform terms of service, which bind the user, and whether a tool's publisher can be pursued over them.
+- **The Chrome Web Store's policy, read:** "Do not encourage, facilitate, or enable the unauthorized access, download, or streaming of copyrighted content or media", and "Do not facilitate unauthorized access to content on websites, such as circumventing paywalls or login restrictions". Video downloaders aren't banned, but "may be restricted from feature in the store". An extractor would need its listing and its behaviour checked against both rules.
 
 **G3, page files (#426): Counsel.** The PO's questions are recorded on #441 (2026-11-17).
 
@@ -364,7 +377,14 @@ The three kinds of data, kept apart:
 - **The law:**
   - **EU and UK:** GDPR and UK GDPR art. 3 reach a publisher only where it processes personal data. A local app that sends nothing to Singlbase processes little, but the website, the GitHub issues and any support e-mail do.
   - **Kenya: read.** The Data Protection Act 2019 applies to processing "by a data controller or data processor who (i) is established or ordinarily resident in Kenya and processes personal data while in Kenya; or (ii) not established or ordinarily resident in Kenya, but processing personal data of data subjects located in Kenya" (s.4). Under s.18, "no person shall act as a data controller or data processor unless registered with the Data Commissioner", with thresholds the Commissioner sets.
-  - **For counsel:** which of these apply to Singlbase, given M1. The GDPR and UK GDPR texts weren't collected.
+  - **Kenya's registration threshold, read:** the Data Protection (Registration of Data Controllers and Data Processors) Regulations 2021 (Legal Notice 265 of 2021), reg. 13(2), exempt a controller or processor that "(a) has an annual turnover of below five million shillings or annual revenue of below five million shillings; and (b) has less than ten employees". The Act's Parts IV and VI still apply (reg. 13(3)). Reg. 13(4) excludes some purposes from the exemption, and its list wasn't read here.
+  - **GDPR, read:**
+    - Art. 3(1) covers processing "in the context of the activities of an establishment of a controller or a processor in the Union".
+    - Art. 3(2) covers a controller outside the Union only where the processing relates to "(a) the offering of goods or services, irrespective of whether a payment of the data subject is required, to such data subjects in the Union; or (b) the monitoring of their behaviour".
+    - The app processes nothing on Singlbase's side. The website, issues and support e-mail may.
+    - The UK GDPR text wasn't collected.
+  - **For counsel:** which of these apply to Singlbase, given M1.
+  - **Kenyan texts:** quoted from Kenya Law (National Council for Law Reporting) under its terms of use.
 - **I2: Risk.** The [support page](../../site/content/support.md) line 12 asks users to attach a diagnostics report to a public GitHub issue. The report names no download, link or folder, and removes logins, cookies, keys and tokens ([docs/DIAGNOSTICS.md](../DIAGNOSTICS.md)). But users may attach screenshots or logs with personal data, and a public issue is published worldwide. Consider a warning there, and a private channel for reports with personal data.
 - **I3: Fact.** Peers' IP addresses are shown in the torrent details ([`src/features/torrents/TorrentSection.tsx`](../../src/features/torrents/TorrentSection.tsx) lines 122–124) and kept in memory only. Torrent resume data is kept "without trackers" ([docs/PRIVACY.md](../PRIVACY.md)).
 - **What holds up:**
@@ -428,7 +448,7 @@ The GPL's own disclaimer (§15–16) is not assumed to protect the company in ev
     - A note to that section: "Publicly available encryption object code 'software' classified under ECCN 5D002 is not subject to the EAR when the corresponding source code meets the criteria specified in § 742.15(b)".
     - A notification to BIS is needed only for source code that "provides or performs 'non-standard cryptography'" (742.15(b)(2)). Apollo Download Manager uses standard algorithms through OpenSSL, ring and RustCrypto.
     - **For counsel:** confirm the classification, and that nothing in the app is "non-standard cryptography".
-  - **EU:** the dual-use regulation (EU) 2021/821 has a public-domain note.
+  - **EU: read.** Regulation (EU) 2021/821, Annex I, General Software Note: the list does "not control 'software'" that is "'In the public domain'". Entries a. and c. of the note don't release Category 5, Part 2 (information security), but entry b., public domain, carries no such exception. **For counsel:** whether published open-source software is "in the public domain" under the regulation's definition, which wasn't read here.
   - **Kenya:** not researched.
 - **Sanctions:** GitHub and the stores apply their own; Singlbase distributes through them. Counsel should say whether the company has its own obligations.
 - **N2, EU Cyber Resilience Act, Regulation (EU) 2024/2847: Counsel.** It applies to products with digital elements made available on the EU market in a commercial activity. **Read.**
