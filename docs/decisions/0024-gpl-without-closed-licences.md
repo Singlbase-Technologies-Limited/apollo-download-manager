@@ -25,7 +25,7 @@ The PO wanted to know whether the project could be "completely free and open to 
   - **US:** the Copyright Office's report *Copyright and Artificial Intelligence, Part 2* (29 January 2025) concludes that copyright "does not extend to purely AI-generated material, or material where there is insufficient human control over the expressive elements". It does protect "the creative selection, coordination, or arrangement of material in the outputs, or creative modifications of the outputs". 17 U.S.C. §102(b) excludes ideas, systems and methods of operation, so architecture choices alone don't make their author the author of the code.
   - **Kenya:** the Copyright Act (as at 31 December 2022), s.2, makes the author of a computer-generated computer program "the person by whom the arrangements necessary for the creation of the work were undertaken", and the author of a computer program "the person who exercised control over the making of the program".
   - **UK:** CDPA s.9(3) uses the same arrangements test.
-  - **EU:** not checked.
+  - **EU:** the Software Directive 2009/24/EC protects a program that is "the author's own intellectual creation" (Art. 1(3)), and its author is "the natural person or group of natural persons who has created the program" (Art. 2(1)), so the position is close to the US one.
 
   So the GPL protects the project fully where those rules apply, and protects the human-shaped parts in the US. No court has yet tested either rule for AI-assisted code.
 - **Rights already given can't be taken back:** the GPL FAQ says the public's GPL rights "cannot be withdrawn". A copyright holder may also license "under several different licenses in parallel".
