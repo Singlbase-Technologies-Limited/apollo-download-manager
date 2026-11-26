@@ -102,5 +102,6 @@ Every document in `docs/` is listed here. A new document is added to this map in
 | [research/2026-11-06-torrent-performance.md](research/2026-11-06-torrent-performance.md) | See how torrents find peers and how fast they download, measured, and the follow-ups (#352) |
 | [research/2026-11-05-product-name-shortlist.md](research/2026-11-05-product-name-shortlist.md) | Compare the candidate product names for #346 and what their first checks found |
 | [research/2026-11-13-feature-research.md](research/2026-11-13-feature-research.md) | See what other download managers have and users wish for, and the ranked roadmap of what to build next (#427) |
+| [research/2026-11-25-legal-due-diligence.md](research/2026-11-25-legal-due-diligence.md) | See the legal risks found before wider public release, the questions for counsel, and the follow-up issues proposed (#441) |
 
 `images/` holds screenshots that the pages above embed.
