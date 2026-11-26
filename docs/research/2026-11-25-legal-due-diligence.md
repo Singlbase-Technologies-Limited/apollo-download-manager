@@ -21,7 +21,7 @@ Each finding is one of four kinds:
 ### Limits
 
 - **An investigation can't prove that a risk is absent.** Areas where nothing was found say what was searched.
-- **Sources:** the official sources marked **read** were read on 2026-11-25. Several official sites refused automated reading that day: EUR-Lex, Kenya Law, gnu.org, Cornell LII, eCFR and Microsoft's Edge policy page. Those sources are named with their official address and marked **not read here**. Their content is what counsel should confirm; this report doesn't paraphrase them from memory.
+- **Sources:** on 2026-11-25, several official sites refused automated reading: EUR-Lex, Kenya Law, gnu.org, Cornell LII and eCFR. On 2026-11-26 the PO collected those texts from the official sites, as PDFs or copied text, and the quotes below come from them. The copies are kept outside the repository. Sources still marked **not read here** weren't collected; this report doesn't paraphrase them from memory.
 - **Not reachable by the agent:** V1's repository (`Singlbase-Technologies-Limited/velocity-download-manager`, private; the agent account gets HTTP 404), the GitHub organisation's settings, the store dashboards, and any contract, assignment or company registration.
 
 ### Sources read
@@ -31,9 +31,17 @@ Each finding is one of four kinds:
 | [`LICENSE`](../../LICENSE) (the GNU GPL v3 text) | Corresponding Source (§1), conveying object code (§6) |
 | [UK CDPA 1988 s.9](https://www.legislation.gov.uk/ukpga/1988/48/section/9) and [s.178](https://www.legislation.gov.uk/ukpga/1988/48/section/178) | Computer-generated works |
 | [UK CDPA s.296ZB](https://www.legislation.gov.uk/ukpga/1988/48/section/296ZB) and [s.296ZD](https://www.legislation.gov.uk/ukpga/1988/48/section/296ZD) | Circumvention devices and services |
-| [US Copyright Office: Copyright and AI](https://www.copyright.gov/ai/) | That Part 2 (copyrightability, 29 January 2025) exists; its PDF couldn't be read as text |
+| [US Copyright Office, *Copyright and Artificial Intelligence, Part 2*](https://www.copyright.gov/ai/Copyright-and-Artificial-Intelligence-Part-2-Copyrightability-Report.pdf) (29 January 2025) and [*Thaler v. Perlmutter*](https://media.cadc.uscourts.gov/opinions/docs/2025/03/23-5233.pdf) (D.C. Cir., 18 March 2025) | Authorship of AI-assisted code (A1) |
+| [17 U.S.C. §102](https://www.copyright.gov/title17/92chap1.html#102) and [§1201](https://www.copyright.gov/title17/92chap12.html#1201) | What copyright protects; circumvention (G2) |
+| [*MGM Studios v. Grokster*, 545 U.S. 913 (2005)](https://supreme.justia.com/cases/federal/us/545/913/) | Inducement (F) |
+| [Kenya Copyright Act (Cap. 130)](https://new.kenyalaw.org/akn/ke/act/2001/12/eng@2022-12-31), [Data Protection Act 2019](https://new.kenyalaw.org/akn/ke/act/2019/24), [Computer Misuse and Cybercrimes Act 2018](https://new.kenyalaw.org/akn/ke/act/2018/5), all as at 31 December 2022 | Authorship (A1), circumvention (G2), data protection (I), unauthorised access (G3) |
+| [GPL FAQ](https://www.gnu.org/licenses/gpl-faq.html) and [the free software definition](https://www.gnu.org/philosophy/free-sw.en.html) (through the Internet Archive; gnu.org didn't answer) | Licensing (D4) |
+| [Regulation (EU) 2024/2847, the Cyber Resilience Act](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng), and [the Commission's CRA FAQ](https://ec.europa.eu/newsroom/dae/redirection/document/122331) | N2 |
+| [CJEU C-610/15, *Stichting Brein v Ziggo*](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62015CJ0610) and [Directive 2001/29/EC](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32001L0029) | F, G2 |
+| [15 CFR 742.15](https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-742/section-742.15) and [734.3](https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-734/section-734.3) (eCFR, up to date as of 24 November 2026) | N1 |
+| [Firefox data consent](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) and the [policies taking effect on 1 December 2026](https://extensionworkshop.com/documentation/publish/add-on-policies-preview-2026-12/) | H |
 | [Chrome Web Store program policies](https://developer.chrome.com/docs/webstore/program-policies/policies), [Limited Use](https://developer.chrome.com/docs/webstore/program-policies/limited-use), [User Data FAQ](https://developer.chrome.com/docs/webstore/user_data) | Extension disclosures |
-| [Firefox add-on policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) | Partly: the policy text came back only as a summary, so it isn't quoted as verified |
+| [Firefox add-on policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) | H: the full text, copied by the PO on 2026-11-26 |
 | [Microsoft: SmartScreen reputation](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation), [Azure Artifact Signing](https://learn.microsoft.com/en-us/azure/artifact-signing/faq), [SignPath Foundation terms](https://signpath.org/terms), [CA/Browser Forum code-signing requirements](https://cabforum.org/working-groups/code-signing/requirements/) | Signing (#428, ADR-0022, in PR 518) |
 
 ## Critical and High matters that need counsel
@@ -110,10 +118,22 @@ $ git log --format='%b' | grep -ic "co-authored-by: claude"
 
 **The legal concern:**
 
-- **US:** the Copyright Office's Part 2 report (29 January 2025, [copyright.gov/ai](https://www.copyright.gov/ai/)) and *Thaler v. Perlmutter* (D.C. Cir., 18 March 2025, [opinion](https://media.cadc.uscourts.gov/opinions/docs/2025/03/23-5233.pdf)) address human authorship. Both were found, but their text couldn't be read here. Counsel should confirm what protection, if any, covers code an AI wrote under detailed human direction, and what the human selection, arrangement and editing adds.
+- **US: read.**
+  - **The Copyright Office's conclusions** (Part 2, 29 January 2025):
+    - "Copyright does not extend to purely AI-generated material, or material where there is insufficient human control over the expressive elements."
+    - "prompts do not alone provide sufficient control."
+    - Human authors are entitled to copyright in "the creative selection, coordination, or arrangement of material in the outputs, or creative modifications of the outputs".
+  - **Its footnote 60** quotes a court: "Providing sketches, ideas or supervision over copyrightable material is not sufficient to make one a joint author."
+  - **17 U.S.C. §102(b):** protection never extends to "any idea, procedure, process, system, method of operation, concept, principle, or discovery". So the PO's architecture choices are evidence of human control, not protected expression in themselves.
+  - ***Thaler v. Perlmutter*** (D.C. Cir., 18 March 2025): "the human authorship requirement does not prohibit copyrighting work that was made by or with the assistance of artificial intelligence"; the author must be "the person who created, operated, or used artificial intelligence".
+  - **For counsel:** how much of Apollo Download Manager's code reflects enough human control.
 - **UK:** **read.** CDPA s.9(3) makes "the person by whom the arrangements necessary for the creation of the work are undertaken" the author of a computer-generated work, and s.178 defines one as generated "in circumstances such that there is no human author". Whether Singlbase or the PO made "the arrangements", and how s.9(3) applies to AI-assisted code, needs counsel.
 - **EU:** protection needs the author's own intellectual creation (CJEU case law, not read here). How far AI output qualifies is unsettled.
-- **Kenya:** the Copyright Act 2001 (Cap 130) defines the author of computer-generated works. [Kenya Law](https://new.kenyalaw.org/) refused automated reading, so the definition isn't quoted.
+- **Kenya: read** (the Act as at 31 December 2022). Section 2 defines the "author":
+  - of "a literary, dramatic, musical or artistic work or computer program which is computer generated", as "the person by whom the arrangements necessary for the creation of the work were undertaken";
+  - of "a computer programmer", as "the person who exercised control over the making of the program".
+
+  A work is eligible only if "sufficient effort has been expended on making the work to give it an original character" (s.22(3)), and rights "accrue to the author automatically" (s.22(5)). No court has yet applied these to AI-assisted code, and later amendments aren't in this copy.
 
 **Why it matters:**
 
@@ -257,10 +277,10 @@ THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 577 crates, 62 npm pac
 
 **The publisher's exposure** depends on intent, marketing and disclosure, not on the feature existing:
 
-- **US:** inducement (*MGM Studios v. Grokster*, 545 U.S. 913 (2005); not read here) turns on "clear expression or other affirmative steps taken to foster infringement". No text found in the app, guide, website or store listing promotes infringement (searched for this report). That should be kept so (N3), and counsel should review the marketing.
-- **EU:** the CJEU's *Stichting Brein v Ziggo* (C-610/15, 2017; not read here) concerned a platform indexing torrents. Apollo Download Manager indexes nothing, has no search and no tracker.
+- **US: read.** *MGM Studios v. Grokster*, 545 U.S. 913 (2005), held: "One who distributes a device with the object of promoting its use to infringe copyright, as shown by clear expression or other affirmative steps taken to foster infringement, going beyond mere distribution with knowledge of third-party action, is liable for the resulting acts of infringement by third parties using the device, regardless of the device's lawful uses". No text found in the app, guide, website or store listing promotes infringement (searched for this report). That should be kept so (N3), and counsel should review the marketing.
+- **EU: read.** The CJEU's *Stichting Brein v Ziggo* (C-610/15, 14 June 2017) ruled that "communication to the public" covers "the making available and management, on the internet, of a sharing platform which, by means of indexation of metadata relating to protected works and the provision of a search engine, allows users of that platform to locate those works and to share them". Apollo Download Manager indexes nothing, has no search and runs no tracker.
 - **UK:** CDPA s.16(2) (authorising infringement) and s.97A injunctions against service providers. Not read here.
-- **Kenya:** the Copyright Act's infringement provisions. Not read here.
+- **Kenya: read in part.** The Copyright Act s.35(1) makes infringement an act done "without the license of the owner of the copyright"; it has no provision found on authorising or inducing another's infringement. Counsel should confirm whether Kenyan law has secondary liability for a tool's publisher.
 
 **F2:** DHT and peer exchange on by default are V1's defaults (PO decisions on #62) and normal for a general-purpose client. Seeding off by default lowers what a user uploads after a download completes.
 
@@ -284,10 +304,10 @@ THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 577 crates, 62 npm pac
 **G2, if an extractor is added (#253): Counsel, before any implementation.**
 
 - **Anti-circumvention:** the laws differ:
-  - **US:** 17 U.S.C. §1201(a)(2) and (b), the trafficking provisions (not read here).
-  - **EU:** InfoSoc Directive 2001/29/EC art. 6 (not read here).
+  - **US: read.** 17 U.S.C. §1201(a)(2): "No person shall manufacture, import, offer to the public, provide, or otherwise traffic in any technology, product, service, device, component, or part thereof", that is "primarily designed or produced for the purpose of circumventing a technological measure that effectively controls access to a work", or has "only limited commercially significant purpose or use other than to circumvent", or is marketed for circumvention. §1201(b)(1) does the same for measures protecting a copyright owner's rights. Distribution free of charge is still "offer to the public".
+  - **EU: read.** Directive 2001/29/EC art. 6(2): Member States protect against "the manufacture, import, distribution, sale, rental, advertisement for sale or rental, or possession for commercial purposes of devices, products or components" that are "promoted, advertised or marketed for the purpose of circumvention", have "only a limited commercially significant purpose or use other than to circumvent", or are "primarily designed, produced, adapted or performed for the purpose of enabling or facilitating the circumvention of, any effective technological measures".
   - **UK:** CDPA s.296ZB and s.296ZD, **read**. s.296ZB makes it an offence to sell or distribute, in the course of business, a device "primarily designed, produced, or adapted for the purpose of enabling or facilitating the circumvention of effective technological measures". s.296ZD gives rights holders civil remedies against such devices.
-  - **Kenya:** the Copyright Act's provisions on technological protection measures (not read here).
+  - **Kenya: read.** Copyright Act s.35(3): copyright is infringed by a person who "(a) circumvents any effective technological protection measure designed to protect works; or (b) manufactures or distributes devices which are primarily designed or produced for the purpose of circumventing technological protection measures". Circumvention is permitted only "in limited circumstances as set out in the Second Schedule" (s.26B).
 - **The boundaries counsel should review:**
   1. any code that decrypts, or obtains keys for, protected streams (Widevine, PlayReady, FairPlay): never, on any reading;
   2. signature or token "deciphering" that a site uses to restrict access, which is the core of the yt-dlp disputes;
@@ -300,7 +320,7 @@ THIRD_PARTY_NOTICES.md is up to date: 6 native libraries, 577 crates, 62 npm pac
 
 - **What the code does:** the extension reads the `href` and `src` of the page's links and media elements in the user's own browser, lists those that look like files, and shows a button. `pageButton: true` by default ([`browser-extension/src/shared/settings.ts`](../../browser-extension/src/shared/settings.ts) line 43). It needs the optional `<all_urls>` permission ([`scripts/extension-lib.mjs`](../../scripts/extension-lib.mjs) line 19).
 - **What it doesn't do:** it makes no requests of its own and follows no links.
-- **Unauthorised-access laws** (US CFAA, UK Computer Misuse Act 1990, Kenya Computer Misuse and Cybercrimes Act 2018) concern access without authorisation. Reading links the browser has already loaded, in the user's own session, is unlike scraping a server. Counsel should confirm this, and whether on-by-default matters.
+- **Unauthorised-access laws** (US CFAA, UK Computer Misuse Act 1990, Kenya Computer Misuse and Cybercrimes Act 2018) concern access without authorisation. Kenya's s.14(1), **read**: an offence is committed by a person who "causes … a computer system to perform a function, by infringing security measures, with intent to gain access, and knowing such access is unauthorised". The extension infringes no security measure. Reading links the browser has already loaded, in the user's own session, is unlike scraping a server. Counsel should confirm this, and whether on-by-default matters.
 
 ## H. Browser extension: privacy, permissions and store compliance
 
@@ -327,9 +347,13 @@ The three kinds of data, kept apart:
   - Chrome also requires an affirmative Limited Use statement.
 - **Firefox:**
   - The manifest declares `data_collection_permissions: { required: ["none"] }` ([`scripts/extension-lib.mjs`](../../scripts/extension-lib.mjs) line 76).
-  - The policy text was read only as a summary. It indicates that transmission means data handled "outside of the add-on" or the local browser, and that native messaging is covered. Counsel or the PO should confirm the exact wording before the AMO listing (#240).
-  - A revised policy is dated 1 December 2026, so read the version in force at submission.
-- **Edge:** the policy page refused reading here (HTTP 404 at the address tried). Check it at submission.
+  - **The policy, read** (the current text and the one taking effect on 1 December 2026 say the same):
+    - "data transmission refers to any data that is collected, used, transferred, shared, or handled outside of the add-on or the local browser";
+    - "If the add-on uses native messaging, the Add-on Policies (including those related to user consent and control) apply to any data sent to the native application as well";
+    - "The transmission of browsing activity is only permitted as part of the add-on's primary function".
+  - **The data-consent page** lists `browsingActivity` as "Information about the websites users visit, such as specific URLs".
+  - **What follows:** "none" was wrong, and the declaration becomes `browsingActivity` (#522, PR 529, ADR-0023).
+- **Edge: read** at its current address ([developer policies](https://learn.microsoft.com/en-us/legal/microsoft-edge/extensions/developer-policies)), §1.5.1: an extension "may collect, access, use, or transmit personal information (including web browsing activity) only if required by and only for use in a prominently disclosed, user-facing feature". That is #522.
 
 ## I. Privacy and data protection
 
@@ -339,8 +363,8 @@ The three kinds of data, kept apart:
   - **What to do:** measure it (a packet capture of a fresh start with no torrents), then either start DHT with the first torrent, or say so in the privacy page.
 - **The law:**
   - **EU and UK:** GDPR and UK GDPR art. 3 reach a publisher only where it processes personal data. A local app that sends nothing to Singlbase processes little, but the website, the GitHub issues and any support e-mail do.
-  - **Kenya:** the Data Protection Act 2019 has its own registration duties for data controllers and processors.
-  - Counsel should say which apply to Singlbase, given M1. None of these texts were read here.
+  - **Kenya: read.** The Data Protection Act 2019 applies to processing "by a data controller or data processor who (i) is established or ordinarily resident in Kenya and processes personal data while in Kenya; or (ii) not established or ordinarily resident in Kenya, but processing personal data of data subjects located in Kenya" (s.4). Under s.18, "no person shall act as a data controller or data processor unless registered with the Data Commissioner", with thresholds the Commissioner sets.
+  - **For counsel:** which of these apply to Singlbase, given M1. The GDPR and UK GDPR texts weren't collected.
 - **I2: Risk.** The [support page](../../site/content/support.md) line 12 asks users to attach a diagnostics report to a public GitHub issue. The report names no download, link or folder, and removes logins, cookies, keys and tokens ([docs/DIAGNOSTICS.md](../DIAGNOSTICS.md)). But users may attach screenshots or logs with personal data, and a public issue is published worldwide. Consider a warning there, and a private channel for reports with personal data.
 - **I3: Fact.** Peers' IP addresses are shown in the torrent details ([`src/features/torrents/TorrentSection.tsx`](../../src/features/torrents/TorrentSection.tsx) lines 122–124) and kept in memory only. Torrent resume data is kept "without trackers" ([docs/PRIVACY.md](../PRIVACY.md)).
 - **What holds up:**
@@ -399,11 +423,20 @@ The GPL's own disclaimer (§15–16) is not assumed to protect the company in ev
 
 - **Patents:** no patent search was done; one needs counsel. GPL v3 §11 and the CLA §3 grant patent licences from contributors. Apache-2.0 dependencies (OpenSSL) carry their own patent grants. Download managers and BitTorrent clients are long-established; that isn't freedom to operate.
 - **N1, encryption export: Counsel.** The app ships OpenSSL 3.5.9 (Linux), ring and RustCrypto (SFTP through russh), and Schannel through the system (Windows).
-  - **US:** the EAR treats publicly available encryption source code specially (15 CFR 734.3(b)(3), 742.15(b)). Whether a notification to BIS is still needed, and how the compiled binaries are classified (5D002, mass market), wasn't verified: eCFR and BIS refused reading here.
+  - **US: read** (eCFR, up to date as of 24 November 2026).
+    - 15 CFR 742.15(b)(1): "publicly available … encryption source code classified under ECCN 5D002 is not subject to the EAR".
+    - A note to that section: "Publicly available encryption object code 'software' classified under ECCN 5D002 is not subject to the EAR when the corresponding source code meets the criteria specified in § 742.15(b)".
+    - A notification to BIS is needed only for source code that "provides or performs 'non-standard cryptography'" (742.15(b)(2)). Apollo Download Manager uses standard algorithms through OpenSSL, ring and RustCrypto.
+    - **For counsel:** confirm the classification, and that nothing in the app is "non-standard cryptography".
   - **EU:** the dual-use regulation (EU) 2021/821 has a public-domain note.
   - **Kenya:** not researched.
 - **Sanctions:** GitHub and the stores apply their own; Singlbase distributes through them. Counsel should say whether the company has its own obligations.
-- **N2, EU Cyber Resilience Act, Regulation (EU) 2024/2847: Counsel.** It applies to products with digital elements made available on the EU market in a commercial activity. Its reporting duties apply from 11 September 2026 and the rest from 11 December 2027, per its Article 71 (not read here: EUR-Lex refused). Free and open-source software outside a commercial activity is largely excluded. A company publishing GPL software has to know which side it is on: no sale, no paid support and no closed licence (B5) point one way, a company publisher the other. This matters before December 2027.
+- **N2, EU Cyber Resilience Act, Regulation (EU) 2024/2847: Counsel.** It applies to products with digital elements made available on the EU market in a commercial activity. **Read.**
+  - **Dates:** Article 71(2): "This Regulation shall apply from 11 December 2027. However, Article 14 shall apply from 11 September 2026".
+  - **Scope:** "making available on the market" means supply "in the course of a commercial activity, whether in return for payment or free of charge" (Article 3).
+  - **Recital 18:** free and open-source software "not monetised by their manufacturers should not be considered to be a commercial activity", and "the mere presence of regular releases" doesn't make it one.
+  - **Recital 15:** "Accepting donations without the intention of making a profit should not be considered to be a commercial activity"; donations exceeding costs, paid support beyond cost, or "an intention to monetise" would be.
+  - **What the PO decided:** Singlbase stays non-commercial (#530, ADR-0024, PR 531). As long as that holds, Apollo Download Manager isn't made available on the market under the CRA.
 - **Accessibility:** the European Accessibility Act covers listed products and services; a free download manager isn't obviously among them. No obligation is assumed; counsel can confirm.
 - **Other projects' trademarks:** libcurl, OpenSSL and libtorrent are named in the docs for what they are, and not used in the product name or the logo. That is normal nominative use, and no issue was found.
 - **N3, claims:**
